@@ -1,0 +1,6 @@
+ARCH   ?= arc
+CPU    ?= em4
+DEVICE ?= atlas_peak-arc
+
+# Toolchain is overridable by the project.
+VXMICRO_TOOL ?= gcc
