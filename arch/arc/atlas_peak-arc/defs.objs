@@ -1,0 +1,61 @@
+bsp_INCLUDE_DIR = $(strip \
+	${vBASE}/include \
+	${vBASE}/target/src/bsp/common \
+	${vBASE}/include/bsp \
+	${vBASE}/drivers \
+	${vBASE}/arch/${vARCH} \
+	${vBSP_BASE_DIR}/${vBSP} \
+)
+
+# initialization
+bsp_init_SRC = $(strip \
+	arch/arc/bsp/vector_table.c \
+	arch/arc/bsp/reset.s \
+	arch/arc/bsp/prep_c.c  \
+	kernel/common/bsp/init.c \
+	kernel/common/bsp/ctors.c \
+)
+
+#serial ports
+# for real board use driver for NS16550
+# for nSIM use the driver for nSIM UART
+bsp_hw_SRC_UART_NSIM_  = drivers/serial/ns16550.c
+bsp_hw_SRC_UART_NSIM_y = arch/${vARCH}/serial/nsim_uart.c
+
+# peripherals
+bsp_hw_SRC = $(strip \
+	arch/${vARCH}/timer/arcv2_timer0.c \
+	arch/${vARCH}/interrupt_controller/arcv2_irq_unit.c \
+	${bsp_hw_SRC_UART_NSIM_${CONFIG_NSIM}} \
+)
+
+bsp_modules_SRC = $(strip \
+	drivers/console/uart_console.c \
+)
+
+# miscellaneous needed by kernel
+bsp_misc_SRC = $(strip \
+	arch/arc/bsp/fatal_error.c \
+	drivers/random/rand32-timer.c \
+)
+
+bsp_kernel_SRC = $(strip \
+	${bsp_init_SRC} \
+	${bsp_hw_SRC} \
+	${bsp_modules_SRC} \
+	${bsp_misc_SRC} \
+)
+
+bsp_SRC_IRQ_VECTOR_TABLE_y = ${vBSP_BASE_DIR}/${vBSP}/irq_vector_table.c
+bsp_SRC_SW_ISR_TABLE_y = ${vBSP_BASE_DIR}/${vBSP}/sw_isr_table.c
+
+bsp_SRC = $(strip \
+	${vBSP_BASE_DIR}/${vBSP}/system.c \
+	${bsp_SRC_IRQ_VECTOR_TABLE_${CONFIG_IRQ_VECTOR_TABLE_BSP}} \
+	${bsp_SRC_SW_ISR_TABLE_${CONFIG_SW_ISR_TABLE_BSP}} \
+)
+
+# add ${vBASE} to the source files not coming from the BSP directory
+bsp_SRC += $(addprefix ${vBASE}/,${bsp_kernel_SRC})
+
+KLIBS += bsp
