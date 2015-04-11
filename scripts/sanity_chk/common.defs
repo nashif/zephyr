@@ -78,6 +78,7 @@ RUN_PASSED="PROJECT EXECUTION SUCCESSFUL"
 RUN_FAILED="PROJECT EXECUTION FAILED"
 
 # architecture BSP lists
+arc_BSP_LIST="atlas_peak-arc"
 arm_BSP_LIST="fsl_frdm_k64f ti_lm3s6965"
 x86_BSP_LIST="pentium4 minuteia atom quark"
 _BSP_LIST="${arc_BSP_LIST} ${arm_BSP_LIST} ${x86_BSP_LIST}"

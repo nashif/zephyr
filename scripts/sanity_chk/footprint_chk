@@ -75,6 +75,7 @@ PRJ_PATH=${TIMO_BASE}/samples
 # but be sure to terminate line with a '\n' character!
 #
 PRJ_LIST_STD="\
+nanokernel/benchmark/footprint     TEST=min         <nq> atlas_peak-arc \n\
 nanokernel/benchmark/footprint     TEST=min         <nq> ti_lm3s6965 \n\
 nanokernel/benchmark/footprint     TEST=min         <nq> fsl_frdm_k64f \n\
 nanokernel/benchmark/footprint     TEST=min         <n>  pentium4 minuteia \n\

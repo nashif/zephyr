@@ -83,7 +83,9 @@ nanokernel/apps/hello_world                  <n>  quark pentium4  minuteia  atom
 nanokernel/apps/philosophers                 <n>  pentium4  minuteia  atom quark \n\
 nanokernel/apps/hello_world                  <n>  fsl_frdm_k64f ti_lm3s6965      \n\
 nanokernel/apps/philosophers                 <n>  fsl_frdm_k64f ti_lm3s6965      \n\
-microkernel/apps/hello_world                 <u>  atom pentium4  minuteia  quark \n\
+nanokernel/apps/hello_world                  <n>  atlas_peak-arc                 \n\
+nanokernel/apps/philosophers                 <n>  atlas_peak-arc                 \n\
+microkernel/apps/hello_world                 <u>  pentium4  minuteia  atom quark \n\
 microkernel/apps/philosophers                <u>  pentium4  minuteia  atom quark \n\
 microkernel/apps/hello_world                 <u>  fsl_frdm_k64f ti_lm3s6965      \n\
 microkernel/apps/philosophers                <u>  fsl_frdm_k64f ti_lm3s6965      \n\
