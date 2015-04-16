@@ -42,4 +42,9 @@
 typedef unsigned int  size_t;
 #endif
 
+int isspace(int c);
+int isdigit(int c);
+int atoi(const char *s);
+int isalpha(int c);
+
 #endif  /* __INC_stdlib_h__ */
