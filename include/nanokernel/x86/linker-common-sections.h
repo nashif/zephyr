@@ -75,6 +75,13 @@ order when programming the MMU.
 SECTIONS
 	{
 	GROUP_START(ROMABLE_REGION)
+		
+	SECTION_PROLOGUE (version_header_section, (OPTIONAL),)
+	{
+		*(.version_header)
+		KEEP(*(".version_header*"))
+	} GROUP_LINK_IN(ROMABLE_REGION)
+
 
 	SECTION_PROLOGUE(_TEXT_SECTION_NAME, (OPTIONAL),)
 	{
@@ -107,6 +114,14 @@ SECTIONS
 	KEXEC_PGALIGN_PAD(MMU_PAGE_SIZE)
 	} GROUP_LINK_IN(ROMABLE_REGION)
 
+	SECTION_PROLOGUE (tcmd_section, (OPTIONAL),)
+	{
+	 /* This section is used to store test commands.  */
+	. = ALIGN(8);
+	__test_cmds_start = .;
+	KEEP(*(SORT(.test_cmd.*)))
+	__test_cmds_end = .;
+	} GROUP_LINK_IN(ROMABLE_REGION)
 
 	SECTION_PROLOGUE(_RODATA_SECTION_NAME, (OPTIONAL),)
 	{
