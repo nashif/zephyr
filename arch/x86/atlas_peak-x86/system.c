@@ -109,6 +109,28 @@ static void consoleInit(void)
 #endif /* DO_CONSOLE_INIT */
 
 
+
+
+#ifdef CONFIG_BSP_ATLAS_PEAK_X86_FPGA
+/**************************************************************************
+ * _rom_flash_delay - delay hardware initialization
+ *
+ * Add a delay to address the delay between the ROM code and the FLASH code
+ *
+ * RETURNS: N/A
+ */
+static inline void _rom_flash_delay(void)
+{
+	int x = 255;
+
+	do {
+		*((uint32_t *)(LOAPIC_BASE_ADRS + LOAPIC_EOI)) = 0;
+		x--;
+	} while (x > 0);
+}
+#endif /* CONFIG_BSP_ATLAS_PEAK_X86_FPGA */
+
+
 /**************************************************************************
 *
 * _InitHardware - perform basic hardware initialization
@@ -126,4 +148,7 @@ void _InitHardware(void)
 	_ioapic_init();
 
 	consoleInit(); /* NOP if not needed */
+#ifdef CONFIG_BSP_ATLAS_PEAK_X86_FPGA
+	_rom_flash_delay();
+#endif
 }

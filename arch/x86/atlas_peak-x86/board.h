@@ -44,6 +44,7 @@ the Atlas Peak BSP.
 #include <misc/util.h>
 #include <drivers/uart.h>
 
+
 #define INT_VEC_IRQ0  0x20	/* Vector number for IRQ0 */
 #define HPET_TIMER0_IRQ INT_VEC_IRQ0
 
@@ -51,9 +52,11 @@ the Atlas Peak BSP.
  * IO APIC (IOAPIC) device information (Intel ioapic)
  */
 #define IOAPIC_NUM_RTES         64              /* Number of IRQs = 32 */
+
 #define IOAPIC_BASE_ADRS_PHYS   0xFEC00000      /* base physical address */
 #define IOAPIC_SIZE             MB(1)
 #define IOAPIC_BASE_ADRS      IOAPIC_BASE_ADRS_PHYS
+
 
 /*
  * Local APIC (LOAPIC) device information (Intel loapic)
@@ -62,6 +65,8 @@ the Atlas Peak BSP.
 #define LOAPIC_BASE_ADRS_PHYS   0xFEE00000      /* base physical address */
 #define LOAPIC_SIZE             KB(4)
 #define LOAPIC_BASE_ADRS      LOAPIC_BASE_ADRS_PHYS
+
+
 
 /* serial port (aka COM port) information */
 
@@ -79,8 +84,17 @@ the Atlas Peak BSP.
 
 #define UART_REG_ADDR_INTERVAL  4       /* address diff of adjacent regs. */
 
-#define UART_XTAL_FREQ	32000000
-#define LOAPIC_TIMER_FREQ	CONFIG_LOAPIC_TIMER_FREQ
+/*
+ * On the board the UART works on the same clock frequency as CPU
+ * which is 16MHz for FPGA variant and 32MHz for the production board
+ */
+#ifdef CONFIG_BSP_ATLAS_PEAK_X86_FPGA
+  #define UART_XTAL_FREQ	18000000
+  #define LOAPIC_TIMER_FREQ	16000000
+#else
+  #define UART_XTAL_FREQ	32000000
+  #define LOAPIC_TIMER_FREQ	CONFIG_LOAPIC_TIMER_FREQ
+#endif
 
 
 /* UART uses level triggered interrupt, low level */
@@ -88,6 +102,31 @@ the Atlas Peak BSP.
 
 /* uart configuration settings */
 
+/* FPGA setup uses UART0 for logging, other AtlasPeak boards use UART1 */
+#ifdef CONFIG_BSP_ATLAS_PEAK_X86_FPGA
+/* Generic definitions */
+#define CONFIG_UART_NUM_SYSTEM_PORTS   1
+#define CONFIG_UART_NUM_EXTRA_PORTS    0
+#define CONFIG_UART_BAUDRATE	    COM1_BAUD_RATE
+#define CONFIG_UART_NUM_PORTS \
+	(CONFIG_UART_NUM_SYSTEM_PORTS + CONFIG_UART_NUM_EXTRA_PORTS)
+
+ /* Console definitions */
+#define CONFIG_UART_CONSOLE_INDEX	    0
+#define CONFIG_UART_CONSOLE_REGS	    COM1_BASE_ADRS
+#define CONFIG_UART_CONSOLE_IRQ	    COM1_INT_LVL
+#define CONFIG_UART_CONSOLE_INT_PRI    COM1_INT_PRI
+
+/* Host driver definitions */
+#define CONFIG_UART_HOSTDRV_INDEX		    0
+#define CONFIG_UART_HOSTDRV_INTERRUPT_DRIVEN   1
+#define CONFIG_HOSTDRV_RX_EVENT		    2
+#define CONFIG_HOSTDRV_TX_EVENT		    3
+#define CONFIG_UART_HOSTDRV_REGS		    COM1_BASE_ADRS
+#define CONFIG_UART_HOSTDRV_IRQ		    COM1_INT_LVL
+#define CONFIG_UART_HOSTDRV_INT_PRI	    COM1_INT_PRI
+
+#else /* CONFIG_BSP_ATLAS_PEAK_X86_FPGA */
 /* Generic definitions */
 #define CONFIG_UART_NUM_SYSTEM_PORTS   2
 #define CONFIG_UART_NUM_EXTRA_PORTS    0
@@ -100,6 +139,16 @@ the Atlas Peak BSP.
 #define CONFIG_UART_CONSOLE_REGS	    COM2_BASE_ADRS
 #define CONFIG_UART_CONSOLE_IRQ	    COM2_INT_LVL
 #define CONFIG_UART_CONSOLE_INT_PRI    COM2_INT_PRI
+
+/* Host driver definitions */
+#define CONFIG_UART_HOSTDRV_INDEX		    0
+#define CONFIG_UART_HOSTDRV_INTERRUPT_DRIVEN   1
+#define CONFIG_HOSTDRV_RX_EVENT		    2
+#define CONFIG_HOSTDRV_TX_EVENT		    3
+#define CONFIG_UART_HOSTDRV_REGS		    COM2_BASE_ADRS
+#define CONFIG_UART_HOSTDRV_IRQ		    COM2_INT_LVL
+#define CONFIG_UART_HOSTDRV_INT_PRI	    COM2_INT_PRI
+#endif /* CONFIG_BSP_ATLAS_PEAK_X86_FPGA */
 
 /* uart interface */
 #define UART_POLL_IN            uart_poll_in
@@ -157,15 +206,18 @@ the Atlas Peak BSP.
 /* Start of the 4 MB virtual address space */
 #define VIRT_ADDR_START 0xA8000000
 
-/*
- * Start of the pool in virtual memory where space for MMIO memory can be
- * allocated from. We allow a total of 1024 KB total space for static and
- * dynamic memory devices. Static devices *MUST* be allocated first. The
- * remainder of the 1 MB space is assumed to be used for dynamic devices.
- */
-#define VIRT_POOL_MMIO_ADDR 0xA8200000
-#define VIRT_POOL_MMIO_SIZE MB(1)
-
+#ifdef CONFIG_MM_POMS
+  #include <virtAddrPools.h>
+#else /* !CONFIG_MM_POMS */
+  /*
+   * Start of the pool in virtual memory where space for MMIO memory can be
+   * allocated from. We allow a total of 1024 KB total space for static and
+   * dynamic memory devices. Static devices *MUST* be allocated first. The
+   * remainder of the 1 MB space is assumed to be used for dynamic devices.
+   */
+  #define VIRT_POOL_MMIO_ADDR 0xA8200000
+  #define VIRT_POOL_MMIO_SIZE MB(1)
+#endif /* CONFIG_MM_POMS */
 
 #ifndef _ASMLANGUAGE
 
