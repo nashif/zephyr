@@ -41,6 +41,7 @@ was provided to allow testing of kernel stack canaries on a BSP that does not
 #include <nanokernel.h>
 #include <nanokernel/cpu.h>
 #include <drivers/rand32.h>
+#include <board.h>
 
 #if defined(CONFIG_TEST_RANDOM_GENERATOR)
 /*******************************************************************************

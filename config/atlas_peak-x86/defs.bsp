@@ -1,0 +1,7 @@
+ARCH   ?= x86
+CPU    ?= minuteia
+DEVICE ?= atlas_peak-x86
+#BSP_VARIANT ?= minuteia
+
+# Toolchain is overridable by the project.
+VXMICRO_TOOL ?= gcc

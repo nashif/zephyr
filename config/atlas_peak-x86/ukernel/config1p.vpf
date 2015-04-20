@@ -1,0 +1,6 @@
+% Development board : Atlas Peak
+% Target processor  : minuteia
+
+% DRIVERTYPE      NODE         CALL
+% =============================================================
+  TIMERDRIVER     NODE1        'timer_driver(0)'

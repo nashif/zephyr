@@ -1,0 +1,38 @@
+bsp_INCLUDE_DIR = $(strip \
+	${vBASE}/include \
+	${vBASE}/target/src/bsp/common \
+	${vBASE}/include/bsp \
+	${vBASE}/drivers \
+	${vBSP_BASE_DIR}/${vBSP}/ \
+	${vBASE}/arch/${vARCH} \
+)
+
+bsp_kernel_SRC = $(strip \
+	arch/${vARCH}/bsp/crt0.s \
+	arch/${vARCH}/bsp/cache.c \
+	arch/${vARCH}/bsp/cache_s.s \
+	arch/${vARCH}/bsp/rand32.c \
+	arch/${vARCH}/${vBSP}/drvIntStubs.s \
+	kernel/common/bsp/init.c \
+	kernel/common/bsp/ctors.c \
+	arch/${vARCH}/bsp/sysFatalErrorHandler.c \
+	arch/x86/timer/loApicTimer.c \
+	arch/x86/interrupt_controller/ioApicIntr.c \
+	arch/x86/interrupt_controller/loApicIntr.c \
+)
+
+bsp_drivers_SRC = $(strip \
+	serial/ns16550.c \
+	console/uart_console.c \
+)
+
+bsp_SRC = $(strip \
+	${vBSP_BASE_DIR}/${vBSP}/system.c \
+	${vBSP_BASE_DIR}/${vBSP}/systemApic.c \
+	$(wildcard ${vBSP_BASE_DIR}/${vBSP}/src/*.c) \
+	$(wildcard ${vBSP_BASE_DIR}/${vBSP}/src/*.s) \
+	$(foreach src,${bsp_kernel_SRC},$(addprefix ${vBASE}/,${src})) \
+	$(foreach src,${bsp_drivers_SRC},$(addprefix ${vBASE}/drivers/,${src})) \
+)
+
+KLIBS += bsp
