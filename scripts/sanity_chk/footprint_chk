@@ -78,14 +78,14 @@ PRJ_LIST_STD="\
 nanokernel/benchmark/footprint     TEST=min         <nq> atlas_peak-arc \n\
 nanokernel/benchmark/footprint     TEST=min         <nq> ti_lm3s6965 \n\
 nanokernel/benchmark/footprint     TEST=min         <nq> fsl_frdm_k64f \n\
-nanokernel/benchmark/footprint     TEST=min         <n>  pentium4 minuteia \n\
-nanokernel/benchmark/footprint     TEST=reg         <n>  pentium4 minuteia \n\
-nanokernel/benchmark/footprint     TEST=max         <nq> pentium4 minuteia \n\
+nanokernel/benchmark/footprint     TEST=min         <n>  pentium4 minuteia atlas_peak-x86 \n\
+nanokernel/benchmark/footprint     TEST=reg         <n>  pentium4 minuteia atlas_peak-x86 \n\
+nanokernel/benchmark/footprint     TEST=max         <nq> pentium4 minuteia atlas_peak-x86 \n\
 microkernel/benchmark/footprint    TEST=min         <uq> ti_lm3s6965 \n\
 microkernel/benchmark/footprint    TEST=min         <uq> fsl_frdm_k64f \n\
-microkernel/benchmark/footprint    TEST=min         <u>  pentium4 minuteia \n\
-microkernel/benchmark/footprint    TEST=reg         <u>  pentium4 minuteia \n\
-microkernel/benchmark/footprint    TEST=max         <uq> pentium4 minuteia \n\
+microkernel/benchmark/footprint    TEST=min         <u>  pentium4 minuteia atlas_peak-x86 \n\
+microkernel/benchmark/footprint    TEST=reg         <u>  pentium4 minuteia atlas_peak-x86 \n\
+microkernel/benchmark/footprint    TEST=max         <uq> pentium4 minuteia atlas_peak-x86 \n\
     # projects that don't indicate completion                        \n\
 nanokernel/benchmark/latency_measure   <n>  pentium4  minuteia  atom quark \n\
 nanokernel/benchmark/sys_kernel        <n>  pentium4  minuteia  atom quark \n\

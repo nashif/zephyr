@@ -80,7 +80,7 @@ RUN_FAILED="PROJECT EXECUTION FAILED"
 # architecture BSP lists
 arc_BSP_LIST="atlas_peak-arc"
 arm_BSP_LIST="fsl_frdm_k64f ti_lm3s6965"
-x86_BSP_LIST="pentium4 minuteia atom quark"
+x86_BSP_LIST="pentium4 minuteia atom quark atlas_peak-x86"
 _BSP_LIST="${arc_BSP_LIST} ${arm_BSP_LIST} ${x86_BSP_LIST}"
 
 # header used to identify script output during execution
