@@ -55,9 +55,9 @@ MEMORY
     {
 #ifdef CONFIG_XIP
     ROM (rx)        : ORIGIN = PHYS_LOAD_ADDR, LENGTH = 192K
-    RAM (wx)        : ORIGIN = PHYS_RAM_ADDR, LENGTH = 63K
+    RAM (wx)        : ORIGIN = PHYS_RAM_ADDR, LENGTH = 55K
 #else  /* !CONFIG_XIP */
-    RAM (wx)	    : ORIGIN = PHYS_LOAD_ADDR, LENGTH = 63K
+    RAM (wx)	    : ORIGIN = PHYS_LOAD_ADDR, LENGTH = 55K
 #endif /* CONFIG_XIP */
 
     /*
