@@ -47,4 +47,8 @@ int isdigit(int c);
 int atoi(const char *s);
 int isalpha(int c);
 
+unsigned long int strtoul(const char* str, char** endptr, int base);
+long int strtol (const char* str, char** endptr, int base);
+
+
 #endif  /* __INC_stdlib_h__ */

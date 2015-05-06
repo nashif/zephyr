@@ -152,6 +152,12 @@ int strncmp(const char *s1, const char *s2, size_t n)
 	return (n == 0) ? 0 : (*s1 - *s2);
 }
 
+char *strcat(char *restrict dest, const char *restrict src)
+{
+	strcpy(dest + strlen(dest), src);
+	return dest;
+}
+
 /*******************************************************************************
 *
 * memcmp - compare two memory areas
