@@ -30,22 +30,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __INC_stdlib_h__
-#define __INC_stdlib_h__
+#ifndef __INC_ctype_h__
+#define __INC_ctype_h__
 
-#include <ctype.h>
+int isspace(int c);
+int isdigit(int c);
+int atoi(const char *s);
+int isalpha(int c);
 
-#if !defined(NULL)
-#define NULL (void *) 0
-#endif
-
-#if !defined(__size_t_defined)
-#define __size_t_defined
-typedef unsigned int  size_t;
-#endif
-
-unsigned long int strtoul(const char* str, char** endptr, int base);
-long int strtol (const char* str, char** endptr, int base);
-
-
-#endif  /* __INC_stdlib_h__ */
+#endif  /* __INC_ctype_h__ */
