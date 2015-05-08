@@ -41,6 +41,7 @@ the Atlas Peak BSP.
 #ifndef __INCboardh
 #define __INCboardh
 
+#include <stdint.h>
 #include <misc/util.h>
 #include <drivers/uart.h>
 
