@@ -135,8 +135,13 @@ This header file is used to specify and describe board-level aspects for the
 
 /* ARCv2 timer 0 configuration settings for the system clock */
 #ifdef CONFIG_NANOKERNEL
-#define CONFIG_ARCV2_TIMER0_CLOCK_FREQ 32000000 /* 32MHz reference clock \
-							*/
+
+#ifdef CONFIG_FPGA
+#define CONFIG_ARCV2_TIMER0_CLOCK_FREQ	16000000 /* 32MHz reference clock */
+#else
+#define CONFIG_ARCV2_TIMER0_CLOCK_FREQ	32000000 /* 32MHz reference clock */
+#endif
+
 #define CONFIG_ARCV2_TIMER1_CLOCK_FREQ CONFIG_ARCV2_TIMER0_CLOCK_FREQ
 #endif /* CONFIG_NANOKERNEL */
 
