@@ -1,4 +1,4 @@
-/* string.h */
+/* strings.h */
 
 /*
  * Copyright (c) 2014 Wind River Systems, Inc.
@@ -30,30 +30,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __INC_string_h__
-#define __INC_string_h__
+#ifndef __INC_strings_h__
+#define __INC_strings_h__
 
-#if !defined(NULL)
-#define NULL (void *) 0
-#endif
+extern int strncasecmp(const char *s1, const char *s2, size_t n);
 
-#if !defined(__size_t_defined)
-#define __size_t_defined
-typedef unsigned int  size_t;
-#endif
-
-extern char  *strcpy(char *restrict d, const char *restrict s);
-extern char  *strncpy(char *restrict d, const char *restrict s, size_t n);
-extern char  *strchr(const char *s, int c);
-extern size_t strlen(const char *s);
-extern int    strcmp(const char *s1, const char *s2);
-extern int    strncmp(const char *s1, const char *s2, size_t n);
-extern char *strcat(char *restrict dest, const char *restrict src);
-
-extern long int strtol(const char *nptr, char **endptr, int base);
-extern void  *memmove(void *d, const void *s, size_t n);
-extern void  *memcpy(void *restrict d, const void *restrict s, size_t n);
-extern void  *memset(void *buf, int c, size_t n);
-extern int    memcmp(const void* p1,const void* p2, size_t count);
-
-#endif  /* __INC_string_h__ */
+#endif  /* __INC_strings_h__ */
