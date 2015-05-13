@@ -7,3 +7,4 @@ lib-y += source/stdlib/strtol.o
 lib-y += source/stdlib/strtoul.o
 lib-y += source/stdlib/atoi.o
 lib-y += source/string/strncasecmp.o
+lib-y += source/string/errno.o
