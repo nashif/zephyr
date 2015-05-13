@@ -97,7 +97,7 @@ void _FaultDump(const NANO_ESF *esf, int fault)
  * \NOMANUAL
  */
 
-void _Fault(void)
+void __attribute__((weak)) _Fault(void)
 {
 	uint32_t ecr = _arc_v2_aux_reg_read(_ARC_V2_ECR);
 
