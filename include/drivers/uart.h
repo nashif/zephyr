@@ -37,6 +37,9 @@
 extern "C" {
 #endif
 
+/* options for uart init */
+#define UART_OPTION_AFCE 0x01
+
 /* generic UART info structure */
 struct uart_init_info {
 	int baud_rate;
@@ -45,7 +48,6 @@ struct uart_init_info {
 	uint8_t int_pri; /* interrupt priority level */
 };
 /* UART driver has to configure the device to 8n1 */
-
 void uart_init(int port, const struct uart_init_info *const pinfo);
 
 /* console I/O functions */

@@ -165,6 +165,7 @@ INCLUDE FILES: drivers/uart.h
 #define MCR_OUT1 0x04 /* output #1 */
 #define MCR_OUT2 0x08 /* output #2 */
 #define MCR_LOOP 0x10 /* loop back */
+#define MCR_AFCE 0x20 /* auto flow control enable */
 
 /* constants for line status register */
 
@@ -289,6 +290,7 @@ void uart_init(int port, /* UART channel to initialize */
 {
 	int oldLevel;     /* old interrupt lock level */
 	uint32_t divisor; /* baud rate divisor */
+	uint8_t mdc = 0;
 
 	ns16550_uart_init();
 
@@ -308,7 +310,12 @@ void uart_init(int port, /* UART channel to initialize */
 	/* 8 data bits, 1 stop bit, no parity, clear DLAB */
 	OUTBYTE(LCR(port), LCR_CS8 | LCR_1_STB | LCR_PDIS);
 
-	OUTBYTE(MDC(port), MCR_OUT2 | MCR_RTS | MCR_DTR);
+	mdc = MCR_OUT2 | MCR_RTS | MCR_DTR;
+
+	if ((init_info->options & UART_OPTION_AFCE) == UART_OPTION_AFCE)
+		mdc |= MCR_AFCE;
+
+	OUTBYTE(MDC(port), mdc);
 
 	/*
 	 * Program FIFO: enabled, mode 0 (set for compatibility with quark),
