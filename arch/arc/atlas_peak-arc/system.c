@@ -74,6 +74,12 @@ int _mbxPollOut(int data) {
     while(MBX(20) & 1)
         ; // STS
     irq_unlock_inline(flags);
+    /* If end of line, delay to give lakemont
+     * a chance to do some processing */
+    if (data == '\r') {
+        volatile int count = 10000;
+        while (count --);
+    }
     return data;
 }
 
