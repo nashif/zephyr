@@ -214,8 +214,15 @@ SECTIONS {
 
 	GROUP_END(RAMABLE_REGION)
 
-	/* Data Closely Coupled Memory (DCCM) */
+	/* Data Closely Coupled Memory (DCCM). DCCM is now used by algorithms. */
 	GROUP_START(DCCM)
+	    SECTION_PROLOGUE(dccm,(NOLOAD),)
+	    {
+		    . = ALIGN(4);
+		    __dccm_start = .;
+		    *(.dccm)
+			_dccm_end = ALIGN(4);
+	    } GROUP_LINK_IN(DCCM)
 	GROUP_END(DCCM)
 
 	}
