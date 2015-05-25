@@ -159,6 +159,10 @@ if BSP_QUARK
 source "arch/x86/quark/Kconfig"
 endif
 
+if BSP_ATLAS_PEAK_X86
+source "arch/x86/atlas_peak-x86/Kconfig"
+endif
+
 source "arch/x86/timer/Kconfig"
 
 source "arch/x86/interrupt_controller/Kconfig"

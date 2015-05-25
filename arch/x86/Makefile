@@ -6,4 +6,4 @@ obj-y += interrupt_controller/
 obj-$(CONFIG_MICROKERNEL) += task/
 obj-$(CONFIG_BSP_QUARK) += quark/
 obj-$(CONFIG_BSP_GENERIC_PC) += generic_pc/
-obj-$(CONFIG_BSP_ATLASPEAK_X86) += atlas_peak-x86/
+obj-$(CONFIG_BSP_ATLAS_PEAK_X86) += atlas_peak-x86/
