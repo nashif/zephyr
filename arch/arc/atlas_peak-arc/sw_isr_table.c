@@ -41,13 +41,13 @@ provides a table that is filled with _SpuriousIRQ bindings.
 #include <sections.h>
 #include <sw_isr_table.h>
 
-extern void _SpuriousIRQ(void *arg);
+extern void _irq_spurious(void *arg);
 
 #if defined(CONFIG_SW_ISR_TABLE_DYNAMIC)
 
-_IsrTableEntry_t __isr_table_section _IsrTable[CONFIG_NUM_IRQS] = {
+_IsrTableEntry_t __isr_table_section _sw_isr_table[CONFIG_NUM_IRQS] = {
 	[0 ...(CONFIG_NUM_IRQS - 1)].arg = (void *)0xABAD1DEA,
-	[0 ...(CONFIG_NUM_IRQS - 1)].isr = _SpuriousIRQ
+	[0 ...(CONFIG_NUM_IRQS - 1)].isr = _irq_spurious
 };
 
 #else
