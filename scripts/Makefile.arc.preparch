@@ -1,0 +1,21 @@
+LTO_FLAG-y = $(call cc-option,-flto,)
+SECTION_GC_FLAG = $(call cc-option,-ffunction-sections,) $(call cc-option,-fdata-sections,)
+
+arc_FLAGS =  -DVXMICRO_ARCH_arc
+arc_FLAGS += -DVXMICRO_ARCH=arc
+arc_FLAGS += -mARCv2EM -mav2em -mno-sdata
+
+LDFLAG_LINKERCMD = -DVXMICRO_ARCH_arc
+
+
+
+QEMU_BIOS ?= /usr/share/qemu
+QEMU_CPU_TYPE_arc = qemu32
+QEMU_FLAGS_arc = -m 32 -cpu $(QEMU_CPU_TYPE_arc) \
+		-no-reboot -nographic -display none -net none \
+		-clock dynticks -no-acpi -balloon none -no-hpet \
+		-L $(QEMU_BIOS) -bios bios.bin \
+		-serial mon:stdio -machine type=pc-0.14
+QEMU_arc = qemu-system-arc
+
+export ISA_FLAG_arc QEMU_FLAGS_arc QEMU_arc QEMU_CPU_TYPE_arc
