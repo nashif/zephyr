@@ -41,6 +41,11 @@ config	ARC
 
 endmenu
 
+config BSP_ATLASPEAK_ARC
+	bool "Minimum configuration for Atlas Peak"
+	default y
+
+
 menu "ARC EM4 processor options"
 
 config	CPU_ARCEM4
@@ -99,7 +104,7 @@ config	NUM_REGULAR_IRQ_PRIO_LEVELS
 config	NUM_IRQS
 	int
 	prompt "Upper limit of interrupt numbers/IDs used"
-	default 1
+	default 17
 	range 1 256
 	help
 	  Interrupts available will be 0 to NUM_IRQS-1.
