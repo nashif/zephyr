@@ -30,6 +30,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+source "kernel/Kconfig"
+
+source "misc/Kconfig"
 
 menu "ARC family options"
 
@@ -231,3 +234,9 @@ endmenu
 
 
 source "arch/arc/atlas_peak-arc/Kconfig"
+
+
+
+source "drivers/Kconfig"
+
+source "net/Kconfig"
