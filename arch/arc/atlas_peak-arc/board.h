@@ -173,6 +173,15 @@ This header file is used to specify and describe board-level aspects for the
 
 #define UART_REG_ADDR_INTERVAL 4 /* for ns16550 driver */
 
+#define CONFIGURE_UART_PORTS(__type, __name)                    \
+        static __type __name[CONFIG_UART_NUM_PORTS] = {         \
+                {                                               \
+                        .port = CONFIG_UART_CONSOLE_REGS,        \
+                        .irq = CONFIG_UART_CONSOLE_IRQ           \
+                },                                              \
+        }
+
+
 /*
  * Device drivers utilize the macros PLB_BYTE_REG_WRITE() and
  * PLB_BYTE_REG_READ() to access byte-wide registers on the processor
