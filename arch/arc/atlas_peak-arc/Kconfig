@@ -50,15 +50,18 @@ config BSP_DIR
         to locate the correct linker file.
 
 config NUM_IRQ_PRIO_LEVELS
+	int
 	# This processor supports only 2 priority levels:
 	# 0 for Fast Interrupts (FIRQs) and 1 for Regular Interrupts (IRQs).
 	default 2
 
 config NUM_REGULAR_IRQ_PRIO_LEVELS
+	int
 	# This processor supports only 1 Regular Interrupt priority level (1).
 	default 1
 
 config  NUM_IRQS
+	int
 	# must be >= the highest interrupt number used
 	default 17
 
