@@ -96,8 +96,6 @@ static void consoleInit(void)
 	 * Need type casting to avoid compiler warnings about assigning a
 	 * pointer to a smaller integer. We know the size is right...
 	 */
-	info.regs = (unsigned long)CONFIG_UART_CONSOLE_REGS;
-	info.irq = CONFIG_UART_CONSOLE_IRQ;
 	info.int_pri = CONFIG_UART_CONSOLE_INT_PRI;
 	uart_init(CONFIG_UART_CONSOLE_INDEX, &info);
 
