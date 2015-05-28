@@ -85,6 +85,14 @@ the Atlas Peak BSP.
 
 #define UART_REG_ADDR_INTERVAL  4       /* address diff of adjacent regs. */
 
+#define CONFIGURE_UART_PORTS(__type, __name)                    \
+        static __type __name[CONFIG_UART_NUM_PORTS] = {         \
+                {                                               \
+                        .port = CONFIG_UART_CONSOLE_REGS,        \
+                        .irq = CONFIG_UART_CONSOLE_IRQ           \
+                },                                              \
+        }
+
 /*
  * On the board the UART works on the same clock frequency as CPU
  * which is 16MHz for FPGA variant and 32MHz for the production board
