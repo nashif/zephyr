@@ -130,9 +130,6 @@ config  AUTOMATIC_FP_ENABLING
 	if SSE is configured, otherwise it is enabled for using x87 FPU or
 	MMX instructions only.
 
-config XIP
-	default n
-
 endmenu
 
 config PCI
