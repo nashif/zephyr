@@ -41,7 +41,7 @@ config HPET_TIMER
 
 config LOAPIC_TIMER
 	bool "LOAPIC timer"
-	depends on LOAPIC && BSP_GENERIC_PC
+	depends on LOAPIC
 	default n
 	help
 	This option selects LOAPIC timer as a system timer.
