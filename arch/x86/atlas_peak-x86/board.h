@@ -85,7 +85,7 @@ the Atlas Peak BSP.
 
 #define UART_REG_ADDR_INTERVAL  4       /* address diff of adjacent regs. */
 
-#define CONFIGURE_UART_PORTS(__type, __name)                    \
+#define UART_PORTS_CONFIGURE(__type, __name)                    \
         static __type __name[CONFIG_UART_NUM_PORTS] = {         \
                 {                                               \
                         .port = CONFIG_UART_CONSOLE_REGS,        \
