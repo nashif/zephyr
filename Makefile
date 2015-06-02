@@ -180,25 +180,8 @@ ifndef KBUILD_CHECKSRC
   KBUILD_CHECKSRC = 0
 endif
 
-# Use make M=dir to specify directory of external module to build
-# Old syntax make ... SUBDIRS=$PWD is still supported
-# Setting the environment variable KBUILD_EXTMOD take precedence
-ifdef SUBDIRS
-  KBUILD_EXTMOD ?= $(SUBDIRS)
-endif
-
-ifeq ("$(origin M)", "command line")
-  KBUILD_EXTMOD := $(M)
-endif
-
-# If building an external module we do not care about the all: rule
-# but instead _all depend on modules
 PHONY += all
-ifeq ($(KBUILD_EXTMOD),)
 _all: all
-else
-_all: modules
-endif
 
 ifeq ($(KBUILD_SRC),)
         # building in the source tree
@@ -215,7 +198,7 @@ objtree		:= .
 src		:= $(srctree)
 obj		:= $(objtree)
 
-VPATH		:= $(srctree)$(if $(KBUILD_EXTMOD),:$(KBUILD_EXTMOD))
+VPATH		:= $(srctree)
 
 export srctree objtree VPATH
 
@@ -347,7 +330,7 @@ ifeq ($(MAKECMDGOALS),)
 endif
 
 export KBUILD_MODULES KBUILD_BUILTIN
-export KBUILD_CHECKSRC KBUILD_SRC KBUILD_EXTMOD
+export KBUILD_CHECKSRC KBUILD_SRC
 
 ifneq ($(CC),)
 ifeq ($(shell $(CC) -v 2>&1 | grep -c "clang version"), 1)
@@ -384,8 +367,6 @@ DEPMOD		= /sbin/depmod
 PERL		= perl
 PYTHON		= python
 CHECK		= sparse
-QEMU_BIN_PATH	?= /usr/bin
-QEMU		= $(QEMU_BIN_PATH)/$(QEMU_$(SRCARCH))
 
 CHECKFLAGS     := -Wbitwise -Wno-return-void $(CF)
 CFLAGS_MODULE   =
@@ -399,7 +380,7 @@ CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
 # Use USERINCLUDE when you must reference the UAPI directories only.
 USERINCLUDE    := -include $(CURDIR)/include/generated/autoconf.h
 PROJECTINCLUDE := $(strip -I$(srctree)/include/microkernel \
-		-I$(CURDIR)/misc/generated/nodes) \
+		-I$(CURDIR)/misc/generated/sysgen) \
 		$(USERINCLUDE)
 
 # Use TIMOINCLUDE when you must reference the include/ directory.
@@ -429,9 +410,6 @@ KBUILD_CFLAGS   := -c -g -std=c99 \
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -c -g -xassembler-with-cpp
-KBUILD_AFLAGS_MODULE  := -DMODULE
-KBUILD_CFLAGS_MODULE  := -DMODULE
-KBUILD_LDFLAGS_MODULE := -T $(srctree)/scripts/module-common.lds
 
 LDFLAGS += $(call cc-ldoption,-nostartfiles)
 LDFLAGS += $(call cc-ldoption,-nodefaultlibs)
@@ -457,10 +435,6 @@ export KBUILD_AFLAGS_MODULE KBUILD_CFLAGS_MODULE KBUILD_LDFLAGS_MODULE
 export KBUILD_AFLAGS_KERNEL KBUILD_CFLAGS_KERNEL
 export KBUILD_ARFLAGS PROJECTINCLUDE LDLIBS_TOOLCHAIN
 
-# When compiling out-of-tree modules, put MODVERDIR in the module
-# tree rather than in the kernel tree. The kernel tree might
-# even be read-only.
-export MODVERDIR := $(if $(KBUILD_EXTMOD),$(firstword $(KBUILD_EXTMOD))/).tmp_versions
 
 # Files to ignore in find ... statements
 
@@ -527,13 +501,11 @@ ifneq ($(filter $(no-dot-config-targets), $(MAKECMDGOALS)),)
 	endif
 endif
 
-ifeq ($(KBUILD_EXTMOD),)
-        ifneq ($(filter config %config,$(MAKECMDGOALS)),)
-                config-targets := 1
-                ifneq ($(filter-out config %config,$(MAKECMDGOALS)),)
-                        mixed-targets := 1
-                endif
-        endif
+ifneq ($(filter config %config,$(MAKECMDGOALS)),)
+	config-targets := 1
+	ifneq ($(filter-out config %config,$(MAKECMDGOALS)),)
+		mixed-targets := 1
+	endif
 endif
 
 ifeq ($(mixed-targets),1)
@@ -575,13 +547,11 @@ else
 # Build targets only - this includes tinymountain, arch specific targets, clean
 # targets and others. In general all targets except *config targets.
 
-ifeq ($(KBUILD_EXTMOD),)
 # Additional helpers built in scripts/
 # Carefully list dependencies so we do not try to build scripts twice
 # in parallel
 PHONY += scripts
-scripts: scripts_basic include/config/auto.conf include/config/tristate.conf \
-	 asm-generic
+scripts: scripts_basic include/config/auto.conf include/config/tristate.conf
 	$(Q)$(MAKE) $(build)=$(@)
 
 
@@ -592,13 +562,11 @@ ifneq ($(strip $(PROJECT)),)
 core-y += $(SOURCE_DIR)
 endif
 
-endif # KBUILD_EXTMOD
 
 ifeq ($(dot-config),1)
 # Read in config
 -include include/config/auto.conf
 
-ifeq ($(KBUILD_EXTMOD),)
 # Read in dependencies to all Kconfig* files, make sure to run
 # oldconfig if changes are detected.
 -include include/config/auto.conf.cmd
@@ -612,21 +580,6 @@ $(KCONFIG_CONFIG) include/config/auto.conf.cmd: ;
 # we execute the config step to be sure to catch updated Kconfig files
 include/config/%.conf: $(KCONFIG_CONFIG) include/config/auto.conf.cmd
 	$(Q)$(MAKE) -f $(srctree)/Makefile silentoldconfig
-else
-# external modules needs include/generated/autoconf.h and include/config/auto.conf
-# but do not care if they are up-to-date. Use auto.conf to trigger the test
-PHONY += include/config/auto.conf
-
-include/config/auto.conf:
-	$(Q)test -e include/generated/autoconf.h -a -e $@ || (		\
-	echo >&2;							\
-	echo >&2 "  ERROR: Kernel configuration is invalid.";		\
-	echo >&2 "         include/generated/autoconf.h or $@ are missing.";\
-	echo >&2 "         Run 'make oldconfig && make prepare' on kernel src to fix it.";	\
-	echo >&2 ;							\
-	/bin/false)
-
-endif # KBUILD_EXTMOD
 
 else
 # Dummy target needed, because used as prerequisite
@@ -651,6 +604,9 @@ sinclude $(srctree)/scripts/Makefile.$(SRCARCH).preparch
 ifdef VXMICRO_GCC_VARIANT
 include $(srctree)/scripts/Makefile.toolchain.$(VXMICRO_GCC_VARIANT)
 endif
+
+QEMU_BIN_PATH	?= /usr/bin
+QEMU		= $(QEMU_BIN_PATH)/$(QEMU_$(SRCARCH))
 
 # The all: target is the default when no target is given on the
 # command line.
@@ -853,33 +809,7 @@ mod_strip_cmd = true
 endif # INSTALL_MOD_STRIP
 export mod_strip_cmd
 
-# CONFIG_MODULE_COMPRESS, if defined, will cause module to be compressed
-# after they are installed in agreement with CONFIG_MODULE_COMPRESS_GZIP
-# or CONFIG_MODULE_COMPRESS_XZ.
 
-mod_compress_cmd = true
-ifdef CONFIG_MODULE_COMPRESS
-  ifdef CONFIG_MODULE_COMPRESS_GZIP
-    mod_compress_cmd = gzip -n
-  endif # CONFIG_MODULE_COMPRESS_GZIP
-  ifdef CONFIG_MODULE_COMPRESS_XZ
-    mod_compress_cmd = xz
-  endif # CONFIG_MODULE_COMPRESS_XZ
-endif # CONFIG_MODULE_COMPRESS
-export mod_compress_cmd
-
-# Select initial ramdisk compression format, default is gzip(1).
-# This shall be used by the dracut(8) tool while creating an initramfs image.
-#
-INITRD_COMPRESS-y                  := gzip
-INITRD_COMPRESS-$(CONFIG_RD_BZIP2) := bzip2
-INITRD_COMPRESS-$(CONFIG_RD_LZMA)  := lzma
-INITRD_COMPRESS-$(CONFIG_RD_XZ)    := xz
-INITRD_COMPRESS-$(CONFIG_RD_LZO)   := lzo
-INITRD_COMPRESS-$(CONFIG_RD_LZ4)   := lz4
-# do not export INITRD_COMPRESS, since we didn't actually
-# choose a sane default compression above.
-# export INITRD_COMPRESS := $(INITRD_COMPRESS-y)
 
 ifdef CONFIG_MODULE_SIG_ALL
 MODSECKEY = ./signing_key.priv
@@ -892,7 +822,6 @@ endif
 export mod_sign_cmd
 
 
-ifeq ($(KBUILD_EXTMOD),)
 core-y		+=
 
 tinymountain-dirs	:= $(patsubst %/,%,$(filter %/, $(init-y) $(init-m) \
@@ -932,6 +861,7 @@ quiet_cmd_link-tinymountain = LINK    $@
 # Include targets which we want to
 # execute if the rest of the kernel build went well.
 tinymountain: scripts/link-tinymountain.sh $(tinymountain-deps) FORCE
+	@touch tinymountain
 ifdef CONFIG_HEADERS_CHECK
 	$(Q)$(MAKE) -f $(srctree)/Makefile headers_check
 endif
@@ -1013,7 +943,7 @@ archprepare_common = $(strip \
 		include/generated/offsets.h \
 		)
 
-archprepare_microkernel-y = misc/generated/nodes/microkernel_objects.h
+archprepare_microkernel-y = misc/generated/sysgen/kernel_main.c
 
 archprepare_prereq = $(strip \
 		$(archprepare_common) \
@@ -1126,81 +1056,6 @@ PHONY += kselftest
 kselftest:
 	$(Q)$(MAKE) -C tools/testing/selftests run_tests
 
-# ---------------------------------------------------------------------------
-# Modules
-
-ifdef CONFIG_MODULES
-
-# By default, build modules as well
-
-all: modules
-
-# Build modules
-#
-# A module can be listed more than once in obj-m resulting in
-# duplicate lines in modules.order files.  Those are removed
-# using awk while concatenating to the final file.
-
-PHONY += modules
-modules: $(tinymountain-dirs) $(if $(KBUILD_BUILTIN),tinymountain) modules.builtin
-	@$(kecho) '  Building modules, stage 2.';
-	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.modpost
-
-modules.builtin: $(tinymountain-dirs:%=%/modules.builtin)
-	$(Q)$(AWK) '!x[$$0]++' $^ > $(objtree)/modules.builtin
-
-%/modules.builtin: include/config/auto.conf
-	$(Q)$(MAKE) $(modbuiltin)=$*
-
-
-# Target to prepare building external modules
-PHONY += modules_prepare
-modules_prepare: prepare scripts
-
-# Target to install modules
-PHONY += modules_install
-modules_install: _modinst_ _modinst_post
-
-PHONY += _modinst_
-_modinst_:
-	@rm -rf $(MODLIB)/kernel
-	@rm -f $(MODLIB)/source
-	@mkdir -p $(MODLIB)/kernel
-	@ln -s `cd $(srctree) && /bin/pwd` $(MODLIB)/source
-	@if [ ! $(objtree) -ef  $(MODLIB)/build ]; then \
-		rm -f $(MODLIB)/build ; \
-		ln -s $(CURDIR) $(MODLIB)/build ; \
-	fi
-	@cp -f $(objtree)/modules.builtin $(MODLIB)/
-	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.modinst
-
-# This depmod is only for convenience to give the initial
-# boot a modules.dep even before / is mounted read-write.  However the
-# boot script depmod is the master version.
-PHONY += _modinst_post
-_modinst_post: _modinst_
-	$(call cmd,depmod)
-
-ifeq ($(CONFIG_MODULE_SIG), y)
-PHONY += modules_sign
-modules_sign:
-	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.modsign
-endif
-
-else # CONFIG_MODULES
-
-# Modules not configured
-# ---------------------------------------------------------------------------
-
-modules modules_install: FORCE
-	@echo >&2
-	@echo >&2 "The present kernel configuration has modules disabled."
-	@echo >&2 "Type 'make config' and enable loadable module support."
-	@echo >&2 "Then build a kernel with module support enabled."
-	@echo >&2
-	@exit 1
-
-endif # CONFIG_MODULES
 
 ###
 # Cleaning is done on three levels.
@@ -1212,10 +1067,9 @@ endif # CONFIG_MODULES
 # Directories & files removed with 'make clean'
 CLEAN_DIRS  += $(MODVERDIR)
 
-CLEAN_FILES += misc/generated/nodes/kernel_main.c \
-		misc/generated/nodes/microkernel_objects.h \
-		misc/generated/nodes/vxmicro.h \
-		misc/generated/nodes/prj.vpf
+CLEAN_FILES += 	misc/generated/sysgen/kernel_main.c \
+		misc/generated/sysgen/vxmicro.h \
+		misc/generated/sysgen/prj.vpf
 
 # Directories & files removed with 'make mrproper'
 MRPROPER_DIRS  += include/config usr/include include/generated          \
@@ -1352,84 +1206,6 @@ $(help-board-dirs): help-%:
 	$(Q)$(MAKE) $(build)=scripts build_docproc
 	$(Q)$(MAKE) $(build)=Documentation/DocBook $@
 
-else # KBUILD_EXTMOD
-
-###
-# External module support.
-# When building external modules the kernel used as basis is considered
-# read-only, and no consistency checks are made and the make
-# system is not used on the basis kernel. If updates are required
-# in the basis kernel ordinary make commands (without M=...) must
-# be used.
-#
-# The following are the only valid targets when building external
-# modules.
-# make M=dir clean     Delete all automatically generated files
-# make M=dir modules   Make all modules in specified dir
-# make M=dir	       Same as 'make M=dir modules'
-# make M=dir modules_install
-#                      Install the modules built in the module directory
-#                      Assumes install directory is already created
-
-# We are always building modules
-KBUILD_MODULES := 1
-PHONY += crmodverdir
-crmodverdir:
-	$(cmd_crmodverdir)
-
-PHONY += $(objtree)/Module.symvers
-$(objtree)/Module.symvers:
-	@test -e $(objtree)/Module.symvers || ( \
-	echo; \
-	echo "  WARNING: Symbol version dump $(objtree)/Module.symvers"; \
-	echo "           is missing; modules will have no dependencies and modversions."; \
-	echo )
-
-module-dirs := $(addprefix _module_,$(KBUILD_EXTMOD))
-PHONY += $(module-dirs) modules
-$(module-dirs): crmodverdir $(objtree)/Module.symvers
-	$(Q)$(MAKE) $(build)=$(patsubst _module_%,%,$@)
-
-modules: $(module-dirs)
-	@$(kecho) '  Building modules, stage 2.';
-	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.modpost
-
-PHONY += modules_install
-modules_install: _emodinst_ _emodinst_post
-
-install-dir := $(if $(INSTALL_MOD_DIR),$(INSTALL_MOD_DIR),extra)
-PHONY += _emodinst_
-_emodinst_:
-	$(Q)mkdir -p $(MODLIB)/$(install-dir)
-	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.modinst
-
-PHONY += _emodinst_post
-_emodinst_post: _emodinst_
-	$(call cmd,depmod)
-
-clean-dirs := $(addprefix _clean_,$(KBUILD_EXTMOD))
-
-PHONY += $(clean-dirs) clean
-$(clean-dirs):
-	$(Q)$(MAKE) $(clean)=$(patsubst _clean_%,%,$@)
-
-clean:	rm-dirs := $(MODVERDIR)
-clean: rm-files := $(KBUILD_EXTMOD)/Module.symvers
-
-help:
-	@echo  '  Building external modules.'
-	@echo  '  Syntax: make -C path/to/kernel/src M=$$PWD target'
-	@echo  ''
-	@echo  '  modules         - default target, build the module(s)'
-	@echo  '  modules_install - install the module'
-	@echo  '  clean           - remove generated files in module directory only'
-	@echo  ''
-
-# Dummies...
-PHONY += prepare scripts
-prepare: ;
-scripts: ;
-endif # KBUILD_EXTMOD
 
 #BUG [oas] regular expression is substituted by [oa] to ommit the removal
 #    of .s files. This change can be undone once all .s files have been
@@ -1442,7 +1218,7 @@ clean: $(clean-dirs)
 		-o -name '*.ko.*' \
 		-o -name '*.dwo'  \
 		-o -name '.*.d' -o -name '.*.tmp' -o -name '*.mod.c' \
-		-o -name '*.symtypes' -o \
+		-o -name '*.symtypes' \
 		-o -name modules.builtin -o -name '.tmp_*.o.*' \
 		-o -name '*.gcno' \) -type f -print | xargs rm -f
 
@@ -1531,14 +1307,8 @@ qemu: tinymountain
 #  target-dir => where to store outputfile
 #  build-dir  => directory in kernel source tree to use
 
-ifeq ($(KBUILD_EXTMOD),)
         build-dir  = $(patsubst %/,%,$(dir $@))
         target-dir = $(dir $@)
-else
-        zap-slash=$(filter-out .,$(patsubst %/,%,$(dir $@)))
-        build-dir  = $(KBUILD_EXTMOD)$(if $(zap-slash),/$(zap-slash))
-        target-dir = $(if $(KBUILD_EXTMOD),$(dir $<),$(dir $@))
-endif
 
 %.s: %.c prepare scripts FORCE
 	$(Q)$(MAKE) $(build)=$(build-dir) $(target-dir)$(notdir $@)
@@ -1566,11 +1336,6 @@ Documentation/: headers_install
 	$(cmd_crmodverdir)
 	$(Q)$(MAKE) KBUILD_MODULES=$(if $(CONFIG_MODULES),1) \
 	$(build)=$(build-dir)
-%.ko: prepare scripts FORCE
-	$(cmd_crmodverdir)
-	$(Q)$(MAKE) KBUILD_MODULES=$(if $(CONFIG_MODULES),1)   \
-	$(build)=$(build-dir) $(@:.ko=.o)
-	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.modpost
 
 # FIXME Should go into a make.lib or something
 # ===========================================================================
@@ -1586,10 +1351,6 @@ quiet_cmd_depmod = DEPMOD  $(KERNELRELEASE)
       cmd_depmod = $(CONFIG_SHELL) $(srctree)/scripts/depmod.sh $(DEPMOD) \
                    $(KERNELRELEASE) "$(patsubst y,_,$(CONFIG_HAVE_UNDERSCORE_SYMBOL_PREFIX))"
 
-# Create temporary dir for module support files
-# clean it up only when building all modules
-cmd_crmodverdir = $(Q)mkdir -p $(MODVERDIR) \
-                  $(if $(KBUILD_MODULES),; rm -f $(MODVERDIR)/*)
 
 # read all saved command lines
 

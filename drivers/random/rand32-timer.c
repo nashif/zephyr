@@ -1,4 +1,4 @@
-/* rand32.c - random number generator */
+/* non-random number generator based on system timer */
 
 /*
  * Copyright (c) 2013-2015 Wind River Systems, Inc.
@@ -32,47 +32,56 @@
 
 /*
 DESCRIPTION
-This module provides a non-random implementation of _Rand32Get(), which is not
-meant to be used in a final product as a truly random number generator. It
-was provided to allow testing of kernel stack canaries on a BSP that does not
-(yet) provide a random number generator.
+This module provides a non-random implementation of sys_rand32_get(), which is
+not meant to be used in a final product as a truly random number generator. It
+was provided to allow testing on a BSP that does not (yet) provide a random
+number generator.
 */
 
 #include <drivers/rand32.h>
 #include <drivers/system_timer.h>
+#include <nanokernel.h>
 
-#if defined(CONFIG_TEST_RANDOM_GENERATOR)
 #if defined(__GNUC__)
+
+/*
+ * Symbols used to ensure a rapid series of calls to random number generator
+ * return different values.
+ */
+static atomic_val_t _rand32_counter = 0;
+
+#define _RAND32_INC 1000000013
 
 /*******************************************************************************
  *
- * _Rand32Init - initialize the random number generator
+ * sys_rand32_init - initialize the random number generator
  *
  * The non-random number generator does not require any initialization.
+ * This routine is automatically invoked by the kernel during system
+ * initialization.
  *
  * RETURNS: N/A
  */
 
 
-void _Rand32Init(void)
+void sys_rand32_init(void)
 {
 }
 
 /*******************************************************************************
  *
- * _Rand32Get - get a 32 bit random number
+ * sys_rand32_get - get a 32 bit random number
  *
  * The non-random number generator returns values that are based off the
- * target's clock counter, which means that successive calls will normally
- * display ever-increasing values.
+ * target's clock counter, which means that successive calls will return
+ * different values.
  *
  * RETURNS: a 32-bit number
  */
 
-uint32_t _Rand32Get(void)
+uint32_t sys_rand32_get(void)
 {
-	return timer_read();
+	return timer_read() + atomic_add(&_rand32_counter, _RAND32_INC);
 }
 
 #endif /* __GNUC__ */
-#endif /* CONFIG_TEST_RANDOM_GENERATOR */

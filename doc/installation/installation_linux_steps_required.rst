@@ -42,52 +42,52 @@ Follow these steps to install the SDK on your host system.
 
 #. Run the binary, type:
 
-.. code-block:: bash
+    .. code-block:: bash
 
-   $ chmod +x tm-toolchains-i686-setup.run
+       $ chmod +x tm-toolchains-i686-setup.run
 
-   $ sudo ./tm-toolchains-i686-setup.run
+       $ sudo ./tm-toolchains-i686-setup.run
 
 
 #. Follow the installation instructions on the screen. The
    toolchain's default installation location is :file:`/opt/poky-tm`.
 
-.. code-block:: bash
+    .. code-block:: bash
 
-   Verifying archive integrity... All good.
+       Verifying archive integrity... All good.
 
-   Uncompressing SDK for TM 100%
+       Uncompressing SDK for TM 100%
 
-   Enter target directory for SDK (default: /opt/poky-tm/1.8):
+       Enter target directory for SDK (default: /opt/poky-tm/1.8):
 
 #. Enter a new location or hit :kbd:`Return` to accept default.
 
-.. code-block:: bash
+    .. code-block:: bash
 
-   Installing SDK to /opt/poky-tm/1.8
+       Installing SDK to /opt/poky-tm/1.8
 
-   Creating directory /opt/poky-tm/1.8
+       Creating directory /opt/poky-tm/1.8
 
-   Success
+       Success
 
-   [*] Installing x86 tools...
+       [*] Installing x86 tools...
 
-   [*] Installing arm tools...
+       [*] Installing arm tools...
 
-   [*] Installing arc tools...
+       [*] Installing arc tools...
 
-   [*] Installing additional host tools...
+       [*] Installing additional host tools...
 
-   Success installing SDK. SDK is ready to be used.
+       Success installing SDK. SDK is ready to be used.
 
 #. To use the Yocto SDK, export the following environment variables,
    type:
 
-.. code-block:: bash
+    .. code-block:: bash
 
-   $ export VXMICRO_GCC_VARIANT=yocto
+       $ export VXMICRO_GCC_VARIANT=yocto
 
-   $ export YOCTO_SDK_INSTALL_DIR=/opt/poky-tm/1.8
+       $ export YOCTO_SDK_INSTALL_DIR=/opt/poky-tm/1.8
 
 #. When you build Tiny Mountain now, the Yocto SDK will be used.
 
@@ -125,22 +125,22 @@ but can be summarized with the following steps:
 
 #. Clone the repository, type:
 
-.. code-block:: bash
+    .. code-block:: bash
 
-   $ git clone ssh://01ORGUSERNAME@oic-review.01.org:29418/forto-collab`
+       $ git clone ssh://01ORGUSERNAME@oic-review.01.org:29418/forto-collab`
 
 #. Change to the Tiny Mountain directory, type:
 
-.. code-block:: bash
+    .. code-block:: bash
 
-   $ cd forto-collab
+       $ cd forto-collab
 
 #. Source the build environment to set the Tiny Mountain environment
    variables, type:
 
-.. code-block:: bash
+    .. code-block:: bash
 
-   $ source vxmicro-env.bash
+       $ source timo-env.bash
 
 Building a Tiny Mountain Example
 ================================
@@ -149,28 +149,20 @@ To build a Tiny Mountain example follow these steps:
 
 #. Go to the root directory of your foss-rtos checkout
 
-#. Set the paths properly in the :file:`$VXMICRO_BASE` directory,
+#. Set the paths properly in the :file:`$TIMO_BASE` directory,
    type:
 
-.. code-block:: bash
+    .. code-block:: bash
 
-   $ source vxmicro-env.bash
+       $ source timo-env.bash
 
-3. Go to the source directory and build the host tools
+#. Build Tiny Mountain with the example project, type:
 
-.. code-block:: bash
+    .. code-block:: bash
 
-   $ cd $VXMICRO_BASE/host/src
+       $ cd $TIMO_BASE/samples/microkernel/apps/hello_world
 
-   $ make pristine && make
-
-4. Build with the example project.
-
-.. code-block:: bash
-
-   $ cd $VXMICRO_BASE/samples/microkernel/apps/hello_world
-
-   $ make pristine && make
+       $ make pristine && make
 
 
 
@@ -179,14 +171,14 @@ To build a Tiny Mountain example follow these steps:
    You can override the default BSP with the one you want by adding
    :makevar:`BSP=` and the options you want to the make command, for example
    :command:`make BSP=generic_pc`. The complete options available for the BSP
-   flag can be found at :file:`$VXMICRO_BASE/arch` under the
-   respective architecture, for example :file:`$VXMICRO_BASE/arc/x86/generic_pc`.
+   flag can be found at :file:`$TIMO_BASE/arch` under the
+   respective architecture, for example :file:`$TIMO_BASE/arch/x86/generic_pc`.
 
 The sample projects for the microkernel are found
-at:file:`$VXMICRO_BASE/samples/microkernel/apps` and the results are at
+at:file:`$TIMO_BASE/samples/microkernel/apps` and the results are at
 :file:`$SAMPLE_PROJECT/outdir/microkernel.{ bin | elf }`.
 
-For sample projects in the :file:`$VXMICRO_BASE/samples/nanokernel/apps`
+For sample projects in the :file:`$TIMO_BASE/samples/nanokernel/apps`
 directory, the results can be found in
 :file:`$SAMPLE_PROJECT/outdir/nanokernel.{ bin | elf }`.
 
@@ -207,7 +199,7 @@ Another option is to add it to the make command, for example:
 
 .. code-block:: bash
 
-   $ make QEMU_BIN_PATH=/usr/local/bin { microkernel | nanokernel }.qemu
+   $ make QEMU_BIN_PATH=/usr/local/bin qemu
 
 Running a Microkernel Project
 -----------------------------
@@ -216,19 +208,19 @@ Run a microkernel project using the default BSP (generic_pc), type:
 
 .. code-block:: bash
 
-   $ make pristine && make microkernel.qemu
+   $ make pristine && make qemu
 
 Run a project using the quark BSP, type:
 
 .. code-block:: bash
 
-   $ make pristine && make BSP=quark microkernel.qemu
+   $ make pristine && make BSP=quark qemu
 
 Run a project using the ARM BSP, type:
 
 .. code-block:: bash
 
-   $ make pristine && make BSP=ti_lm3s6965 microkernel.qemu
+   $ make pristine && make BSP=ti_lm3s6965 qemu
 
 Running a Nanokernel Project
 ----------------------------
@@ -238,16 +230,16 @@ following commands:
 
 .. code-block:: bash
 
-   $ make pristine && make nanokernel.qemu
+   $ make pristine && make qemu
 
 Run a project using the quark BSP use the following commands:
 
 .. code-block:: bash
 
-   $ make pristine && make BSP=quark nanokernel.qemu
+   $ make pristine && make BSP=quark qemu
 
 Run a project using the ARM BSP use the following commands:
 
 .. code-block:: bash
 
-   $ make pristine && make BSP=ti_lm3s6965 nanokernel.qemu
+   $ make pristine && make BSP=ti_lm3s6965 qemu
