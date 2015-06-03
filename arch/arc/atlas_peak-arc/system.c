@@ -37,7 +37,7 @@ for the atlas_peak-arc BSP.
 */
 
 #include <nanokernel.h>
-#include <nanokernel/cpu.h>
+#include <arch/cpu.h>
 #include <cputype.h>
 #include <board.h>
 

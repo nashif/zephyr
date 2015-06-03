@@ -53,4 +53,4 @@ This is the linker script for both standard images and XIP images.
 #define DCCM_SIZE		8K
 
 
-#include <nanokernel/arc/v2/scripts/atlas_peak/linker.cmd>
+#include <arch/arc/v2/scripts/atlas_peak/linker.cmd>
