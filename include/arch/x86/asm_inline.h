@@ -1,7 +1,7 @@
-/* cpu.h - ARC specific definitions for cputype.h */
+/* Intel x86 inline assembler functions and macros for public functions */
 
 /*
- * Copyright (c) 2013-2015 Wind River Systems, Inc.
+ * Copyright (c) 2015, Wind River Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,40 +30,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _ASM_INLINE_PUBLIC_H
+#define _ASM_INLINE_PUBLIC_H
+
 /*
-DESCRIPTION
-This file is included by cputype.h when the VXMICRO_ARCH_arc macro is
-defined, i.e. whenever a build for the ARC architecture is being performed.
-This file shall only contain the CPU/compiler specific
-definitions that are necessary to build the EMBEDDED kernel library.
-*/
+ * The file must not be included directly
+ * Include nanokernel/cpu.h instead
+ */
 
-#ifndef _ARC_CPU__H_
-#define _ARC_CPU__H_
-
-#ifdef __cplusplus
-extern "C" {
+#if defined(__GNUC__)
+#include <arch/x86/asm_inline_gcc.h>
+#else
+#include <arch/x86/asm_inline_other.h>
 #endif
 
-#include <stdint.h>
-#include <toolchain.h>
-#include <misc/util.h>
-#include <drivers/system_timer.h> /* timer_driver() needed by kernel_main.c */
-
-/* sizes */
-
-#define OCTET_TO_SIZEOFUNIT(X) (X)
-#define SIZEOFUNIT_TO_OCTET(X) (X)
-
-/* arch-specific event numbers */
-
-#define TICK_EVENT 0
-
-#define k_memcpy memcpy
-#define k_memset memset
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* _ARC_CPU__H_ */
+#endif /* _ASM_INLINE_PUBLIC_H */

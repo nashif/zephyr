@@ -1,7 +1,7 @@
-/* Intel x86 inline assembler functions and macros for public functions */
+/* nanokernel/private.h */
 
 /*
- * Copyright (c) 2015, Wind River Systems, Inc.
+ * Copyright (c) 1997-2014 Wind River Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,18 +30,73 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ASM_INLINE_PUBLIC_H
-#define _ASM_INLINE_PUBLIC_H
+#ifndef __NANOPRIVATE_H__
+#define __NANOPRIVATE_H__
 
-/*
- * The file must not be included directly
- * Include nanokernel/cpu.h instead
- */
-
-#if defined(__GNUC__)
-#include <nanokernel/x86/asm_inline_gcc.h>
-#else
-#include <nanokernel/x86/asm_inline_other.h>
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#endif /* _ASM_INLINE_PUBLIC_H */
+typedef struct s_CCS tCCS;
+
+struct _nano_queue {
+	void *head;
+	void *tail;
+};
+
+struct nano_sem {
+	struct _nano_queue wait_q;
+	int nsig;
+};
+
+struct nano_lifo {
+	struct _nano_queue wait_q;
+	void *list;
+};
+
+struct nano_fifo {
+	union {
+		struct _nano_queue wait_q;
+		struct _nano_queue data_q;
+	};
+	int stat;
+};
+
+struct nano_stack {
+	tCCS *fiber;
+	uint32_t *base;
+	uint32_t *next;
+};
+
+struct nano_timer {
+	struct nano_timer *link;
+	uint32_t ticks;
+	struct nano_lifo lifo;
+	void *userData;
+};
+
+/* context entry point function typedef */
+
+typedef void *_ContextArg;
+typedef void (*_ContextEntry)(_ContextArg arg1,
+			      _ContextArg arg2,
+			      _ContextArg arg3);
+
+/* Private API to set and clear essential fiber/task flag */
+extern void _context_essential_set(void);
+extern void _context_essential_clear(void);
+
+/* Private API to clean up when a context is aborted */
+#if defined(CONFIG_CONTEXT_MONITOR)
+extern void _context_exit(tCCS *ccs);
+#else
+#define _context_exit(ccs) \
+	do {/* nothing */    \
+	} while (0)
+#endif /* CONFIG_CONTEXT_MONITOR */
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __NANOPRIVATE_H__ */

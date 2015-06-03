@@ -33,7 +33,7 @@
 /* includes */
 
 #include <microkernel.h>
-#include <string_s.h>
+#include <string.h>
 #include <toolchain.h>
 #include <sections.h>
 
@@ -67,8 +67,7 @@ static void copy_packet(struct k_args **out, struct k_args *in)
 	 * a backpointer to the original packet.
 	 */
 
-	k_memcpy_s(*out, sizeof(struct k_args),
-			   in, sizeof(struct k_args));
+	memcpy(*out, in, sizeof(struct k_args));
 	(*out)->Ctxt.args = in;
 }
 
@@ -246,7 +245,7 @@ void _k_mbox_send_ack(struct k_args *pCopyWriter)
 
 			struct k_args A;
 #ifndef NO_KARG_CLEAR
-			k_memset(&A, 0xfd, sizeof(struct k_args));
+			memset(&A, 0xfd, sizeof(struct k_args));
 #endif
 			A.Comm = SIGNALS;
 			A.Args.s1.sema = pCopyWriter->Args.m1.mess.extra.sema;
@@ -786,8 +785,7 @@ void _k_mbox_receive_data(struct k_args *Starter)
 	set_state_bit(_k_current_task, TF_RECVDATA);
 
 	GETARGS(CopyStarter);
-	k_memcpy_s(CopyStarter, sizeof(struct k_args),
-			Starter, sizeof(struct k_args));
+	memcpy(CopyStarter, Starter, sizeof(struct k_args));
 	CopyStarter->Ctxt.args = Starter;
 
 	MoveD = CopyStarter->Args.m1.mess.extra.transfer;
@@ -964,8 +962,7 @@ void _k_mbox_send_data(struct k_args *Starter)
 	set_state_bit(_k_current_task, TF_SENDDATA);
 
 	GETARGS(CopyStarter);
-	k_memcpy_s(CopyStarter, sizeof(struct k_args),
-		Starter, sizeof(struct k_args));
+	memcpy(CopyStarter, Starter, sizeof(struct k_args));
 	CopyStarter->Ctxt.args = Starter;
 
 	MoveD = CopyStarter->Args.m1.mess.extra.transfer;

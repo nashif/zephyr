@@ -1,7 +1,7 @@
-/* macros to generate absolute symbols */
+/* CortexM/error.h - Cortex-M public error handling */
 
 /*
- * Copyright (c) 2010, 2012-2014, Wind River Systems, Inc.
+ * Copyright (c) 2013-2014 Wind River Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,13 +30,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ABSSYM_H_
-#define _ABSSYM_H_
+/*
+DESCRIPTION
+ARM-specific nanokernel error handling interface. Included by ARM/arch.h.
+*/
 
-#if defined(__GNUC__)
-#include <toolchain/abs_sym_gcc.h>
-#else
-#include <toolchain/abs_sym_other.h>
+#ifndef _ARCH_ARM_CORTEXM_ERROR_H_
+#define _ARCH_ARM_CORTEXM_ERROR_H_
+
+#include <arch/arm/CortexM/exc.h>
+
+#ifndef _ASMLANGUAGE
+extern FUNC_NORETURN void _NanoFatalErrorHandler(unsigned int,
+						 const NANO_ESF *);
+extern void _SysFatalErrorHandler(unsigned int, const NANO_ESF *);
 #endif
 
-#endif /* _ABSSYM_H_ */
+#define _NANO_ERR_HW_EXCEPTION (0)      /* MPU/Bus/Usage fault */
+#define _NANO_ERR_INVALID_TASK_EXIT (1) /* Invalid task exit */
+#define _NANO_ERR_STACK_CHK_FAIL (2)    /* Stack corruption detected */
+
+#endif /* _ARCH_ARM_CORTEXM_ERROR_H_ */

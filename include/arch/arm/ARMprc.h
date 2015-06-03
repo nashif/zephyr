@@ -1,7 +1,7 @@
-/* CortexM/error.h - Cortex-M public error handling */
+/* cpu.h - ARM specific definitions for cputype.h */
 
 /*
- * Copyright (c) 2013-2014 Wind River Systems, Inc.
+ * Copyright (c) 2013-2015 Wind River Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -32,23 +32,31 @@
 
 /*
 DESCRIPTION
-ARM-specific nanokernel error handling interface. Included by ARM/arch.h.
+This file is included by cputype.h when the VXMICRO_ARCH_arm macro is
+defined, i.e. whenever a build for the ARM architecture is being performed.
+This file shall only contain the CPU/compiler specific
+definitions that are necessary to build the EMBEDDED kernel library.
 */
 
-#ifndef _ARCH_ARM_CORTEXM_ERROR_H_
-#define _ARCH_ARM_CORTEXM_ERROR_H_
+#ifndef _ARM_CPU__H_
+#define _ARM_CPU__H_
 
-#include <nanokernel/arm/CortexM/exc.h>
-
-#ifndef _ASMLANGUAGE
-extern FUNC_NORETURN void _NanoFatalErrorHandler(unsigned int,
-						 const NANO_ESF *);
-extern void _SysFatalErrorHandler(unsigned int, const NANO_ESF *);
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#define _NANO_ERR_HW_EXCEPTION (0)      /* MPU/Bus/Usage fault */
-#define _NANO_ERR_INVALID_TASK_EXIT (1) /* Invalid task exit */
-#define _NANO_ERR_STACK_CHK_FAIL (2)    /* Stack corruption detected */
-#define _NANO_ERR_INVALID_STRING_OP (3) /* Invalid string operation */
+#include <stdint.h>
+#include <toolchain.h>
+#include <misc/util.h>
+#include <drivers/system_timer.h> /* timer_driver() needed by kernel_main.c */
 
-#endif /* _ARCH_ARM_CORTEXM_ERROR_H_ */
+/* sizes */
+
+#define OCTET_TO_SIZEOFUNIT(X) (X)
+#define SIZEOFUNIT_TO_OCTET(X) (X)
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _ARM_CPU__H_ */

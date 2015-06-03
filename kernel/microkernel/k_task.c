@@ -33,7 +33,8 @@
 
 #include <microkernel.h>
 #include <nanokernel.h>
-#include <nanokernel/cpu.h>
+#include <arch/cpu.h>
+#include <string.h>
 #include <toolchain.h>
 #include <sections.h>
 
@@ -209,7 +210,7 @@ void start_task(struct k_proc *X,	 /* ptr to task control block */
 /* Note: the field X->worksize now represents the task size in bytes */
 
 #ifdef CONFIG_INIT_STACKS
-	k_memset(X->workspace, 0xaa, X->worksize);
+	memset(X->workspace, 0xaa, X->worksize);
 #endif
 
 	contextOptions = 0;

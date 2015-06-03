@@ -1,7 +1,7 @@
-/* CortexM/irq.h - Cortex-M public interrupt handling */
+/* cpu.h - automatically selects the correct arch.h file to include */
 
 /*
- * Copyright (c) 2013-2014 Wind River Systems, Inc.
+ * Copyright (c) 1997-2014 Wind River Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,47 +30,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
-DESCRIPTION
-ARM-specific nanokernel interrupt handling interface. Included by ARM/arch.h.
-*/
+#ifndef __ARCHCPU_H__
+#define __ARCHCPU_H__
 
-#ifndef _ARCH_ARM_CORTEXM_IRQ_H_
-#define _ARCH_ARM_CORTEXM_IRQ_H_
-
-#include <nanokernel/arm/CortexM/nvic.h>
-
-#ifdef _ASMLANGUAGE
-GTEXT(_IntExit);
-GTEXT(irq_lock)
-GTEXT(irq_unlock)
-GTEXT(irq_handler_set)
-GTEXT(irq_connect)
-GTEXT(irq_disconnect)
-GTEXT(irq_enable)
-GTEXT(irq_disable)
-GTEXT(irq_priority_set)
+#if defined(VXMICRO_ARCH_x86)
+#include <arch/x86/arch.h>
+#elif defined(VXMICRO_ARCH_arm)
+#include <arch/arm/arch.h>
+#elif defined(VXMICRO_ARCH_arc)
+#include <arch/arc/arch.h>
 #else
-extern int irq_lock(void);
-extern void irq_unlock(int key);
+#error "Unknown VXMICRO_ARCH"
+#endif
 
-extern void irq_handler_set(unsigned int irq,
-				 void (*old)(void *arg),
-				 void (*new)(void *arg),
-				 void *arg);
-extern int irq_connect(unsigned int irq,
-			     unsigned int prio,
-			     void (*isr)(void *arg),
-			     void *arg);
-extern void irq_disconnect(unsigned int irq);
-
-extern void irq_enable(unsigned int irq);
-extern void irq_disable(unsigned int irq);
-
-extern void irq_priority_set(unsigned int irq, unsigned int prio);
-
-extern void _IntExit(void);
-
-#endif /* _ASMLANGUAGE */
-
-#endif /* _ARCH_ARM_CORTEXM_IRQ_H_ */
+#endif /* __ARCHCPU_H__ */

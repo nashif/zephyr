@@ -1,7 +1,7 @@
-/* arch.h - ARM specific nanokernel interface header */
+/* cpu.h - ARC specific definitions for cputype.h */
 
 /*
- * Copyright (c) 2013-2014 Wind River Systems, Inc.
+ * Copyright (c) 2013-2015 Wind River Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -32,40 +32,31 @@
 
 /*
 DESCRIPTION
-This header contains the ARM specific nanokernel interface.  It is
-included by the nanokernel interface architecture-abstraction header
-(nanokernel/cpu.h)
+This file is included by cputype.h when the VXMICRO_ARCH_arc macro is
+defined, i.e. whenever a build for the ARC architecture is being performed.
+This file shall only contain the CPU/compiler specific
+definitions that are necessary to build the EMBEDDED kernel library.
 */
 
-#ifndef _ARM_ARCH__H_
-#define _ARM_ARCH__H_
+#ifndef _ARC_CPU__H_
+#define _ARC_CPU__H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifndef _ASMLANGUAGE
-#include <nanokernel.h>
-#include <cputype.h>
-#endif
+#include <stdint.h>
+#include <toolchain.h>
+#include <misc/util.h>
+#include <drivers/system_timer.h> /* timer_driver() needed by kernel_main.c */
 
-#ifdef CONFIG_CPU_CORTEXM
-#include <nanokernel/arm/CortexM/init.h>
-#include <nanokernel/arm/CortexM/exc.h>
-#include <nanokernel/arm/CortexM/irq.h>
-#include <nanokernel/arm/CortexM/ffs.h>
-#include <nanokernel/arm/CortexM/error.h>
-#include <nanokernel/arm/CortexM/misc.h>
-#include <nanokernel/arm/CortexM/scs.h>
-#include <nanokernel/arm/CortexM/scb.h>
-#include <nanokernel/arm/CortexM/nvic.h>
-#include <nanokernel/arm/CortexM/memory_map.h>
-#include <nanokernel/arm/CortexM/gdb_stub.h>
-#include <nanokernel/arm/CortexM/asm_inline.h>
-#endif
+/* sizes */
+
+#define OCTET_TO_SIZEOFUNIT(X) (X)
+#define SIZEOFUNIT_TO_OCTET(X) (X)
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _ARM_ARCH__H_ */
+#endif /* _ARC_CPU__H_ */

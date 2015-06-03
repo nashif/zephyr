@@ -38,7 +38,7 @@ ARC-specific nanokernel error handling interface. Included by ARC/arch.h.
 #ifndef _ARCH_ARC_V2_ERROR_H_
 #define _ARCH_ARC_V2_ERROR_H_
 
-#include <nanokernel/arc/v2/exc.h>
+#include <arch/arc/v2/exc.h>
 
 #ifndef _ASMLANGUAGE
 extern FUNC_NORETURN void _NanoFatalErrorHandler(unsigned int,
@@ -49,6 +49,5 @@ extern void _SysFatalErrorHandler(unsigned int cause, const NANO_ESF *esf);
 #define _NANO_ERR_HW_EXCEPTION (0)      /* MPU/Bus/Usage fault */
 #define _NANO_ERR_INVALID_TASK_EXIT (1) /* Invalid task exit */
 #define _NANO_ERR_STACK_CHK_FAIL (2)    /* Stack corruption detected */
-#define _NANO_ERR_INVALID_STRING_OP (3) /* Invalid string operation */
 
 #endif /* _ARCH_ARC_V2_ERROR_H_ */

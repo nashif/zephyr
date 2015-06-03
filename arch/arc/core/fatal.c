@@ -39,7 +39,7 @@ ARCv2 CPUs.
 #include <nanok.h>
 #include <offsets.h>
 #include <toolchain.h>
-#include <nanokernel/cpu.h>
+#include <arch/cpu.h>
 
 #ifdef CONFIG_PRINTK
 #include <misc/printk.h>
@@ -81,12 +81,6 @@ FUNC_NORETURN void _NanoFatalErrorHandler(unsigned int reason,
 #if defined(CONFIG_STACK_CANARIES)
 	case _NANO_ERR_STACK_CHK_FAIL:
 		PR_EXC("***** Stack Check Fail! *****\n");
-		break;
-#endif
-
-#ifdef CONFIG_ENHANCED_SECURITY
-	case _NANO_ERR_INVALID_STRING_OP:
-		PR_EXC("**** Invalid string operation! ****\n");
 		break;
 #endif
 

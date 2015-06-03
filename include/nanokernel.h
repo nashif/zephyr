@@ -36,7 +36,7 @@
 #include <stdint.h>
 #include <toolchain.h> /* compiler specific configuration options */
 
-#include <nanokernel/private.h>
+#include <arch/private.h>
 #include <kernel_version.h>
 #include <clock_vars.h>
 #include <drivers/rand32.h>
@@ -44,9 +44,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef int atomic_t;
-typedef atomic_t atomic_val_t;
 
 typedef struct s_CCS *nano_context_id_t;
 
@@ -197,24 +194,6 @@ extern uint32_t nano_tick_delta_32(int64_t *reftime);
 
 #endif /* CONFIG_NANOKERNEL */
 
-/* atomic operator APIs */
-
-extern atomic_val_t atomic_add(atomic_t *target, atomic_val_t value);
-extern atomic_val_t atomic_and(atomic_t *target, atomic_val_t value);
-extern atomic_val_t atomic_dec(atomic_t *target);
-extern atomic_val_t atomic_inc(atomic_t *target);
-extern atomic_val_t atomic_nand(atomic_t *target, atomic_val_t value);
-extern atomic_val_t atomic_or(atomic_t *target, atomic_val_t value);
-extern atomic_val_t atomic_sub(atomic_t *target, atomic_val_t value);
-extern atomic_val_t atomic_xor(atomic_t *target, atomic_val_t value);
-extern atomic_val_t atomic_clear(atomic_t *target);
-extern atomic_val_t atomic_get(atomic_t *target);
-extern atomic_val_t atomic_set(atomic_t *target, atomic_val_t value);
-extern int atomic_cas(atomic_t *target,
-			 atomic_val_t oldValue,
-			 atomic_val_t newValue);
-#define ATOMIC_INIT(i) {(i)}
-
 /*
  * Auto-initialization
  *
@@ -239,8 +218,6 @@ extern int atomic_cas(atomic_t *target,
 
 #define SYS_PREKERNEL_INIT(name, level) \
 			void (*__ctor_##name)(void) __prekernel_init_level(level) = name
-
-extern uint32_t kernel_version_get(void);
 
 #ifdef __cplusplus
 }

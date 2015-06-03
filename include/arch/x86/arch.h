@@ -42,7 +42,7 @@ by the generic nanokernel interface header (nanokernel.h)
 /* WARNING: must include nanokernel.h before this file */
 
 #ifndef _ASMLANGUAGE
-#include <nanokernel/x86/Intelprc.h>
+#include <arch/x86/Intelprc.h>
 #endif
 
 /*
@@ -196,7 +196,6 @@ typedef struct nanoIsf {
 #define _NANO_ERR_GEN_PROT_FAULT	 (2)	/* General protection fault */
 #define _NANO_ERR_INVALID_TASK_EXIT  (3)	/* Invalid task exit */
 #define _NANO_ERR_STACK_CHK_FAIL	 (4)	/* Stack corruption detected */
-#define _NANO_ERR_INVALID_STRING_OP  (5)	/* Invalid string operation */
 
 #ifndef _ASMLANGUAGE
 

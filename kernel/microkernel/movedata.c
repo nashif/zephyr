@@ -33,7 +33,7 @@
 /* includes */
 
 #include <minik.h>
-#include <string_s.h>
+#include <string.h>
 #include <toolchain.h>
 #include <sections.h>
 #include <misc/__assert.h>
@@ -65,9 +65,7 @@ static void mvdreq_docont(struct k_args *Cont)
 
 static void mvdreq_copy(struct moved_req *ReqArgs)
 {
-	k_memcpy_s(ReqArgs->destination,
-		   OCTET_TO_SIZEOFUNIT(ReqArgs->iTotalSize),
-		   ReqArgs->source,
+	memcpy(ReqArgs->destination, ReqArgs->source,
 		   OCTET_TO_SIZEOFUNIT(ReqArgs->iTotalSize));
 
 	if (ReqArgs->Action & MVDACT_SNDACK)

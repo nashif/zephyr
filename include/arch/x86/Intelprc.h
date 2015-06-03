@@ -52,17 +52,9 @@ extern "C"
 #include <stdint.h>
 #include <toolchain.h>
 #include <misc/util.h>
-#include <nanokernel/x86/addr_types.h>
-#include <nanokernel/x86/asm_inline.h>
+#include <arch/x86/addr_types.h>
+#include <arch/x86/asm_inline.h>
 #include <drivers/system_timer.h> /* timer_driver() needed by kernel_main.c */
-
-/*
- * Notification event reserved for use by GDB Agent.
- * It is used to signal the agent notification task whenever
- * a task has been stopped by the agent.
- */
-
-#define GDB_NOTIFICATION_EVENT 1
 
 #ifdef __cplusplus
 	}

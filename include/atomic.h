@@ -1,7 +1,7 @@
-/* Intel ARM inline assembler functions and macros for public functions */
+/* atomic operations */
 
 /*
- * Copyright (c) 2015, Wind River Systems, Inc.
+ * Copyright (c) 1997-2015, Wind River Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,18 +30,35 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ASM_INLINE_PUBLIC_H
-#define _ASM_INLINE_PUBLIC_H
+#ifndef __ATOMIC_H__
+#define __ATOMIC_H__
 
-/*
- * The file must not be included directly
- * Include nanokernel/cpu.h instead
- */
-
-#if defined(__GNUC__)
-#include <nanokernel/arm/CortexM/asm_inline_gcc.h>
-#else
-#include <nanokernel/arm/CortexM/asm_inline_other.h>
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#endif /* _ASM_INLINE_PUBLIC_H */
+typedef int atomic_t;
+typedef atomic_t atomic_val_t;
+
+extern atomic_val_t atomic_add(atomic_t *target, atomic_val_t value);
+extern atomic_val_t atomic_and(atomic_t *target, atomic_val_t value);
+extern atomic_val_t atomic_dec(atomic_t *target);
+extern atomic_val_t atomic_inc(atomic_t *target);
+extern atomic_val_t atomic_nand(atomic_t *target, atomic_val_t value);
+extern atomic_val_t atomic_or(atomic_t *target, atomic_val_t value);
+extern atomic_val_t atomic_sub(atomic_t *target, atomic_val_t value);
+extern atomic_val_t atomic_xor(atomic_t *target, atomic_val_t value);
+extern atomic_val_t atomic_clear(atomic_t *target);
+extern atomic_val_t atomic_get(atomic_t *target);
+extern atomic_val_t atomic_set(atomic_t *target, atomic_val_t value);
+extern int atomic_cas(atomic_t *target,
+					  atomic_val_t oldValue, atomic_val_t newValue);
+
+
+#define ATOMIC_INIT(i) {(i)}
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __ATOMIC_H__ */

@@ -1,7 +1,7 @@
-/* nanokernel/private.h */
+/* arch.h - ARC specific nanokernel interface header */
 
 /*
- * Copyright (c) 1997-2014 Wind River Systems, Inc.
+ * Copyright (c) 2014 Wind River Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,73 +30,38 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __NANOPRIVATE_H__
-#define __NANOPRIVATE_H__
+/*
+DESCRIPTION
+This header contains the ARC specific nanokernel interface.  It is
+included by the nanokernel interface architecture-abstraction header
+(nanokernel/cpu.h)
+*/
+
+#ifndef _ARC_ARCH__H_
+#define _ARC_ARCH__H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct s_CCS tCCS;
+#ifndef _ASMLANGUAGE
+#include <nanokernel.h>
+#include <cputype.h>
+#endif
 
-struct _nano_queue {
-	void *head;
-	void *tail;
-};
-
-struct nano_sem {
-	struct _nano_queue wait_q;
-	int nsig;
-};
-
-struct nano_lifo {
-	struct _nano_queue wait_q;
-	void *list;
-};
-
-struct nano_fifo {
-	union {
-		struct _nano_queue wait_q;
-		struct _nano_queue data_q;
-	};
-	int stat;
-};
-
-struct nano_stack {
-	tCCS *fiber;
-	uint32_t *base;
-	uint32_t *next;
-};
-
-struct nano_timer {
-	struct nano_timer *link;
-	uint32_t ticks;
-	struct nano_lifo lifo;
-	void *userData;
-};
-
-/* context entry point function typedef */
-
-typedef void *_ContextArg;
-typedef void (*_ContextEntry)(_ContextArg arg1,
-			      _ContextArg arg2,
-			      _ContextArg arg3);
-
-/* Private API to set and clear essential fiber/task flag */
-extern void _NanoEssentialContextSet(void);
-extern void _NanoEssentialContextClear(void);
-
-/* Private API to clean up when a context is aborted */
-#if defined(CONFIG_CONTEXT_MONITOR)
-extern void _context_exit(tCCS *ccs);
-#else
-#define _context_exit(ccs) \
-	do {/* nothing */    \
-	} while (0)
-#endif /* CONFIG_CONTEXT_MONITOR */
+#ifdef CONFIG_CPU_ARCV2
+#include <arch/arc/v2/init.h>
+#include <arch/arc/v2/exc.h>
+#include <arch/arc/v2/irq.h>
+#include <arch/arc/v2/ffs.h>
+#include <arch/arc/v2/error.h>
+#include <arch/arc/v2/misc.h>
+#include <arch/arc/v2/aux_regs.h>
+#include <arch/arc/v2/arcv2_irq_unit.h>
+#endif
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __NANOPRIVATE_H__ */
+#endif /* _ARC_ARCH__H_ */

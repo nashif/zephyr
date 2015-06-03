@@ -1,7 +1,7 @@
-/* cpu.h - ARM specific definitions for cputype.h */
+/* arch.h - ARM specific nanokernel interface header */
 
 /*
- * Copyright (c) 2013-2015 Wind River Systems, Inc.
+ * Copyright (c) 2013-2014 Wind River Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -32,34 +32,40 @@
 
 /*
 DESCRIPTION
-This file is included by cputype.h when the VXMICRO_ARCH_arm macro is
-defined, i.e. whenever a build for the ARM architecture is being performed.
-This file shall only contain the CPU/compiler specific
-definitions that are necessary to build the EMBEDDED kernel library.
+This header contains the ARM specific nanokernel interface.  It is
+included by the nanokernel interface architecture-abstraction header
+(nanokernel/cpu.h)
 */
 
-#ifndef _ARM_CPU__H_
-#define _ARM_CPU__H_
+#ifndef _ARM_ARCH__H_
+#define _ARM_ARCH__H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <stdint.h>
-#include <toolchain.h>
-#include <misc/util.h>
-#include <drivers/system_timer.h> /* timer_driver() needed by kernel_main.c */
+#ifndef _ASMLANGUAGE
+#include <nanokernel.h>
+#include <cputype.h>
+#endif
 
-/* sizes */
-
-#define OCTET_TO_SIZEOFUNIT(X) (X)
-#define SIZEOFUNIT_TO_OCTET(X) (X)
-
-#define k_memcpy memcpy
-#define k_memset memset
+#ifdef CONFIG_CPU_CORTEXM
+#include <arch/arm/CortexM/init.h>
+#include <arch/arm/CortexM/exc.h>
+#include <arch/arm/CortexM/irq.h>
+#include <arch/arm/CortexM/ffs.h>
+#include <arch/arm/CortexM/error.h>
+#include <arch/arm/CortexM/misc.h>
+#include <arch/arm/CortexM/scs.h>
+#include <arch/arm/CortexM/scb.h>
+#include <arch/arm/CortexM/nvic.h>
+#include <arch/arm/CortexM/memory_map.h>
+#include <arch/arm/CortexM/gdb_stub.h>
+#include <arch/arm/CortexM/asm_inline.h>
+#endif
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _ARM_CPU__H_ */
+#endif /* _ARM_ARCH__H_ */

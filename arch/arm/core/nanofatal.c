@@ -42,7 +42,7 @@ This module provides the _NanoFatalErrorHandler() routine for ARM Cortex-M.
 
 #include <cputype.h>
 #include <nanokernel.h>
-#include <nanokernel/cpu.h>
+#include <arch/cpu.h>
 #include <nanok.h>
 
 #ifdef CONFIG_PRINTK
@@ -101,12 +101,6 @@ FUNC_NORETURN void _NanoFatalErrorHandler(
 		PR_EXC("***** Stack Check Fail! *****\n");
 		break;
 #endif /* CONFIG_STACK_CANARIES */
-
-#ifdef CONFIG_ENHANCED_SECURITY
-	case _NANO_ERR_INVALID_STRING_OP:
-		PR_EXC("**** Invalid string operation! ****\n");
-		break;
-#endif /* CONFIG_ENHANCED_SECURITY */
 
 	default:
 		PR_EXC("**** Unknown Fatal Error %d! ****\n", reason);
