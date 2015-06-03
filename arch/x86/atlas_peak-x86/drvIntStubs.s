@@ -44,7 +44,7 @@ by the Atlas Peak BSP.
 
 #ifndef CONFIG_DYNAMIC_INT_STUBS
 
-#include <nanokernel/x86/asm.h>
+#include <arch/x86/asm.h>
 
 	/* exports (internal APIs) */
 	GTEXT(_loApicTimerIntStub)

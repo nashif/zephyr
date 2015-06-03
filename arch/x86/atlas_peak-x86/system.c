@@ -40,7 +40,7 @@ hardware for the Atlas Peak BSP.
 
 #include <cputype.h>
 #include <nanokernel.h>
-#include <nanokernel/cpu.h>
+#include <arch/cpu.h>
 #include <misc/printk.h>
 #include <misc/__assert.h>
 #include "board.h"
