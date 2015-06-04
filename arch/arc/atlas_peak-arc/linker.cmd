@@ -37,7 +37,7 @@ This is the linker script for both standard images and XIP images.
 
 /* Flash base address and size */
 #define FLASH_START     0x40034000  /* Flash bank 1 */
-#define FLASH_SIZE      160K
+#define FLASH_SIZE      152K
 
 /*
  * SRAM base address and size
