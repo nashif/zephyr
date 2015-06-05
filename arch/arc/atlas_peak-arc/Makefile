@@ -1,10 +1,10 @@
-EXTRA_CFLAGS +=-I$(srctree)/arch/arc/$(strip $(CONFIG_BSP_DIR))
-EXTRA_AFLAGS +=-I$(srctree)/arch/arc/$(strip $(CONFIG_BSP_DIR))
-EXTRA_CFLAGS +=-I$(srctree)/include/bsp
-EXTRA_CFLAGS +=-I$(srctree)/include/drivers
-EXTRA_CFLAGS +=-I$(srctree)/drivers
+ccflags-y +=-I$(srctree)/arch/arc/$(strip $(CONFIG_BSP_DIR))
+asflags-y +=-I$(srctree)/arch/arc/$(strip $(CONFIG_BSP_DIR))
+ccflags-y +=-I$(srctree)/include/bsp
+ccflags-y +=-I$(srctree)/include/drivers
+ccflags-y +=-I$(srctree)/drivers
 
-EXTRA_AFLAGS := ${EXTRA_CFLAGS}
+asflags-y := ${ccflags-y}
 
 obj-y = system.o
 obj-$(CONFIG_IRQ_VECTOR_TABLE_BSP) += irq_vector_table.o
