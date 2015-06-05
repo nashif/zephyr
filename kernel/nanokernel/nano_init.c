@@ -45,10 +45,6 @@ This module contains routines that are used to initialize the nanokernel.
 #include <toolchain.h>
 #include <nanok.h>
 
-#ifdef CONFIG_MICROKERNEL
-#include <minik.h>
-#endif /* CONFIG_MICROKERNEL */
-
 /* kernel build timestamp items */
 
 #define BUILD_TIMESTAMP "BUILD: " __DATE__ " " __TIME__
@@ -79,7 +75,7 @@ const char * const build_timestamp = BUILD_TIMESTAMP;
 
 /* stack space for the background (or idle) task context */
 
-static char __noinit main_task_stack[CONFIG_MAIN_STACK_SIZE];
+char __noinit __stack main_task_stack[CONFIG_MAIN_STACK_SIZE];
 
 /*
  * storage space for the interrupt stack
@@ -156,8 +152,9 @@ static void nano_init(tCCS *dummyOutContext)
 	 * (or idle task). The entry point for this context is 'main'.
 	 */
 
-	_nanokernel.task =
-		_NewContext(main_task_stack,	/* pStackMem */
+	_nanokernel.task = (tCCS *) main_task_stack;
+
+	_NewContext(main_task_stack,	/* pStackMem */
 			    CONFIG_MAIN_STACK_SIZE, /* stackSize */
 			    (_ContextEntry)main,	 /* pEntry */
 			    (_ContextArg)0,	 /* parameter1 */
@@ -170,13 +167,6 @@ static void nano_init(tCCS *dummyOutContext)
 	/* indicate that failure of this task may be fatal to the entire system */
 
 	_nanokernel.task->flags |= ESSENTIAL;
-
-#if defined(CONFIG_MICROKERNEL)
-	/* fill in microkernel's TCB with info about the idle task */
-
-	_k_task_list[_k_task_count].workspace = (char *)_nanokernel.task;
-	_k_task_list[_k_task_count].worksize = CONFIG_MAIN_STACK_SIZE;
-#endif
 
 	/* perform any architecture-specific initialization */
 

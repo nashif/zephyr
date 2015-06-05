@@ -71,6 +71,10 @@ order when programming the MMU.
 
 #include <linker-tool.h>
 
+#define INIT_LEVEL(level)				\
+		__initconfig##level##_start = .;	\
+		*(.initconfig##level##.init)		\
+
 /* SECTIONS definitions */
 SECTIONS
 	{
@@ -123,6 +127,14 @@ SECTIONS
 	__test_cmds_end = .;
 	} GROUP_LINK_IN(ROMABLE_REGION)
 
+	SECTION_PROLOGUE (devconfig, (OPTIONAL),)
+	{
+		__devconfig_start = .;
+		*(".devconfig.*")
+		KEEP(*(SORT_BY_NAME(".devconfig*")))
+		__devconfig_end = .;
+	} GROUP_LINK_IN(ROMABLE_REGION)
+
 	SECTION_PROLOGUE(_RODATA_SECTION_NAME, (OPTIONAL),)
 	{
 	*(.rodata)
@@ -149,6 +161,21 @@ SECTIONS
 	*(".data.*")
 	IDT_MEMORY
 	. = ALIGN(4);
+	} GROUP_LINK_IN(RAM)
+
+	SECTION_PROLOGUE (initlevel, (OPTIONAL),)
+	{
+		__initconfig_start = .;
+		INIT_LEVEL(0)
+		INIT_LEVEL(1)
+		INIT_LEVEL(2)
+		INIT_LEVEL(3)
+		INIT_LEVEL(4)
+		INIT_LEVEL(5)
+		INIT_LEVEL(6)
+		INIT_LEVEL(7)
+		KEEP(*(SORT_BY_NAME(".initconfig*")))
+		__initconfig_end = .;
 	} GROUP_LINK_IN(RAM)
 
 	__data_ram_end = .;

@@ -102,8 +102,8 @@ static ALWAYS_INLINE void _context_monitor_init(struct s_CCS *pCcs /* context */
 * RETURNS: N/A
 */
 
-void *_NewContext(
-	char *pStackMem,      /* stack memory */
+void _NewContext(
+	char *pStackMem,      /* aligned stack memory */
 	unsigned stackSize,   /* stack size in bytes */
 	_ContextEntry pEntry, /* entry point */
 	void *parameter1,     /* entry point first param */
@@ -115,7 +115,7 @@ void *_NewContext(
 {
 	char *stackEnd = pStackMem + stackSize;
 	struct __esf *pInitCtx;
-	tCCS *pCcs = (void *)ROUND_UP(pStackMem, sizeof(uint32_t));
+	tCCS *pCcs = (tCCS *) pStackMem;
 
 	/* carve the context entry struct from the "base" of the stack */
 
@@ -146,6 +146,4 @@ void *_NewContext(
 	/* initial values in all other registers/CCS entries are irrelevant */
 
 	CONTEXT_MONITOR_INIT(pCcs);
-
-	return pCcs;
 }

@@ -1,13 +1,13 @@
-EXTRA_CFLAGS +=-I$(srctree)/kernel/nanokernel/include
-EXTRA_CFLAGS +=-I$(srctree)/kernel/microkernel/include
+ccflags-y +=-I$(srctree)/kernel/nanokernel/include
+ccflags-y +=-I$(srctree)/kernel/microkernel/include
 
 
-EXTRA_AFLAGS := ${EXTRA_CFLAGS}
+asflags-y := ${ccflags-y}
 
 obj-y = nano_fiber.o nano_lifo.o \
 	nano_fifo.o nano_stack.o nano_timer.o \
 	nano_context.o nano_init.o nano_sema.o \
-	version.o  ctors.o
+	version.o  ctors.o device.o
 
 obj-$(CONFIG_STACK_CANARIES) += compiler_stack_protect.o
 obj-$(CONFIG_INT_LATENCY_BENCHMARK) += int_latency_bench.o

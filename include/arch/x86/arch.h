@@ -71,9 +71,30 @@ by the generic nanokernel interface header (nanokernel.h)
 #define _INT_STUB_ALIGN	1
 #endif
 
-typedef unsigned char __attribute__((aligned(_INT_STUB_ALIGN)))
-						NANO_INT_STUB[_INT_STUB_SIZE];
+/*
+ * Floating point register set alignment.
+ *
+ * If support for SSEx extensions is enabled a 16 byte boundary is required,
+ * since the 'fxsave' and 'fxrstor' instructions require this.  In all other
+ * cases a 4 byte bounday is sufficient.
+ */
 
+#ifdef CONFIG_SSE
+#define FP_REG_SET_ALIGN  16
+#else
+#define FP_REG_SET_ALIGN  4
+#endif
+
+/*
+ * The CCS must be aligned to the same boundary as that used by the floating
+ * point register set.  This applies even for contexts that don't initially
+ * use floating point, since it is possible to enable floating point support
+ * later on.
+ */
+
+#define STACK_ALIGN  FP_REG_SET_ALIGN
+
+typedef unsigned char __aligned(_INT_STUB_ALIGN) NANO_INT_STUB[_INT_STUB_SIZE];
 
 typedef struct s_isrList {
 	void		*fnc;    /* Address of ISR/stub */
@@ -196,6 +217,7 @@ typedef struct nanoIsf {
 #define _NANO_ERR_GEN_PROT_FAULT	 (2)	/* General protection fault */
 #define _NANO_ERR_INVALID_TASK_EXIT  (3)	/* Invalid task exit */
 #define _NANO_ERR_STACK_CHK_FAIL	 (4)	/* Stack corruption detected */
+#define _NANO_ERR_ALLOCATION_FAIL    (5)    /* Kernel Allocation Failure */
 
 #ifndef _ASMLANGUAGE
 
@@ -299,7 +321,7 @@ typedef void (*NANO_EOI_GET_FUNC) (void *);
 #define NANO_SOFT_IRQ	((unsigned int) (-1))
 
 #ifdef CONFIG_FP_SHARING
-/* Definitions for the 'options' parameter to the nanoFiberStart() API */
+/* Definitions for the 'options' parameter to the fiber_fiber_start() API */
 
 #define USE_FP		0x10	/* context uses floating point unit */
 #ifdef CONFIG_SSE
@@ -343,7 +365,7 @@ extern void	irq_unlock(int key);
 /*
  * Dynamically enable/disable the capability of a context to share floating
  * point hardware resources.  The same "floating point" options accepted by
- * nanoFiberStart() are accepted by these APIs (i.e. USE_FP and USE_SSE).
+ * fiber_fiber_start() are accepted by these APIs (i.e. USE_FP and USE_SSE).
  */
 
 extern void	fiber_float_enable(nano_context_id_t ctx, unsigned int options);

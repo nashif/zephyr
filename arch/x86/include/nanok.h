@@ -69,31 +69,6 @@ offsets.o module.
 #define STACK_ALIGN_SIZE 4
 
 /*
- * Alignment requirement for the tFpRegSet structure
- *
- * If support for SSEx extensions is enabled a 16 byte boundary is required,
- * since the 'fxsave' and 'fxrstor' instructions require this.  In all other
- * cases a 4 byte bounday is sufficient.
- */
-
-#ifdef CONFIG_SSE
-#define FP_REG_SET_ALIGN 16
-#else
-#define FP_REG_SET_ALIGN 4
-#endif /* CONFIG_SSE */
-
-/*
- * Alignment requirement for the CCS structure
- *
- * The CCS must be aligned to the same boundary as that used by
- * the FP register set that appears at the end of the structure.
- * This applies even for contexts that don't initially use floating point,
- * since it is possible to enable floating point support later on.
- */
-
-#define CCS_ALIGN FP_REG_SET_ALIGN
-
-/*
  * Bitmask definitions for the tCCS->flags bit field
  *
  * The USE_FP flag bit will be set whenever a context uses any non-integer
@@ -547,7 +522,7 @@ typedef struct s_FpRegSet {  /* # of bytes: name of register */
 	unsigned short ds;       /* 2  : x87 FPU instr operand ptr selector */
 	unsigned short pad5;     /* 2  : N/A */
 	tFpReg fpReg[8];	 /* 80 : ST0 -> ST7 */
-} tFpRegSet __attribute__((aligned(FP_REG_SET_ALIGN)));
+} tFpRegSet __aligned(FP_REG_SET_ALIGN);
 
 #ifdef CONFIG_SSE
 
@@ -595,7 +570,7 @@ typedef struct s_FpRegSetEx /* # of bytes: name of register */
 	tFpRegEx fpReg[8];      /* 128 : x87 FPU/MMX registers */
 	tXmmReg xmmReg[8];      /* 128 : XMM registers */
 	unsigned char rsrvd3[176]; /* 176 : reserved */
-} tFpRegSetEx __attribute__((aligned(FP_REG_SET_ALIGN)));
+} tFpRegSetEx __aligned(FP_REG_SET_ALIGN);
 
 #else /* CONFIG_SSE == 0 */
 
@@ -875,8 +850,7 @@ static inline void fiberRtnValueSet(
 #define _EXC_STUB_ALIGN 1
 #endif
 
-typedef unsigned char
-	__attribute__((aligned(_EXC_STUB_ALIGN))) NANO_EXC_STUB[_EXC_STUB_SIZE];
+typedef unsigned char __aligned(_EXC_STUB_ALIGN) NANO_EXC_STUB[_EXC_STUB_SIZE];
 
 /*
  * Macro to declare a dynamic exception stub. Using the macro places the stub
@@ -891,8 +865,7 @@ extern void nano_cpu_atomic_idle(unsigned int imask);
 extern unsigned _Swap(unsigned int mask);
 extern void _insert_ccs(tCCS **queue, tCCS *ccs);
 
-extern void _NewContextUsr(void *ccs, int prio, unsigned options);
-extern void *_NewContext(char *pStack,
+extern void _NewContext(char *pStack,
 			 unsigned stackSize,
 			 _ContextEntry pEntry,
 			 _ContextArg arg1,

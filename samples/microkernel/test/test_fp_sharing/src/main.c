@@ -95,7 +95,7 @@ x87 FPU registers are being saved/restored.
 
 #ifndef MAX_TESTS
 /* test duration, unless overridden by project builder (0 => run forever) */
-#define MAX_TESTS 1000
+#define MAX_TESTS 500
 #endif
 
 /* macro used to read system clock value */
@@ -119,7 +119,7 @@ static FP_REG_SET floatRegisterSet;
 #ifdef CONFIG_NANOKERNEL
 /* stack for high priority fiber context (also use .bss for floatRegisterSet) */
 
-static char fiberStack[1024];
+static char __stack fiberStack[1024];
 
 static struct nano_timer fiberTimer;
 static void *dummyTimerData;	/* allocate just enough room for a pointer */

@@ -63,12 +63,11 @@ void _ContextEntryWrapper(_ContextEntry, _ContextArg, _ContextArg, _ContextArg);
 *
 * _NewContextInternal - initialize a new execution context
 *
-* This function is utilized to initialize all execution contexts, both fiber
-* contexts, kernel task contexts and user mode task contexts.  The 'priority'
-* parameter will be set to -1 for the creation of task context.
+* This function is utilized to initialize all execution contexts (both fiber
+* and task).  The 'priority' parameter will be set to -1 for the creation of
+* task context.
 *
-* This function is called by _NewContext() and _NewContextUsr() to initialize
-* task contexts.
+* This function is called by _NewContext() to initialize task contexts.
 *
 * RETURNS: N/A
 *
@@ -76,7 +75,6 @@ void _ContextEntryWrapper(_ContextEntry, _ContextArg, _ContextArg, _ContextArg);
 */
 
 static void _NewContextInternal(
-	tCCS * ccs,	  /* pointer to the new task's ccs */
 	char *pStackMem,    /* pointer to context stack memory */
 	unsigned stackSize, /* size of stack in bytes */
 	int priority,       /* context priority */
@@ -84,6 +82,7 @@ static void _NewContextInternal(
 	)
 {
 	unsigned long *pInitialCtx;
+	tCCS *ccs = (tCCS *) pStackMem;    /* pointer to the new task's ccs */
 
 #ifndef CONFIG_FP_SHARING
 	ARG_UNUSED(options);
@@ -109,11 +108,11 @@ static void _NewContextInternal(
 
 
 	/*
-	 * The creation of the initial stack for the task (user or kernel) has
-	 * already been done. Now all that is needed is to set the ESP. However,
-	 * we have been passed the base address of the stack which is past the
-	 * initial stack frame. Therefore some of the calculations done in the
-	 * other routines that initialize the stack frame need to be repeated.
+	 * The creation of the initial stack for the task has already been done.
+	 * Now all that is needed is to set the ESP. However, we have been passed
+	 * the base address of the stack which is past the initial stack frame.
+	 * Therefore some of the calculations done in the other routines that
+	 * initialize the stack frame need to be repeated.
 	 */
 
 	pInitialCtx = (unsigned long *)STACK_ROUND_DOWN(pStackMem + stackSize);
@@ -281,9 +280,6 @@ __asm__("\t.globl _context_entry\n"
 * This function is utilized to create execution contexts for both fiber
 * contexts and kernel task contexts.
 *
-* This function is called by start_task() to initialize task contexts, and
-* by _fiber_start() (nanoFiberStart) to initialize fiber contexts.
-*
 * The "context control block" (CCS) is carved from the "end" of the specified
 * context stack memory.
 *
@@ -292,8 +288,8 @@ __asm__("\t.globl _context_entry\n"
 * \NOMANUAL
 */
 
-void *_NewContext(
-	char *pStackMem,      /* pointer to context stack memory */
+void _NewContext(
+	char *pStackMem,      /* pointer to aligned stack memory */
 	unsigned stackSize,   /* size of stack in bytes */
 	_ContextEntry pEntry, /* context entry point function */
 	void *parameter1, /* first parameter to context entry point function */
@@ -303,7 +299,6 @@ void *_NewContext(
 	unsigned options  /* context options: USE_FP, USE_SSE */
 	)
 {
-	tCCS *ccs;
 	unsigned long *pInitialContext;
 
 	/* carve the context entry struct from the "base" of the stack */
@@ -358,10 +353,5 @@ void *_NewContext(
 	 * stack
 	 */
 
-	ccs = (tCCS *)ROUND_UP(pStackMem, CCS_ALIGN);
-
-	_NewContextInternal(ccs, pStackMem, stackSize, priority, options);
-
-
-	return ((void *)ccs);
+	_NewContextInternal(pStackMem, stackSize, priority, options);
 }

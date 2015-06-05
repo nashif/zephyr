@@ -1,7 +1,5 @@
-/* Freescale K6x microprocessor PMC register definitions */
 
-/*
- * Copyright (c) 2014 Wind River Systems, Inc.
+/* Copyright (c) 2015 Intel Corporation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -13,7 +11,7 @@
  * this list of conditions and the following disclaimer in the documentation
  * and/or other materials provided with the distribution.
  *
- * 3) Neither the name of Wind River Systems nor the names of its contributors
+ * 3) Neither the name of Intel Corporation nor the names of its contributors
  * may be used to endorse or promote products derived from this software without
  * specific prior written permission.
  *
@@ -30,38 +28,41 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
-DESCRIPTION
-This module defines the Power Management Controller (PMC) registers for the
-K6x Family of microprocessors.
-NOTE: Not all the registers are currently defined here - only those that are
-currently used.
-*/
+#ifndef _INIT_H_
+#define _INIT_H_
 
-#ifndef _K6xPMC_H_
-#define _K6xPMC_H_
+#include <device.h>
+#define __used			__attribute__((__used__))
 
-#include <stdint.h>
+/*! @def __define_initconfig
+ *
+ *  @brief Define an init object
+ *
+ *  @details This macro declares an init object to be placed a
+ *  given init level section in the image. This macro not should be used
+ *  directly.
+ *
+ *  @param cfg_name Name of the config object created with
+ *  DECLARE_DEVICE_INIT_CONFIG() macro that will be referenced by
+ *  init object.
+ *
+ *  @param id The init level id where the init object will be placed
+ *  in the image.
+ *
+ *  @sa DECLARE_DEVICE_INIT_CONFIG()
+ */
+#define __define_initconfig(cfg_name, id) \
+	 static struct device (__initconfig_##cfg_name##id) __used  \
+	__attribute__((__section__(".initconfig" #id ".init"))) = { \
+		.config = &(config_##cfg_name)};
 
-#define PMC_REGSC_ACKISO_MASK 0x08 /* ack I/O isolation (write to clear) */
+#define pure_init(cfg)			__define_initconfig(cfg, 0)
+#define nano_early_init(cfg)		__define_initconfig(cfg, 1)
+#define nano_late_init(cfg)		__define_initconfig(cfg, 2)
+#define micro_early_init(cfg)		__define_initconfig(cfg, 3)
+#define micro_late_init(cfg)		__define_initconfig(cfg, 4)
+#define pre_app_init(cfg)		__define_initconfig(cfg, 5)
+#define late_initconfig(cfg)		__define_initconfig(cfg, 6)
 
-typedef union {
-	uint8_t value;
-	struct {
-		uint8_t bandgapBufEn : 1 __packed; /* bandgap buffering */
-		uint8_t res_1 : 1 __packed; /* SBZ */
-		uint8_t regOnStatus : 1 __packed; /* regulator on, R/O */
-		uint8_t ackIsolation : 1 __packed; /* ack I/O isolation */
-		uint8_t bandgapEn : 1 __packed; /* bandgap enable */
-		uint8_t res_5 : 1 __packed;
-		uint8_t res_6 : 2 __packed; /* RAZ/WI */
-	} field;
-} REGSC_t; /* 0x0002 Regulator Status/Control Register */
 
-typedef volatile struct {
-	uint8_t lvdsc1; /* 0x0000 */
-	uint8_t lvdsc2; /* 0x0001 */
-	REGSC_t regsc;  /* 0x0002 */
-} K6x_PMC_t;		/* K6x Microntroller PMC module */
-
-#endif /* _K6xPMC_H_ */
+#endif /* _INIT_H_ */
