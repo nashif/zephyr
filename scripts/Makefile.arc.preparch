@@ -1,12 +1,7 @@
 LTO_FLAG-y = $(call cc-option,-flto,)
 SECTION_GC_FLAG = $(call cc-option,-ffunction-sections,) $(call cc-option,-fdata-sections,)
 
-arc_FLAGS =  -DVXMICRO_ARCH_arc
-arc_FLAGS += -DVXMICRO_ARCH=arc
 arc_FLAGS += -mARCv2EM -mav2em -mno-sdata
-
-LDFLAG_LINKERCMD = -DVXMICRO_ARCH_arc
-
 
 
 QEMU_BIOS ?= /usr/share/qemu
