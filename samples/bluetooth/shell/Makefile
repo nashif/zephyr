@@ -33,12 +33,12 @@
 # DESCRIPTION
 # Makefile for the console shell with Bluetooth commands
 BSP ?= generic_pc
-VPFILE = prj.vpf
+MDEF_FILE = prj.mdef
 KERNEL_TYPE = micro
 CONF_FILE = prj_$(ARCH).conf
 QEMU_EXTRA_FLAGS = -serial unix:/tmp/bt-server-bredr
 
-PRJ_INCPATH += ${TIMO_BASE}/include/drivers
+PRJ_INCPATH += ${ZEPHYR_BASE}/include/drivers
 
-include $(TIMO_BASE)/Makefile.inc
+include $(ZEPHYR_BASE)/Makefile.inc
 # console handler

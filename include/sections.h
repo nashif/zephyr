@@ -50,7 +50,7 @@
 
 /* Various text section names */
 #define TEXT text
-#if defined(VXMICRO_ARCH_x86)
+#if defined(CONFIG_X86_32)
 #define TEXT_START text_start /* beginning of TEXT section */
 #else
 #define TEXT_START text /* beginning of TEXT section */
@@ -62,7 +62,7 @@
 #define DATA data
 #define NOINIT noinit
 
-#if defined(VXMICRO_ARCH_arm)
+#if defined(CONFIG_ARM)
 #define SCS_SECTION scs
 #define SCP_SECTION scp
 
@@ -79,7 +79,7 @@
 #define GDB_STUB_IRQ_VECTOR_TABLE  gdb_stub_irq_vector_table
 #endif  /* CONFIG_GDB_INFO && !CONFIG_SW_ISR_TABLE */
 
-#elif defined(VXMICRO_ARCH_arc)
+#elif defined(CONFIG_ARC)
 
 	#ifdef CONFIG_SW_ISR_TABLE_DYNAMIC
 		#define ISR_TABLE_SECTION  DATA

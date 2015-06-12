@@ -1,4 +1,4 @@
-/* fifo.c - test microkernel FIFO APIs under VxMicro */
+/* fifo.c - test microkernel FIFO APIs */
 
 /*
  * Copyright (c) 2012-2014 Wind River Systems, Inc.
@@ -45,24 +45,19 @@ Scenarios tested include:
 - Verify the return codes are correct for the APIs
 */
 
-/* includes */
-
 #include <tc_util.h>
-#include <vxmicro.h>
-
-/* defines */
+#include <stdbool.h>
+#include <zephyr.h>
 
 #define MULTIPLIER              100     /* Used to initialize myData */
 #define NUM_OF_ELEMENT          5       /* Number of elements in myData array */
 #define DEPTH_OF_FIFO_QUEUE     2       /*
                                          * Depth of FIFO queue, this has to
 										 * be aligned with the number in
-                                         * prj.vpf file
+                                         * prj.mdef file
                                          */
 
 #define SPECIAL_DATA            999     /* Special number to put in queue */
-
-/* locals */
 
 static int myData[NUM_OF_ELEMENT];
 static int tcRC = TC_PASS;              /* test case return code */
@@ -105,15 +100,15 @@ void printMyData(void)
 * verifyRetValue - verify return value
 *
 * This routine verifies current value against expected value
-* and returns TRUE if they are the same.
+* and returns true if they are the same.
 *
 * \param expectRetValue     expect value
 * \param currentRetValue    current value
 *
-* RETURNS:  TRUE, FALSE
+* RETURNS:  true, false
 */
 
-BOOL verifyRetValue(int expectRetValue, int currentRetValue)
+bool verifyRetValue(int expectRetValue, int currentRetValue)
 {
 	return (expectRetValue == currentRetValue);
 } /* verifyRetValue */

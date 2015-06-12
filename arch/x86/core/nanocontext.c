@@ -1,4 +1,4 @@
-/* nanocontext.c - VxMicro nanokernel context support primitives */
+/* nanocontext.c - nanokernel context support primitives */
 
 /*
  * Copyright (c) 2010-2015 Wind River Systems, Inc.
@@ -36,8 +36,6 @@ This module provides core nanokernel fiber related primitives for the IA-32
 processor architecture.
 */
 
-/* includes */
-
 #ifdef CONFIG_MICROKERNEL
 #include <microkernel.h>
 #include <kernel_struct.h>
@@ -46,7 +44,6 @@ processor architecture.
 #include <toolchain.h>
 #include <sections.h>
 #include <nanok.h>
-#include <nanocontextentry.h>
 
 
 /* the one and only nanokernel control structure */
@@ -300,6 +297,10 @@ void _NewContext(
 	)
 {
 	unsigned long *pInitialContext;
+
+#ifdef CONFIG_INIT_STACKS
+    k_memset(pStackMem, 0xaa, stackSize);
+#endif
 
 	/* carve the context entry struct from the "base" of the stack */
 

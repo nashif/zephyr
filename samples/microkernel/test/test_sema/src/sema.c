@@ -41,11 +41,9 @@ This modules tests the following semaphore routines:
   isr_sem_give(),  fiber_sem_give()
 */
 
-/* includes */
-
 #include <nanokernel.h>
 #include <arch/cpu.h>
-#include <vxmicro.h>
+#include <zephyr.h>
 #include <tc_util.h>
 
 #include <util_test_common.h>
@@ -53,7 +51,6 @@ This modules tests the following semaphore routines:
 extern void trigger_isrSemaSignal(ksem_t semaphore);
 extern void releaseTestFiber(void);
 
-/* defines */
 #define N_TESTS 10 /* number of tests to run */
 
 #define OBJ_TIMEOUT  SECONDS(1)
@@ -255,7 +252,7 @@ int simpleGroupTest(void)
 	value = task_sem_group_take_wait_timeout(semList, OBJ_TIMEOUT);
 	if (value != ENDLIST) {
 		TC_ERROR("task_sem_group_take_wait_timeout() returned %d not %d\n",
-				 value, ENDGROUP);
+				 value, ENDLIST);
 		return TC_FAIL;
 	}
 
@@ -562,9 +559,9 @@ int AlternateTask(void)
 
 /*******************************************************************************
 *
-* RegressionTask - entry point to VxMicro semaphore test suite
+* RegressionTask - entry point to semaphore test suite
 *
-* This is the entry point to the VxMicro semaphore test suite.
+* This is the entry point to the semaphore test suite.
 *
 * RETURNS: TC_PASS or TC_FAIL
 */

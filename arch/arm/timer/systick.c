@@ -32,8 +32,8 @@
 
 /*
 DESCRIPTION
-This module implements the VxMicro's CORTEX-M3 ARM's systick device driver.
-It provides the standard VxMicro "system clock driver" interfaces.
+This module implements the kernel's CORTEX-M3 ARM's systick device driver.
+It provides the standard kernel "system clock driver" interfaces.
 
 The driver utilizes systick to provide kernel ticks.
 
@@ -52,7 +52,6 @@ conjunction with a microkernel.
 */
 
 #include <nanokernel.h>
-#include <arch/cpu.h>
 #include <toolchain.h>
 #include <sections.h>
 #include <misc/__assert.h>
@@ -62,7 +61,6 @@ conjunction with a microkernel.
 #ifdef CONFIG_MICROKERNEL
 
 #include <microkernel.h>
-#include <cputype.h>
 
 extern struct nano_stack _k_command_stack;
 
@@ -81,8 +79,6 @@ static uint32_t clock_accumulated_count = 0;
  */
 
 #include <board.h>
-
-/* defines */
 
 /*
  * When GDB_INFO is enabled, the handler installed in the vector table
@@ -103,8 +99,6 @@ static uint32_t clock_accumulated_count = 0;
 #define IDLE_TICKLESS 1     /* tickless idle  mode */
 #endif			    /* CONFIG_TICKLESS_IDLE */
 
-/* globals */
-
 #ifdef CONFIG_INT_LATENCY_BENCHMARK
 extern uint32_t _hw_irq_to_c_handler_latency;
 #endif
@@ -118,8 +112,6 @@ extern void _sys_power_save_idle_exit(int32_t ticks);
 #ifdef CONFIG_TICKLESS_IDLE
 extern int32_t _sys_idle_elapsed_ticks;
 #endif /* CONFIG_TICKLESS_IDLE */
-
-/* locals */
 
 #ifdef CONFIG_TICKLESS_IDLE
 static uint32_t __noinit default_load_value; /* default count */
@@ -667,7 +659,7 @@ void timer_driver(int priority /* priority parameter is ignored by this driver
 * timer_read - read the BSP timer hardware
 *
 * This routine returns the current time in terms of timer hardware clock cycles.
-* Some VxMicro facilities (e.g. benchmarking code) directly call timer_read()
+* Some kernel facilities (e.g. benchmarking code) directly call timer_read()
 * instead of utilizing the 'timer_read_fptr' function pointer.
 *
 * RETURNS: up counter of elapsed clock cycles

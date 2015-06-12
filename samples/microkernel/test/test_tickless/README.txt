@@ -21,8 +21,20 @@ Building and Running Project:
 This microkernel project outputs to the console.  It can be built and executed
 on QEMU as follows:
 
-    make pristine
-    make microkernel.qemu
+    make qemu
+
+--------------------------------------------------------------------------------
+
+Troubleshooting:
+
+Problems caused by out-dated project information can be addressed by
+issuing one of the following commands then rebuilding the project:
+
+    make clean          # discard results of previous builds
+                        # but keep existing configuration info
+or
+    make pristine       # discard results of previous builds
+                        # and restore pre-defined configuration info
 
 --------------------------------------------------------------------------------
 
@@ -40,4 +52,4 @@ diff  time stamp: 0x0000000018a69898
 Cal   time stamp: 0x00000000163adc3a
 variance in time stamp diff: 10 percent
 ===================================================================
-VXMICRO PROJECT EXECUTION SUCCESSFUL
+PROJECT EXECUTION SUCCESSFUL

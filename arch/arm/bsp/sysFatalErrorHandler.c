@@ -35,11 +35,7 @@ DESCRIPTION
 This module provides the _SysFatalErrorHandler() routine for Cortex-M BSPs.
 */
 
-/* includes */
-
-#include <cputype.h>
 #include <nanokernel.h>
-#include <arch/cpu.h>
 #include <toolchain.h>
 #include <sections.h>
 #include "board.h"

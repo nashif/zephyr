@@ -1,7 +1,7 @@
-/* stdlib.h */
+/* ctype.h */
 
 /*
- * Copyright (c) 2011-2014 Wind River Systems, Inc.
+ * Copyright (c) 2015 Intel Corporation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -33,9 +33,9 @@
 #ifndef __INC_ctype_h__
 #define __INC_ctype_h__
 
-int isspace(int c);
-int isdigit(int c);
-int atoi(const char *s);
-int isalpha(int c);
+static inline int tolower(int chr)
+{
+	return (chr >= 'A' && chr <= 'Z') ? (chr + 32) : (chr);
+}
 
 #endif  /* __INC_ctype_h__ */

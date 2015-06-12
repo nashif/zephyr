@@ -29,31 +29,31 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-# Wrapper script to sanitize the various aspects of VxMicro
+# Wrapper script to perform all operating system sanity tests
 
 # Import common sanity check definitions
 #
-if [ -z ${TIMO_BASE} ]; then
-	echo "shell variables required to build VxMicro are not set"
+if [ -z ${ZEPHYR_BASE} ]; then
+	echo "shell variables required to build Zephyr OS are not set"
 	exit 1
 fi
-if [ ! -d ${TIMO_BASE} ] ; then
-	echo "directory ${TIMO_BASE} not found"
+if [ ! -d ${ZEPHYR_BASE} ] ; then
+	echo "directory ${ZEPHYR_BASE} not found"
 	exit 1
 fi
-source ${TIMO_BASE}/scripts/sanity_chk/common.defs
+source ${ZEPHYR_BASE}/scripts/sanity_chk/common.defs
 
 # Symbols used in this script only
 #
-SCRIPT_PATH=${TIMO_BASE}/scripts/sanity_chk
-HOST_TOOLS_SRC_PATH=${TIMO_BASE}/host/src
+SCRIPT_PATH=${ZEPHYR_BASE}/scripts/sanity_chk
+HOST_TOOLS_SRC_PATH=${ZEPHYR_BASE}/host/src
 
 # print script usage
 #
 help() {
 cat << EOF
 
-Usage : ${SCRIPT_NAME} [-hHcqbls] [-A <arch>] [-B <board>] [-T <toolchain>]
+Usage : ${SCRIPT_NAME} [-hHcqbls] [-A <arch>] [-B <board>]
        -h display this help message
        -H display more detailed documentation
        -c just clean projects and delete execution logs
@@ -63,7 +63,6 @@ Usage : ${SCRIPT_NAME} [-hHcqbls] [-A <arch>] [-B <board>] [-T <toolchain>]
        -s do not build host tools
        -A build projects for the specified architecture
        -B build projects for the specified BSP or BSP variant
-       -T build projects using the specified toolchain
 
 EOF
 }
@@ -73,23 +72,22 @@ EOF
 long_help() {
 cat << EOF
 
-Script to sanitize VxMicro.
+Script to sanitize Zephyr OS.
 
 The full sanity check consists of the following phases:
 
-    - Rebuild host tools to ensure they are compatible with the rest of VxMicro.
-    - Run "footprint_chk" to characterize the footprint of VxMicro.
-    - Run "regression_chk" to sanitize the standard portion of VxMicro.
+    - Rebuild host tools to ensure they are up to date.
+    - Run "footprint_chk" to characterize kernel footprint.
+    - Run "regression_chk" to regression test kernel operation.
     - Run "common-klibs_chk" to verify if projects can share a set of common kernel libs
-    - Run "out-of-tree_chk" to verify if projects and BSPs can reside outside the normal VxMicro tree.
+    - Run "out-of-tree_chk" to verify if projects and BSPs can reside outside the normal tree.
 
 The full sanity check is run by default. If desired, some steps can be omitted
 by using the available command options.
 
 *-=*-=*-=*-=*-=*-=*-=*-=*-=*-=*-=*-=*-=*-=
 
-Before running the script, ensure Linux shell environment variables are set
-appropriately to build VxMicro on a Linux host.
+Before running the script, ensure Zephyr OS environment variables are set.
 
 The script returns 0 on success. If an error is encountered at any point
 the script terminates with an error message and returns the exit value
@@ -159,7 +157,7 @@ main() {
 			args_passed_on="${args_passed_on} -B $OPTARG"
 			;;
 		T)
-			export VXMICRO_TOOL="$OPTARG"
+			# temporarily retained until CI scripts are revised
 			;;
 		\?)
 			${ECHO} "invalid option -$OPTARG"
@@ -192,15 +190,6 @@ main() {
 		${SCRIPT_PATH}/out-of-tree_chk -c
 		exit $?
 	fi
-
-	# ensure a toolchain has been specified
-	if [ x${VXMICRO_TOOL} = x ] ; then
-		print_header
-		${ECHO} "no toolchain specified"
-		exit 1
-	fi
-
-	export VXMICRO_TOOL
 
 	# rebuild host tools (optional)
         #update_host_tools ${skip_host_tools}

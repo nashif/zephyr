@@ -85,7 +85,7 @@ Macros to abstract compiler capabilities (common to all toolchains).
 
 #ifdef _ASMLANGUAGE
 
-  #ifdef VXMICRO_ARCH_x86
+  #ifdef CONFIG_X86_32
 
     #ifdef PERF_OPT
       #define PERFOPT_ALIGN .balign 16
@@ -93,7 +93,7 @@ Macros to abstract compiler capabilities (common to all toolchains).
       #define PERFOPT_ALIGN .balign  1
     #endif
 
-  #elif defined(VXMICRO_ARCH_arm)
+  #elif defined(CONFIG_ARM)
 
     #ifdef CONFIG_ISA_THUMB
       #define PERFOPT_ALIGN .balign  2
@@ -101,7 +101,7 @@ Macros to abstract compiler capabilities (common to all toolchains).
       #define PERFOPT_ALIGN .balign  4
     #endif
 
-  #elif defined(VXMICRO_ARCH_arc)
+  #elif defined(CONFIG_ARC)
 
     #define PERFOPT_ALIGN .balign  4
 

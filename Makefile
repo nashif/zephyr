@@ -7,7 +7,7 @@ PATCHLEVEL 	   = 0
 SUBLEVEL	   = 0
 NAME 		   = Tiny Mountain
 
-export SOURCE_DIR PROJECT VPFILE KLIBC_DIR
+export SOURCE_DIR PROJECT MDEF_FILE KLIBC_DIR
 
 # *DOCUMENTATION*
 # To see a list of typical targets execute "make help"
@@ -35,9 +35,9 @@ unexport GREP_OPTIONS
 # their own directory. If in some directory we have a dependency on
 # a file in another dir (which doesn't happen often, but it's often
 # unavoidable when linking the built-in.o targets which finally
-# turn into tinymountain), we will call a sub make in that other dir, and
-# after that we are sure that everything which is in that other dir
-# is now up to date.
+# turn into the kernel binary), we will call a sub make in that other
+# dir, and after that we are sure that everything which is in that
+# other dir is now up to date.
 #
 # The only cases where we need to modify files which have global
 # effects are thus separated out and done before the recursive
@@ -308,26 +308,6 @@ endif
 KBUILD_MODULES :=
 KBUILD_BUILTIN := 1
 
-# If we have only "make modules", don't compile built-in objects.
-# When we're building modules with modversions, we need to consider
-# the built-in objects during the descend as well, in order to
-# make sure the checksums are up to date before we record them.
-
-ifeq ($(MAKECMDGOALS),modules)
-  KBUILD_BUILTIN := $(if $(CONFIG_MODVERSIONS),1)
-endif
-
-# If we have "make <whatever> modules", compile modules
-# in addition to whatever we do anyway.
-# Just "make" or "make all" shall build modules as well
-
-ifneq ($(filter all _all modules,$(MAKECMDGOALS)),)
-  KBUILD_MODULES := 1
-endif
-
-ifeq ($(MAKECMDGOALS),)
-  KBUILD_MODULES := 1
-endif
 
 export KBUILD_MODULES KBUILD_BUILTIN
 export KBUILD_CHECKSRC KBUILD_SRC
@@ -359,11 +339,9 @@ STRIP		= $(CROSS_COMPILE)strip
 OBJCOPY		= $(CROSS_COMPILE)objcopy
 OBJDUMP		= $(CROSS_COMPILE)objdump
 AWK		= awk
-GENKSYMS	= $(TIMO_BASE)/scripts/genksyms/genksyms
-GENIDT		= $(TIMO_BASE)/scripts/gen_idt/gen_idt
-FIXDEP		= $(TIMO_BASE)/scripts/basic/fixdep
-INSTALLKERNEL  := installkernel
-DEPMOD		= /sbin/depmod
+GENKSYMS	= $(ZEPHYR_BASE)/scripts/genksyms/genksyms
+GENIDT		= $(ZEPHYR_BASE)/scripts/gen_idt/gen_idt
+FIXDEP		= $(ZEPHYR_BASE)/scripts/basic/fixdep
 PERL		= perl
 PYTHON		= python
 CHECK		= sparse
@@ -383,9 +361,9 @@ PROJECTINCLUDE := $(strip -I$(srctree)/include/microkernel \
 		-I$(CURDIR)/misc/generated/sysgen) \
 		$(USERINCLUDE)
 
-# Use TIMOINCLUDE when you must reference the include/ directory.
+# Use ZEPHYRINCLUDE when you must reference the include/ directory.
 # Needed to be compatible with the O= option
-TIMOINCLUDE    := \
+ZEPHYRINCLUDE    := \
 		-I$(srctree)/arch/$(hdr-arch)/include \
 		$(if $(KBUILD_SRC), -I$(srctree)/include) \
 		-I$(srctree)/include \
@@ -411,14 +389,12 @@ KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -c -g -xassembler-with-cpp
 
-LDFLAGS += $(call cc-ldoption,-nostartfiles)
-LDFLAGS += $(call cc-ldoption,-nodefaultlibs)
-LDFLAGS += $(call cc-ldoption,-nostdlib)
-LDFLAGS += $(call cc-ldoption,-static)
+LDFLAGS += $(call ld-option,-nostartfiles)
+LDFLAGS += $(call ld-option,-nodefaultlibs)
+LDFLAGS += $(call ld-option,-nostdlib)
+LDFLAGS += $(call ld-option,-static)
 LDLIBS_TOOLCHAIN ?= -lgcc
 
-# Read KERNELRELEASE from include/config/kernel.release (if it exists)
-KERNELRELEASE = $(shell cat include/config/kernel.release 2> /dev/null)
 KERNELVERSION = $(VERSION_GENERATION).$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_REVISION)
 
 export VERSION_GENERATION VERSION_MAJOR VERSION_MINOR VERSION_REVISION VERSION_RESERVED
@@ -428,7 +404,7 @@ export CPP AR NM STRIP OBJCOPY OBJDUMP
 export MAKE AWK GENKSYMS INSTALLKERNEL PERL PYTHON UTS_MACHINE GENIDT FIXDEP
 export HOSTCXX HOSTCXXFLAGS LDFLAGS_MODULE CHECK CHECKFLAGS
 
-export KBUILD_CPPFLAGS NOSTDINC_FLAGS TIMOINCLUDE OBJCOPYFLAGS LDFLAGS
+export KBUILD_CPPFLAGS NOSTDINC_FLAGS ZEPHYRINCLUDE OBJCOPYFLAGS LDFLAGS
 export KBUILD_CFLAGS CFLAGS_KERNEL CFLAGS_MODULE CFLAGS_GCOV
 export KBUILD_AFLAGS AFLAGS_KERNEL AFLAGS_MODULE
 export KBUILD_AFLAGS_MODULE KBUILD_CFLAGS_MODULE KBUILD_LDFLAGS_MODULE
@@ -450,8 +426,8 @@ export RCS_TAR_IGNORE := --exclude SCCS --exclude BitKeeper --exclude .svn \
 # Basic helpers built in scripts/
 PHONY += scripts_basic
 scripts_basic:
-	$(Q)$(MAKE) -C $(TIMO_BASE) $(build)=scripts/basic
-	$(Q)$(MAKE) -C $(TIMO_BASE) $(build)=scripts/gen_idt
+	$(Q)$(MAKE) -C $(ZEPHYR_BASE) $(build)=scripts/basic
+	$(Q)$(MAKE) -C $(ZEPHYR_BASE) $(build)=scripts/gen_idt
 	$(Q)rm -f .tmp_quiet_recordmcount
 
 # To avoid any implicit rule to kick in, define an empty command.
@@ -537,14 +513,14 @@ include $(srctree)/arch/$(SRCARCH)/Makefile
 export KBUILD_DEFCONFIG KBUILD_KCONFIG
 
 config: scripts_basic outputmakefile FORCE
-	$(Q)$(MAKE) -C $(TIMO_BASE) $(build)=scripts/kconfig $@
+	$(Q)$(MAKE) -C $(ZEPHYR_BASE) $(build)=scripts/kconfig $@
 
 %config: scripts_basic outputmakefile FORCE
-	$(Q)$(MAKE) -C $(TIMO_BASE) $(build)=scripts/kconfig $@
+	$(Q)$(MAKE) -C $(ZEPHYR_BASE) $(build)=scripts/kconfig $@
 
 else
 # ===========================================================================
-# Build targets only - this includes tinymountain, arch specific targets, clean
+# Build targets only - this includes zephyr, arch specific targets, clean
 # targets and others. In general all targets except *config targets.
 
 # Additional helpers built in scripts/
@@ -587,10 +563,10 @@ include/config/auto.conf: ;
 endif # $(dot-config)
 
 ifdef CONFIG_MINIMAL_LIBC
-# Objects we will link into tinymountain / subdirs we need to visit
+# Objects we will link into the kernel / subdirs we need to visit
 KLIBC_DIR := lib/libc/minimal
 libs-y := $(KLIBC_DIR)/
-TIMOINCLUDE += -I$(srctree)/lib/libc/minimal/include
+ZEPHYRINCLUDE += -I$(srctree)/lib/libc/minimal/include
 endif
 
 ifdef CONFIG_TOOLCHAIN_NEWLIB
@@ -601,8 +577,8 @@ endif
 #File that includes all prepare special embedded architecture targets.
 include $(srctree)/scripts/Makefile.preparch
 sinclude $(srctree)/scripts/Makefile.$(SRCARCH).preparch
-ifdef VXMICRO_GCC_VARIANT
-include $(srctree)/scripts/Makefile.toolchain.$(VXMICRO_GCC_VARIANT)
+ifdef ZEPHYR_GCC_VARIANT
+include $(srctree)/scripts/Makefile.toolchain.$(ZEPHYR_GCC_VARIANT)
 endif
 
 QEMU_BIN_PATH	?= /usr/bin
@@ -611,8 +587,8 @@ QEMU		= $(QEMU_BIN_PATH)/$(QEMU_$(SRCARCH))
 # The all: target is the default when no target is given on the
 # command line.
 # This allow a user to issue only 'make' to build a kernel including modules
-# Defaults to tinymountain, but the arch makefile usually adds further targets
-all: tinymountain
+# Defaults to zephyr, but the arch makefile usually adds further targets
+all: zephyr
 
 ifdef CONFIG_READABLE_ASM
 # Disable optimizations that make assembler listings hard to read.
@@ -744,15 +720,14 @@ KBUILD_CFLAGS += $(KCFLAGS)
 
 # Use --build-id when available.
 
-LDFLAGS_tinymountain += $(call cc-ldoption,-nostartfiles)
-LDFLAGS_tinymountain += $(call cc-ldoption,-nodefaultlibs)
-LDFLAGS_tinymountain += $(call cc-ldoption,-nostdlib)
-LDFLAGS_tinymountain += $(call cc-ldoption,-static)
-#LDFLAGS_tinymountain += $(call cc-ldoption,-Wl$(comma)--unresolved-symbols=ignore-in-object-files)
-LDFLAGS_tinymountain += $(call cc-ldoption,-Wl$(comma)-X)
-LDFLAGS_tinymountain += $(call cc-ldoption,-Wl$(comma)-N)
-LDFLAGS_tinymountain += $(call cc-ldoption,-Wl$(comma)--gc-sections)
-LDFLAGS_tinymountain += $(call cc-ldoption,-Wl$(comma)--build-id=none)
+LDFLAGS_zephyr += $(call ld-option,-nostartfiles)
+LDFLAGS_zephyr += $(call ld-option,-nodefaultlibs)
+LDFLAGS_zephyr += $(call ld-option,-nostdlib)
+LDFLAGS_zephyr += $(call ld-option,-static)
+LDFLAGS_zephyr += $(call ld-option,-X)
+LDFLAGS_zephyr += $(call ld-option,-N)
+LDFLAGS_zephyr += $(call ld-option,--gc-sections)
+LDFLAGS_zephyr += $(call ld-option,--build-id=none)
 
 LD_TOOLCHAIN ?= -D__GCC_LINKER_CMD__
 
@@ -769,7 +744,7 @@ export LD_TOOLCHAIN KERNEL_NAME
 # set in the environment
 # Also any assignments in arch/$(ARCH)/Makefile take precedence over
 # this default value
-export KBUILD_IMAGE ?= tinymountain
+export KBUILD_IMAGE ?= zephyr
 
 #
 # INSTALL_PATH specifies where to place the updated kernel and system map
@@ -783,52 +758,13 @@ export	INSTALL_PATH ?= /boot
 #
 export INSTALL_DTBS_PATH ?= $(INSTALL_PATH)/dtbs/$(KERNELRELEASE)
 
-#
-# INSTALL_MOD_PATH specifies a prefix to MODLIB for module directory
-# relocations required by build roots.  This is not defined in the
-# makefile but the argument can be passed to make if needed.
-#
-
-MODLIB	= $(INSTALL_MOD_PATH)/lib/modules/$(KERNELRELEASE)
-export MODLIB
-
-#
-# INSTALL_MOD_STRIP, if defined, will cause modules to be
-# stripped after they are installed.  If INSTALL_MOD_STRIP is '1', then
-# the default option --strip-debug will be used.  Otherwise,
-# INSTALL_MOD_STRIP value will be used as the options to the strip command.
-
-ifdef INSTALL_MOD_STRIP
-ifeq ($(INSTALL_MOD_STRIP),1)
-mod_strip_cmd = $(STRIP) --strip-debug
-else
-mod_strip_cmd = $(STRIP) $(INSTALL_MOD_STRIP)
-endif # INSTALL_MOD_STRIP=1
-else
-mod_strip_cmd = true
-endif # INSTALL_MOD_STRIP
-export mod_strip_cmd
-
-
-
-ifdef CONFIG_MODULE_SIG_ALL
-MODSECKEY = ./signing_key.priv
-MODPUBKEY = ./signing_key.x509
-export MODPUBKEY
-mod_sign_cmd = perl $(srctree)/scripts/sign-file $(CONFIG_MODULE_SIG_HASH) $(MODSECKEY) $(MODPUBKEY)
-else
-mod_sign_cmd = true
-endif
-export mod_sign_cmd
-
-
 core-y		+=
 
-tinymountain-dirs	:= $(patsubst %/,%,$(filter %/, $(init-y) $(init-m) \
+zephyr-dirs	:= $(patsubst %/,%,$(filter %/, $(init-y) $(init-m) \
 		     $(core-y) $(core-m) $(drivers-y) $(drivers-m) \
 		     $(bsp-y) $(bsp-m) $(libs-y) $(libs-m)))
 
-tinymountain-alldirs	:= $(sort $(tinymountain-dirs) $(patsubst %/,%,$(filter %/, \
+zephyr-alldirs	:= $(sort $(zephyr-dirs) $(patsubst %/,%,$(filter %/, \
 		     $(init-) $(core-) $(drivers-) $(bsp-) $(libs-))))
 
 init-y		:= $(patsubst %/, %/built-in.o, $(init-y))
@@ -839,29 +775,29 @@ libs-y1		:= $(patsubst %/, %/lib.a, $(libs-y))
 libs-y2		:= $(patsubst %/, %/built-in.o, $(libs-y))
 libs-y		:= $(libs-y1) $(libs-y2)
 
-# Externally visible symbols (used by link-tinymountain.sh)
+# Externally visible symbols (used by link-zephyr.sh)
 DQUOTE = "
 #This comment line is to fix the highlighting of some editors due the quote effect."
-export KBUILD_TIMO_INIT := $(head-y) $(init-y)
-export KBUILD_TIMO_MAIN := $(core-y) $(libs-y) $(drivers-y) $(bsp-y)
+export KBUILD_ZEPHYR_INIT := $(head-y) $(init-y)
+export KBUILD_ZEPHYR_MAIN := $(core-y) $(libs-y) $(drivers-y) $(bsp-y)
 export KBUILD_LDS          := $(srctree)/arch/$(SRCARCH)/$(subst $(DQUOTE),,$(CONFIG_BSP_DIR))/linker.cmd
-export LDFLAGS_tinymountain
+export LDFLAGS_zephyr
 # used by scripts/pacmage/Makefile
-export KBUILD_ALLDIRS := $(sort $(filter-out arch/%,$(tinymountain-alldirs)) arch Documentation include samples scripts tools virt)
+export KBUILD_ALLDIRS := $(sort $(filter-out arch/%,$(zephyr-alldirs)) arch Documentation include samples scripts tools virt)
 
-tinymountain-deps := $(KBUILD_LDS) $(KBUILD_TIMO_INIT) $(KBUILD_TIMO_MAIN)
+zephyr-deps := $(KBUILD_LDS) $(KBUILD_ZEPHYR_INIT) $(KBUILD_ZEPHYR_MAIN)
 
 ALL_LIBS += $(TOOLCHAIN_LIBS)
 export ALL_LIBS
 
-# Final link of tinymountain
-      cmd_link-tinymountain = $(CONFIG_SHELL) $< $(LD) $(LDFLAGS) $(LDFLAGS_tinymountain) $(LIB_INCLUDE_DIR) $(ALL_LIBS)
-quiet_cmd_link-tinymountain = LINK    $@
+# Final link of zephyr
+      cmd_link-zephyr = $(CONFIG_SHELL) $< $(LD) $(LDFLAGS) $(LDFLAGS_zephyr) $(LIB_INCLUDE_DIR) $(ALL_LIBS)
+quiet_cmd_link-zephyr = LINK    $@
 
 # Include targets which we want to
 # execute if the rest of the kernel build went well.
-tinymountain: scripts/link-tinymountain.sh $(tinymountain-deps) FORCE
-	@touch tinymountain
+zephyr: scripts/link-zephyr.sh $(zephyr-deps) FORCE
+	@touch zephyr
 ifdef CONFIG_HEADERS_CHECK
 	$(Q)$(MAKE) -f $(srctree)/Makefile headers_check
 endif
@@ -873,30 +809,22 @@ ifdef CONFIG_BUILD_DOCSRC
 endif
 
 ifneq ($(strip $(PROJECT)),)
-	+$(call if_changed,link-tinymountain)
+	+$(call if_changed,link-zephyr)
 endif
 
 # The actual objects are generated when descending,
 # make sure no implicit rule kicks in
-$(sort $(tinymountain-deps)): $(tinymountain-dirs) ;
+$(sort $(zephyr-deps)): $(zephyr-dirs) ;
 
-# Handle descending into subdirectories listed in $(tinymountain-dirs)
+# Handle descending into subdirectories listed in $(zephyr-dirs)
 # Preset locale variables to speed up the build process. Limit locale
 # tweaks to this spot to avoid wrong language settings when running
 # make menuconfig etc.
 # Error messages still appears in the original language
 
-PHONY += $(tinymountain-dirs)
-$(tinymountain-dirs): prepare scripts
+PHONY += $(zephyr-dirs)
+$(zephyr-dirs): prepare scripts
 	$(Q)$(MAKE) $(build)=$@
-
-define filechk_kernel.release
-	echo "$(KERNELVERSION)$$($(CONFIG_SHELL) $(srctree)/scripts/setlocalversion $(srctree))"
-endef
-
-# Store (new) KERNELRELEASE string in include/config/kernel.release
-include/config/kernel.release: include/config/auto.conf FORCE
-	$(call filechk,kernel.release)
 
 # Things we need to do before we recursively start building the kernel
 # or the modules are listed in "prepare".
@@ -905,7 +833,7 @@ include/config/kernel.release: include/config/auto.conf FORCE
 # version.h and scripts_basic is processed / created.
 
 # Listed in dependency order
-PHONY += prepare archprepare prepare0 prepare1 prepare2 prepare3
+PHONY += prepare prepare1 prepare2 prepare3
 
 # prepare3 is used to check if we are building in a separate output directory,
 # and if so do:
@@ -945,33 +873,20 @@ archprepare_common = $(strip \
 
 archprepare_microkernel-y = misc/generated/sysgen/kernel_main.c
 
-archprepare_prereq = $(strip \
+archprepare = $(strip \
 		$(archprepare_common) \
 		$(archprepare_microkernel-$(SYSGEN_EXEC)) \
 		)
 
-archprepare: $(archprepare_prereq)
-
-prepare0: archprepare FORCE
-	$(Q)$(MAKE) $(build)=.
-
 # All the preparing..
-prepare: prepare0
+prepare: $(archprepare)  FORCE
+	$(Q)$(MAKE) $(build)=.
 
 # Generate some files
 # ---------------------------------------------------------------------------
 
 # KERNELRELEASE can change from a few different places, meaning version.h
 # needs to be updated, so this check is forced on all builds
-
-uts_len := 64
-define filechk_utsrelease.h
-	if [ `echo -n "$(KERNELRELEASE)" | wc -c ` -gt $(uts_len) ]; then \
-	  echo '"$(KERNELRELEASE)" exceeds $(uts_len) characters' >&2;    \
-	  exit 1;                                                         \
-	fi;                                                               \
-	(echo \#define UTS_RELEASE \"$(KERNELRELEASE)\";)
-endef
 
 KERNEL_VERSION_HEX=0x$(VERSION_GENERATION)$(VERSION_MAJOR)$(VERSION_MINOR)$(VERSION_REVISION)
 KERNEL_CODE=40
@@ -994,9 +909,6 @@ endef
 
 $(version_h): $(srctree)/Makefile FORCE
 	$(call filechk,version.h)
-
-include/generated/utsrelease.h: include/config/kernel.release FORCE
-	$(call filechk,utsrelease.h)
 
 PHONY += headerdep
 headerdep:
@@ -1060,7 +972,6 @@ kselftest:
 ###
 # Cleaning is done on three levels.
 # make clean     Delete most generated files
-#                Leave enough to build external modules
 # make mrproper  Delete the current configuration, and all generated files
 # make distclean Remove editor backup files, patch leftover files and the like
 
@@ -1068,8 +979,8 @@ kselftest:
 CLEAN_DIRS  += $(MODVERDIR)
 
 CLEAN_FILES += 	misc/generated/sysgen/kernel_main.c \
-		misc/generated/sysgen/vxmicro.h \
-		misc/generated/sysgen/prj.vpf
+		misc/generated/sysgen/zephyr.h \
+		misc/generated/sysgen/prj.mdef
 
 # Directories & files removed with 'make mrproper'
 MRPROPER_DIRS  += include/config usr/include include/generated          \
@@ -1080,20 +991,20 @@ MRPROPER_FILES += .config .config.old .version $(version_h) \
 		  extra_certificates signing_key.x509.keyid		\
 		  signing_key.x509.signer
 
-# clean - Delete most, but leave enough to build external modules
+# clean - Delete most
 #
 clean: rm-dirs  := $(CLEAN_DIRS)
 clean: rm-files := $(CLEAN_FILES)
-clean-dirs      := $(addprefix _clean_, . $(tinymountain-alldirs) )
+clean-dirs      := $(addprefix _clean_, . $(zephyr-alldirs) )
 
-PHONY += $(clean-dirs) clean archclean tinymountainclean
+PHONY += $(clean-dirs) clean archclean zephyrclean
 $(clean-dirs):
 	$(Q)$(MAKE) $(clean)=$(patsubst _clean_%,%,$@)
 
-tinymountainclean:
-	$(Q)$(CONFIG_SHELL) $(srctree)/scripts/link-tinymountain.sh clean
+zephyrclean:
+	$(Q)$(CONFIG_SHELL) $(srctree)/scripts/link-zephyr.sh clean
 
-clean: archclean tinymountainclean
+clean: archclean zephyrclean
 
 # mrproper - Delete all generated files, including .config
 #
@@ -1120,20 +1031,6 @@ distclean: mrproper
 		-o -name '.*.rej' -o -name '*%'  -o -name 'core' \) \
 		-type f -print | xargs rm -f
 
-
-# Packaging of the kernel to various formats
-# ---------------------------------------------------------------------------
-# rpm target kept for backward compatibility
-package-dir	:= scripts/package
-
-%src-pkg: FORCE
-	$(Q)$(MAKE) $(build)=$(package-dir) $@
-%pkg: include/config/kernel.release FORCE
-	$(Q)$(MAKE) $(build)=$(package-dir) $@
-rpm: include/config/kernel.release FORCE
-	$(Q)$(MAKE) $(build)=$(package-dir) $@
-
-
 # Brief documentation of the typical targets used
 # ---------------------------------------------------------------------------
 
@@ -1145,7 +1042,6 @@ board-dirs := $(sort $(notdir $(board-dirs:/=)))
 help:
 	@echo  'Cleaning targets:'
 	@echo  '  clean		  - Remove most generated files but keep the config and'
-	@echo  '                    enough build support to build external modules'
 	@echo  '  mrproper	  - Remove all generated files + config + various backup files'
 	@echo  '  distclean	  - mrproper + remove editor backup and patch files'
 	@echo  ''
@@ -1154,7 +1050,7 @@ help:
 	@echo  ''
 	@echo  'Other generic targets:'
 	@echo  '  all		  - Build all targets marked with [*]'
-	@echo  '* tinymountain	  - Build the bare kernel'
+	@echo  '* zephyr	  - Build the bare kernel'
 	@echo  '  qemu		  - Build the bare kernel and runs the emulation with qemu'
 	@echo  'Architecture specific targets ($(SRCARCH)):'
 	@$(if $(archhelp),$(archhelp),\
@@ -1257,7 +1153,7 @@ export_report:
 endif #ifeq ($(config-targets),1)
 endif #ifeq ($(mixed-targets),1)
 
-PHONY += checkstack kernelrelease kernelversion image_name
+PHONY += checkstack kernelversion image_name
 
 # UML needs a little special treatment here.  It wants to use the host
 # toolchain, so needs $(SUBARCH) passed to checkstack.pl.  Everyone
@@ -1269,11 +1165,8 @@ else
 CHECKSTACK_ARCH := $(ARCH)
 endif
 checkstack:
-	$(OBJDUMP) -d tinymountain $$(find . -name '*.ko') | \
+	$(OBJDUMP) -d zephyr $$(find . -name '*.ko') | \
 	$(PERL) $(src)/scripts/checkstack.pl $(CHECKSTACK_ARCH)
-
-kernelrelease:
-	@echo "$(KERNELVERSION)$$($(CONFIG_SHELL) $(srctree)/scripts/setlocalversion $(srctree))"
 
 kernelversion:
 	@echo $(KERNELVERSION)
@@ -1292,7 +1185,7 @@ tools/%: FORCE
 
 QEMU_FLAGS = $(QEMU_FLAGS_$(SRCARCH)) -pidfile qemu.pid
 
-qemu: tinymountain
+qemu: zephyr
 	@echo "To exit from QEMU enter: 'CTRL+a, x'"
 	@echo '[QEMU] CPU: $(QEMU_CPU_TYPE_$(SRCARCH))'
 	$(Q)$(QEMU) $(QEMU_FLAGS) $(QEMU_EXTRA_FLAGS) -kernel $(KERNEL_NAME).elf
@@ -1302,7 +1195,6 @@ qemu: tinymountain
 # Single targets are compatible with:
 # - build with mixed source and output
 # - build with separate output dir 'make O=...'
-# - external modules
 #
 #  target-dir => where to store outputfile
 #  build-dir  => directory in kernel source tree to use
@@ -1328,14 +1220,12 @@ qemu: tinymountain
 # Modules
 /: prepare scripts FORCE
 	$(cmd_crmodverdir)
-	$(Q)$(MAKE) KBUILD_MODULES=$(if $(CONFIG_MODULES),1) \
-	$(build)=$(build-dir)
+	$(Q)$(MAKE) $(build)=$(build-dir)
 # Make sure the latest headers are built for Documentation
 Documentation/: headers_install
 %/: prepare scripts FORCE
 	$(cmd_crmodverdir)
-	$(Q)$(MAKE) KBUILD_MODULES=$(if $(CONFIG_MODULES),1) \
-	$(build)=$(build-dir)
+	$(Q)$(MAKE) $(build)=$(build-dir)
 
 # FIXME Should go into a make.lib or something
 # ===========================================================================
@@ -1345,12 +1235,6 @@ quiet_cmd_rmdirs = $(if $(wildcard $(rm-dirs)),CLEAN   $(wildcard $(rm-dirs)))
 
 quiet_cmd_rmfiles = $(if $(wildcard $(rm-files)),CLEAN   $(wildcard $(rm-files)))
       cmd_rmfiles = rm -f $(rm-files)
-
-# Run depmod only if we have System.map and depmod is executable
-quiet_cmd_depmod = DEPMOD  $(KERNELRELEASE)
-      cmd_depmod = $(CONFIG_SHELL) $(srctree)/scripts/depmod.sh $(DEPMOD) \
-                   $(KERNELRELEASE) "$(patsubst y,_,$(CONFIG_HAVE_UNDERSCORE_SYMBOL_PREFIX))"
-
 
 # read all saved command lines
 

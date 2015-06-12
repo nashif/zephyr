@@ -38,7 +38,7 @@
 #include <tc_util.h>
 #include <nanokernel.h>
 #include <arch/cpu.h>
-#include <vxmicro.h>
+#include <zephyr.h>
 
 /* One of the task IRQ objects will not be allocated */
 #define NUM_TASK_IRQS   CONFIG_MAX_NUM_TASK_IRQS - 1
@@ -47,8 +47,6 @@
 
 /* # ticks to wait for test completion */
 #define TIMEOUT	(60 * sys_clock_ticks_per_sec)
-
-/* locals */
 
 static ksem_t resultSems[] = { SEM_TASKDONE, SEM_TASKFAIL, ENDLIST };
 static ksem_t rdySem = SEM_RDY;

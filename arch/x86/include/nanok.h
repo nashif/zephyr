@@ -47,15 +47,13 @@ offsets.o module.
 #ifndef _NANOK_H
 #define _NANOK_H
 
-/* includes */
-
 #include <toolchain.h>
 #include <sections.h>
 #include <asm_inline.h>
 
 #ifndef _ASMLANGUAGE
 #include <nanokernel.h>		   /* public nanokernel API */
-#include <arch/x86/arch.h> /* private IA-32 definitions */
+#include <../../../kernel/nanokernel/include/nano_internal.h>
 #include <stdint.h>
 /*
  * This pulls in the code shared with the IDT generator that actually
@@ -744,10 +742,6 @@ typedef struct s_NANO {
 #define STACK_ROUND_UP(x) ROUND_UP(x, STACK_ALIGN_SIZE)
 #define STACK_ROUND_DOWN(x) ROUND_DOWN(x, STACK_ALIGN_SIZE)
 
-#ifndef NULL
-#define NULL (void *)0
-#endif
-
 /* variable declarations */
 
 /*
@@ -862,17 +856,7 @@ typedef unsigned char __aligned(_EXC_STUB_ALIGN) NANO_EXC_STUB[_EXC_STUB_SIZE];
 /* function prototypes */
 
 extern void nano_cpu_atomic_idle(unsigned int imask);
-extern unsigned _Swap(unsigned int mask);
-extern void _insert_ccs(tCCS **queue, tCCS *ccs);
 
-extern void _NewContext(char *pStack,
-			 unsigned stackSize,
-			 _ContextEntry pEntry,
-			 _ContextArg arg1,
-			 _ContextArg arg2,
-			 _ContextArg arg3,
-			 int prio,
-			 unsigned options);
 extern void nanoCpuExcConnect(unsigned int vector,
 			      void (*routine)(NANO_ESF * pEsf),
 			      NANO_EXC_STUB pExcStubMem);

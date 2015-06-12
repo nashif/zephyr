@@ -29,26 +29,26 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-# Script to characterize footprint of VxMicro
+# Script to characterize kernel footprint
 
 # Import common sanity check definitions
 #
-if [ -z ${TIMO_BASE} ]; then
-	echo "shell variables required to build VxMicro are not set"
+if [ -z ${ZEPHYR_BASE} ]; then
+	echo "shell variables required to build Zephyr OS are not set"
 	exit 1
 fi
-if [ ! -d ${TIMO_BASE} ] ; then
-	echo "directory ${TIMO_BASE} not found"
+if [ ! -d ${ZEPHYR_BASE} ] ; then
+	echo "directory ${ZEPHYR_BASE} not found"
 	exit 1
 fi
-source ${TIMO_BASE}/scripts/sanity_chk/common.defs
+source ${ZEPHYR_BASE}/scripts/sanity_chk/common.defs
 
 # Additional commands used in script
-SIZE="${TIMO_BASE}/scripts/truesize"
+SIZE="${ZEPHYR_BASE}/scripts/truesize"
 
 # Location of master project directory
 #
-PRJ_PATH=${TIMO_BASE}/samples
+PRJ_PATH=${ZEPHYR_BASE}/samples
 
 # Pseudo-file describing sample projects to be characterized
 #
@@ -74,7 +74,7 @@ PRJ_PATH=${TIMO_BASE}/samples
 # List of sample projects can contain comment lines (denoted by '#'),
 # but be sure to terminate line with a '\n' character!
 #
-PRJ_LIST_STD="\
+PRJ_LIST="\
 nanokernel/benchmark/footprint     TEST=min         <nq> atlas_peak-arc \n\
 nanokernel/benchmark/footprint     TEST=min         <nq> ti_lm3s6965 \n\
 nanokernel/benchmark/footprint     TEST=min         <nq> fsl_frdm_k64f \n\
@@ -101,7 +101,7 @@ microkernel/benchmark/boot_time        <u>  pentium4! minuteia! atom quark "
 help() {
 cat << EOF
 
-Usage : ${SCRIPT_NAME} [-hHcqb] [-A <arch>] [-B <board>] [-T <toolchain>]
+Usage : ${SCRIPT_NAME} [-hHcqb] [-A <arch>] [-B <board>]
        -h display this help message
        -H display more detailed documentation
        -c just clean projects
@@ -109,7 +109,6 @@ Usage : ${SCRIPT_NAME} [-hHcqb] [-A <arch>] [-B <board>] [-T <toolchain>]
        -b just build projects
        -A build projects for the specified architecture
        -B build projects for the specified BSP or BSP variant
-       -T build projects using the specified toolchain
 
 EOF
 }
@@ -119,7 +118,7 @@ EOF
 long_help() {
 cat << EOF
 
-Script to determine footprint characteristics of VxMicro.
+Script to determine kernel footprint characteristics.
 
 The script builds nanokernel and microkernel footprint
 projects for their various configurations and measures the size of the
@@ -142,7 +141,7 @@ main() {
 	#
 	# note: must handle all options that can be passed in by "sanity_chk",
 	# including ones that aren't applicable to this script
-	while getopts ":hHcqblA:B:T:" arg $*
+	while getopts ":hHcqblA:B:" arg $*
 	do
 		case $arg in
 		h)
@@ -171,9 +170,6 @@ main() {
 		B)
 			BSP_NAME=$OPTARG
 			;;
-		T)
-			export VXMICRO_TOOL="$OPTARG"
-			;;
 		\?)
 			${ECHO} "invalid option -$OPTARG"
 			help
@@ -200,7 +196,6 @@ main() {
 		${ECHO} "Cleaning all footprint sample projects"
 		${ECHO}
 
-		PRJ_LIST=${PRJ_LIST_STD}
 		clean_all_projects
 
 		${ECHO}
@@ -208,9 +203,6 @@ main() {
 		${ECHO} "${SCRIPT_NAME} cleanup completed successfully"
 		exit 0
 	fi
-
-	# determine which projects are to be built
-	PRJ_LIST=${PRJ_LIST_STD}
 
 	# set up environment info used to build projects
 	build_info_set

@@ -1,4 +1,4 @@
-/* mutex.c - test microkernel mutex APIs under VxMicro */
+/* mutex.c - test microkernel mutex APIs */
 
 /*
  * Copyright (c) 2012-2015 Wind River Systems, Inc.
@@ -32,7 +32,7 @@
 
 /*
 DESCRIPTION
-This module demonstrates the priority inheritance algorithm used in VxMicro.
+This module demonstrates the microkernel's priority inheritance algorithm.
 A task that owns a mutex is promoted to the priority level of the
 highest-priority task attempting to lock the mutex.
 
@@ -65,19 +65,13 @@ Timeline
             : RegressionTask (@ priority 40) sleeps
 */
 
-/* includes */
-
 #include <tc_util.h>
-#include <vxmicro.h>
-
-/* defines */
+#include <zephyr.h>
 
 #define  ONE_SECOND                 (sys_clock_ticks_per_sec)
 #define  HALF_SECOND                (sys_clock_ticks_per_sec / 2)
 #define  THIRD_SECOND               (sys_clock_ticks_per_sec / 3)
 #define  FOURTH_SECOND              (sys_clock_ticks_per_sec / 4)
-
-/* locals */
 
 static int tcRC = TC_PASS;         /* test case return code */
 

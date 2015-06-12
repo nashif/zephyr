@@ -42,6 +42,7 @@ task, depending on how the kernel is configured.
 #include <toolchain.h>
 #include <sections.h>
 #include <microkernel.h>
+#include <drivers/system_timer.h>
 
 #if defined(CONFIG_WORKLOAD_MONITOR)
 
@@ -281,9 +282,7 @@ unsigned char _sys_power_save_flag = 1;
 
 #if defined(CONFIG_ADVANCED_POWER_MANAGEMENT)
 
-#include <cputype.h>
 #include <nanokernel.h>
-#include <arch/cpu.h>
 #include <microkernel/k_types.h>
 #ifdef CONFIG_ADVANCED_IDLE
 #include <advidle.h>

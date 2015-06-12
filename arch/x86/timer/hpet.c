@@ -32,7 +32,7 @@
 
 /*
 DESCRIPTION
-This module implements a VxMicro device driver for the Intel High Precision
+This module implements a kernel device driver for the Intel High Precision
 Event Timer (HPET) device, and provides the standard "system clock driver"
 interfaces.
 
@@ -65,7 +65,6 @@ In a nanokernel-only system this device driver omits more complex capabilities
 */
 
 #include <nanokernel.h>
-#include <arch/cpu.h>
 #include <toolchain.h>
 #include <sections.h>
 #include <clock_vars.h>
@@ -74,7 +73,6 @@ In a nanokernel-only system this device driver omits more complex capabilities
 #ifdef CONFIG_MICROKERNEL
 
 #include <microkernel.h>
-#include <cputype.h>
 
 extern struct nano_stack _k_command_stack;
 
@@ -82,7 +80,7 @@ extern struct nano_stack _k_command_stack;
 #define TIMER_SUPPORTS_TICKLESS
 #endif
 
-#endif /*  CONFIG_NANOKERNEL */
+#endif /*  CONFIG_MICROKERNEL */
 
 /*
  * A board support package's board.h header must provide definitions for the
@@ -95,8 +93,6 @@ extern struct nano_stack _k_command_stack;
  */
 
 #include <board.h>
-
-/* defines */
 
 /* HPET register offsets */
 
@@ -196,7 +192,6 @@ extern struct nano_stack _k_command_stack;
 
 #define HPET_COMP_DELAY 192
 
-/* locals */
 #ifdef CONFIG_DYNAMIC_INT_STUBS
 static NANO_CPU_INT_STUB_DECL(_hpetIntStub); /* interrupt stub memory */
 #else					     /* !CONFIG_DYNAMIC_INT_STUBS */

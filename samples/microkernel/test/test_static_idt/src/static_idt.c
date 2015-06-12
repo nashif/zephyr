@@ -35,8 +35,6 @@ DESCRIPTION
 Ensures interrupt and exception stubs are installed correctly.
 */
 
-/* includes */
-
 #include <tc_util.h>
 
 #include <nanokernel.h>
@@ -49,10 +47,8 @@ Ensures interrupt and exception stubs are installed correctly.
 #endif
 
 #ifdef CONFIG_MICROKERNEL
-#include <vxmicro.h>
+#include <zephyr.h>
 #endif
-
-/* defines */
 
 /* These vectors are somewhat arbitrary. We try and use unused vectors */
 #define TEST_SOFT_INT 62
@@ -68,8 +64,6 @@ extern void *nanoIntStub;
 extern void *exc_divide_error_handlerStub;
 
 NANO_CPU_INT_REGISTER(nanoIntStub, TEST_SOFT_INT, 0);
-
-/* locals */
 
 static volatile int    excHandlerExecuted;
 static volatile int    intHandlerExecuted;

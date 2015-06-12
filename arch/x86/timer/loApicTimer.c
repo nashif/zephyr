@@ -32,7 +32,7 @@
 
 /*
 DESCRIPTION
-This module implements a VxMicro device driver for the Intel local APIC
+This module implements a kernel device driver for the Intel local APIC
 device, and provides the standard "system clock driver" interfaces.
 This library contains routines for the timer in the Intel local APIC/xAPIC
 (Advanced Programmable Interrupt Controller) in P6 (PentiumPro, II, III)
@@ -43,10 +43,7 @@ divided by a value specified in the divide configuration register.
 After reset, the timer is initialized to zero.
 */
 
-/* includes */
-
 #include <nanokernel.h>
-#include <arch/cpu.h>
 #include <toolchain.h>
 #include <sections.h>
 #include <clock_vars.h>
@@ -55,7 +52,6 @@ After reset, the timer is initialized to zero.
 
 #ifdef CONFIG_MICROKERNEL
 #include <microkernel.h>
-#include <cputype.h>
 #endif /* CONFIG_MICROKERNEL */
 
 /*
@@ -71,8 +67,6 @@ After reset, the timer is initialized to zero.
  */
 
 #include <board.h>
-
-/* defines */
 
 /* Local APIC Timer Bits */
 
@@ -112,13 +106,10 @@ After reset, the timer is initialized to zero.
 	do {/* nothing */              \
 	} while (0)
 #endif /* !TIMER_SUPPORTS_TICKLESS */
-/* globals */
-
 #if defined(TIMER_SUPPORTS_TICKLESS)
 extern int32_t _sys_idle_elapsed_ticks;
 #endif /* TIMER_SUPPORTS_TICKLESS */
 
-/* locals */
 #ifdef CONFIG_DYNAMIC_INT_STUBS
 static NANO_CPU_INT_STUB_DECL(
 	_loapic_timer_irq_stub); /* interrupt stub memory for */

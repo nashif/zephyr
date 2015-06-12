@@ -36,9 +36,7 @@ This module contains routines that are used to initialize the nanokernel.
 */
 
 #include <offsets.h>
-#include <cputype.h>
 #include <nanokernel.h>
-#include <arch/cpu.h>
 #include <misc/printk.h>
 #include <drivers/rand32.h>
 #include <sections.h>
@@ -55,7 +53,7 @@ const char * const build_timestamp = BUILD_TIMESTAMP;
 
 /* boot banner items */
 
-#define BOOT_BANNER "****** BOOTING VXMICRO ******"
+#define BOOT_BANNER "****** BOOTING ZEPHYR OS ******"
 
 #if !defined(CONFIG_BOOT_BANNER)
 #define PRINT_BOOT_BANNER() do { } while (0)
@@ -188,13 +186,13 @@ static void nano_init(tCCS *dummyOutContext)
 
 extern void *__stack_chk_guard;
 
-#if defined(VXMICRO_ARCH_x86)
+#if defined(CONFIG_X86_32)
 #define _MOVE_INSTR "movl "
-#elif defined(VXMICRO_ARCH_arm)
+#elif defined(CONFIG_ARM)
 #define _MOVE_INSTR "str "
 #else
-#error "Unknown VXMICRO_ARCH type"
-#endif /* VXMICRO_ARCH */
+#error "Unknown Architecture type"
+#endif /* CONFIG_X86_32 */
 
 #define STACK_CANARY_INIT()                                \
 	do {                                               \

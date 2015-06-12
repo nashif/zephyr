@@ -1,4 +1,4 @@
-/* pipe.c - test microkernel target pipe APIs under VxMicro */
+/* pipe.c - test microkernel target pipe APIs */
 
 /*
  * Copyright (c) 2012-2014 Wind River Systems, Inc.
@@ -41,23 +41,17 @@ The following target pipe routine does not yet have a test case:
   task_pipe_put_async()
 */
 
-/* includes */
-
 #include <nanokernel.h>
 #include <arch/cpu.h>
 #include <tc_util.h>
-#include <vxmicro.h>
+#include <zephyr.h>
 #include <misc/util.h>
-
-/* defines */
 
 #define  ONE_SECOND     (sys_clock_ticks_per_sec)
 
 #define  IRQ_PRIORITY   3
 
-#define  PIPE_SIZE  256    /* This must match the value in the VPF file */
-
-/* typedefs */
+#define  PIPE_SIZE  256    /* This must match the value in the MDEF file */
 
 typedef struct {
 	int  size;                 /* number of bytes to send/receive */
@@ -65,9 +59,6 @@ typedef struct {
 	int  sent;                 /* expected # of bytes sent */
 	int  rcode;                /* expected return code */
 } SIZE_EXPECT;
-
-/* locals */
-
 
 static char txBuffer[PIPE_SIZE + 32];
 static char rxBuffer[PIPE_SIZE + 32];
@@ -158,8 +149,6 @@ static SIZE_EXPECT  timeout_cases[] = {
 		{PIPE_SIZE, _0_TO_N, 0, RC_FAIL},
 		{PIPE_SIZE + 1, _0_TO_N, 0, RC_FAIL}
 	};
-
-/* globals */
 
 extern ksem_t regSem;
 extern ksem_t altSem;
@@ -1002,7 +991,7 @@ int AlternateTask(void)
 *
 * RegressionTask - main task in the test suite
 *
-* This is the entry point to the VxMicro target pipe test suite.
+* This is the entry point to the pipe test suite.
 *
 * RETURNS: TC_PASS or TC_FAIL
 */

@@ -1,4 +1,4 @@
-/* task.c - test microkernel task APIs under VxMicro */
+/* task.c - test microkernel task APIs */
 
 /*
  * Copyright (c) 2012-2014 Wind River Systems, Inc.
@@ -38,10 +38,8 @@ This module tests the following task APIs:
     task_sleep(), task_yield()
 */
 
-/* includes */
-
 #include <tc_util.h>
-#include <vxmicro.h>
+#include <zephyr.h>
 #include <arch/cpu.h>
 
 /* test uses 1 software IRQs */
@@ -50,24 +48,18 @@ This module tests the following task APIs:
 #include <irq_test_common.h>
 #include <util_test_common.h>
 
-/* defines */
-
-#define  RT_PRIO         10     /* RegressionTask prio - must match prj.vpf */
-#define  HT_PRIO         20     /* HelperTask prio - must match prj.vpf */
+#define  RT_PRIO         10     /* RegressionTask prio - must match prj.mdef */
+#define  HT_PRIO         20     /* HelperTask prio - must match prj.mdef */
 
 #define  SLEEP_TIME SECONDS(1)
 
 #define  CMD_TASKID    0
 #define  CMD_PRIORITY  1
 
-/* typedefs */
-
 typedef struct {
 	int  cmd;
 	int  data;
 } ISR_INFO;
-
-/* locals */
 
 static vvfn _trigger_isrTaskCommand = (vvfn)sw_isr_trigger_0;
 

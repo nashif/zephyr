@@ -2,7 +2,7 @@ Title: latency measure
 
 Description:
 
-This benchmark measures the latency of selected capabilities of both the VxMicro
+This benchmark measures the latency of selected capabilities of both the
 nanokernel and microkernel.
 
 IMPORTANT: The sample output below was generated using a simulation
@@ -16,15 +16,27 @@ Building and Running Project:
 This microkernel project outputs to the console.  It can be built and executed
 on QEMU as follows:
 
-    make pristine
     make NODE1.qemu
+
+--------------------------------------------------------------------------------
+
+Troubleshooting:
+
+Problems caused by out-dated project information can be addressed by
+issuing one of the following commands then rebuilding the project:
+
+    make clean          # discard results of previous builds
+                        # but keep existing configuration info
+or
+    make pristine       # discard results of previous builds
+                        # and restore pre-defined configuration info
 
 --------------------------------------------------------------------------------
 
 Sample Output:
 
 |-----------------------------------------------------------------------------|
-|                    VxMicro Nanokernel Latency Benchmark                     |
+|                        Nanokernel Latency Benchmark                         |
 |-----------------------------------------------------------------------------|
 |  tcs = timer clock cycles: 1 tcs is N nsec                                  |
 |-----------------------------------------------------------------------------|
@@ -48,7 +60,7 @@ Sample Output:
 | Average time for lock then unlock is NNN tcs = NNNN nsec                    |
 |-----------------------------------------------------------------------------|
 |-----------------------------------------------------------------------------|
-|                    VxMicro Microkernel Latency Benchmark                    |
+|                        Microkernel Latency Benchmark                        |
 |-----------------------------------------------------------------------------|
 |  tcs = timer clock cycles: 1 tcs is N nsec                                  |
 |-----------------------------------------------------------------------------|
@@ -72,4 +84,4 @@ Sample Output:
 |                                    E N D                                    |
 |-----------------------------------------------------------------------------|
 ===================================================================
-VXMICRO PROJECT EXECUTION SUCCESSFUL
+PROJECT EXECUTION SUCCESSFUL

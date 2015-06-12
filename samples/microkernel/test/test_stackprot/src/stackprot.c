@@ -1,4 +1,4 @@
-/* stackprot.c - test Stack Protector feature using canary under VxMicro */
+/* stackprot.c - test Stack Protector feature using canary */
 
 /*
  * Copyright (c) 2012-2014 Wind River Systems, Inc.
@@ -46,20 +46,15 @@ DESCRIPTION
   prints out a short string couple times.
 */
 
-/* includes */
 #include <tc_util.h>
 
 #ifdef CONFIG_MICROKERNEL
-#include <vxmicro.h>
-
-/* locals */
+#include <zephyr.h>
 
 #else
 #include <arch/cpu.h>
 
-/* defines */
 #define STACKSIZE               1024
-/* locals */
 char __stack fiberStack[STACKSIZE];
 
 #endif /* CONFIG_MICROKERNEL */
@@ -67,7 +62,6 @@ char __stack fiberStack[STACKSIZE];
 static int count = 0;
 static int tcRC = TC_PASS;
 
-/* forward declarations */
 void check_input(const char *name, const char *input);
 
 /*******************************************************************************
@@ -168,7 +162,7 @@ void main(void)
 
 #ifdef CONFIG_MICROKERNEL
 	/* Start task */
-	task_start(ALTERNATETASK);       /* refer to prj.vpf file */
+	task_start(ALTERNATETASK);       /* refer to prj.mdef file */
 #else
 	/* Start fiber */
 	task_fiber_start(&fiberStack[0], STACKSIZE,

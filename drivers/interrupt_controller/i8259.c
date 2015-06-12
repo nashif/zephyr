@@ -32,7 +32,7 @@
 
 /*
 DESCRIPTION
-This module implements a VxMicro device driver for the Intel 8259A PIC
+This module implements a kernel device driver for the Intel 8259A PIC
 (Programmable Interrupt Controller).  In summary, the i8259A supports
 up to 8 vectored priority interrupts.  Cascading up to 8 PICs allows support
 of up to 64 vectored priority interrupts.  This device driver assumes two
@@ -83,8 +83,6 @@ the last level acknowledged and serviced.
  * specific and implemented in assembler
  */
 
-/* includes */
-
 #include <nanokernel.h>
 #include <arch/cpu.h>
 #include <toolchain.h>
@@ -93,14 +91,10 @@ the last level acknowledged and serviced.
 #include <drivers/pic.h>
 #include <board.h>
 
-/* defines */
-
 #define OCW3_DEF 0x08 /* 3rd default control word */
 #define OCW3_PCB 0x04 /* Polling Control Bit */
 #define OCW3_ISR 0x03 /* Read in-service reg */
 #define OCW3_IRR 0x02 /* Read inter request reg */
-
-/* globals */
 
 #ifndef CONFIG_SHUTOFF_PIC
 unsigned int _i8259_spurious_interrupt_count =
@@ -252,7 +246,7 @@ void _i8259_eoi_slave(unsigned int irq /* IRQ number to
 * This routine enables or disables a specified PIC interrupt input line. To
 * enable an interrupt input line, the parameter <enable> must be non-zero.
 *
-* The VxMicro nanokernel exports the irq_enable() and irq_disable()
+* The nanokernel exports the irq_enable() and irq_disable()
 * APIs (mapped to _i8259_irq_enable() and _i8259_irq_disable(), respectively).
 * This function is called by _i8259_irq_enable() and _i8259_irq_disable() to
 * perform the actual enabling/disabling of an IRQ to minimize footprint.

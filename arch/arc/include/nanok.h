@@ -53,6 +53,7 @@ extern "C" {
 #include <arch/cpu.h>
 
 #ifndef _ASMLANGUAGE
+#include <../../../kernel/nanokernel/include/nano_internal.h>
 #include <stdint.h>
 #endif
 
@@ -264,12 +265,6 @@ static ALWAYS_INLINE int _IS_IN_ISR(void)
 	return ((act & 0xffff) != 0);
 }
 
-extern void _insert_ccs(tCCS **, tCCS *);
-extern void _NewContext(char *, unsigned, _ContextEntry,
-						_ContextArg, _ContextArg, _ContextArg,
-						int, unsigned);
-
-extern unsigned int _Swap(unsigned int);
 extern void nanoCpuAtomicIdle(unsigned int);
 extern void _ContextEntryWrapper(void);
 

@@ -2,8 +2,7 @@ Title: latency measure
 
 Description:
 
-This benchmark measures the latency of selected capabilities of VxMicro
-nanokernel features.
+This benchmark measures the latency of selected nanokernel features.
 
 IMPORTANT: The results below were generated using a simulation environment,
 and may not reflect the results that will be generated using other
@@ -16,15 +15,27 @@ Building and Running Project:
 This nanokernel project outputs to the console.  It can be built and executed
 on QEMU as follows:
 
-    make pristine
-    make nanokernel.qemu
+    make qemu
+
+--------------------------------------------------------------------------------
+
+Troubleshooting:
+
+Problems caused by out-dated project information can be addressed by
+issuing one of the following commands then rebuilding the project:
+
+    make clean          # discard results of previous builds
+                        # but keep existing configuration info
+or
+    make pristine       # discard results of previous builds
+                        # and restore pre-defined configuration info
 
 --------------------------------------------------------------------------------
 
 Sample Output:
 
 |-----------------------------------------------------------------------------|
-|                    VxMicro Nanokernel Latency Benchmark                     |
+|                        Nanokernel Latency Benchmark                         |
 |-----------------------------------------------------------------------------|
 |  tcs = timer clock cycles: 1 tcs is N nsec                                  |
 |-----------------------------------------------------------------------------|

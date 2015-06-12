@@ -2,7 +2,7 @@ Title: kernel access to standard libraries
 
 Description:
 
-This test verifies kernel access to VxMicro's standard libraries.
+This test verifies kernel access to the standard C libraries.
 It is intended to catch issues in which a library is completely absent
 or non-functional, and is NOT intended to be a comprehensive test suite
 of all functionality provided by the libraries.
@@ -14,8 +14,20 @@ Building and Running Project:
 This microkernel project outputs to the console.  It can be built and executed
 on QEMU as follows:
 
-    make pristine
-    make microkernel.qemu
+    make qemu
+
+--------------------------------------------------------------------------------
+
+Troubleshooting:
+
+Problems caused by out-dated project information can be addressed by
+issuing one of the following commands then rebuilding the project:
+
+    make clean          # discard results of previous builds
+                        # but keep existing configuration info
+or
+    make pristine       # discard results of previous builds
+                        # and restore pre-defined configuration info
 
 --------------------------------------------------------------------------------
 
@@ -34,4 +46,4 @@ Testing stdint.h library ...
 Testing string.h library ...
 Validation complete
 ===================================================================
-VXMICRO PROJECT EXECUTION SUCCESSFUL
+PROJECT EXECUTION SUCCESSFUL

@@ -2,9 +2,8 @@ Title: AppKernel
 
 Description:
 
-AppKernel is used to measure the performance of VxMicro.  It performs benchmarks
-for sema, mutex, memmap, mempool, event, mailbox and pipe when used by
-tasks in microkernel.
+AppKernel is used to measure the performance of microkernel events, mutexes,
+semaphores, FIFOs, mailboxes, pipes, memory maps, and memory pools.
 
 --------------------------------------------------------------------------------
 
@@ -13,8 +12,20 @@ Building and Running Project:
 This microkernel project outputs to the console. It can be built and executed
 on QEMU as follows:
 
-    make pristine
-    make microkernel.qemu
+    make qemu
+
+--------------------------------------------------------------------------------
+
+Troubleshooting:
+
+Problems caused by out-dated project information can be addressed by
+issuing one of the following commands then rebuilding the project:
+
+    make clean          # discard results of previous builds
+                        # but keep existing configuration info
+or
+    make pristine       # discard results of previous builds
+                        # and restore pre-defined configuration info
 
 --------------------------------------------------------------------------------
 
@@ -23,7 +34,7 @@ Sample Output:
 |-----------------------------------------------------------------------------|
 |          S I M P L E   S E R V I C E    M E A S U R E M E N T S  |  nsec    |
 |-----------------------------------------------------------------------------|
-| minimum VxMicro call time                                        |     NNNNN|
+| kernel service request overhead                                  |     NNNNN|
 |-----------------------------------------------------------------------------|
 | enqueue 1 byte msg in FIFO                                       |    NNNNNN|
 | dequeue 1 byte msg in FIFO                                       |    NNNNNN|
@@ -134,4 +145,4 @@ Sample Output:
 |-----------------------------------------------------------------------------|
 |         END OF TESTS                                                        |
 |-----------------------------------------------------------------------------|
-VXMICRO PROJECT EXECUTION SUCCESSFUL
+PROJECT EXECUTION SUCCESSFUL

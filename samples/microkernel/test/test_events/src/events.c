@@ -1,4 +1,4 @@
-/* events.c - test microkernel event APIs under VxMicro */
+/* events.c - test microkernel event APIs */
 
 /*
  * Copyright (c) 2012-2014 Wind River Systems, Inc.
@@ -38,10 +38,8 @@ This modules tests the following event APIs:
 
 */
 
-/* includes */
-
 #include <tc_util.h>
-#include <vxmicro.h>
+#include <zephyr.h>
 #include <arch/cpu.h>
 #include <toolchain.h>
 
@@ -51,13 +49,9 @@ This modules tests the following event APIs:
 #include <irq_test_common.h>
 #include <util_test_common.h>
 
-/* typedefs */
-
 typedef struct {
 	kevent_t  event;
 } ISR_INFO;
-
-/* locals */
 
 static int  evidence = 0;
 

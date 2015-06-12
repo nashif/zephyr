@@ -40,7 +40,6 @@
 #include <arch/cpu.h>
 #include <toolchain.h>
 #include <nanok.h>
-#include <nanocontextentry.h>
 #include <offsets.h>
 
 /*  initial stack frame */
@@ -123,6 +122,10 @@ void _NewContext(
 	struct init_stack_frame *pInitCtx;
 
 	tCCS *pCcs = (tCCS *) pStackMem;
+
+#ifdef CONFIG_INIT_STACKS
+    k_memset(pStackMem, 0xaa, stackSize);
+#endif
 
 	/* carve the context entry struct from the "base" of the stack */
 

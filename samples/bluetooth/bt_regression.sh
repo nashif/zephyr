@@ -2,20 +2,20 @@
 
 # Import common sanity check definitions
 #
-if [ -z ${TIMO_BASE} ]; then
-	echo "shell variables required to build VxMicro are not set"
+if [ -z ${ZEPHYR_BASE} ]; then
+	echo "shell variables required to build Zephyr OS are not set"
 	exit 1
 fi
-if [ ! -d ${TIMO_BASE} ] ; then
-	echo "directory ${TIMO_BASE} not found"
+if [ ! -d ${ZEPHYR_BASE} ] ; then
+	echo "directory ${ZEPHYR_BASE} not found"
 	exit 1
 fi
 
-source ${TIMO_BASE}/scripts/sanity_chk/common.defs
+source ${ZEPHYR_BASE}/scripts/sanity_chk/common.defs
 
 # Location of master project directory
 #
-PRJ_PATH=${TIMO_BASE}/samples
+PRJ_PATH=${ZEPHYR_BASE}/samples
 
 PRJ_LIST="\
 nanokernel/apps/bluetooth/init               <n> pentium4        \n\
@@ -48,7 +48,6 @@ main() {
 	BSP_NAME=""
 	ARCH_NAME=""
 	KEEP_LOGS=0
-	VXMICRO_TOOL=gcc
 
 	# set up environment info used to build projects
 	build_info_set

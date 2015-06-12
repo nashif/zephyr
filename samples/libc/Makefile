@@ -28,7 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-include $(subst \,/,${VXMICRO_BASE})/make/env/defs.base
+include $(subst \,/,${ZEPHYR_BASE})/make/env/defs.base
 
 .PHONY: all clean
 all:

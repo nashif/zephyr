@@ -137,7 +137,7 @@ void set_state_bit(
 		 * tasks.
 		 */
 #if defined(__GNUC__)
-#if defined(VXMICRO_ARCH_arm)
+#if defined(CONFIG_ARM)
 		/*
 		 * Avoid bad code generation by certain gcc toolchains for ARM
 		 * when an optimization setting of -O2 or above is used.
@@ -207,10 +207,6 @@ void start_task(struct k_proc *X,	 /* ptr to task control block */
 	unsigned int contextOptions;
 
 /* Note: the field X->worksize now represents the task size in bytes */
-
-#ifdef CONFIG_INIT_STACKS
-	memset(X->workspace, 0xaa, X->worksize);
-#endif
 
 	contextOptions = 0;
 	_START_TASK_ARCH(X, &contextOptions);

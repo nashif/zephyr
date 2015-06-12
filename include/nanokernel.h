@@ -1,4 +1,4 @@
-/* nanokernel.h - public API for VxMicro nanokernel */
+/* nanokernel.h - public API for nanokernel */
 
 /*
  * Copyright (c) 1997-2015, Wind River Systems, Inc.
@@ -33,10 +33,14 @@
 #ifndef __NANOKERNEL_H__
 #define __NANOKERNEL_H__
 
-#include <stdint.h>
-#include <toolchain.h> /* compiler specific configuration options */
+/* fundamental include files */
 
-#include <arch/private.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <toolchain.h>
+
+/* generic kernel public APIs */
+
 #include <kernel_version.h>
 #include <clock_vars.h>
 #include <drivers/rand32.h>
@@ -44,6 +48,21 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/*
+ * nanokernel private APIs that are exposed via the public API
+ *
+ * THESE ITEMS SHOULD NOT BE REFERENCED EXCEPT BY THE KERNEL ITSELF!
+ */
+
+struct _nano_queue {
+	void *head;
+	void *tail;
+};
+
+struct s_CCS;
+
+/* architecture-independent nanokernel public APIs */
 
 typedef struct s_CCS *nano_context_id_t;
 
@@ -60,7 +79,7 @@ typedef int nano_context_type_t;
  */
 extern nano_context_id_t context_self_get(void);
 extern nano_context_type_t context_type_get(void);
-extern int _context_essential_check(tCCS *pCtx);
+extern int _context_essential_check(nano_context_id_t pCtx);
 
 /* fiber APIs
  */
@@ -92,8 +111,16 @@ extern void task_fiber_start(char *pStack,
 			       unsigned prio,
 			       unsigned options);
 
-/* FIFO APIs
- */
+/* FIFO APIs */
+
+struct nano_fifo {
+	union {
+		struct _nano_queue wait_q;
+		struct _nano_queue data_q;
+	};
+	int stat;
+};
+
 extern void nano_fifo_init(struct nano_fifo *chan);
 /* scheduling context independent methods (when context is not known) */
 extern void nano_fifo_put(struct nano_fifo *chan, void *data);
@@ -111,8 +138,13 @@ extern void nano_task_fifo_put(struct nano_fifo *chan, void *data);
 extern void *nano_task_fifo_get(struct nano_fifo *chan);
 extern void *nano_task_fifo_get_wait(struct nano_fifo *chan);
 
-/* LIFO APIs
- */
+/* LIFO APIs */
+
+struct nano_lifo {
+	struct _nano_queue wait_q;
+	void *list;
+};
+
 extern void nano_lifo_init(struct nano_lifo *chan);
 /* methods for ISRs */
 extern void nano_isr_lifo_put(struct nano_lifo *chan, void *data);
@@ -126,8 +158,13 @@ extern void nano_task_lifo_put(struct nano_lifo *chan, void *data);
 extern void *nano_task_lifo_get(struct nano_lifo *chan);
 extern void *nano_task_lifo_get_wait(struct nano_lifo *chan);
 
-/* semaphore APIs
- */
+/* semaphore APIs */
+
+struct nano_sem {
+	struct _nano_queue wait_q;
+	int nsig;
+};
+
 extern void nano_sem_init(struct nano_sem *chan);
 /* scheduling context independent methods (when context is not known) */
 extern void nano_sem_give(struct nano_sem *chan);
@@ -144,8 +181,14 @@ extern void nano_task_sem_give(struct nano_sem *chan);
 extern int nano_task_sem_take(struct nano_sem *chan);
 extern void nano_task_sem_take_wait(struct nano_sem *chan);
 
-/* stack APIs
- */
+/* stack APIs */
+
+struct nano_stack {
+	nano_context_id_t fiber;
+	uint32_t *base;
+	uint32_t *next;
+};
+
 extern void nano_stack_init(struct nano_stack *chan, uint32_t *data);
 /* methods for ISRs */
 extern void nano_isr_stack_push(struct nano_stack *chan, uint32_t data);
@@ -169,6 +212,13 @@ extern void *context_custom_data_get(void);
 #if defined(CONFIG_NANOKERNEL)
 
 /* nanokernel-only timers */
+
+struct nano_timer {
+	struct nano_timer *link;
+	uint32_t ticks;
+	struct nano_lifo lifo;
+	void *userData;
+};
 
 extern void nano_timer_init(struct nano_timer *chan, void *data);
 
@@ -222,5 +272,10 @@ extern uint32_t nano_tick_delta_32(int64_t *reftime);
 #ifdef __cplusplus
 }
 #endif
+
+
+/* architecture-specific nanokernel public APIs */
+
+#include <arch/cpu.h>
 
 #endif /* __NANOKERNEL_H__ */

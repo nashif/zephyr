@@ -40,7 +40,6 @@ tasks or fibers.
 #include <sections.h>
 
 #include <nanok.h>
-#include <nanocontextentry.h>
 #include <misc/printk.h>
 
 /*******************************************************************************
@@ -277,43 +276,3 @@ FUNC_NORETURN void _context_entry(
 
 	CODE_UNREACHABLE;
 }
-/*******************************************************************************
-*
-* _insert_ccs - add a context into the list of runnable contexts
-*
-* The list of runnable contexts is maintained via a single linked list
-* in priority order.  Numerically lower priorities represent higher priority
-* contexts.
-*
-* \NOMANUAL
-*
-* RETURNS: N/A
-*/
-
-void _insert_ccs(tCCS **queue, tCCS *ccs)
-{
-	tCCS *pQ;
-
-	pQ = (tCCS *)queue;
-
-	/*
-	 * Scan the "queue" until end of list or until context with numerically
-	 * higher priority is located.  A context will be placed at the end of
-	 * the series of equal priority contexts.
-	 */
-
-	while (pQ->link && (ccs->prio >= pQ->link->prio)) {
-		pQ = pQ->link;
-	}
-
-	/*
-	 * Insert context.  A context will be placed at the end of equal
-	 * priority
-	 * contexts.
-	 */
-
-	ccs->link = pQ->link;
-	pQ->link = ccs;
-}
-
-

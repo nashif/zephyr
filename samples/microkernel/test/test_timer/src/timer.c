@@ -1,4 +1,4 @@
-/* timer.c - test ukernel timer APIs */
+/* timer.c - test microkernel timer APIs */
 
 /*
  * Copyright (c) 2013-2014 Wind River Systems, Inc.
@@ -32,17 +32,15 @@
 
 /*
 DESCRIPTION
-This module tests the following ukernel timer routines:
+This module tests the following microkernel timer routines:
 
   task_timer_alloc(), task_timer_free()
   task_timer_start(), task_timer_restart(), task_timer_stop()
   task_tick_delta(), task_tick_get_32()
 */
 
-/* includes */
-
 #include <tc_util.h>
-#include <vxmicro.h>
+#include <zephyr.h>
 
 extern struct nano_lifo _k_timer_free;    /* For white box testing only */
 
@@ -50,8 +48,6 @@ extern struct nano_lifo _k_timer_free;    /* For white box testing only */
 
 #define WITHIN_ERROR(var, target, epsilon)       \
 		(((var) >= (target)) && ((var) <= (target) + (epsilon)))
-
-/* locals */
 
 static ktimer_t pTimer[NTIMERS + 1];
 

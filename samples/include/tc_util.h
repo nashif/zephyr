@@ -33,8 +33,6 @@
 #ifndef __TC_UTIL_H__
 #define __TC_UTIL_H__
 
-/* includes */
-
 #if defined(CONFIG_NANOKERNEL)
 #include <nanokernel.h>
 #else
@@ -43,8 +41,6 @@
 
 #include <misc/printk.h>
 #include <string.h>
-
-/* defines */
 
 #define PRINT_DATA(fmt, ...) printk(fmt, ##__VA_ARGS__)
 
@@ -85,7 +81,7 @@
 	do {                                                    \
 		PRINT_LINE;                                         \
 		TC_END(result,                                      \
-			"VXMICRO PROJECT EXECUTION %s\n",               \
+			"PROJECT EXECUTION %s\n",               \
 			result == TC_PASS ? "SUCCESSFUL" : "FAILED");   \
 	} while (0)
 

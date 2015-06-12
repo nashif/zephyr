@@ -33,9 +33,10 @@
 #ifndef MINIK_H
 #define MINIK_H
 
+#include <stddef.h>
 #include <kernel_struct.h>
 #include <kernel_main.h>
-#include <clock_vars.h>
+#include <nanok.h>
 
 #define KERNEL_ENTRY(A) _k_task_call(A)
 
@@ -172,25 +173,25 @@ extern void force_timeout(struct k_args *A);
 #define TF_STOP 0x00000001    /* Not started */
 #define TF_TERM 0x00000002    /* Terminated */
 #define TF_SUSP 0x00000004    /* Suspended */
-#define TF_BLCK 0x00000008    /* Blocked by host server debugger */
+#define TF_BLCK 0x00000008    /* Blocked */
 #define TF_GDBSTOP 0x00000010 /* Stopped by GDB agent */
 #define TF_PRIO 0x00000020    /* Task priority is changing */
 
 #define TF_TIME 0x00000800     /* Sleeping */
 #define TF_DRIV 0x00001000     /* Waiting for arch specific driver */
-#define TF_DATA 0x00002000     /* Waiting for movedata to complete */
+#define TF_RES0 0x00002000     /* Reserved */
 #define TF_EVNT 0x00004000     /* Waiting for an event */
 #define TF_ENQU 0x00008000     /* Waiting to put data on a FIFO */
 #define TF_DEQU 0x00010000     /* Waiting to get data from a FIFO */
-#define TF_SEND 0x00020000     /* Waiting to send via mbox or channel */
-#define TF_RECV 0x00040000     /* Waiting to recv via mbox or channel */
+#define TF_SEND 0x00020000     /* Waiting to send via mailbox or pipe */
+#define TF_RECV 0x00040000     /* Waiting to recv via mailbox or pipe */
 #define TF_SEMA 0x00080000     /* Waiting for a semaphore */
 #define TF_LIST 0x00100000     /* Waiting for a group of semaphores */
 #define TF_LOCK 0x00200000     /* Waiting for a mutex */
 #define TF_ALLO 0x00400000     /* Waiting on a memory mapping */
 #define TF_GTBL 0x00800000     /* Waiting on a memory pool */
-#define TF_FIFO 0x01000000     /* Waiting on a remote FIFO operation */
-#define TF_NETW 0x02000000     /* Obsolete */
+#define TF_RES1 0x01000000     /* Reserved */
+#define TF_RES2 0x02000000     /* Reserved */
 #define TF_RECVDATA 0x04000000 /* Waiting to receive data */
 #define TF_SENDDATA 0x08000000 /* Waiting to send data */
 
@@ -201,6 +202,16 @@ extern int _k_debug_halt;
 #endif
 
 #ifdef CONFIG_TASK_MONITOR
+
+#define MON_TSWAP 1
+#define MON_STATE 2
+#define MON_KSERV 4
+#define MON_EVENT 8
+#define MON_ALL 15
+
+typedef void (*k_task_monitor_hook_t)(ktask_t taskid, uint32_t timestamp);
+
+extern void task_monitor_hook_set(k_task_monitor_hook_t func);
 
 extern void _k_task_monitor(struct k_proc *, uint32_t d2);
 extern void _k_task_monitor_args(struct k_args *);

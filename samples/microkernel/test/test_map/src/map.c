@@ -1,4 +1,4 @@
-/* map.c - test microkernel Map APIs under VxMicro */
+/* map.c - test microkernel memory map APIs */
 
 /*
  * Copyright (c) 2012-2014 Wind River Systems, Inc.
@@ -44,25 +44,18 @@ allocated, and is only released once.  Using an invalid pointer will have
 unpredictable side effects.
 */
 
-/* includes */
-
 #include <tc_util.h>
-#include <vxmicro.h>
-
-/* defines */
+#include <stdbool.h>
+#include <zephyr.h>
 
 #define NUMBLOCKS   2       /*
                              * Number of memory blocks.  This number
-                             * has to be aligned with the number in VPF file
+                             * has to be aligned with the number in MDEF file
                              * The minimum number of blocks needed to run the
                              * test is 2
                              */
 
-/* locals */
-
 static int tcRC = TC_PASS;     /* test case return code */
-
-/* forward declarations */
 
 int testMapGetAllBlocks(void **P);
 int testMapFreeAllBlocks(void **P);
@@ -72,15 +65,15 @@ int testMapFreeAllBlocks(void **P);
 * verifyRetValue - verify return value
 *
 * This routine verifies current value against expected value
-* and returns TRUE if they are the same.
+* and returns true if they are the same.
 *
 * \param expectRetValue     expect value
 * \param currentRetValue    current value
 *
-* RETURNS:  TRUE, FALSE
+* RETURNS:  true, false
 */
 
-BOOL verifyRetValue(int expectRetValue, int currentRetValue)
+bool verifyRetValue(int expectRetValue, int currentRetValue)
 {
 	return (expectRetValue == currentRetValue);
 
@@ -171,7 +164,7 @@ int testMapGetAllBlocks(void **p)
 
 	TC_PRINT("Function %s\n", __func__);
 
-	/* Number of blocks in the map is defined in VPF file */
+	/* Number of blocks in the map is defined in MDEF file */
 	for (int i = 0; i < NUMBLOCKS; i++) {
 		/* Verify number of used blocks in the map */
 		retValue = task_mem_map_used_get(MAP_LgBlks);
@@ -242,7 +235,7 @@ int testMapFreeAllBlocks(void **p)
 
 	TC_PRINT("Function %s\n", __func__);
 
-	/* Number of blocks in the map is defined in VPF file */
+	/* Number of blocks in the map is defined in MDEF file */
 	for (int i = 0; i < NUMBLOCKS; i++) {
 		/* Verify number of used blocks in the map */
 		retValue = task_mem_map_used_get(MAP_LgBlks);

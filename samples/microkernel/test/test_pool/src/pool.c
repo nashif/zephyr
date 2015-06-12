@@ -1,4 +1,4 @@
-/* pool.c - test microkernel memory pool APIs under VxMicro */
+/* pool.c - test microkernel memory pool APIs */
 
 /*
  * Copyright (c) 2012-2014 Wind River Systems, Inc.
@@ -38,15 +38,11 @@ This modules tests the following memory pool routines:
   task_mem_pool_free()
 */
 
-/* includes */
-
 #include <tc_util.h>
 #include <nanokernel.h>
 #include <arch/cpu.h>
-#include <vxmicro.h>
+#include <zephyr.h>
 #include <misc/util.h>
-
-/* defines */
 
 #define  ONE_SECOND     (sys_clock_ticks_per_sec)
 #define  TENTH_SECOND   (sys_clock_ticks_per_sec / 10)
@@ -54,8 +50,6 @@ This modules tests the following memory pool routines:
 #define  NUM_BLOCKS     64
 
 #define  DEFRAG_BLK_TEST 2222
-
-/* typedefs */
 
 typedef struct {
 	struct k_block *block;    /* pointer to block data */
@@ -67,8 +61,6 @@ typedef struct {
 
 typedef int (*poolBlockGetFunc_t)(struct k_block *, kmemory_pool_t, int, int32_t);
 typedef int (*poolMoveBlockFunc_t)(struct k_block *, kmemory_pool_t);
-
-/* locals */
 
 static volatile int evidence = 0;
 
@@ -463,7 +455,7 @@ void AlternateTask(void)
 *
 * RegressionTask - main task in the test suite
 *
-* This is the entry point to the VxMicro memory pool test suite.
+* This is the entry point to the memory pool test suite.
 *
 * RETURNS: N/A
 */

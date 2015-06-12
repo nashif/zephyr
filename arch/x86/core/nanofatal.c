@@ -35,18 +35,13 @@ DESCRIPTION
 This module provides the _NanoFatalErrorHandler() routine.
 */
 
-/* includes */
 #include <toolchain.h>
 #include <sections.h>
 
-#include <cputype.h>
 #include <nanokernel.h>
-#include <arch/cpu.h>
 #include <nanok.h>
 #include <misc/printk.h>
 
-
-/* globals */
 
 /*
  * Define a default ESF for use with _NanoFatalErrorHandler() in the event

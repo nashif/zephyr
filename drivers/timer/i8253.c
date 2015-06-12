@@ -32,7 +32,7 @@
 
 /*
 DESCRIPTION
-This module implements a VxMicro device driver for the Intel 8253 PIT
+This module implements a kernel device driver for the Intel 8253 PIT
 (Programmable Interval Timer) device, and provides the standard "system
 clock driver" interfaces.
 
@@ -49,10 +49,7 @@ An interrupt controller driver will not be utilized, so this driver will
 directly invoke the VIOAPIC APIs to configure/unmask the IRQ.
 */
 
-/* includes */
-
 #include <nanokernel.h>
-#include <arch/cpu.h>
 #include <toolchain.h>
 #include <sections.h>
 #include <limits.h>
@@ -62,7 +59,6 @@ directly invoke the VIOAPIC APIs to configure/unmask the IRQ.
 #ifdef CONFIG_MICROKERNEL
 
 #include <microkernel.h>
-#include <cputype.h>
 
 #endif /* CONFIG_MICROKERNEL */
 
@@ -83,8 +79,6 @@ directly invoke the VIOAPIC APIs to configure/unmask the IRQ.
  */
 
 #include <board.h>
-
-/* defines */
 
 #if defined(CONFIG_TICKLESS_IDLE)
 #define TIMER_SUPPORTS_TICKLESS
@@ -115,13 +109,9 @@ directly invoke the VIOAPIC APIs to configure/unmask the IRQ.
 #define PIT_CNT2(base) PIT_ADRS(base, 0x02) /* counter/channel 2 */
 #define PIT_CMD(base) PIT_ADRS(base, 0x03)  /* control word */
 
-/* globals */
-
 #if defined(TIMER_SUPPORTS_TICKLESS)
 extern int32_t _sys_idle_elapsed_ticks;
 #endif
-
-/* locals */
 
 /* interrupt stub memory for irq_connect() */
 
@@ -155,7 +145,7 @@ static uint32_t old_accumulated_count = 0; /* previous accumulated value value *
 
 #ifdef CONFIG_MICROKERNEL
 extern struct nano_stack _k_command_stack;
-#endif /* ! CONFIG_MICROKERNEL */
+#endif /* CONFIG_MICROKERNEL */
 
 /*******************************************************************************
 *

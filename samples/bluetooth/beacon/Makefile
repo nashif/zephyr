@@ -33,13 +33,13 @@
 # DESCRIPTION
 # Makefile for the Bluetooth beacon sample
 
-include $(subst \,/,${VXMICRO_BASE})/make/env/defs.base
+include $(subst \,/,${ZEPHYR_BASE})/make/env/defs.base
 
 # default BSP
 BSP ?= generic_pc
 
 PRJ_CONF = prj_${vARCH}.conf
-VPFILE = prj.vpf
+MDEF_FILE = prj.mdef
 
 # UART for Bluetooth
 QEMU_EXTRA_FLAGS ?= -serial unix:/tmp/bt-server-bredr

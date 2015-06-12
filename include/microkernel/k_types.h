@@ -33,7 +33,7 @@
 #ifndef K_TYPES_H
 #define K_TYPES_H
 
-#include <cputype.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,7 +54,6 @@ typedef uint32_t kmemory_pool_t;
 typedef unsigned int kevent_t;
 typedef uint32_t kirq_t;
 
-typedef void (*taskswitchcallbackfunc)(ktask_t taskid, uint32_t timestamp);
 typedef int (*kevent_handler_t)(int event);
 
 #define RC_OK 0
@@ -65,8 +64,6 @@ typedef int (*kevent_handler_t)(int event);
 
 #define ANYTASK (-1)  /* for mail sender or receiver parameter  */
 #define ENDLIST (-1)  /* this value terminates a semaphore list */
-#define ENDGROUP (-1) /* terminates semaphore group (id. above) */
-#define EMPTYID (-1)
 
 #define TICKS_UNLIMITED (-1)
 #define TICKS_NONE 0

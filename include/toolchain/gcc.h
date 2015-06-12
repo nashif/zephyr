@@ -53,7 +53,7 @@
 /* The GNU assembler for Cortex-M3 uses # for immediate values, not
  * comments, so the @nobits# trick does not work.
  */
-#if defined(VXMICRO_ARCH_arm)
+#if defined(CONFIG_ARM)
 #define _NODATA_SECTION(segment)  __attribute__((section(#segment)))
 #else
 #define _NODATA_SECTION(segment)				\
@@ -109,6 +109,7 @@ __extension__ ({							\
 
 #define __packed        __attribute__((__packed__))
 #define __aligned(x)    __attribute__((aligned(x)))
+#define __may_alias     __attribute__((__may_alias__))
 
 #define ARG_UNUSED(x) (void)(x)
 
@@ -119,7 +120,7 @@ __extension__ ({							\
 
 #if defined(_ASMLANGUAGE) && !defined(_LINKER)
 
-#ifdef VXMICRO_ARCH_arm
+#ifdef CONFIG_ARM
 
 #if defined(CONFIG_ISA_THUMB)
 
@@ -154,7 +155,7 @@ A##a:
 #define FUNC_CODE()
 #define FUNC_INSTR(a)
 
-#endif /* !VXMICRO_ARCH_arm */
+#endif /* !CONFIG_ARM */
 
 #endif /* _ASMLANGUAGE && !_LINKER */
 
@@ -167,12 +168,12 @@ A##a:
 
 #if defined(_ASMLANGUAGE) && !defined(_LINKER)
 
-#ifdef VXMICRO_ARCH_arm
+#ifdef CONFIG_ARM
 #define GTEXT(sym) .global FUNC(sym); .type FUNC(sym),%function
 #define GDATA(sym) .global FUNC(sym); .type FUNC(sym),%object
 #define WTEXT(sym) .weak FUNC(sym); .type FUNC(sym),%function
 #define WDATA(sym) .weak FUNC(sym); .type FUNC(sym),%object
-#elif defined(VXMICRO_ARCH_arc)
+#elif defined(CONFIG_ARC)
 /*
  * Need to use assembly macros because ';' is interpreted as the start of
  * a single line comment in the ARC assembler.
@@ -190,7 +191,7 @@ A##a:
 
 #define GTEXT(sym) glbl_text sym
 #define GDATA(sym) glbl_data sym
-#else  /* !VXMICRO_ARCH_arm && !VXMICRO_ARCH_arc */
+#else  /* !CONFIG_ARM && !CONFIG_ARC */
 #define GTEXT(sym) .globl FUNC(sym); .type FUNC(sym),@function
 #define GDATA(sym) .globl FUNC(sym); .type FUNC(sym),@object
 #endif
@@ -205,7 +206,7 @@ A##a:
  *   if all functions in the sub-section are not referenced.
  */
 
-#if defined(VXMICRO_ARCH_arc)
+#if defined(CONFIG_ARC)
 /*
  * Need to use assembly macros because ';' is interpreted as the start of
  * a single line comment in the ARC assembler.
@@ -237,7 +238,7 @@ A##a:
 #define SECTION_FUNC(sect, sym) section_func sect, sym
 #define SECTION_SUBSEC_FUNC(sect, subsec, sym) \
 	section_subsec_func sect, subsec, sym
-#else /* !VXMICRO_ARCH_arc */
+#else /* !CONFIG_ARC */
 
 #define SECTION_VAR(sect, sym)  .section .sect.FUNC(sym); FUNC(sym):
 #define SECTION_FUNC(sect, sym)						\
@@ -248,7 +249,7 @@ A##a:
 #define SECTION_SUBSEC_FUNC(sect, subsec, sym)				\
 		.section .sect.subsec, "ax"; PERFOPT_ALIGN; FUNC(sym):
 
-#endif /* VXMICRO_ARCH_arc */
+#endif /* CONFIG_ARC */
 
 #endif /* _ASMLANGUAGE && !_LINKER */
 
@@ -278,7 +279,7 @@ A##a:
 
 #define GEN_ABS_SYM_END }
 
-#if defined(VXMICRO_ARCH_arm)
+#if defined(CONFIG_ARM)
 
 /*
  * GNU/ARM backend does not have a proper operand modifier which does not
@@ -293,7 +294,7 @@ A##a:
 		",%B0"                              \
 		"\n\t.type\t" #name ",%%object" :  : "n"(~(value)))
 
-#elif defined(VXMICRO_ARCH_x86) || defined(VXMICRO_ARCH_arc)
+#elif defined(CONFIG_X86_32) || defined(CONFIG_ARC)
 
 #define GEN_ABSOLUTE_SYM(name, value)               \
 	__asm__(".globl\t" #name "\n\t.equ\t" #name \

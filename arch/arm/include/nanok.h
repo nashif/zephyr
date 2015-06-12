@@ -53,6 +53,7 @@ extern "C" {
 #include <arch/cpu.h>
 
 #ifndef _ASMLANGUAGE
+#include <../../../kernel/nanokernel/include/nano_internal.h>
 #include <stdint.h>
 #endif
 
@@ -198,17 +199,6 @@ static ALWAYS_INLINE void fiberRtnValueSet(
 	pEsf->a1 = value;
 }
 
-extern void _insert_ccs(tCCS **, tCCS *);
-extern void _NewContext(char *,
-			 unsigned,
-			 _ContextEntry,
-			 _ContextArg,
-			 _ContextArg,
-			 _ContextArg,
-			 int,
-			 unsigned);
-
-extern unsigned int _Swap(unsigned int);
 extern void nano_cpu_atomic_idle(unsigned int);
 
 #define _IS_IN_ISR() _IsInIsr()

@@ -44,13 +44,12 @@ included by the nanokernel interface architecture-abstraction header
 extern "C" {
 #endif
 
-#ifndef _ASMLANGUAGE
-#include <nanokernel.h>
-#include <cputype.h>
-#endif
+/* APIs need to support non-byte addressible architectures */
+
+#define OCTET_TO_SIZEOFUNIT(X) (X)
+#define SIZEOFUNIT_TO_OCTET(X) (X)
 
 #ifdef CONFIG_CPU_ARCV2
-#include <arch/arc/v2/init.h>
 #include <arch/arc/v2/exc.h>
 #include <arch/arc/v2/irq.h>
 #include <arch/arc/v2/ffs.h>

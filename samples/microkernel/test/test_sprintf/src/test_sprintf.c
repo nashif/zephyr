@@ -35,12 +35,8 @@ DESCRIPTION
 This module contains the code for testing sprintf() functionality.
 */
 
-/* includes */
-
 #include <tc_util.h>
 #include <stdio.h>
-
-/* defines */
 
 #define DEADBEEF  0xdeadbeef
 
@@ -67,8 +63,6 @@ This module contains the code for testing sprintf() functionality.
 		"66666666666666666666666666666666666666666666666666666666666666666"
 
 #define PRINTF_MAX_STRING_LENGTH   200
-
-/* typedefs */
 
 typedef union {
 	double  d;
@@ -218,7 +212,7 @@ int sprintfDoubleTest(void)
 	/*******************/
 
 	/*
-	 * VxMicro does not support size modifiers such as L.  As such, attempts to
+	 * Size modifiers such as L are not supported.  As such, attempts to
 	 * print a long double will NOT result in intuitively expected output.
 	 * Until such time as they are supported (if ever) the output will remain
 	 * counter-intuitive.  If they ever are supported then this test will have
@@ -271,9 +265,9 @@ int vsnprintfTest(void)
 	char buffer[100];
 
 	/*
-	 * VxMicro may be handling the string size in a non-standard manner.
-	 * If a negative value is supplied for the string size, VxMicro converts
-	 * it to 0x7fffffff--maximum integer size.  Since there is insufficient
+	 * The string size may be handled in a non-standard manner.
+	 * If a negative value is supplied for the string size, it is converted
+	 * to 0x7fffffff--maximum integer size.  Since there is insufficient
 	 * memory to test a string of that length, we just check that the string
 	 * was fully written so that we can exercise the code path.
 	 */
@@ -392,9 +386,9 @@ int snprintfTest(void)
 	char buffer[100];
 
 	/*
-	 * VxMicro may be handling the string size in a non-standard manner.
-	 * If a negative value is supplied for the string size, VxMicro converts
-	 * it to 0x7fffffff--maximum integer size.  Since there is insufficient
+	 * The string size may be handled in a non-standard manner.
+	 * If a negative value is supplied for the string size, it is converted
+	 * to 0x7fffffff--maximum integer size.  Since there is insufficient
 	 * memory to test a string of that length, we just check that the string
 	 * was fully written so that we can exercise the code path.
 	 */
@@ -535,7 +529,7 @@ int sprintfIntegerTest(void)
 
 	/*******************/
 
-	/* Note: VxMicro prints hex numbers in 8 characters */
+	/* Note: prints hex numbers in 8 characters */
 	len = sprintf(buffer, "%x", 0x11);
 	if (len != 2) {
 		TC_ERROR("sprintf(%%x).  Expected 2 bytes written, not %d\n", len);

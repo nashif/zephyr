@@ -32,14 +32,24 @@ Building and Running Project:
 This microkernel project outputs to the console.  It can be built and executed
 on QEMU in three possibile configurations as follows:
 
-    make pristine
-    make BOOTTIME_QUALIFIER=best microkernel.qemu
+    make BOOTTIME_QUALIFIER=best qemu
 
-    make pristine
-    make BOOTTIME_QUALIFIER=default microkernel.qemu
+    make BOOTTIME_QUALIFIER=default qemu
 
-    make pristine
-    make BOOTTIME_QUALIFIER=worst microkernel.qemu
+    make BOOTTIME_QUALIFIER=worst qemu
+
+--------------------------------------------------------------------------------
+
+Troubleshooting:
+
+Problems caused by out-dated project information can be addressed by
+issuing one of the following commands then rebuilding the project:
+
+    make clean          # discard results of previous builds
+                        # but keep existing configuration info
+or
+    make pristine       # discard results of previous builds
+                        # and restore pre-defined configuration info
 
 --------------------------------------------------------------------------------
 
@@ -55,4 +65,4 @@ Boot Time Measurement finished
 ===================================================================
 PASS - bootTimeTask.
 ===================================================================
-VXMICRO PROJECT EXECUTION SUCCESSFUL
+PROJECT EXECUTION SUCCESSFUL

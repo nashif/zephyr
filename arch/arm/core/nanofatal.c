@@ -35,14 +35,10 @@ DESCRIPTION
 This module provides the _NanoFatalErrorHandler() routine for ARM Cortex-M.
 */
 
-/* includes */
-
 #include <toolchain.h>
 #include <sections.h>
 
-#include <cputype.h>
 #include <nanokernel.h>
-#include <arch/cpu.h>
 #include <nanok.h>
 
 #ifdef CONFIG_PRINTK
@@ -51,8 +47,6 @@ This module provides the _NanoFatalErrorHandler() routine for ARM Cortex-M.
 #else
 #define PR_EXC(...)
 #endif /* CONFIG_PRINTK */
-
-/* globals */
 
 /*
  * Define a default ESF for use with _NanoFatalErrorHandler() in the event

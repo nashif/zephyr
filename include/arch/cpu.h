@@ -33,14 +33,14 @@
 #ifndef __ARCHCPU_H__
 #define __ARCHCPU_H__
 
-#if defined(VXMICRO_ARCH_x86)
+#if defined(CONFIG_X86_32)
 #include <arch/x86/arch.h>
-#elif defined(VXMICRO_ARCH_arm)
+#elif defined(CONFIG_ARM)
 #include <arch/arm/arch.h>
-#elif defined(VXMICRO_ARCH_arc)
+#elif defined(CONFIG_ARC)
 #include <arch/arc/arch.h>
 #else
-#error "Unknown VXMICRO_ARCH"
+#error "Unknown Architecture"
 #endif
 
 #endif /* __ARCHCPU_H__ */

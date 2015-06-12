@@ -32,9 +32,8 @@
 
 /*
 DESCRIPTION
-This module provides the VxMicro nanokernel (aka system-level) 'stack'
-implementation.  This module provides the backing implementation for the
-following APIs:
+This module provides the nanokernel stack object implementation, including
+the following APIs:
 
    nano_stack_init
    nano_fiber_stack_push, nano_task_stack_push, nano_isr_stack_push
@@ -110,7 +109,7 @@ void _stack_push_non_preemptible(
 	if (ccs) {
 		stack->fiber = 0;
 		fiberRtnValueSet(ccs, data);
-		_insert_ccs((tCCS **)&_nanokernel.fiber, ccs);
+		_nano_fiber_schedule(ccs);
 	} else {
 		*(stack->next) = data;
 		stack->next++;
@@ -144,7 +143,7 @@ void nano_task_stack_push(
 	if (ccs) {
 		stack->fiber = 0;
 		fiberRtnValueSet(ccs, data);
-		_insert_ccs((tCCS **)&_nanokernel.fiber, ccs);
+		_nano_fiber_schedule(ccs);
 		_Swap(imask);
 		return;
 	} else {

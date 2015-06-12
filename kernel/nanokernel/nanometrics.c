@@ -30,14 +30,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* includes */
-
 #include <nanok.h>
 #include <toolchain.h>
 #include <sections.h>
 
 #ifdef CONFIG_BOOT_TIME_MEASUREMENT
-uint64_t __noinit __start_tsc; /* timestamp when VxMicro starts */
+uint64_t __noinit __start_tsc; /* timestamp when kernel starts */
 uint64_t __noinit __main_tsc;  /* timestamp when main() starts */
 uint64_t __noinit __idle_tsc;  /* timestamp when CPU goes idle */
 #endif

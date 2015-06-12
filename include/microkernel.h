@@ -1,4 +1,4 @@
-/* microkernel.h - public API for VxMicro microkernel */
+/* microkernel.h - public API for microkernel */
 
 /*
  * Copyright (c) 1997-2015, Wind River Systems, Inc.
@@ -33,13 +33,13 @@
 #ifndef _MICROKERNEL_H
 #define _MICROKERNEL_H
 
-#include <nanokernel.h>
-#include <arch/cpu.h>
+/* nanokernel and generic kernel public APIs */
 
-#include <cputype.h>
+#include <nanokernel.h>
+
+/* microkernel public APIs */
+
 #include <microkernel/k_types.h>
-#include <clock_vars.h>
-#include <drivers/rand32.h>
 
 #include <microkernel/task.h>
 #include <microkernel/ticks.h>
@@ -52,19 +52,5 @@
 #include <microkernel/pool.h>
 #include <microkernel/pipe.h>
 #include <microkernel/task_irq.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#define MON_TSWAP 1
-#define MON_STATE 2
-#define MON_KSERV 4
-#define MON_EVENT 8
-#define MON_ALL 15
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* _MICROKERNEL_H */
