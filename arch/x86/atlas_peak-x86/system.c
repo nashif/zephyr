@@ -38,9 +38,7 @@ This module provides routines to initialize and support board-level
 hardware for the Atlas Peak BSP.
 */
 
-#include <cputype.h>
 #include <nanokernel.h>
-#include <arch/cpu.h>
 #include <misc/printk.h>
 #include <misc/__assert.h>
 #include "board.h"
