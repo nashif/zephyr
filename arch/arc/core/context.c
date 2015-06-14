@@ -40,6 +40,7 @@
 #include <toolchain.h>
 #include <nanok.h>
 #include <offsets.h>
+#include <misc/util.h>
 
 /*  initial stack frame */
 struct init_stack_frame {
