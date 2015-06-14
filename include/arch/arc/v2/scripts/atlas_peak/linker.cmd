@@ -148,17 +148,17 @@ SECTIONS {
 	GROUP_START(RAMABLE_REGION)
 
 #if defined(CONFIG_XIP)
-		SECTION_AT_PROLOGUE(_DATA_SECTION_NAME,,,_DATA_IN_ROM) {
+	SECTION_AT_PROLOGUE(_DATA_SECTION_NAME,,,_DATA_IN_ROM) {
 #else
-		SECTION_PROLOGUE(_DATA_SECTION_NAME,,) {
+	SECTION_PROLOGUE(_DATA_SECTION_NAME,,) {
 #endif
 
 /* when XIP, .text is in ROM, but vector table must be at start of .data */
 
-			__data_ram_start = .;
-			*(.data)
-			*(".data.*")
-		} GROUP_LINK_IN(RAMABLE_REGION)
+		__data_ram_start = .;
+		*(.data)
+		*(".data.*")
+	} GROUP_LINK_IN(RAMABLE_REGION)
 
 	SECTION_PROLOGUE (initlevel, (OPTIONAL),)
 	{
@@ -173,42 +173,42 @@ SECTIONS {
 		INIT_LEVEL(7)
 		KEEP(*(SORT_BY_NAME(".initconfig*")))
 		__initconfig_end = .;
-	} GROUP_LINK_IN(RAM)
+	} GROUP_LINK_IN(RAMABLE_REGION)
 
 
-		__data_ram_end = .;
+	__data_ram_end = .;
 
-		SECTION_PROLOGUE(_BSS_SECTION_NAME,(NOLOAD),) {
-			/*
-			 * For performance, BSS section is assumed to be 4 byte aligned and
-			 * a multiple of 4 bytes
-			 */
-			. = ALIGN(4);
-			__bss_start = .;
-			*(.bss)
-			*(".bss.*")
-			COMMON_SYMBOLS
-			/*
-			 * BSP clears this memory in words only and doesn't clear any
-			 * potential left over bytes.
-			 */
-			__bss_end = ALIGN(4);
-		} GROUP_LINK_IN(RAMABLE_REGION)
+	SECTION_PROLOGUE(_BSS_SECTION_NAME,(NOLOAD),) {
+		/*
+		 * For performance, BSS section is assumed to be 4 byte aligned and
+		 * a multiple of 4 bytes
+		 */
+		. = ALIGN(4);
+		__bss_start = .;
+		*(.bss)
+		*(".bss.*")
+		COMMON_SYMBOLS
+		/*
+		 * BSP clears this memory in words only and doesn't clear any
+		 * potential left over bytes.
+		 */
+		__bss_end = ALIGN(4);
+	} GROUP_LINK_IN(RAMABLE_REGION)
 
-		SECTION_PROLOGUE(_NOINIT_SECTION_NAME,(NOLOAD),) {
-			/*
-			 * This section is used for non-initialized objects that
-			 * will not be cleared during the boot process.
-			 */
-			*(.noinit)
-			*(".noinit.*")
+	SECTION_PROLOGUE(_NOINIT_SECTION_NAME,(NOLOAD),) {
+		/*
+		 * This section is used for non-initialized objects that
+		 * will not be cleared during the boot process.
+		 */
+		*(.noinit)
+		*(".noinit.*")
 
-		} GROUP_LINK_IN(RAMABLE_REGION)
+	} GROUP_LINK_IN(RAMABLE_REGION)
 
-		/* Define linker symbols */
+	/* Define linker symbols */
 
-		_end = .; /* end of image */
-		__bss_num_words = (__bss_end - __bss_start) >> 2;
+	_end = .; /* end of image */
+	__bss_num_words = (__bss_end - __bss_start) >> 2;
 
 	GROUP_END(RAMABLE_REGION)
 
