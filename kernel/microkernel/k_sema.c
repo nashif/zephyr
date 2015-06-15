@@ -71,12 +71,12 @@ static void signal_semaphore(int n, struct sem_struct *S)
 			}
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 			if (A->Time.timer) {
-				force_timeout(A);
+				_k_timeout_cancel(A);
 				A->Comm = WAITSRPL;
 			} else {
 #endif
 				A->Time.rcode = RC_OK;
-				reset_state_bit(A->Ctxt.proc, TF_SEMA);
+				_k_state_bit_reset(A->Ctxt.proc, TF_SEMA);
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 			}
 #endif
@@ -107,7 +107,7 @@ void _k_sem_group_wait(struct k_args *R)
 
 	FREEARGS(R);
 	if (--(A->Args.s1.nsem) == 0) {
-		reset_state_bit(A->Ctxt.proc, TF_LIST);
+		_k_state_bit_reset(A->Ctxt.proc, TF_LIST);
 	}
 }
 
@@ -267,7 +267,7 @@ void _k_sem_group_ready(struct k_args *R)
 		A->Comm = WAITMTMO;
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 		if (A->Time.timer) {
-			force_timeout(A);
+			_k_timeout_cancel(A);
 		} else
 #endif
 			_k_sem_group_wait_timeout(A);
@@ -294,7 +294,7 @@ void _k_sem_wait_reply(struct k_args *A)
 	} else
 #endif
 		A->Time.rcode = RC_OK;
-	reset_state_bit(A->Ctxt.proc, TF_SEMA);
+	_k_state_bit_reset(A->Ctxt.proc, TF_SEMA);
 }
 
 /*******************************************************************************
@@ -374,7 +374,7 @@ void _k_sem_group_wait_any(struct k_args *A)
 	}
 
 	A->Ctxt.proc = _k_current_task;
-	set_state_bit(_k_current_task, TF_LIST);
+	_k_state_bit_set(_k_current_task, TF_LIST);
 
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 	if (A->Time.ticks != TICKS_NONE) {
@@ -382,7 +382,7 @@ void _k_sem_group_wait_any(struct k_args *A)
 			A->Time.timer = NULL;
 		} else {
 			A->Comm = WAITMTMO;
-			enlist_timeout(A);
+			_k_timeout_alloc(A);
 		}
 	}
 #endif
@@ -409,14 +409,14 @@ void _k_sem_wait_request(struct k_args *A)
 	} else if (A->Time.ticks != TICKS_NONE) {
 		A->Ctxt.proc = _k_current_task;
 		A->Prio = _k_current_task->Prio;
-		set_state_bit(_k_current_task, TF_SEMA);
+		_k_state_bit_set(_k_current_task, TF_SEMA);
 		INSERT_ELM(S->Waiters, A);
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 		if (A->Time.ticks == TICKS_UNLIMITED) {
 			A->Time.timer = NULL;
 		} else {
 			A->Comm = WAITSTMO;
-			enlist_timeout(A);
+			_k_timeout_alloc(A);
 		}
 #endif
 		return;

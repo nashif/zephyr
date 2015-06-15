@@ -80,12 +80,12 @@ static inline struct k_timer *_timer_id_to_ptr(ktimer_t timer)
 
 /*******************************************************************************
 *
-* enlist_timer - insert a timer into the timer queue
+* _k_timer_enlist - insert a timer into the timer queue
 *
 * RETURNS: N/A
 */
 
-void enlist_timer(struct k_timer *T)
+void _k_timer_enlist(struct k_timer *T)
 {
 	struct k_timer *P = _k_timer_list_head;
 	struct k_timer *Q = NULL;
@@ -112,12 +112,12 @@ void enlist_timer(struct k_timer *T)
 
 /*******************************************************************************
 *
-* delist_timer - remove a timer from the timer queue
+* _k_timer_delist - remove a timer from the timer queue
 *
 * RETURNS: N/A
 */
 
-void delist_timer(struct k_timer *T)
+void _k_timer_delist(struct k_timer *T)
 {
 	struct k_timer *P = T->Forw;
 	struct k_timer *Q = T->Back;
@@ -136,12 +136,14 @@ void delist_timer(struct k_timer *T)
 
 /*******************************************************************************
 *
-* enlist_timeout - allocate and insert a timer into the timer queue
+* _k_timeout_alloc - allocate timer used for command packet timeout
+*
+* Allocates timer for command packet and inserts it into the timer queue.
 *
 * RETURNS: N/A
 */
 
-void enlist_timeout(struct k_args *P)
+void _k_timeout_alloc(struct k_args *P)
 {
 	struct k_timer *T;
 
@@ -149,38 +151,46 @@ void enlist_timeout(struct k_args *P)
 	T->duration = P->Time.ticks;
 	T->period = 0;
 	T->Args = P;
-	enlist_timer(T);
+	_k_timer_enlist(T);
 	P->Time.timer = T;
 }
 
 /*******************************************************************************
 *
-* force_timeout - remove a non-expired timer from the timer queue
+* _k_timeout_cancel - cancel timer used for command packet timeout
 *
+* Cancels timer (if not already expired), then reschedules the command packet
+* for further processing.
+*
+* The command that is processed following cancellation is typically NOT the
+* command that would have occurred had the timeout expired on its own.
+* 
 * RETURNS: N/A
 */
 
-void force_timeout(struct k_args *A)
+void _k_timeout_cancel(struct k_args *A)
 {
 	struct k_timer *T = A->Time.timer;
 
 	if (T->duration != -1) {
-		delist_timer(T);
+		_k_timer_delist(T);
 		TO_ALIST(&_k_command_stack, A);
 	}
 }
 
 /*******************************************************************************
 *
-* delist_timeout - remove a non-expired timer from the timer queue and free it
+* _k_timeout_free - free timer used for command packet timeout
+*
+* Cancels timer (if not already expired), then frees it.
 *
 * RETURNS: N/A
 */
 
-void delist_timeout(struct k_timer *T)
+void _k_timeout_free(struct k_timer *T)
 {
 	if (T->duration != -1)
-		delist_timer(T);
+		_k_timer_delist(T);
 	FREETIMER(T);
 }
 
@@ -224,7 +234,7 @@ void _k_timer_list_update(int ticks)
 		}
 		if (T->period) {
 			T->duration = T->period;
-			enlist_timer(T);
+			_k_timer_enlist(T);
 		} else {
 			T->duration = -1;
 		}
@@ -292,7 +302,7 @@ void _k_timer_dealloc(struct k_args *P)
 	struct k_args *A = T->Args;
 
 	if (T->duration != -1)
-		delist_timer(T);
+		_k_timer_delist(T);
 
 	FREETIMER(T);
 	FREEARGS(A);
@@ -336,7 +346,7 @@ void _k_timer_start(struct k_args *P)
 	struct k_timer *T = P->Args.c1.timer; /* ptr to the timer to start */
 
 	if (T->duration != -1) { /* Stop the timer if it is active */
-		delist_timer(T);
+		_k_timer_delist(T);
 	}
 
 	T->duration = (int32_t)P->Args.c1.time1; /* Set the initial delay */
@@ -365,7 +375,7 @@ void _k_timer_start(struct k_args *P)
 		T->Args->Comm = SIGNALS;
 		T->Args->Args.s1.sema = P->Args.c1.sema;
 	}
-	enlist_timer(T);
+	_k_timer_enlist(T);
 }
 
 /*******************************************************************************
@@ -446,7 +456,7 @@ void _k_timer_stop(struct k_args *P)
 	struct k_timer *T = P->Args.c1.timer;
 
 	if (T->duration != -1)
-		delist_timer(T);
+		_k_timer_delist(T);
 }
 
 /*******************************************************************************
@@ -489,7 +499,7 @@ void _k_task_wakeup(struct k_args *P)
 	T = P->Time.timer;
 
 	FREETIMER(T);
-	reset_state_bit(X, TF_TIME);
+	_k_state_bit_reset(X, TF_TIME);
 }
 
 /*******************************************************************************
@@ -519,8 +529,8 @@ void _k_task_sleep(struct k_args *P)
 	P->Ctxt.proc = _k_current_task;
 	P->Time.timer = T;
 
-	enlist_timer(T);
-	set_state_bit(_k_current_task, TF_TIME);
+	_k_timer_enlist(T);
+	_k_state_bit_set(_k_current_task, TF_TIME);
 }
 
 /*******************************************************************************

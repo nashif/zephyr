@@ -35,14 +35,14 @@
 
 /*******************************************************************************
 *
-* _mem_map_init - initialize kernel memory map subsystem
+* _k_mem_map_init - initialize kernel memory map subsystem
 *
 * Perform any initialization of memory maps that wasn't done at build time.
 *
 * RETURNS: N/A
 */
 
-void _mem_map_init(void)
+void _k_mem_map_init(void)
 {
 	int i, j, w;
 	struct map_struct *M;
@@ -79,10 +79,10 @@ void _mem_map_init(void)
 
 void _k_mem_map_alloc_timeout(struct k_args *A)
 {
-	delist_timeout(A->Time.timer);
+	_k_timeout_free(A->Time.timer);
 	REMOVE_ELM(A);
 	A->Time.rcode = RC_TIME;
-	reset_state_bit(A->Ctxt.proc, TF_ALLO);
+	_k_state_bit_reset(A->Ctxt.proc, TF_ALLO);
 }
 
 /*******************************************************************************
@@ -116,14 +116,14 @@ void _k_mem_map_alloc(struct k_args *A)
 	if (likely(A->Time.ticks != TICKS_NONE)) {
 		A->Prio = _k_current_task->Prio;
 		A->Ctxt.proc = _k_current_task;
-		set_state_bit(_k_current_task, TF_ALLO);
+		_k_state_bit_set(_k_current_task, TF_ALLO);
 		INSERT_ELM(M->Waiters, A);
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 		if (A->Time.ticks == TICKS_UNLIMITED)
 			A->Time.timer = NULL;
 		else {
 			A->Comm = ALLOCTMO;
-			enlist_timeout(A);
+			_k_timeout_alloc(A);
 		}
 #endif
 	} else
@@ -178,12 +178,12 @@ void _k_mem_map_dealloc(struct k_args *A)
 
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 		if (X->Time.timer) {
-			delist_timeout(X->Time.timer);
+			_k_timeout_free(X->Time.timer);
 			X->Comm = NOP;
 		}
 #endif
 		X->Time.rcode = RC_OK;
-		reset_state_bit(X->Ctxt.proc, TF_ALLO);
+		_k_state_bit_reset(X->Ctxt.proc, TF_ALLO);
 
 #ifdef CONFIG_OBJECT_MONITOR
 		M->Count++;

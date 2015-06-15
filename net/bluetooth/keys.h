@@ -1,4 +1,4 @@
-/* conn.h - Bluetooth connection handling */
+/* keys.h - Bluetooth key handling */
 
 /*
  * Copyright (c) 2015 Intel Corporation
@@ -31,68 +31,35 @@
  */
 
 enum {
-	BT_CONN_DISCONNECTED,
-	BT_CONN_CONNECTED,
+	BT_KEYS_SLAVE_LTK      = (1 << 0),
+	BT_KEYS_IRK            = (1 << 1),
+
+	BT_KEYS_ALL            = (BT_KEYS_SLAVE_LTK | BT_KEYS_IRK),
 };
 
-/* L2CAP signaling channel specific context */
-struct bt_conn_l2cap {
-	uint8_t			ident;
+struct bt_ltk {
+	uint64_t		rand;
+	uint16_t		ediv;
+	uint8_t			val[16];
+	struct bt_keys		*next;
 };
 
-struct bt_conn {
-	struct bt_dev		*dev;
-	uint16_t		handle;
-	uint8_t			role;
-
-	bt_addr_le_t		src;
-	bt_addr_le_t		dst;
-
-	uint8_t			encrypt;
-
-	uint16_t		rx_len;
-	struct bt_buf		*rx;
-
-	/* Queue for outgoing ACL data */
-	struct nano_fifo	tx_queue;
-
-	struct bt_keys		*keys;
-
-	/* Fixed channel contexts */
-	struct bt_conn_l2cap	l2cap;
-	void			*att;
-	void			*smp;
-
-	uint8_t			le_conn_interval;
-
-	uint8_t			ref;
-
-	uint8_t			state;
-
-	/* TX fiber stack */
-	BT_STACK(tx_stack, 256);
+struct bt_irk {
+	uint8_t			val[16];
+	bt_addr_t		rpa;
+	struct bt_keys		*next;
 };
 
-/* Process incoming data for a connection */
-void bt_conn_recv(struct bt_conn *conn, struct bt_buf *buf, uint8_t flags);
+struct bt_keys {
+	bt_addr_le_t		addr;
+	int			keys;
 
-/* Send data over a connection */
-void bt_conn_send(struct bt_conn *conn, struct bt_buf *buf);
+	struct bt_ltk		slave_ltk;
+	struct bt_irk		irk;
+};
 
-/* Add a new connection */
-struct bt_conn *bt_conn_add(struct bt_dev *dev, uint16_t handle, uint8_t role);
-
-/* Delete an existing connection */
-void bt_conn_del(struct bt_conn *conn);
-
-/* Look up an existing connection */
-struct bt_conn *bt_conn_lookup_handle(uint16_t handle);
-
-/* Look up an existing connection by address */
-struct bt_conn *bt_conn_lookup_addr_le(const bt_addr_le_t *peer);
-
-/* Increment conn reference count */
-struct bt_conn *bt_conn_get(struct bt_conn *conn);
-
-/* Decrement conn reference count */
-void bt_conn_put(struct bt_conn *conn);
+struct bt_keys *bt_keys_get_addr(const bt_addr_le_t *addr);
+struct bt_keys *bt_keys_get_type(int type, const bt_addr_le_t *addr);
+void bt_keys_clear(struct bt_keys *keys, int type);
+struct bt_keys *bt_keys_find(int type, const bt_addr_le_t *addr);
+struct bt_keys *bt_keys_find_irk(const bt_addr_le_t *addr);

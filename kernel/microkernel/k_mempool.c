@@ -45,14 +45,14 @@
 
 /*******************************************************************************
 *
-* _mem_pools_init - initialize kernel memory pool subsystem
+* _k_mem_pool_init - initialize kernel memory pool subsystem
 *
 * Perform any initialization of memory pool that wasn't done at build time.
 *
 * RETURNS: N/A
 */
 
-void _mem_pools_init(void)
+void _k_mem_pool_init(void)
 {
 	int i, j, k;
 	struct pool_struct *P;
@@ -455,11 +455,11 @@ void _k_block_waiters_get(struct k_args *A)
 
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 			if (curr_task->Time.timer) {
-				delist_timeout(curr_task->Time.timer);
+				_k_timeout_free(curr_task->Time.timer);
 			}
 #endif
 			curr_task->Time.rcode = RC_OK;
-			reset_state_bit(curr_task->Ctxt.proc, TF_GTBL);
+			_k_state_bit_reset(curr_task->Ctxt.proc, TF_GTBL);
 
 			/* remove from list */
 			prev_task->Forw = curr_task->Forw;
@@ -487,10 +487,10 @@ void _k_block_waiters_get(struct k_args *A)
 
 void _k_mem_pool_block_get_timeout_handle(struct k_args *A)
 {
-	delist_timeout(A->Time.timer);
+	_k_timeout_free(A->Time.timer);
 	REMOVE_ELM(A);
 	A->Time.rcode = RC_TIME;
-	reset_state_bit(A->Ctxt.proc, TF_GTBL);
+	_k_state_bit_reset(A->Ctxt.proc, TF_GTBL);
 }
 
 /*******************************************************************************
@@ -536,7 +536,7 @@ void _k_mem_pool_block_get(struct k_args *A)
 		     P->maxblock_size))) {/* timeout?  but not block to large */
 		A->Prio = _k_current_task->Prio;
 		A->Ctxt.proc = _k_current_task;
-		set_state_bit(_k_current_task, TF_GTBL); /* extra new statebit */
+		_k_state_bit_set(_k_current_task, TF_GTBL); /* extra new statebit */
 
 		/* INSERT_ELM (P->frag_tab[offset].Waiters, A); */
 		INSERT_ELM(P->Waiters, A);
@@ -546,7 +546,7 @@ void _k_mem_pool_block_get(struct k_args *A)
 			A->Time.timer = NULL;
 		} else {
 			A->Comm = GTBLTMO;
-			enlist_timeout(A);
+			_k_timeout_alloc(A);
 		}
 #endif
 	} else {

@@ -243,7 +243,7 @@ static void conn_tx_fiber(int arg1, int arg2)
 	bt_conn_put(conn);
 }
 
-struct bt_conn *bt_conn_add(struct bt_dev *dev, uint16_t handle)
+struct bt_conn *bt_conn_add(struct bt_dev *dev, uint16_t handle, uint8_t role)
 {
 	struct bt_conn *conn = NULL;
 	int i;
@@ -265,13 +265,16 @@ struct bt_conn *bt_conn_add(struct bt_dev *dev, uint16_t handle)
 	conn->state	= BT_CONN_CONNECTED;
 	conn->handle	= handle;
 	conn->dev	= dev;
+	conn->role	= role;
 
 	nano_fifo_init(&conn->tx_queue);
 
-	fiber_start(conn->tx_stack, BT_CONN_TX_STACK_SIZE, conn_tx_fiber,
+	fiber_start(conn->tx_stack, sizeof(conn->tx_stack), conn_tx_fiber,
 		    (int)bt_conn_get(conn), 0, 7, 0);
 
-	bt_l2cap_update_conn_param(conn);
+	if (role == BT_HCI_ROLE_SLAVE) {
+		bt_l2cap_update_conn_param(conn);
+	}
 
 	return conn;
 }
@@ -292,7 +295,7 @@ void bt_conn_del(struct bt_conn *conn)
 	bt_conn_put(conn);
 }
 
-struct bt_conn *bt_conn_lookup(uint16_t handle)
+struct bt_conn *bt_conn_lookup_handle(uint16_t handle)
 {
 	int i;
 
@@ -302,6 +305,23 @@ struct bt_conn *bt_conn_lookup(uint16_t handle)
 		}
 
 		if (conns[i].handle == handle) {
+			return &conns[i];
+		}
+	}
+
+	return NULL;
+}
+
+struct bt_conn *bt_conn_lookup_addr_le(const bt_addr_le_t *peer)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(conns); i++) {
+		if (conns[i].state != BT_CONN_CONNECTED) {
+			continue;
+		}
+
+		if (!bt_addr_le_cmp(peer, &conns[i].dst)) {
 			return &conns[i];
 		}
 	}

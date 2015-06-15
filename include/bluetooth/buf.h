@@ -32,6 +32,8 @@
 #ifndef __BT_BUF_H
 #define __BT_BUF_H
 
+#include <stdint.h>
+
 /* The biggest foreseeable buffer size requirement right now comes from
  * the Bluetooth 4.2 SMP MTU which is 65. This then become 65 + 4 (L2CAP
  * header) + 4 (ACL header) + 1 (H4 header) = 74. This also covers the
@@ -74,15 +76,13 @@ struct bt_buf {
 		struct bt_buf_acl_data	acl;
 	};
 
-	/* Reference count */
-	uint8_t ref;
-
-	/* Type of data contained in the buffer */
-	uint8_t type;
-
 	/* Buffer data variables */
-	uint8_t len;
 	uint8_t *data;
+	uint8_t len;
+
+	uint8_t ref:5,   /* Reference count */
+	        type:3;  /* Type of data contained in the buffer */
+
 	uint8_t buf[BT_BUF_MAX_DATA];
 };
 

@@ -44,14 +44,21 @@
 #include <bluetooth/bluetooth.h>
 
 #include "hci_core.h"
+#include "keys.h"
 #include "conn.h"
 #include "l2cap.h"
 #include "smp.h"
+
+#define RECV_KEYS (BT_SMP_DIST_ID_KEY)
+#define SEND_KEYS (BT_SMP_DIST_ENC_KEY)
 
 /* SMP channel specific context */
 struct bt_smp {
 	/* The connection this context is associated with */
 	struct bt_conn		*conn;
+
+	/* If we're waiting for an encryption change event */
+	bool			pending_encrypt;
 
 	/* Pairing Request PDU */
 	uint8_t			preq[7];
@@ -182,6 +189,33 @@ static int le_rand(void *buf, size_t len)
 	return 0;
 }
 
+static int smp_ah(const uint8_t irk[16], const uint8_t r[3], uint8_t out[3])
+{
+	uint8_t res[16];
+	int err;
+
+	BT_DBG("irk %s\n, r %s", h(irk, 16), h(r, 3));
+
+	/* r' = padding || r */
+	memcpy(res, r, 3);
+	memset(res + 3, 0, 13);
+
+	err = le_encrypt(irk, res, res);
+	if (err) {
+		return err;
+	}
+
+	/* The output of the random address function ah is:
+	 *      ah(h, r) = e(k, r') mod 2^24
+	 * The output of the security function e is then truncated to 24 bits
+	 * by taking the least significant 24 bits of the output of e as the
+	 * result of ah.
+	 */
+	memcpy(out, res, 3);
+
+	return 0;
+}
+
 static int smp_c1(const uint8_t k[16], const uint8_t r[16],
 		  const uint8_t preq[7], const uint8_t pres[7],
 		  const bt_addr_le_t *ia, const bt_addr_le_t *ra,
@@ -289,7 +323,7 @@ static int smp_init(struct bt_smp *smp)
 	return 0;
 }
 
-static int smp_pairing_req(struct bt_conn *conn, struct bt_buf *buf)
+static uint8_t smp_pairing_req(struct bt_conn *conn, struct bt_buf *buf)
 {
 	struct bt_smp_pairing *req = (void *)buf->data;
 	struct bt_smp_pairing *rsp;
@@ -299,10 +333,6 @@ static int smp_pairing_req(struct bt_conn *conn, struct bt_buf *buf)
 	int ret;
 
 	BT_DBG("\n");
-
-	if (buf->len != sizeof(*req)) {
-		return BT_SMP_ERR_INVALID_PARAMS;
-	}
 
 	if ((req->max_key_size > BT_SMP_MAX_ENC_KEY_SIZE) ||
 	    (req->max_key_size < BT_SMP_MIN_ENC_KEY_SIZE)) {
@@ -330,8 +360,8 @@ static int smp_pairing_req(struct bt_conn *conn, struct bt_buf *buf)
 	rsp->io_capability = BT_SMP_IO_NO_INPUT_OUTPUT;
 	rsp->oob_flag = BT_SMP_OOB_NOT_PRESENT;
 	rsp->max_key_size = req->max_key_size;
-	rsp->init_key_dist = 0;
-	rsp->resp_key_dist = (req->resp_key_dist & BT_SMP_DIST_ENC_KEY);
+	rsp->init_key_dist = (req->init_key_dist & RECV_KEYS);
+	rsp->resp_key_dist = (req->resp_key_dist & SEND_KEYS);
 
 	smp->local_dist = rsp->resp_key_dist;
 
@@ -348,7 +378,7 @@ static int smp_pairing_req(struct bt_conn *conn, struct bt_buf *buf)
 	return 0;
 }
 
-static int smp_pairing_confirm(struct bt_conn *conn, struct bt_buf *buf)
+static uint8_t smp_pairing_confirm(struct bt_conn *conn, struct bt_buf *buf)
 {
 	struct bt_smp_pairing_confirm *req = (void *)buf->data;
 	struct bt_smp_pairing_confirm *rsp;
@@ -357,10 +387,6 @@ static int smp_pairing_confirm(struct bt_conn *conn, struct bt_buf *buf)
 	int err;
 
 	BT_DBG("\n");
-
-	if (buf->len != sizeof(*req)) {
-		return BT_SMP_ERR_INVALID_PARAMS;
-	}
 
 	memcpy(smp->pcnf, req->val, sizeof(smp->pcnf));
 
@@ -385,7 +411,7 @@ static int smp_pairing_confirm(struct bt_conn *conn, struct bt_buf *buf)
 	return 0;
 }
 
-static int smp_pairing_random(struct bt_conn *conn, struct bt_buf *buf)
+static uint8_t smp_pairing_random(struct bt_conn *conn, struct bt_buf *buf)
 {
 	struct bt_smp_pairing_random *req = (void *)buf->data;
 	struct bt_smp_pairing_random *rsp;
@@ -396,10 +422,6 @@ static int smp_pairing_random(struct bt_conn *conn, struct bt_buf *buf)
 	int err;
 
 	BT_DBG("\n");
-
-	if (buf->len != sizeof(*req)) {
-		return BT_SMP_ERR_INVALID_PARAMS;
-	}
 
 	memcpy(smp->rrnd, req->val, sizeof(smp->rrnd));
 
@@ -416,7 +438,7 @@ static int smp_pairing_random(struct bt_conn *conn, struct bt_buf *buf)
 		return BT_SMP_ERR_CONFIRM_FAILED;
 	}
 
-	keys = bt_keys_create(&conn->dst);
+	keys = bt_keys_get_type(BT_KEYS_SLAVE_LTK, &conn->dst);
 	if (!keys) {
 		BT_ERR("Unable to create new keys\n");
 		return BT_SMP_ERR_UNSPECIFIED;
@@ -424,7 +446,7 @@ static int smp_pairing_random(struct bt_conn *conn, struct bt_buf *buf)
 
 	err = smp_s1(smp->tk, smp->prnd, smp->rrnd, keys->slave_ltk.val);
 	if (err) {
-		bt_keys_clear(keys);
+		bt_keys_clear(keys, BT_KEYS_SLAVE_LTK);
 		return BT_SMP_ERR_UNSPECIFIED;
 	}
 
@@ -434,10 +456,12 @@ static int smp_pairing_random(struct bt_conn *conn, struct bt_buf *buf)
 
 	BT_DBG("generated STK %s\n", h(keys->slave_ltk.val, 16));
 
+	smp->pending_encrypt = true;
+
 	rsp_buf = bt_smp_create_pdu(conn, BT_SMP_CMD_PAIRING_RANDOM,
 				    sizeof(*rsp));
 	if (!rsp_buf) {
-		bt_keys_clear(keys);
+		bt_keys_clear(keys, BT_KEYS_SLAVE_LTK);
 		return BT_SMP_ERR_UNSPECIFIED;
 	}
 
@@ -449,10 +473,76 @@ static int smp_pairing_random(struct bt_conn *conn, struct bt_buf *buf)
 	return 0;
 }
 
+static uint8_t smp_ident_info(struct bt_conn *conn, struct bt_buf *buf)
+{
+	struct bt_smp_ident_info *req = (void *)buf->data;
+	struct bt_keys *keys;
+
+	BT_DBG("\n");
+
+	keys = bt_keys_get_type(BT_KEYS_IRK, &conn->dst);
+	if (!keys) {
+		BT_ERR("Unable to get keys for %s\n",
+		       bt_addr_le_str(&conn->dst));
+		return BT_SMP_ERR_UNSPECIFIED;
+	}
+
+	memcpy(keys->irk.val, req->irk, 16);
+
+	return 0;
+}
+
+static uint8_t smp_ident_addr_info(struct bt_conn *conn, struct bt_buf *buf)
+{
+	struct bt_smp_ident_addr_info *req = (void *)buf->data;
+	struct bt_keys *keys;
+
+	BT_DBG("\n");
+
+	BT_DBG("identity %s\n", bt_addr_le_str(&req->addr));
+
+	if (!bt_addr_le_is_identity(&req->addr)) {
+		BT_ERR("Invalid identity %s for %s\n",
+		       bt_addr_le_str(&req->addr), bt_addr_le_str(&conn->dst));
+		return BT_SMP_ERR_INVALID_PARAMS;
+	}
+
+	keys = bt_keys_get_type(BT_KEYS_IRK, &conn->dst);
+	if (!keys) {
+		BT_ERR("Unable to get keys for %s\n",
+		       bt_addr_le_str(&conn->dst));
+		return BT_SMP_ERR_UNSPECIFIED;
+	}
+
+	if (bt_addr_le_is_rpa(&conn->dst)) {
+		bt_addr_copy(&keys->irk.rpa, (bt_addr_t *)&conn->dst.val);
+		bt_addr_le_copy(&keys->addr, &req->addr);
+		bt_addr_le_copy(&conn->dst, &req->addr);
+	}
+
+	return 0;
+}
+
+static const struct {
+	uint8_t  (*func)(struct bt_conn *conn, struct bt_buf *buf);
+	uint8_t  expect_len;
+} handlers[] = {
+	{ }, /* No op-code defined for 0x00 */
+	{ smp_pairing_req,         sizeof(struct bt_smp_pairing) },
+	{ }, /* Pairing Response - Not yet implemented */
+	{ smp_pairing_confirm,     sizeof(struct bt_smp_pairing_confirm) },
+	{ smp_pairing_random,      sizeof(struct bt_smp_pairing_random) },
+	{ }, /* Pairing Failed - Not yet implemented */
+	{ }, /* Encrypt Information - Not yet implemented */
+	{ }, /* Master Identification - Not yet implemented */
+	{ smp_ident_info,          sizeof(struct bt_smp_ident_info) },
+	{ smp_ident_addr_info,     sizeof(struct bt_smp_ident_addr_info) },
+};
+
 static void bt_smp_recv(struct bt_conn *conn, struct bt_buf *buf)
 {
 	struct bt_smp_hdr *hdr = (void *)buf->data;
-	int err;
+	uint8_t err;
 
 	if (buf->len < sizeof(*hdr)) {
 		BT_ERR("Too small SMP PDU received\n");
@@ -463,20 +553,17 @@ static void bt_smp_recv(struct bt_conn *conn, struct bt_buf *buf)
 
 	bt_buf_pull(buf, sizeof(*hdr));
 
-	switch (hdr->code) {
-	case BT_SMP_CMD_PAIRING_REQ:
-		err = smp_pairing_req(conn, buf);
-		break;
-	case BT_SMP_CMD_PAIRING_CONFIRM:
-		err = smp_pairing_confirm(conn, buf);
-		break;
-	case BT_SMP_CMD_PAIRING_RANDOM:
-		err = smp_pairing_random(conn, buf);
-		break;
-	default:
+	if (hdr->code >= ARRAY_SIZE(handlers) || !handlers[hdr->code].func) {
 		BT_WARN("Unhandled SMP code 0x%02x\n", hdr->code);
 		err = BT_SMP_ERR_CMD_NOTSUPP;
-		break;
+	} else {
+		if (buf->len != handlers[hdr->code].expect_len) {
+			BT_ERR("Invalid len %u for code 0x%02x\n", buf->len,
+			       hdr->code);
+			err = BT_SMP_ERR_INVALID_PARAMS;
+		} else {
+			err = handlers[hdr->code].func(conn, buf);
+		}
 	}
 
 	if (err) {
@@ -533,13 +620,21 @@ static void bt_smp_encrypt_change(struct bt_conn *conn)
 		return;
 	}
 
-	keys = bt_keys_find(&conn->dst);
+	if (!smp->pending_encrypt) {
+		return;
+	}
+
+	smp->pending_encrypt = false;
+
+	keys = bt_keys_get_addr(&conn->dst);
 	if (!keys) {
-		BT_ERR("Unable to look up keys for conn %p\n", conn);
+		BT_ERR("Unable to look up keys for %s\n",
+		       bt_addr_le_str(&conn->dst));
 		return;
 	}
 
 	if (!smp->local_dist) {
+		bt_keys_clear(keys, BT_KEYS_ALL);
 		return;
 	}
 
@@ -576,6 +671,21 @@ static void bt_smp_encrypt_change(struct bt_conn *conn)
 
 		bt_l2cap_send(conn, BT_L2CAP_CID_SMP, buf);
 	}
+}
+
+bool bt_smp_irk_matches(const uint8_t irk[16], const bt_addr_t *addr)
+{
+	uint8_t hash[3];
+	int err;
+
+	BT_DBG("IRK %s bdaddr %s", h(irk, 16), bt_addr_str(addr));
+
+	err = smp_ah(irk, addr->val + 3, hash);
+	if (err) {
+		return false;
+	}
+
+	return !memcmp(addr->val, hash, 3);
 }
 
 void bt_smp_init(void)

@@ -33,6 +33,7 @@
 #include <nanokernel.h>
 #include <arch/cpu.h>
 #include <toolchain.h>
+#include <sections.h>
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
@@ -43,6 +44,7 @@
 #include <bluetooth/hci.h>
 
 #include "hci_core.h"
+#include "keys.h"
 #include "conn.h"
 #include "l2cap.h"
 
@@ -56,27 +58,17 @@
 #define ACL_OUT_MAX	7
 
 /* Stacks for the fibers */
-#if defined(CONFIG_BLUETOOTH_DEBUG)
-#define RX_STACK_SIZE		2048
-#define CMD_RX_STACK_SIZE	1024
-#define CMD_TX_STACK_SIZE	512
-#else
-#define RX_STACK_SIZE		1024
-#define CMD_RX_STACK_SIZE	256
-#define CMD_TX_STACK_SIZE	256
-#endif
-
-static char __stack rx_fiber_stack[RX_STACK_SIZE];
-static char __stack cmd_rx_fiber_stack[CMD_RX_STACK_SIZE];
-static char __stack cmd_tx_fiber_stack[CMD_TX_STACK_SIZE];
+static BT_STACK_NOINIT(rx_fiber_stack, 1024);
+static BT_STACK_NOINIT(rx_prio_fiber_stack, 256);
+static BT_STACK_NOINIT(cmd_tx_fiber_stack, 256);
 
 #if defined(CONFIG_BLUETOOTH_DEBUG)
-static nano_context_id_t cmd_rx_fiber_id;
+static nano_context_id_t rx_prio_fiber_id;
 #endif
 
 static struct bt_dev dev;
 
-static struct bt_keys key_list[CONFIG_BLUETOOTH_MAX_PAIRED];
+static struct bt_conn_cb *callback_list;
 
 #if defined(CONFIG_BLUETOOTH_DEBUG)
 const char *bt_addr_str(const bt_addr_t *addr)
@@ -124,57 +116,32 @@ const char *bt_addr_le_str(const bt_addr_le_t *addr)
 }
 #endif /* CONFIG_BLUETOOTH_DEBUG */
 
-struct bt_keys *bt_keys_create(const bt_addr_le_t *addr)
+static void bt_connected(struct bt_conn *conn)
 {
-	struct bt_keys *keys;
-	int i;
+	struct bt_conn_cb *cb;
 
-	BT_DBG("%s\n", bt_addr_le_str(addr));
-
-	keys = bt_keys_find(addr);
-	if (keys) {
-		return keys;
-	}
-
-	for (i = 0; i < ARRAY_SIZE(key_list); i++) {
-		keys = &key_list[i];
-
-		if (!bt_addr_le_cmp(&keys->addr, BT_ADDR_LE_ANY)) {
-			bt_addr_le_copy(&keys->addr, addr);
-			BT_DBG("created keys %p\n", keys);
-			return keys;
+	for (cb = callback_list; cb; cb = cb->_next) {
+		if (cb->connected) {
+			cb->connected(&conn->dst);
 		}
 	}
-
-	BT_DBG("no match\n");
-
-	return NULL;
 }
 
-struct bt_keys *bt_keys_find(const bt_addr_le_t *addr)
+static void bt_disconnected(struct bt_conn *conn)
 {
-	int i;
+	struct bt_conn_cb *cb;
 
-	BT_DBG("%s\n", bt_addr_le_str(addr));
-
-	for (i = 0; i < ARRAY_SIZE(key_list); i++) {
-		struct bt_keys *keys = &key_list[i];
-
-		if (!bt_addr_le_cmp(&keys->addr, addr)) {
-			BT_DBG("found keys %p\n", keys);
-			return keys;
+	for (cb = callback_list; cb; cb = cb->_next) {
+		if (cb->disconnected) {
+			cb->disconnected(&conn->dst);
 		}
 	}
-
-	BT_DBG("no match\n");
-
-	return NULL;
 }
 
-void bt_keys_clear(struct bt_keys *keys)
+void bt_conn_cb_register(struct bt_conn_cb *cb)
 {
-	BT_DBG("keys %p\n", keys);
-	memset(keys, 0, sizeof(*keys));
+	cb->_next = callback_list;
+	callback_list = cb;
 }
 
 struct bt_buf *bt_hci_cmd_create(uint16_t opcode, uint8_t param_len)
@@ -238,7 +205,7 @@ int bt_hci_cmd_send_sync(uint16_t opcode, struct bt_buf *buf,
 	 * event and giving back the blocking semaphore.
 	 */
 #if defined(CONFIG_BLUETOOTH_DEBUG)
-	if (context_self_get() == cmd_rx_fiber_id) {
+	if (context_self_get() == rx_prio_fiber_id) {
 		BT_ERR("called from invalid context!\n");
 		return -EDEADLK;
 	}
@@ -301,7 +268,7 @@ static void hci_acl(struct bt_buf *buf)
 		return;
 	}
 
-	conn = bt_conn_lookup(buf->acl.handle);
+	conn = bt_conn_lookup_handle(buf->acl.handle);
 	if (!conn) {
 		BT_ERR("Unable to find conn for handle %u\n", buf->acl.handle);
 		bt_buf_put(buf);
@@ -310,6 +277,79 @@ static void hci_acl(struct bt_buf *buf)
 
 	bt_conn_recv(conn, buf, flags);
 }
+
+#if defined(CONFIG_INIT_STACKS) && defined(CONFIG_PRINTK)
+#include <offsets.h>
+#include <misc/printk.h>
+
+enum {
+	STACK_DIRECTION_UP,
+	STACK_DIRECTION_DOWN,
+};
+
+static void analyze_stack(const char *name, const char *stack, unsigned size,
+			  int stack_growth)
+{
+	unsigned i, stack_offset, pcnt, unused = 0;
+
+	/* The CCS is always placed on a 4-byte aligned boundary - if
+	 * the stack beginning doesn't match that there will be some
+	 * unused bytes in the beginning.
+	 */
+	stack_offset = __tCCS_SIZEOF + ((4 - ((unsigned)stack % 4)) % 4);
+
+	if (stack_growth == STACK_DIRECTION_DOWN) {
+		for (i = stack_offset; i < size; i++) {
+			if ((unsigned char)stack[i] == 0xaa) {
+				unused++;
+			} else {
+				break;
+			}
+		}
+	} else {
+		for (i = size - 1; i >= stack_offset; i--) {
+			if ((unsigned char)stack[i] == 0xaa) {
+				unused++;
+			} else {
+				break;
+			}
+		}
+	}
+
+	/* Calculate the real size reserved for the stack */
+	size -= stack_offset;
+	pcnt = ((size - unused) * 100) / size;
+
+	printk("%s (real size %u):\tunused %u\tusage %u / %u (%u %%)\n", name,
+	       size + stack_offset, unused, size - unused, size, pcnt);
+}
+
+static void analyze_stacks(struct bt_conn *conn, struct bt_conn **ref)
+{
+	int stack_growth;
+
+	printk("sizeof(tCCS) = %u\n", __tCCS_SIZEOF);
+
+	if (conn > *ref) {
+		printk("stack grows up\n");
+		stack_growth = STACK_DIRECTION_UP;
+	} else {
+		printk("stack grows down\n");
+		stack_growth = STACK_DIRECTION_DOWN;
+	}
+
+	analyze_stack("rx stack", rx_fiber_stack, sizeof(rx_fiber_stack),
+		      stack_growth);
+	analyze_stack("cmd rx stack", rx_prio_fiber_stack,
+		      sizeof(rx_prio_fiber_stack), stack_growth);
+	analyze_stack("cmd tx stack", cmd_tx_fiber_stack,
+		      sizeof(cmd_tx_fiber_stack), stack_growth);
+	analyze_stack("conn tx stack", conn->tx_stack, sizeof(conn->tx_stack),
+		      stack_growth);
+}
+#else
+#define analyze_stacks(...)
+#endif
 
 /* HCI event processing */
 
@@ -326,13 +366,17 @@ static void hci_disconn_complete(struct bt_buf *buf)
 		return;
 	}
 
-	conn = bt_conn_lookup(handle);
+	conn = bt_conn_lookup_handle(handle);
 	if (!conn) {
 		BT_ERR("Unable to look up conn with handle %u\n", handle);
 		return;
 	}
 
 	bt_l2cap_disconnected(conn);
+	bt_disconnected(conn);
+
+	/* Check stack usage (no-op if not enabled) */
+	analyze_stacks(conn, &conn);
 
 	bt_conn_del(conn);
 
@@ -360,7 +404,7 @@ static void hci_encrypt_change(struct bt_buf *buf)
 		return;
 	}
 
-	conn = bt_conn_lookup(handle);
+	conn = bt_conn_lookup_handle(handle);
 	if (!conn) {
 		BT_ERR("Unable to look up conn with handle %u\n", handle);
 		return;
@@ -490,6 +534,47 @@ static void hci_num_completed_packets(struct bt_buf *buf)
 	}
 }
 
+static void hci_encrypt_key_refresh_complete(struct bt_buf *buf)
+{
+	struct bt_hci_evt_encrypt_key_refresh_complete *evt = (void *)buf->data;
+	struct bt_conn *conn;
+	uint16_t handle;
+
+	handle = sys_le16_to_cpu(evt->handle);
+
+	BT_DBG("status %u handle %u\n", evt->status, handle);
+
+	if (evt->status) {
+		return;
+	}
+
+	conn = bt_conn_lookup_handle(handle);
+	if (!conn) {
+		BT_ERR("Unable to look up conn with handle %u\n", handle);
+		return;
+	}
+
+	bt_l2cap_encrypt_change(conn);
+}
+
+static void copy_id_addr(struct bt_conn *conn, const bt_addr_le_t *addr)
+{
+	struct bt_keys *keys;
+
+	/* If we have a keys struct we already know the identity */
+	if (conn->keys) {
+		return;
+	}
+
+	keys = bt_keys_find_irk(addr);
+	if (keys) {
+		bt_addr_le_copy(&conn->dst, &keys->addr);
+		conn->keys = keys;
+	} else {
+		bt_addr_le_copy(&conn->dst, addr);
+	}
+}
+
 static void le_conn_complete(struct bt_buf *buf)
 {
 	struct bt_hci_evt_le_conn_complete *evt = (void *)buf->data;
@@ -503,7 +588,7 @@ static void le_conn_complete(struct bt_buf *buf)
 		return;
 	}
 
-	conn = bt_conn_add(&dev, handle);
+	conn = bt_conn_add(&dev, handle, evt->role);
 	if (!conn) {
 		BT_ERR("Unable to add new conn for handle %u\n", handle);
 		return;
@@ -511,9 +596,10 @@ static void le_conn_complete(struct bt_buf *buf)
 
 	conn->src.type = BT_ADDR_LE_PUBLIC;
 	memcpy(conn->src.val, dev.bdaddr.val, sizeof(dev.bdaddr.val));
-	bt_addr_le_copy(&conn->dst, &evt->peer_addr);
+	copy_id_addr(conn, &evt->peer_addr);
 	conn->le_conn_interval = sys_le16_to_cpu(evt->interval);
 
+	bt_connected(conn);
 	bt_l2cap_connected(conn);
 }
 
@@ -528,10 +614,18 @@ static void le_adv_report(struct bt_buf *buf)
 
 	while (num_reports--) {
 		int8_t rssi = info->data[info->length];
+		struct bt_keys *keys;
 
 		BT_DBG("%s event %u, len %u, rssi %d dBm\n",
 			bt_addr_le_str(&info->addr),
 			info->evt_type, info->length, rssi);
+
+		keys = bt_keys_find_irk(&info->addr);
+		if (keys) {
+			BT_DBG("Identity %s matched RPA %s\n",
+			       bt_addr_le_str(&keys->addr),
+			       bt_addr_le_str(&info->addr));
+		}
 
 		/* Get next report iteration by moving pointer to right offset
 		 * in buf according to spec 4.2, Vol 2, Part E, 7.7.65.2.
@@ -545,22 +639,24 @@ static void le_ltk_request(struct bt_buf *buf)
 {
 	struct bt_hci_evt_le_ltk_request *evt = (void *)buf->data;
 	struct bt_conn *conn;
-	struct bt_keys *keys;
 	uint16_t handle;
 
 	handle = sys_le16_to_cpu(evt->handle);
 
 	BT_DBG("handle %u\n", handle);
 
-	conn = bt_conn_lookup(handle);
+	conn = bt_conn_lookup_handle(handle);
 	if (!conn) {
 		BT_ERR("Unable to lookup conn for handle %u\n", handle);
 		return;
 	}
 
-	keys = bt_keys_find(&conn->dst);
-	if (keys && keys->slave_ltk.rand == evt->rand &&
-	    keys->slave_ltk.ediv == evt->ediv) {
+	if (!conn->keys)
+		conn->keys = bt_keys_find(BT_KEYS_SLAVE_LTK, &conn->dst);
+
+	if (conn->keys && (conn->keys->keys & BT_KEYS_SLAVE_LTK) &&
+	    conn->keys->slave_ltk.rand == evt->rand &&
+	    conn->keys->slave_ltk.ediv == evt->ediv) {
 		struct bt_hci_cp_le_ltk_req_reply *cp;
 
 		buf = bt_hci_cmd_create(BT_HCI_OP_LE_LTK_REQ_REPLY,
@@ -572,7 +668,7 @@ static void le_ltk_request(struct bt_buf *buf)
 
 		cp = bt_buf_add(buf, sizeof(*cp));
 		cp->handle = evt->handle;
-		memcpy(cp->ltk, keys->slave_ltk.val, 16);
+		memcpy(cp->ltk, conn->keys->slave_ltk.val, 16);
 
 		bt_hci_cmd_send(BT_HCI_OP_LE_LTK_REQ_REPLY, buf);
 	} else {
@@ -629,8 +725,8 @@ static void hci_event(struct bt_buf *buf)
 	case BT_HCI_EVT_ENCRYPT_CHANGE:
 		hci_encrypt_change(buf);
 		break;
-	case BT_HCI_EVT_NUM_COMPLETED_PACKETS:
-		hci_num_completed_packets(buf);
+	case BT_HCI_EVT_ENCRYPT_KEY_REFRESH_COMPLETE:
+		hci_encrypt_key_refresh_complete(buf);
 		break;
 	case BT_HCI_EVT_LE_META_EVENT:
 		hci_le_meta_event(buf);
@@ -706,7 +802,7 @@ static void hci_rx_fiber(void)
 	}
 }
 
-static void cmd_rx_fiber(void)
+static void rx_prio_fiber(void)
 {
 	struct bt_buf *buf;
 
@@ -714,14 +810,14 @@ static void cmd_rx_fiber(void)
 
 	/* So we can avoid bt_hci_cmd_send_sync deadlocks */
 #if defined(CONFIG_BLUETOOTH_DEBUG)
-	cmd_rx_fiber_id = context_self_get();
+	rx_prio_fiber_id = context_self_get();
 #endif
 
 	while (1) {
 		struct bt_hci_evt_hdr *hdr;
 
 		BT_DBG("calling fifo_get_wait\n");
-		buf = nano_fifo_get_wait(&dev.cmd_rx_queue);
+		buf = nano_fifo_get_wait(&dev.rx_prio_queue);
 
 		BT_DBG("buf %p type %u len %u\n", buf, buf->type, buf->len);
 
@@ -740,6 +836,9 @@ static void cmd_rx_fiber(void)
 			break;
 		case BT_HCI_EVT_CMD_STATUS:
 			hci_cmd_status(buf);
+			break;
+		case BT_HCI_EVT_NUM_COMPLETED_PACKETS:
+			hci_num_completed_packets(buf);
 			break;
 		default:
 			BT_ERR("Unknown event 0x%02x\n", hdr->evt);
@@ -997,8 +1096,9 @@ void bt_recv(struct bt_buf *buf)
 	 */
 	hdr = (void *)buf->data;
 	if (hdr->evt == BT_HCI_EVT_CMD_COMPLETE ||
-	    hdr->evt == BT_HCI_EVT_CMD_STATUS) {
-		nano_fifo_put(&dev.cmd_rx_queue, buf);
+	    hdr->evt == BT_HCI_EVT_CMD_STATUS ||
+	    hdr->evt == BT_HCI_EVT_NUM_COMPLETED_PACKETS) {
+		nano_fifo_put(&dev.rx_prio_queue, buf);
 		return;
 	}
 
@@ -1036,19 +1136,19 @@ static void cmd_queue_init(void)
 	dev.ncmd = 1;
 	nano_task_sem_give(&dev.ncmd_sem);
 
-	fiber_start(cmd_tx_fiber_stack, CMD_TX_STACK_SIZE,
+	fiber_start(cmd_tx_fiber_stack, sizeof(cmd_tx_fiber_stack),
 		    (nano_fiber_entry_t)hci_cmd_tx_fiber, 0, 0, 7, 0);
 }
 
 static void rx_queue_init(void)
 {
 	nano_fifo_init(&dev.rx_queue);
-	fiber_start(rx_fiber_stack, RX_STACK_SIZE,
+	fiber_start(rx_fiber_stack, sizeof(rx_fiber_stack),
 		    (nano_fiber_entry_t)hci_rx_fiber, 0, 0, 7, 0);
 
-	nano_fifo_init(&dev.cmd_rx_queue);
-	fiber_start(cmd_rx_fiber_stack, CMD_RX_STACK_SIZE,
-		    (nano_fiber_entry_t)cmd_rx_fiber, 0, 0, 7, 0);
+	nano_fifo_init(&dev.rx_prio_queue);
+	fiber_start(rx_prio_fiber_stack, sizeof(rx_prio_fiber_stack),
+		    (nano_fiber_entry_t)rx_prio_fiber, 0, 0, 7, 0);
 }
 
 int bt_init(void)

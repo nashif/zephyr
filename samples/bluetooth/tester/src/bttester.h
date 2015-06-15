@@ -1,4 +1,4 @@
-/* conn.h - Bluetooth connection handling */
+/* bttester.h - Bluetooth tester headers */
 
 /*
  * Copyright (c) 2015 Intel Corporation
@@ -30,69 +30,40 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-enum {
-	BT_CONN_DISCONNECTED,
-	BT_CONN_CONNECTED,
-};
+#define IPC_MTU 32
 
-/* L2CAP signaling channel specific context */
-struct bt_conn_l2cap {
-	uint8_t			ident;
-};
+#define SERVICE_ID_CORE		0
+#define SERVICE_ID_GAP		1
 
-struct bt_conn {
-	struct bt_dev		*dev;
-	uint16_t		handle;
-	uint8_t			role;
+#define STATUS_SUCCESS		0x00
+#define STATUS_FAILED		0x01
+#define STATUS_UNKNOWN_CMD	0x02
+#define STATUS_NOT_READY	0x03
 
-	bt_addr_le_t		src;
-	bt_addr_le_t		dst;
+struct ipc_hdr {
+	uint8_t  service;
+	uint8_t  opcode;
+	uint16_t len;
+	uint8_t  data[0];
+} __packed;
 
-	uint8_t			encrypt;
+#define OP_STATUS		0x00
+struct ipc_status {
+	uint8_t code;
+} __packed;
 
-	uint16_t		rx_len;
-	struct bt_buf		*rx;
+/* Core Service */
+#define OP_REGISTER_SERVICE		0x01
+struct cmd_register_service {
+	uint8_t id;
+} __packed;
 
-	/* Queue for outgoing ACL data */
-	struct nano_fifo	tx_queue;
+/* GAP Service */
 
-	struct bt_keys		*keys;
+/* no commands yet */
 
-	/* Fixed channel contexts */
-	struct bt_conn_l2cap	l2cap;
-	void			*att;
-	void			*smp;
+void tester_init(void);
+void tester_rsp(uint8_t service, uint8_t opcode, uint8_t status);
 
-	uint8_t			le_conn_interval;
-
-	uint8_t			ref;
-
-	uint8_t			state;
-
-	/* TX fiber stack */
-	BT_STACK(tx_stack, 256);
-};
-
-/* Process incoming data for a connection */
-void bt_conn_recv(struct bt_conn *conn, struct bt_buf *buf, uint8_t flags);
-
-/* Send data over a connection */
-void bt_conn_send(struct bt_conn *conn, struct bt_buf *buf);
-
-/* Add a new connection */
-struct bt_conn *bt_conn_add(struct bt_dev *dev, uint16_t handle, uint8_t role);
-
-/* Delete an existing connection */
-void bt_conn_del(struct bt_conn *conn);
-
-/* Look up an existing connection */
-struct bt_conn *bt_conn_lookup_handle(uint16_t handle);
-
-/* Look up an existing connection by address */
-struct bt_conn *bt_conn_lookup_addr_le(const bt_addr_le_t *peer);
-
-/* Increment conn reference count */
-struct bt_conn *bt_conn_get(struct bt_conn *conn);
-
-/* Decrement conn reference count */
-void bt_conn_put(struct bt_conn *conn);
+void tester_handle_gap(uint8_t opcode, uint8_t *data, uint16_t len);
+uint8_t tester_init_gap(void);

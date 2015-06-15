@@ -57,7 +57,7 @@ void _k_fifo_enque_reply(struct k_args *A)
 	A->Time.rcode = RC_OK;
 #endif
 
-	reset_state_bit(A->Ctxt.proc, TF_ENQU);
+	_k_state_bit_reset(A->Ctxt.proc, TF_ENQU);
 }
 
 /*******************************************************************************
@@ -88,12 +88,12 @@ void _k_fifo_enque_request(struct k_args *A)
 
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 			if (W->Time.timer) {
-				force_timeout(W);
+				_k_timeout_cancel(W);
 				W->Comm = DEQ_RPL;
 			} else {
 #endif
 				W->Time.rcode = RC_OK;
-					reset_state_bit(W->Ctxt.proc, TF_DEQU);
+					_k_state_bit_reset(W->Ctxt.proc, TF_DEQU);
 			}
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 		}
@@ -121,14 +121,14 @@ void _k_fifo_enque_request(struct k_args *A)
 		if (likely(A->Time.ticks != TICKS_NONE)) {
 				A->Ctxt.proc = _k_current_task;
 				A->Prio = _k_current_task->Prio;
-				set_state_bit(_k_current_task, TF_ENQU);
+				_k_state_bit_set(_k_current_task, TF_ENQU);
 			INSERT_ELM(Q->Waiters, A);
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 			if (A->Time.ticks == TICKS_UNLIMITED)
 				A->Time.timer = NULL;
 			else {
 				A->Comm = ENQ_TMO;
-				enlist_timeout(A);
+				_k_timeout_alloc(A);
 			}
 #endif
 		} else {
@@ -184,7 +184,7 @@ void _k_fifo_deque_reply(struct k_args *A)
 	A->Time.rcode = RC_OK;
 #endif
 
-	reset_state_bit(A->Ctxt.proc, TF_DEQU);
+	_k_state_bit_reset(A->Ctxt.proc, TF_DEQU);
 }
 
 /*******************************************************************************
@@ -231,12 +231,12 @@ void _k_fifo_deque_request(struct k_args *A)
 
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 			if (W->Time.timer) {
-				force_timeout(W);
+				_k_timeout_cancel(W);
 				W->Comm = ENQ_RPL;
 			} else {
 #endif
 				W->Time.rcode = RC_OK;
-				reset_state_bit(W->Ctxt.proc, TF_ENQU);
+				_k_state_bit_reset(W->Ctxt.proc, TF_ENQU);
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 			}
 #endif
@@ -249,7 +249,7 @@ void _k_fifo_deque_request(struct k_args *A)
 		if (likely(A->Time.ticks != TICKS_NONE)) {
 			A->Ctxt.proc = _k_current_task;
 			A->Prio = _k_current_task->Prio;
-			set_state_bit(_k_current_task, TF_DEQU);
+			_k_state_bit_set(_k_current_task, TF_DEQU);
 
 			INSERT_ELM(Q->Waiters, A);
 #ifdef CONFIG_SYS_CLOCK_EXISTS
@@ -257,7 +257,7 @@ void _k_fifo_deque_request(struct k_args *A)
 				A->Time.timer = NULL;
 			else {
 				A->Comm = DEQ_TMO;
-				enlist_timeout(A);
+				_k_timeout_alloc(A);
 			}
 #endif
 		} else {
@@ -317,12 +317,12 @@ void _k_fifo_ioctl(struct k_args *A)
 				Q->Waiters = X->Forw;
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 				if (likely(X->Time.timer)) {
-					force_timeout(X);
+					_k_timeout_cancel(X);
 					X->Comm = ENQ_RPL;
 				} else {
 #endif
 					X->Time.rcode = RC_FAIL;
-					reset_state_bit(X->Ctxt.proc, TF_ENQU);
+					_k_state_bit_reset(X->Ctxt.proc, TF_ENQU);
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 				}
 #endif

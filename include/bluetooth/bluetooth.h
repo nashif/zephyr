@@ -34,6 +34,7 @@
 
 #include <stdio.h>
 #include <bluetooth/buf.h>
+#include <bluetooth/hci.h>
 
 /* Bluetooth subsystem logging helpers */
 
@@ -55,7 +56,13 @@
 /* Reset the state of the controller (i.e. perform full HCI init */
 int bt_hci_reset(void);
 
-/* Initialize Bluetooth. Must be the called before anything else. */
+/** @brief Initialize the Bluetooth Subsystem.
+ *
+ *  Initialize Bluetooth. Must be the called before anything else.
+ *  Caller shall be either task or a fiber.
+ *
+ *  @return zero in success or error code otherwise
+ */
 int bt_init(void);
 
 /* HCI driver API */
@@ -86,11 +93,31 @@ struct bt_eir {
 	uint8_t len;
 	uint8_t type;
 	uint8_t data[29];
-} PACK_STRUCT;
+} __packed;
 
+/** @brief Start advertising
+ *
+ *  Set advertisement data,  scan response data, advertisement parameters
+ *  and start advertising.
+ *
+ *  @param type advertising type
+ *  @param ad data to be used in advertisement packets
+ *  @param sd data to be used in scan response packets
+ *
+ *  @return zero in success or error code otherwise.
+ */
 int bt_start_advertising(uint8_t type, const struct bt_eir *ad,
 			 const struct bt_eir *sd);
 int bt_start_scanning(uint8_t scan_type, uint8_t scan_filter);
 int bt_stop_scanning();
+
+struct bt_conn_cb {
+	void (*connected)(const bt_addr_le_t *addr);
+	void (*disconnected)(const bt_addr_le_t *addr);
+
+	struct bt_conn_cb *_next;
+};
+
+void bt_conn_cb_register(struct bt_conn_cb *cb);
 
 #endif /* __BT_BLUETOOTH_H */

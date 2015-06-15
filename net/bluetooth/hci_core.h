@@ -31,6 +31,19 @@
  */
 
 #include <stdbool.h>
+#include <arch/cpu.h>
+
+/* Enabling debug increases stack size requirement considerably */
+#if defined(CONFIG_BLUETOOTH_DEBUG)
+#define BT_STACK_DEBUG_EXTRA	512
+#else
+#define BT_STACK_DEBUG_EXTRA	0
+#endif
+
+#define BT_STACK(name, size) \
+		char __stack name[(size) + BT_STACK_DEBUG_EXTRA]
+#define BT_STACK_NOINIT(name, size) \
+		char __noinit __stack name[(size) + BT_STACK_DEBUG_EXTRA]
 
 /* LMP feature helpers */
 #define lmp_bredr_capable(dev)	(!((dev).features[4] & BT_LMP_NO_BREDR))
@@ -73,8 +86,11 @@ struct bt_dev {
 	/* Queue for incoming HCI events & ACL data */
 	struct nano_fifo	rx_queue;
 
-	/* Queue for incoming HCI Command Complete/Status events */
-	struct nano_fifo	cmd_rx_queue;
+	/* Queue for high priority HCI events which may unlock waiters
+	 * in other fibers. Such events include Number of Completed
+	 * Packets, as well as the Command Complete/Status events.
+	 */
+	struct nano_fifo	rx_prio_queue;
 
 	/* Queue for outgoing HCI commands */
 	struct nano_fifo	cmd_tx_queue;
@@ -103,7 +119,7 @@ static inline void bt_addr_le_copy(bt_addr_le_t *dst, const bt_addr_le_t *src)
 	memcpy(dst, src, sizeof(*dst));
 }
 
-static inline bool bt_addr_is_rpa(const bt_addr_le_t *addr)
+static inline bool bt_addr_le_is_rpa(const bt_addr_le_t *addr)
 {
 	if (addr->type != BT_ADDR_LE_RANDOM)
 		return false;
@@ -125,22 +141,6 @@ static inline bool bt_addr_le_is_identity(const bt_addr_le_t *addr)
 
 	return false;
 }
-
-struct bt_ltk {
-	uint64_t		rand;
-	uint16_t		ediv;
-	uint8_t			val[16];
-};
-
-struct bt_keys {
-	bt_addr_le_t		addr;
-
-	struct bt_ltk		slave_ltk;
-};
-
-struct bt_keys *bt_keys_create(const bt_addr_le_t *addr);
-struct bt_keys *bt_keys_find(const bt_addr_le_t *addr);
-void bt_keys_clear(struct bt_keys *keys);
 
 struct bt_buf *bt_hci_cmd_create(uint16_t opcode, uint8_t param_len);
 int bt_hci_cmd_send(uint16_t opcode, struct bt_buf *buf);

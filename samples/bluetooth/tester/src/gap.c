@@ -1,4 +1,4 @@
-/* conn.h - Bluetooth connection handling */
+/* gap.c - Bluetooth GAP Tester */
 
 /*
  * Copyright (c) 2015 Intel Corporation
@@ -30,69 +30,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-enum {
-	BT_CONN_DISCONNECTED,
-	BT_CONN_CONNECTED,
-};
+#include <stdint.h>
 
-/* L2CAP signaling channel specific context */
-struct bt_conn_l2cap {
-	uint8_t			ident;
-};
+#include <toolchain.h>
+#include <bluetooth/bluetooth.h>
 
-struct bt_conn {
-	struct bt_dev		*dev;
-	uint16_t		handle;
-	uint8_t			role;
+#include "bttester.h"
 
-	bt_addr_le_t		src;
-	bt_addr_le_t		dst;
+void tester_handle_gap(uint8_t opcode, uint8_t *data, uint16_t len)
+{
+	tester_rsp(SERVICE_ID_GAP, opcode, STATUS_UNKNOWN_CMD);
+}
 
-	uint8_t			encrypt;
+uint8_t tester_init_gap(void)
+{
+	if (bt_init() < 0) {
+		return STATUS_FAILED;
+	}
 
-	uint16_t		rx_len;
-	struct bt_buf		*rx;
-
-	/* Queue for outgoing ACL data */
-	struct nano_fifo	tx_queue;
-
-	struct bt_keys		*keys;
-
-	/* Fixed channel contexts */
-	struct bt_conn_l2cap	l2cap;
-	void			*att;
-	void			*smp;
-
-	uint8_t			le_conn_interval;
-
-	uint8_t			ref;
-
-	uint8_t			state;
-
-	/* TX fiber stack */
-	BT_STACK(tx_stack, 256);
-};
-
-/* Process incoming data for a connection */
-void bt_conn_recv(struct bt_conn *conn, struct bt_buf *buf, uint8_t flags);
-
-/* Send data over a connection */
-void bt_conn_send(struct bt_conn *conn, struct bt_buf *buf);
-
-/* Add a new connection */
-struct bt_conn *bt_conn_add(struct bt_dev *dev, uint16_t handle, uint8_t role);
-
-/* Delete an existing connection */
-void bt_conn_del(struct bt_conn *conn);
-
-/* Look up an existing connection */
-struct bt_conn *bt_conn_lookup_handle(uint16_t handle);
-
-/* Look up an existing connection by address */
-struct bt_conn *bt_conn_lookup_addr_le(const bt_addr_le_t *peer);
-
-/* Increment conn reference count */
-struct bt_conn *bt_conn_get(struct bt_conn *conn);
-
-/* Decrement conn reference count */
-void bt_conn_put(struct bt_conn *conn);
+	return STATUS_SUCCESS;
+}

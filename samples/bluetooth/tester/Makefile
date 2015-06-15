@@ -1,5 +1,7 @@
+# Makefile - Bluetooth tester Makefile for microkernel
+
 #
-# Copyright (c) 2015 Wind River Systems, Inc.
+# Copyright (c) 2015 Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -11,7 +13,7 @@
 # this list of conditions and the following disclaimer in the documentation
 # and/or other materials provided with the distribution.
 #
-# 3) Neither the name of Wind River Systems nor the names of its contributors
+# 3) Neither the name of Intel Corporation nor the names of its contributors
 # may be used to endorse or promote products derived from this software without
 # specific prior written permission.
 #
@@ -28,10 +30,22 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-include $(subst \,/,${ZEPHYR_BASE})/make/env/defs.base
+# DESCRIPTION
+# Makefile for the Bluetooth tester application
+# currently only ti_lm3s6965 target is supported
+BSP ?= ti_lm3s6965
+ARCH ?= arm
 
-.PHONY: all clean
-all:
+MDEF_FILE = prj.mdef
+KERNEL_TYPE = micro
+CONF_FILE = prj_$(ARCH).conf
 
-clean:
-	-@${HOS_DelDir} *-kernel-*
+# UART for Bluetooth
+QEMU_EXTRA_FLAGS = -serial unix:/tmp/bt-server-bredr
+
+# UART for Tester
+QEMU_EXTRA_FLAGS += -serial pipe:/tmp/bt-stack-tester
+
+PRJ_INCPATH += ${TIMO_BASE}/include/drivers
+
+include $(TIMO_BASE)/Makefile.inc

@@ -43,6 +43,11 @@
 #include <bluetooth/uuid.h>
 #include <bluetooth/gatt.h>
 
+#include "hci_core.h"
+#include "conn.h"
+#include "l2cap.h"
+#include "att.h"
+
 #if !defined(CONFIG_BLUETOOTH_DEBUG_GATT)
 #undef BT_DBG
 #define BT_DBG(fmt, ...)
@@ -57,9 +62,9 @@ void bt_gatt_register(const struct bt_gatt_attr *attrs, size_t count)
 	attr_count = count;
 }
 
-int bt_gatt_attr_read(const struct bt_gatt_attr *attr, void *buf,
-		      uint8_t buf_len, uint16_t offset, const void *value,
-		      uint8_t value_len)
+int bt_gatt_attr_read(const bt_addr_le_t *peer, const struct bt_gatt_attr *attr,
+		      void *buf, uint8_t buf_len, uint16_t offset,
+		      const void *value, uint8_t value_len)
 {
 	uint8_t len;
 
@@ -76,7 +81,8 @@ int bt_gatt_attr_read(const struct bt_gatt_attr *attr, void *buf,
 	return len;
 }
 
-int bt_gatt_attr_read_service(const struct bt_gatt_attr *attr,
+int bt_gatt_attr_read_service(const bt_addr_le_t *peer,
+			      const struct bt_gatt_attr *attr,
 			      void *buf, uint8_t len, uint16_t offset)
 {
 	struct bt_uuid *uuid = attr->user_data;
@@ -84,11 +90,11 @@ int bt_gatt_attr_read_service(const struct bt_gatt_attr *attr,
 	if (uuid->type == BT_UUID_16) {
 		uint16_t uuid16 = sys_cpu_to_le16(uuid->u16);
 
-		return bt_gatt_attr_read(attr, buf, len, offset, &uuid16,
+		return bt_gatt_attr_read(peer, attr, buf, len, offset, &uuid16,
 					 sizeof(uuid16));
 	}
 
-	return bt_gatt_attr_read(attr, buf, len, offset, uuid->u128,
+	return bt_gatt_attr_read(peer, attr, buf, len, offset, uuid->u128,
 				 sizeof(uuid->u128));
 }
 
@@ -99,10 +105,11 @@ struct gatt_incl {
 		uint16_t uuid16;
 		uint8_t  uuid[16];
 	};
-} PACK_STRUCT;
+} __packed;
 
-int bt_gatt_attr_read_include(struct bt_gatt_attr *attr, void *buf, uint8_t len,
-			      uint16_t offset)
+int bt_gatt_attr_read_include(const bt_addr_le_t *peer,
+			      const struct bt_gatt_attr *attr,
+			      void *buf, uint8_t len, uint16_t offset)
 {
 	struct bt_gatt_include *incl = attr->user_data;
 	struct gatt_incl pdu;
@@ -120,7 +127,7 @@ int bt_gatt_attr_read_include(struct bt_gatt_attr *attr, void *buf, uint8_t len,
 		value_len += sizeof(incl->uuid->u128);
 	}
 
-	return bt_gatt_attr_read(attr, buf, len, offset, &pdu, value_len);
+	return bt_gatt_attr_read(peer, attr, buf, len, offset, &pdu, value_len);
 }
 
 struct gatt_chrc {
@@ -130,9 +137,10 @@ struct gatt_chrc {
 		uint16_t uuid16;
 		uint8_t  uuid[16];
 	};
-} PACK_STRUCT;
+} __packed;
 
-int bt_gatt_attr_read_chrc(const struct bt_gatt_attr *attr, void *buf,
+int bt_gatt_attr_read_chrc(const bt_addr_le_t *peer,
+			   const struct bt_gatt_attr *attr, void *buf,
 			   uint8_t len, uint16_t offset)
 {
 	struct bt_gatt_chrc *chrc = attr->user_data;
@@ -148,10 +156,10 @@ int bt_gatt_attr_read_chrc(const struct bt_gatt_attr *attr, void *buf,
 		value_len += sizeof(pdu.uuid16);
 	} else {
 		memcpy(pdu.uuid, chrc->uuid->u128, sizeof(chrc->uuid->u128));
-		value_len = sizeof(chrc->uuid->u128);
+		value_len += sizeof(chrc->uuid->u128);
 	}
 
-	return bt_gatt_attr_read(attr, buf, len, offset, &pdu, value_len);
+	return bt_gatt_attr_read(peer, attr, buf, len, offset, &pdu, value_len);
 }
 
 void bt_gatt_foreach_attr(uint16_t start_handle, uint16_t end_handle,
@@ -169,4 +177,190 @@ void bt_gatt_foreach_attr(uint16_t start_handle, uint16_t end_handle,
 		if (func(attr, user_data) == BT_GATT_ITER_STOP)
 			break;
 	}
+}
+
+int bt_gatt_attr_read_ccc(const bt_addr_le_t *peer,
+			  const struct bt_gatt_attr *attr, void *buf,
+			  uint8_t len, uint16_t offset)
+{
+	struct _bt_gatt_ccc *ccc = attr->user_data;
+	uint16_t value;
+	size_t i;
+
+	for (i = 0; i < ccc->cfg_len; i++) {
+		if (bt_addr_le_cmp(&ccc->cfg[i].peer, peer)) {
+			continue;
+		}
+
+		value = sys_cpu_to_le16(ccc->cfg[i].value);
+		break;
+	}
+
+	/* Default to disable if there is no cfg for the peer */
+	if (i == ccc->cfg_len) {
+		value = 0x0000;
+	}
+
+	return bt_gatt_attr_read(peer, attr, buf, len, offset, &value,
+				 sizeof(value));
+}
+
+static void gatt_ccc_changed(struct _bt_gatt_ccc *ccc)
+{
+	int i;
+	uint16_t value = 0x0000;
+
+	for (i = 0; i < ccc->cfg_len; i++) {
+		if (ccc->cfg[i].value > value) {
+			value = ccc->cfg[i].value;
+		}
+	}
+
+	if (value != ccc->value) {
+		ccc->value = value;
+		ccc->cfg_changed(value);
+	}
+}
+
+int bt_gatt_attr_write_ccc(const bt_addr_le_t *peer,
+			   const struct bt_gatt_attr *attr, const void *buf,
+			   uint8_t len, uint16_t offset)
+{
+	struct _bt_gatt_ccc *ccc = attr->user_data;
+	struct bt_conn *conn;
+	const uint16_t *data = buf;
+	size_t i;
+
+	if (len != sizeof(*data) || offset) {
+		return -EINVAL;
+	}
+
+	conn = bt_conn_lookup_addr_le(peer);
+	if (!conn) {
+		BT_WARN("%s not connected", bt_addr_le_str(peer));
+		return -ENOTCONN;
+	}
+
+	for (i = 0; i < ccc->cfg_len; i++) {
+		/* Check for existing configuration */
+		if (!bt_addr_le_cmp(&ccc->cfg[i].peer, peer)) {
+			break;
+		}
+	}
+
+	if (i == ccc->cfg_len) {
+		for (i = 0; i < ccc->cfg_len; i++) {
+			/* Check for unused configuration */
+			if (!ccc->cfg[i].valid) {
+				bt_addr_le_copy(&ccc->cfg[i].peer, peer);
+				/* Only set valid if bonded */
+				ccc->cfg[i].valid = conn->keys ? 1 : 0;
+				break;
+			}
+		}
+
+		if (i == ccc->cfg_len) {
+			BT_WARN("No space to store CCC cfg\n");
+			return -ENOMEM;
+		}
+	}
+
+	ccc->cfg[i].value = sys_le16_to_cpu(*data);
+
+	BT_DBG("handle %u value %u\n", attr->handle, ccc->cfg[i].value);
+
+	/* Update cfg if don't match */
+	if (ccc->cfg[i].value != ccc->value) {
+		gatt_ccc_changed(ccc);
+	}
+
+	return len;
+}
+
+int bt_gatt_attr_read_cep(const bt_addr_le_t *peer,
+			  const struct bt_gatt_attr *attr, void *buf,
+			  uint8_t len, uint16_t offset)
+{
+	struct bt_gatt_cep *value = attr->user_data;
+	uint16_t props = sys_cpu_to_le16(value->properties);
+
+	return bt_gatt_attr_read(peer, attr, buf, len, offset, &props,
+				 sizeof(props));
+}
+
+struct notify_data {
+	uint8_t handle;
+	const void *data;
+	size_t len;
+};
+
+static uint8_t notify_cb(const struct bt_gatt_attr *attr, void *user_data)
+{
+	struct notify_data *data = user_data;
+	struct bt_uuid uuid = { .type = BT_UUID_16, .u16 = BT_UUID_GATT_CCC };
+	struct bt_uuid chrc = { .type = BT_UUID_16, .u16 = BT_UUID_GATT_CHRC };
+	struct _bt_gatt_ccc *ccc;
+	size_t i;
+
+	if (bt_uuid_cmp(attr->uuid, &uuid)) {
+		/* Stop if we reach the next characteristic */
+		if (!bt_uuid_cmp(attr->uuid, &chrc)) {
+			return BT_GATT_ITER_STOP;
+		}
+		return BT_GATT_ITER_CONTINUE;
+	}
+
+	/* Check attribute user_data must be of type struct _bt_gatt_ccc */
+	if (attr->write != bt_gatt_attr_write_ccc) {
+		return BT_GATT_ITER_CONTINUE;
+	}
+
+	ccc = attr->user_data;
+
+	/* Notify all peers configured */
+	for (i = 0; i < ccc->cfg_len; i++) {
+		struct bt_conn *conn;
+		struct bt_buf *buf;
+		struct bt_att_notify *nfy;
+
+		/* TODO: Handle indications */
+		if (ccc->value != BT_GATT_CCC_NOTIFY) {
+			continue;
+		}
+
+		conn = bt_conn_lookup_addr_le(&ccc->cfg[i].peer);
+		if (!conn) {
+			continue;
+		}
+
+		buf = bt_att_create_pdu(conn, BT_ATT_OP_NOTIFY,
+					sizeof(*nfy) + data->len);
+		if (!buf) {
+			BT_WARN("No buffer available to send notification");
+			return BT_GATT_ITER_STOP;
+		}
+
+		BT_DBG("conn %p handle %u\n", conn, data->handle);
+
+		nfy = bt_buf_add(buf, sizeof(*nfy));
+		nfy->handle = sys_cpu_to_le16(data->handle);
+
+		bt_buf_add(buf, data->len);
+		memcpy(nfy->value, data->data, data->len);
+
+		bt_l2cap_send(conn, BT_L2CAP_CID_ATT, buf);
+	}
+
+	return BT_GATT_ITER_CONTINUE;
+}
+
+void bt_gatt_notify(uint16_t handle, const void *data, size_t len)
+{
+	struct notify_data nfy;
+
+	nfy.handle = handle;
+	nfy.data = data;
+	nfy.len = len;
+
+	bt_gatt_foreach_attr(handle, 0xffff, notify_cb, &nfy);
 }

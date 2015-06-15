@@ -101,7 +101,7 @@ static void workload_loop(void)
 
 /*******************************************************************************
 *
-* workload_monitor_calibrate - calibrate the workload monitoring subsystem
+* _k_workload_monitor_calibrate - calibrate the workload monitoring subsystem
 *
 * Measures the time required to do a fixed amount of "dummy work", and
 * sets default values for the workload measuring period.
@@ -110,7 +110,7 @@ static void workload_loop(void)
 *
 */
 
-void workload_monitor_calibrate(void)
+void _k_workload_monitor_calibrate(void)
 {
 	_k_workload_n0 = _k_workload_i = 0;
 	_k_workload_n1 = 1000;
@@ -235,7 +235,7 @@ void _k_workload_get(struct k_args *P)
 * This routine returns the workload as a number ranging from 0 to 1000.
 *
 * Each unit equals 0.1% of the time the idle task was not scheduled by the
-* microkernel during the period set by workload_time_slice_set().
+* microkernel during the period set by sys_workload_time_slice_set().
 *
 * IMPORTANT: This workload monitor ignores any time spent servicing ISRs and
 * fibers! Thus, a system which has no meaningful task work to do may spend
@@ -256,14 +256,14 @@ int task_workload_get(void)
 
 /*******************************************************************************
 *
-* workload_time_slice_set - set workload period
+* sys_workload_time_slice_set - set workload period
 *
 * This routine specifies the workload measuring period for task_workload_get().
 *
 * RETURNS: N/A
 */
 
-void workload_time_slice_set(int32_t t)
+void sys_workload_time_slice_set(int32_t t)
 {
 #ifdef CONFIG_WORKLOAD_MONITOR
 	if (t < 10) {
@@ -400,7 +400,7 @@ static inline int32_t _get_next_timer_expiry(void)
 *
 * If the BSP sets the _sys_power_save_flag flag, this routine will call the
 * _sys_power_save_idle() routine in an infinite loop. If the flag is not set,
-* this routine will fall through and kernel_idle() will try the next idling
+* this routine will fall through and _k_kernel_idle() will try the next idling
 * mechanism.
 *
 * RETURNS: N/A
@@ -446,7 +446,7 @@ static void _power_save(void)
 
 /*******************************************************************************
 *
-* kernel_idle - microkernel idle task
+* _k_kernel_idle - microkernel idle task
 *
 * If power save is on, we sleep; if power save is off, we "busy wait".
 *
@@ -454,7 +454,7 @@ static void _power_save(void)
 *
 */
 
-int kernel_idle(void)
+int _k_kernel_idle(void)
 {
 	_power_save(); /* never returns if power saving is enabled */
 
@@ -470,7 +470,7 @@ int kernel_idle(void)
 	}
 
 	/*
-	 * Code analyzers may complain that kernel_idle() uses an infinite loop
+	 * Code analyzers may complain that _k_kernel_idle() uses an infinite loop
 	 * unless we indicate that this is intentional
 	 */
 

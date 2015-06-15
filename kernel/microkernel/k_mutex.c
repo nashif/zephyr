@@ -141,7 +141,7 @@ void _k_mutex_lock_reply(
 	A->Time.rcode = RC_OK;
 #endif
 
-	reset_state_bit(A->Ctxt.proc, TF_LOCK);
+	_k_state_bit_reset(A->Ctxt.proc, TF_LOCK);
 }
 
 /*******************************************************************************
@@ -216,7 +216,7 @@ void _k_mutex_lock_request(struct k_args *A /* pointer to mutex lock
 				 */
 				A->Ctxt.proc = _k_current_task;
 				A->Prio = _k_current_task->Prio;
-				set_state_bit(_k_current_task, TF_LOCK);
+				_k_state_bit_set(_k_current_task, TF_LOCK);
 			/* Note: Mutex->Waiters is a priority sorted list */
 			INSERT_ELM(Mutex->Waiters, A);
 #ifdef CONFIG_SYS_CLOCK_EXISTS
@@ -229,7 +229,7 @@ void _k_mutex_lock_request(struct k_args *A /* pointer to mutex lock
 				 * the request time out.
 				 */
 				A->Comm = LOCK_TMO;
-				enlist_timeout(A);
+				_k_timeout_alloc(A);
 			}
 #endif
 			if (A->Prio < Mutex->OwnerCurrentPrio) {
@@ -364,7 +364,7 @@ void _k_mutex_unlock(struct k_args *A /* pointer to mutex unlock
 				 * Trigger a call to _k_mutex_lock_reply()--it will
 				 * send a reply with a return code of RC_OK.
 				 */
-				force_timeout(X);
+				_k_timeout_cancel(X);
 				X->Comm = LOCK_RPL;
 			} else {
 #endif
@@ -373,7 +373,7 @@ void _k_mutex_unlock(struct k_args *A /* pointer to mutex unlock
 				 * Set the return code.
 				 */
 				X->Time.rcode = RC_OK;
-					reset_state_bit(X->Ctxt.proc, TF_LOCK);
+					_k_state_bit_reset(X->Ctxt.proc, TF_LOCK);
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 			}
 #endif
