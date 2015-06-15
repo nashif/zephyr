@@ -1,3 +1,0 @@
-comment "Configuring microkernel for Atlas Peak on FPGA"
-source "ukernel.kconf"
-

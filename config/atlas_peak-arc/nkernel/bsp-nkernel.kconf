@@ -1,2 +1,0 @@
-comment "Configuring nanokernel for atlas_peak-arc"
-source "nkernel.kconf"

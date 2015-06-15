@@ -1,3 +1,0 @@
-comment "Configuring nanokernel for Atlas Peak on FPGA"
-source "nkernel.kconf"
-
