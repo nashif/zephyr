@@ -33,10 +33,10 @@ config BSP_DIR
 
 
 config  LOAPIC_TIMER_FREQ
-        default 16000000
+        default 32000000
 
 config	SYS_CLOCK_HW_CYCLES_PER_SEC
-	default 16000000
+	default 32000000
 
 config  PHYS_LOAD_ADDR
 	default 0x40010000 if XIP
