@@ -31,3 +31,4 @@
 #
 
 source "net/bluetooth/Kconfig"
+source "net/ip/Kconfig"

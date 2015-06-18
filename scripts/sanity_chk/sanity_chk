@@ -46,23 +46,21 @@ source ${ZEPHYR_BASE}/scripts/sanity_chk/common.defs
 # Symbols used in this script only
 #
 SCRIPT_PATH=${ZEPHYR_BASE}/scripts/sanity_chk
-HOST_TOOLS_SRC_PATH=${ZEPHYR_BASE}/host/src
 
 # print script usage
 #
 help() {
 cat << EOF
 
-Usage : ${SCRIPT_NAME} [-hHcqbls] [-A <arch>] [-B <board>]
+Usage : ${SCRIPT_NAME} [-hHcqbl] [-A <arch>] [-P <platform>]
        -h display this help message
        -H display more detailed documentation
        -c just clean projects and delete execution logs
        -q just do quick sanity check
        -b just build projects
        -l keep successful project execution logs
-       -s do not build host tools
        -A build projects for the specified architecture
-       -B build projects for the specified BSP or BSP variant
+       -P build projects for the specified platform
 
 EOF
 }
@@ -76,11 +74,9 @@ Script to sanitize Zephyr OS.
 
 The full sanity check consists of the following phases:
 
-    - Rebuild host tools to ensure they are up to date.
     - Run "footprint_chk" to characterize kernel footprint.
     - Run "regression_chk" to regression test kernel operation.
-    - Run "common-klibs_chk" to verify if projects can share a set of common kernel libs
-    - Run "out-of-tree_chk" to verify if projects and BSPs can reside outside the normal tree.
+    - Run "out-of-tree_chk" to verify if projects can reside outside the normal tree
 
 The full sanity check is run by default. If desired, some steps can be omitted
 by using the available command options.
@@ -96,35 +92,16 @@ of the command that failed.
 EOF
 }
 
-# If the parameter is zero, build the host tools.
-#
-update_host_tools() {
-    if [ ${1} -eq 0 ] ; then
-	print_header
-	${ECHO} "Building host tools"
-
-	${CD} ${HOST_TOOLS_SRC_PATH}
-	[ $? -eq 0 ] || fail_exit $? $FUNCNAME $LINENO
-
-	${MAKE} clean
-	[ $? -eq 0 ] || fail_exit $? $FUNCNAME $LINENO
-
-	${MAKE}
-	[ $? -eq 0 ] || fail_exit $? $FUNCNAME $LINENO
-    fi
-}
-
 # main routine
 #
 main() {
 	# set up default behaviors
 	clean_only=0
-	skip_host_tools=0
 
 	args_passed_on=""
 
 	# process command options
-	while getopts ":hHcqblsA:B:" arg $*
+	while getopts ":hHcqblA:B:P:" arg $*
 	do
 		case $arg in
 		h)
@@ -147,14 +124,16 @@ main() {
 		l)
 			args_passed_on="${args_passed_on} -l"
 			;;
-		s)
-			skip_host_tools=1
-			;;
 		A)
 			args_passed_on="${args_passed_on} -A $OPTARG"
 			;;
 		B)
+			# Unlisted option.  Exists only until migration to
+			# -P <platform> is complete
 			args_passed_on="${args_passed_on} -B $OPTARG"
+			;;
+		P)
+			args_passed_on="${args_passed_on} -P $OPTARG"
 			;;
 		\?)
 			${ECHO} "invalid option -$OPTARG"
@@ -182,14 +161,9 @@ main() {
 		[ $? -eq 0 ] || exit $?
 		${SCRIPT_PATH}/regression_chk -c
 		[ $? -eq 0 ] || exit $?
-		#${SCRIPT_PATH}/common-klibs_chk -c
-		#[ $? -eq 0 ] || exit $?
 		${SCRIPT_PATH}/out-of-tree_chk -c
 		exit $?
 	fi
-
-	# rebuild host tools (optional)
-        #update_host_tools ${skip_host_tools}
 
 	# run the footprint characterization check
 	print_header
@@ -204,13 +178,6 @@ main() {
 	${ECHO}
 	${SCRIPT_PATH}/regression_chk ${args_passed_on}
 	[ $? -eq 0 ] || exit $?
-
-	# run the common klibs regression check
-	print_header
-	${ECHO} "Running Common klibs Regression Check"
-	${ECHO}
-	#${SCRIPT_PATH}/common-klibs_chk ${args_passed_on}
-	#[ $? -eq 0 ] || exit $?
 
 	# run the out of tree regression check
 	print_header

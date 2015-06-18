@@ -40,6 +40,7 @@ architecture.
 #include <arch/cpu.h>
 #include <toolchain.h>
 #include <nanok.h>
+#include <wait_q.h>
 
 tNANO _nanokernel = {0};
 
@@ -61,7 +62,7 @@ tNANO _nanokernel = {0};
 * RETURNS: N/A
 */
 
-static ALWAYS_INLINE void _context_monitor_init(struct s_CCS *pCcs /* context */
+static ALWAYS_INLINE void _context_monitor_init(struct ccs *pCcs /* context */
 					   )
 {
 	unsigned int key;
@@ -145,6 +146,8 @@ void _NewContext(
 
 	pCcs->preempReg.psp = (uint32_t)pInitCtx;
 	pCcs->basepri = 0;
+
+	_nano_timeout_ccs_init(pCcs);
 
 	/* initial values in all other registers/CCS entries are irrelevant */
 

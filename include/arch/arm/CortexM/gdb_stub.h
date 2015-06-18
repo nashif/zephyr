@@ -1,4 +1,4 @@
-/* gdb_stub.s - extra work performed upon exception entry/exit for GDB */
+/* gdb_stub.h - extra work performed upon exception entry/exit for GDB */
 
 /*
  * Copyright (c) 2014 Wind River Systems, Inc.

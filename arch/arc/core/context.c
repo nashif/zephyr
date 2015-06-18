@@ -41,6 +41,7 @@
 #include <nanok.h>
 #include <offsets.h>
 #include <misc/util.h>
+#include <wait_q.h>
 
 /*  initial stack frame */
 struct init_stack_frame {
@@ -71,7 +72,7 @@ tNANO _nanokernel = {0};
  * RETURNS: N/A
  */
 
-static ALWAYS_INLINE void context_monitor_init(struct s_CCS *pCcs /* context */
+static ALWAYS_INLINE void context_monitor_init(struct ccs *pCcs /* context */
 					   )
 {
 	unsigned int key;
@@ -165,6 +166,8 @@ void _NewContext(
 	pCcs->intlock_key = 0x3F;
 	pCcs->relinquish_cause = _CAUSE_COOP;
 	pCcs->preempReg.sp = (uint32_t)pInitCtx - __tCalleeSaved_SIZEOF;
+
+	_nano_timeout_ccs_init(pCcs);
 
 	/* initial values in all other registers/CCS entries are irrelevant */
 

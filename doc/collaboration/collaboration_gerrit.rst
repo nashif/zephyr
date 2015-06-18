@@ -1,7 +1,5 @@
-.. include:: ../substitutions.rst
-
-Submitting a Patch Via Gerrit
-#############################
+Submitting a Change Via Gerrit
+###############################
 
 
 Follow these instructions to collaborate on the |project| using
@@ -28,91 +26,12 @@ Make sure to subscribe to the `mailing list`_ by filling out the
 .. contents:: Table of Contents
    :depth: 2
 
-Configuring Gerrit Access
-*************************
 
-Gerrit access requires some basic user setup.  The following process has
-been defined as a simple walk-through to enable quick access to the
-Gerrit services.
+Follow the steps available at :ref:`Getting Access` for information about how to access the source
+code using GIT and Gerrit.
 
-Accessing Gerrit
-================
-
-#. `Create`_ or `update`_ a 01.org_ account.
-
-#. Submit your your 01.org_ account and corporate email address to
-   |PM| `<mailto:hirally.santiago.rodriguez@intel.com>`_.
-
-#. Once access is granted, `access Gerrit`_.
-
-#. Log in using your 01.org account credentials.
-
-.. _Create: https://01.org/user/register
-
-.. _update: https://01.org/user/login
-
-.. _access Gerrit: https://oic-review.01.org/gerrit/
-
-.. _01.org: https://01.org/
-
-Configuring SSH to Use Gerrit
-=============================
-
-Gerrit uses SSH to interact with your GIT client. A SSH private key
-needs to be generated on the development machine with a matching public
-key on the Gerrit server.
-
-If you already have a SSH key-pair you would like to use, please skip
-down to step.
-
-Please follow the steps below to get started.
-
-1. Create a key-pair in your Linux machine, type:
-
-.. code-block:: bash
-
-   $ ssh-keygen -t rsa -C "John Doe john.doe@example.com"
-
-.. note:: This will ask you for a password to protect the private key as it
-   generates a unique key. Please keep this password private, and DO
-   NOT enter a blank password.  
-
-The generated key-pair is found at:
-:file:`~/.ssh/id_rsa and ~/.ssh/id_rsa.pub`.
-
-2. Add the the private key in the :file:`id_rsa` file in your key ring,
-type:
-
-.. code-block:: bash
-
-   $ ssh-add ~/.ssh/id_rsa
-
-3. Add your the public key :file:`id_rsa.pub` to the Gerrit account:
-
-   a. Go to `access Gerrit`_.
-
-   b. Click on your account name in the upper right corner.
-
-   c. From the pop-up menu, select :guilabel:`Settings`.
-
-   d. On the left hand menu select, click on
-   :guilabel:`SSH Public Keys`.
-
-   e. Click Add key and paste the contents of your public key
-   :file:`~/.id/id_rsa.pub`.
-
-.. note:: To obtain the contents of your public key
-   on a Linux machine type:
-   :command:`$ cat ~/.ssh/id_rsa.pub`
-   The output is the contents of :file:`~/.id/id_rsa.pub`.
-   Paste it into the Add SSH key window in Gerrit.
-.. warning:: Potential Security Risk 
-   Do not copy your private key :file:`~/.ssh/id_rsa` Use only the public
-   :file:`~/.id/id_rsa.pub`.
-
-
-Coding with Gerrit
-******************
+Working with Gerrit
+********************
 
 Gerrit is a review system, and as such, assigns the following roles to
 users:
@@ -134,24 +53,11 @@ For more detailed information visit:
 `<http://gerrit-documentation.googlecode.com/svn/Documentation/2.6/intro-quick.html>`_
 
 
-Checking the Code Out
-=====================
 
-#. Ensure that SSH has been set up porperly. See
-   `Configuring SSH to Use Gerrit`_ for details.
+Submitting a Change
+--------------------
 
-#. Clone the repository, type:
-
-   :command:`$ git clone ssh://01ORGUSERNAME@oic-review.01.org:29418/forto-collab`
-
-#. You have checked out a local copy of the source code. Develop
-   freely, issuing as many commits and rebases as needed.
-
-
-Submitting a Patch
-------------------
-
-Currently, there is only one method to submit a patch for review:
+Currently, there is only one method to submit a change for review:
 
 **Gerrit**
 
@@ -160,7 +66,7 @@ coding and contribution guidelines of the project. Directions for
 building the source code are out of the scope of this document. Please
 refer to the :ref:`Install`.
 
-When a patch set is ready for submission, Gerrit requires that the
+When a change set is ready for submission, Gerrit requires that the
 changes be pushed to a special branch.  The name of this special branch
 contains a reference to the final branch where the code should reside
 once accepted.
@@ -190,7 +96,7 @@ The gerrit server generates a
 `link <https://oic-review.01.org/gerrit/1045>`_ where the change can be
 tracked.
 
-2. Add reviewers to your patch.
+2. Add reviewers to your change.
 
   a. To Define the list of reviewers via the command line at code
   submission time. Add *%r=reviewer@project.org* to the command. For
@@ -218,22 +124,23 @@ tracked.
 .. note::
    In the examples, actual email addresses should be used instead of the
    :literal:`@email.com and @notemail.com` addressses.
-   
+
 Reviewing Using Gerrit
 **********************
 
- An example of a gerrit patch review page:
+ An example of a gerrit change review page:
 
 .. figure:: figures/gs_collaboration_gerrit01.png
    :scale: 75 %
    :alt: Gerrit Review Page
-   
+
    An example of a Gerrit change review page.
 
    The fields highlighted in yellow are of interest and require a
    little more explanation.
-   
-* Add: This button allows the patch submitter to manually add names of
+
+
+* Add: This button allows the change submitter to manually add names of
   people who should review this changeset; type a name and the system
   will auto-complete based on the list of people registered and with
   access to the system.  They will be notified by email that you are
@@ -247,7 +154,7 @@ Reviewing Using Gerrit
   header (and value) are present, Gerrit will remember it and present
   it as another version of the same change.
 
-* Status: Currently, the patch is in review status, as indicated by
+* Status: Currently, the change is in review status, as indicated by
   the “Needs Code-Review” in the upper left corner. The list of
   Reviewers will all emit their opinion voting +1 if they agree to the
   merge, -1 if they disagree. Gerrit users with a Maintainer role can
@@ -267,10 +174,10 @@ Click on a request and the history tab shows you the feedback.
 
    An example of how feedback is displayed on Gerrit.
 
-Viewing Pending Patches
-=======================
+Viewing Pending Changes
+------------------------
 
-1. Find all the pending patches by clicking on the
+1. Find all the pending changes by clicking on the
 :menuselection:`All --> Changes` link in the upper left corner or
 directly at:
 `<https://oic-review.01.org/gerrit/#/q/project:forto-collab>`_
@@ -278,15 +185,15 @@ directly at:
 If you collaborate in multiple projects, you may wish to limit the
 branch through the search bar in the upper right side.
 
-Add the filter *project:forto-collab* to limit the visible patches only
+Add the filter *project:forto-collab* to limit the visible changes only
 to those of the forto-collab project.
 
-2. List all current patches you submitted or those patches in need of
+2. List all current changes you submitted or those changes in need of
 your input by clicking on :menuselection:`My --> Changes` or going to:
 `<https://oic-review.01.org/gerrit/#/dashboard/self>`_
 
-Reviewing a Patch
------------------
+Reviewing a Change
+-------------------
 
 1. Click on a the link for incoming or outgoing review, such as
 *“This is test #1”* shown in this figure:
@@ -297,20 +204,20 @@ Reviewing a Patch
 
    An example of incoming and outgoing items in review.
 
-2. The details of the patch and its current status are loaded:
+2. The details of the change and its current status are loaded:
 
 
 .. figure:: figures/gs_collaboration_gerrit04.png
    :scale: 75 %
-   :alt: Detailed View of a Patch in Gerrit
+   :alt: Detailed View of a Change in Gerrit
 
-   An example of the detailed view of a patch in Gerrit.
+   An example of the detailed view of a change in Gerrit.
 
    The highlighted items require further explanation.
 
 From left to right:
 
-* **The state:** Displays the current status of the patch. In the
+* **The state:** Displays the current status of the change. In the
   example the status reads: +l Needs Code-Review.
 
 * **Reply:** Click on this button after reviewing to add a final
@@ -378,12 +285,12 @@ highlighted to add comments to that section.
 
    Shows a comment saved as a draft.
 
-8. Once reviewing all the files of the patch is complete, click the
-green up arrow at the top right to return to the main patch page. Click
+8. Once reviewing all the files of the change is complete, click the
+green up arrow at the top right to return to the main change page. Click
 the reply button, write some final comments and submit your score for
 the patch set. Click post to submit the review of each reviewed file as
 well as your final comment and score. Gerrit sends an email to the
-patch submitter and all listed reviewers. Finally, it logs the review
+change submitter and all listed reviewers. Finally, it logs the review
 for future reference. All individual comments are saved as Draft until
 the post button is clicked.
 
@@ -392,4 +299,4 @@ the post button is clicked.
    :alt: Submitting the Final Comment and Review
 
    Shows the dialog box for submitting the final comment and the review 
-   score of a patch.
+   score of a change.

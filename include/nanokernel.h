@@ -60,11 +60,19 @@ struct _nano_queue {
 	void *tail;
 };
 
-struct s_CCS;
+#include <misc/dlist.h>
+
+struct _nano_timeout {
+	sys_dlist_t node;
+	struct _nano_queue *wait_q;
+	int32_t delta_ticks_from_prev;
+};
+
+struct ccs;
 
 /* architecture-independent nanokernel public APIs */
 
-typedef struct s_CCS *nano_context_id_t;
+typedef struct ccs *nano_context_id_t;
 
 typedef void (*nano_fiber_entry_t)(int i1, int i2);
 
@@ -74,6 +82,10 @@ typedef int nano_context_type_t;
 #define NANO_CTX_ISR (0)
 #define NANO_CTX_FIBER (1)
 #define NANO_CTX_TASK (2)
+
+/* timeout special values */
+#define TICKS_UNLIMITED (-1)
+#define TICKS_NONE 0
 
 /* context APIs
  */
@@ -102,6 +114,22 @@ extern void fiber_fiber_start(char *pStack,
 				unsigned options);
 extern void fiber_yield(void);
 extern void fiber_abort(void);
+
+#ifdef CONFIG_NANO_TIMEOUTS
+extern void fiber_sleep(int32_t timeout);
+extern void *fiber_fiber_delayed_start(char *stack,
+	unsigned int stack_size_in_bytes,
+	nano_fiber_entry_t entry_point, int param1,
+	int param2, unsigned int priority,
+	unsigned int options, int32_t timeout_in_ticks);
+extern void *fiber_delayed_start(char *stack, unsigned int stack_size_in_bytes,
+							nano_fiber_entry_t entry_point, int param1,
+							int param2, unsigned int priority,
+							unsigned int options, int32_t timeout_in_ticks);
+extern void fiber_delayed_start_cancel(void *handle);
+extern void fiber_fiber_delayed_start_cancel(void *handle);
+#endif
+
 /* methods for tasks */
 extern void task_fiber_start(char *pStack,
 			       unsigned int stackSize,
@@ -110,6 +138,14 @@ extern void task_fiber_start(char *pStack,
 			       int arg2,
 			       unsigned prio,
 			       unsigned options);
+#ifdef CONFIG_NANO_TIMEOUTS
+extern void *task_fiber_delayed_start(char *stack,
+	unsigned int stack_size_in_bytes,
+	nano_fiber_entry_t entry_point, int param1,
+	int param2, unsigned int priority,
+	unsigned int options, int32_t timeout_in_ticks);
+extern void task_fiber_delayed_start_cancel(void *handle);
+#endif
 
 /* FIFO APIs */
 
@@ -133,10 +169,19 @@ extern void *nano_isr_fifo_get(struct nano_fifo *chan);
 extern void nano_fiber_fifo_put(struct nano_fifo *chan, void *data);
 extern void *nano_fiber_fifo_get(struct nano_fifo *chan);
 extern void *nano_fiber_fifo_get_wait(struct nano_fifo *chan);
+#ifdef CONFIG_NANO_TIMEOUTS
+extern void *nano_fiber_fifo_get_wait_timeout(struct nano_fifo *chan,
+												int32_t timeout_in_ticks);
+#endif
+
 /* methods for tasks */
 extern void nano_task_fifo_put(struct nano_fifo *chan, void *data);
 extern void *nano_task_fifo_get(struct nano_fifo *chan);
 extern void *nano_task_fifo_get_wait(struct nano_fifo *chan);
+#ifdef CONFIG_NANO_TIMEOUTS
+extern void *nano_task_fifo_get_wait_timeout(struct nano_fifo *chan,
+												int32_t timeout_in_ticks);
+#endif
 
 /* LIFO APIs */
 
@@ -153,10 +198,19 @@ extern void *nano_isr_lifo_get(struct nano_lifo *chan);
 extern void nano_fiber_lifo_put(struct nano_lifo *chan, void *data);
 extern void *nano_fiber_lifo_get(struct nano_lifo *chan);
 extern void *nano_fiber_lifo_get_wait(struct nano_lifo *chan);
+#ifdef CONFIG_NANO_TIMEOUTS
+extern void *nano_fiber_lifo_get_wait_timeout(struct nano_lifo *chan,
+												int32_t timeout_in_ticks);
+#endif
+
 /* methods for tasks */
 extern void nano_task_lifo_put(struct nano_lifo *chan, void *data);
 extern void *nano_task_lifo_get(struct nano_lifo *chan);
 extern void *nano_task_lifo_get_wait(struct nano_lifo *chan);
+#ifdef CONFIG_NANO_TIMEOUTS
+extern void *nano_task_lifo_get_wait_timeout(struct nano_lifo *chan,
+												int32_t timeout_in_ticks);
+#endif
 
 /* semaphore APIs */
 
@@ -176,10 +230,19 @@ extern int nano_isr_sem_take(struct nano_sem *chan);
 extern void nano_fiber_sem_give(struct nano_sem *chan);
 extern int nano_fiber_sem_take(struct nano_sem *chan);
 extern void nano_fiber_sem_take_wait(struct nano_sem *chan);
+#ifdef CONFIG_NANO_TIMEOUTS
+extern int nano_fiber_sem_take_wait_timeout(struct nano_sem *chan,
+											int32_t timeout);
+#endif
+
 /* methods for tasks */
 extern void nano_task_sem_give(struct nano_sem *chan);
 extern int nano_task_sem_take(struct nano_sem *chan);
 extern void nano_task_sem_take_wait(struct nano_sem *chan);
+#ifdef CONFIG_NANO_TIMEOUTS
+extern int nano_task_sem_take_wait_timeout(struct nano_sem *chan,
+											int32_t timeout);
+#endif
 
 /* stack APIs */
 
@@ -209,9 +272,7 @@ extern void context_custom_data_set(void *value);
 extern void *context_custom_data_get(void);
 #endif /* CONFIG_CONTEXT_CUSTOM_DATA */
 
-#if defined(CONFIG_NANOKERNEL)
-
-/* nanokernel-only timers */
+/* nanokernel timers */
 
 struct nano_timer {
 	struct nano_timer *link;
@@ -241,8 +302,6 @@ extern uint32_t nano_tick_get_32(void);
 extern uint32_t nano_cycle_get_32(void);
 extern int64_t nano_tick_delta(int64_t *reftime);
 extern uint32_t nano_tick_delta_32(int64_t *reftime);
-
-#endif /* CONFIG_NANOKERNEL */
 
 /*
  * Auto-initialization

@@ -8,7 +8,7 @@ Section Scope
 
 This section provides an overview of the most important nanokernel
 objects. The information contained here is an aid to better understand
-how Tiny Mountain operates at the nanokernel level.
+how the Zephyr OS operates at the nanokernel level.
 
 Document Format
 ***************
@@ -69,11 +69,7 @@ Nanokernel LIFO Object
 Definition
 ==========
 
-<<<<<<< HEAD
-The LIFO is defined in :file:`kernel/nanokernel/core/nano_lifo.c`. It
-=====================================================================
 The LIFO is defined in :file:`kernel/nanokernel/nano_lifo.c`. It
->>>>>>> 4fb7905fc834d5993a5613eee2c0f9bfc8d2943f
 consists of a linked list of memory blocks that uses the first word in
 each block as a next pointer. The data is stored in last-in-first-out
 order.
@@ -273,8 +269,7 @@ Example Code
 Step-by-Step Description
 ========================
 
- A quick breakdown of the major objects in use
-by this sample includes:
+A quick breakdown of the major objects in use by this sample includes:
 
 - One fiber, executing in the :c:func:`fiberEntry()` routine.
 

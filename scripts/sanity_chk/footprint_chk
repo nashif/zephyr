@@ -50,65 +50,23 @@ SIZE="${ZEPHYR_BASE}/scripts/truesize"
 #
 PRJ_PATH=${ZEPHYR_BASE}/samples
 
-# Pseudo-file describing sample projects to be characterized
+# Identify the file containing the projects to be built (or cleaned)
 #
-# Project info must be specified on a single line
-# (which must terminate with a '\n' character, EXCEPT for the final entry).
-#
-# Project info consists of:
-# - project directory (relative to PRJ_PATH)
-# - build arguments (optional)
-# - project flags, enclosed in angle brackets "<>"
-#   - 'u' => microkernel; 'n' => nanokernel (required; must be first flag)
-#   - 'q' => run as part of quick sanity check (optional)
-# - list of BSP names that can be used with the project
-#
-# Sanity check will select first BSP name listed if the user does not specify
-# a BSP name when running sanity check (i.e. is the "default" BSP).
-#
-# A given project can appear more than once, allowing the project to be
-# sanitized multiple times. This can be useful if the project has multiple
-# configurations, or if the project should be characterized on more than one BSP
-# during a default BSP sanity check.
-#
-# List of sample projects can contain comment lines (denoted by '#'),
-# but be sure to terminate line with a '\n' character!
-#
-PRJ_LIST="\
-nanokernel/benchmark/footprint     TEST=min         <nq> atlas_peak-arc \n\
-nanokernel/benchmark/footprint     TEST=min         <nq> ti_lm3s6965 \n\
-nanokernel/benchmark/footprint     TEST=min         <nq> fsl_frdm_k64f \n\
-nanokernel/benchmark/footprint     TEST=min         <n>  pentium4 minuteia atlas_peak-x86 \n\
-nanokernel/benchmark/footprint     TEST=reg         <n>  pentium4 minuteia atlas_peak-x86 \n\
-nanokernel/benchmark/footprint     TEST=max         <nq> pentium4 minuteia atlas_peak-x86 \n\
-microkernel/benchmark/footprint    TEST=min         <uq> ti_lm3s6965 \n\
-microkernel/benchmark/footprint    TEST=min         <uq> fsl_frdm_k64f \n\
-microkernel/benchmark/footprint    TEST=min         <u>  pentium4 minuteia atlas_peak-x86 \n\
-microkernel/benchmark/footprint    TEST=reg         <u>  pentium4 minuteia atlas_peak-x86 \n\
-microkernel/benchmark/footprint    TEST=max         <uq> pentium4 minuteia atlas_peak-x86 \n\
-    # projects that don't indicate completion                        \n\
-nanokernel/benchmark/latency_measure   <n>  pentium4  minuteia  atom quark \n\
-nanokernel/benchmark/sys_kernel        <n>  pentium4  minuteia  atom quark \n\
-microkernel/benchmark/app_kernel       <u>  pentium4  minuteia  atom quark \n\
-microkernel/benchmark/latency_measure  <u>  pentium4  minuteia  atom quark \n\
-microkernel/benchmark/sys_kernel       <u>  pentium4  minuteia  atom quark \n\
-    # projects that don't require any special capabilities           \n\
-nanokernel/benchmark/boot_time         <n>  pentium4! minuteia! atom quark \n\
-microkernel/benchmark/boot_time        <u>  pentium4! minuteia! atom quark "
+PRJ_LIST=${ZEPHYR_BASE}/scripts/sanity_chk/footprint_chk.data
 
 # print script usage
 #
 help() {
 cat << EOF
 
-Usage : ${SCRIPT_NAME} [-hHcqb] [-A <arch>] [-B <board>]
+Usage : ${SCRIPT_NAME} [-hHcqb] [-A <arch>] [-P <platform>]
        -h display this help message
        -H display more detailed documentation
        -c just clean projects
        -q just do quick sanity check
        -b just build projects
        -A build projects for the specified architecture
-       -B build projects for the specified BSP or BSP variant
+       -P build projects for the specified platform
 
 EOF
 }
@@ -122,7 +80,7 @@ Script to determine kernel footprint characteristics.
 
 The script builds nanokernel and microkernel footprint
 projects for their various configurations and measures the size of the
-resulting images. (NOTE: Only some BSP variants are supported.)
+resulting images.
 
 EOF
 }
@@ -136,12 +94,13 @@ main() {
 	build_only=0
 	ARCH_NAME=""
 	BSP_NAME=""
+	PLATFORM_NAME=""
 
 	# process command options
 	#
 	# note: must handle all options that can be passed in by "sanity_chk",
 	# including ones that aren't applicable to this script
-	while getopts ":hHcqblA:B:" arg $*
+	while getopts ":hHcqblA:B:P:" arg $*
 	do
 		case $arg in
 		h)
@@ -168,7 +127,14 @@ main() {
 			ARCH_NAME=$OPTARG
 			;;
 		B)
+			# Unlisted option.  Exists only until migration to
+			# -P <platform> is complete
 			BSP_NAME=$OPTARG
+			BSP_SPECIFIED=1
+			;;
+		P)
+			PLATFORM_NAME=$OPTARG
+			PLATFORM_SPECIFIED=1
 			;;
 		\?)
 			${ECHO} "invalid option -$OPTARG"
@@ -188,6 +154,12 @@ main() {
 	if [ x$1 != x ] ; then
 		${ECHO} "unexpected argument $1"
 		exit 1
+	fi
+
+	# Do not permit the use of both -P and deprecated -B options
+	if [ x${BSP_SPECIFIED} != x ] && [ x${PLATFORM_SPECIFIED} != x ] ; then
+		${ECHO} "Do not use both the -P and the deprecated -B options"
+		exit 1;
 	fi
 
 	# handle case where we're just cleaning up
@@ -233,7 +205,7 @@ main() {
 			${ECHO}
 			${ECHO} "Footprint for ${PRJ_NAME[${cur_proj}]}"
 			${ECHO}
-			${ECHO} "target:    ${BSP_INFO[${cur_proj}]}"
+			${ECHO} "target:    ${PLATFORM[${cur_proj}]}"
 			${ECHO} "arguments: ${PRJ_ARGS[$cur_proj]}"
 			${ECHO}
 			${SIZE} outdir/*.elf

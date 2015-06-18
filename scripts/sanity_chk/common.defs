@@ -77,11 +77,14 @@ RUN_UNTIL="PROJECT EXECUTION"
 RUN_PASSED="PROJECT EXECUTION SUCCESSFUL"
 RUN_FAILED="PROJECT EXECUTION FAILED"
 
-# architecture BSP lists
-arc_BSP_LIST="atlas_peak-arc"
-arm_BSP_LIST="fsl_frdm_k64f ti_lm3s6965"
-x86_BSP_LIST="pentium4 minuteia atom quark atlas_peak-x86"
-_BSP_LIST="${arc_BSP_LIST} ${arm_BSP_LIST} ${x86_BSP_LIST}"
+# architecture platform lists
+arc_PLATFORM_LIST="atlas_peak-arc"
+arm_PLATFORM_LIST="fsl_frdm_k64f ti_lm3s6965"
+x86_PLATFORM_LIST="generic_pc_pentium4   \
+				   generic_pc_minuteia   \
+				   generic_pc_atom_n28xx \
+				   quark"
+_PLATFORM_LIST="${arc_PLATFORM_LIST} ${arm_PLATFORM_LIST} ${x86_PLATFORM_LIST}"
 
 # header used to identify script output during execution
 #
@@ -127,13 +130,13 @@ clean_project() {
 
 # restore all projects to their pristine state
 #
-# ON ENTRY: ${PRJ_LIST} is pseudo-file of project information
+# ON ENTRY: ${PRJ_LIST} is a file containing the project info
 #
 # Note that routine will clean a project multiple times if it appears multiple
 # times in ${PRJ_LIST}. It's not worth optimizing to prevent this ...
 #
 clean_all_projects() {
-	project_dirs=`${ECHO} -e ${PRJ_LIST} | ${AWK} '!/#/ {print $1}'`
+	project_dirs=`${AWK} '!/#/ {print $1}' ${PRJ_LIST}`
 	for project in ${project_dirs}
 	do
 		clean_project ${project}
@@ -142,7 +145,8 @@ clean_all_projects() {
 
 # set up environment info used to build projects
 #
-# ON ENTRY: ${BSP_NAME} is BSP to use (empty => use per-project default)
+# ON ENTRY: ${BSP_NAME} is BSP to use (empty => use project default)
+#           ${PLATFORM_NAME} is platform to use (empty => get from ${BSP_NAME})
 #
 # ON EXIT: ${BUILD_INFO} specifies build options
 #
@@ -153,23 +157,48 @@ build_info_set() {
 		exit 1
 	fi
 
+	# ensure platform name isn't a script option that was entered by mistake
+	if [ x${PLATFORM_NAME:0:1} = "x-" ] ; then
+		${ECHO} "invalid platform '${PLATFORM_NAME}' specified"
+		exit 1
+	fi
+
 	# set up toolchain-specific build environment stuff
 	BUILD_INFO="EXTRA_CFLAGS=-Werror EXTRA_ASMFLAGS=-Wa,--fatal-warnings EXTRA_LFLAGS=--fatal-warnings"
+
+	# If a BSP name was specified, translate it to a platform name
+	if [ x${BSP_NAME} = x"pentium4" ] ; then
+		PLATFORM_NAME=generic_pc_pentium4
+	elif [ x${BSP_NAME} = x"minuteia" ] ; then
+		PLATFORM_NAME=generic_pc_minuteia
+	elif [ x${BSP_NAME} = x"atom" ] ; then
+		PLATFORM_NAME=generic_pc_atom_n28xx
+	elif [ x${BSP_NAME} = x"quark" ] ; then
+		PLATFORM_NAME=quark
+	elif [ x${BSP_NAME} = x"ti_lm3s6965" ] ; then
+		PLATFORM_NAME=ti_lm3s6965
+	elif [ x${BSP_NAME} = x"fsl_frdm_k64f" ] ; then
+		PLATFORM_NAME=fsl_frdm_k64f
+	elif [ x${BSP_NAME} != x"" ] ; then
+		# Temporary until Jenkins no longer specifies "-B generic_pc"
+		PLATFORM_NAME=unrecognized
+	fi
 }
 
 # set up project info used to build projects
 #
 # ON ENTRY: ${PRJ_PATH} is path to master project directory
-#           ${PRJ_LIST} is pseudo-file of project information
-#           ${BSP_NAME} is BSP to use (empty => use per-project default)
+#           ${PRJ_LIST} is a file containing the  project info
+#           ${PLATFORM_NAME} is platform to use (empty => use project default)
 #           ${ARCH_NAME} is architecture to use (empty => no arch restrictions)
 #
 # ON EXIT: ${PRJ_NAME} array specifies project directory name
 #          ${PRJ_ARGS} array specifies any additional project build arguments
-#          ${PRJ_TYPE} array specifies project type ("nanokernel" or "microkernel")
+#          ${PRJ_TYPE} array specifies project type ("nano" or "micro")
 #          ${PRJ_FLAG} array specifies project flags ('u' or 'n'; optional 'q')
-#          ${BSP_INFO} array specifies project BSP and BSP_VARIANT
-#          ${BSP_FLAG} array specifies optional BSP flag ('!' or empty)
+#          ${PLATFORM} array specifies the platform name
+#          ${PLATFORM_BUILD} array specifies the platform's kbuild defconfig
+#          ${PLATFORM_FLAG} array specifies optional flag ('!' or empty)
 #          ${NUM_PROJ} specifies number of projects described in arrays
 #
 proj_info_set() {
@@ -177,32 +206,32 @@ proj_info_set() {
 	${RM} -f ${TEMP_AWK_PROG} ${TEMP_PRJ_LIST}
 
 	# create list of projects to sanitize
-	# - specified BSP: choose only projects that support that BSP,
-	#   then filter out info about all other BSPs for those projects
-	# - no specified BSP: choose all projects, then filter out info
-	#   about all BSPs except the first one listed
+	# - specified platform: choose only projects that support that platform,
+	#   then filter out info about all other platforms for those projects
+	# - no specified platform: choose all projects, then filter out info
+	#   about all platforms except the first one listed
 	# note: ignores any comment lines in the project information file
 	#       (i.e. any lines containing a '#' character)
 	dollar='$'
-	if [  x${BSP_NAME} != x ] ; then
-	    awk_string="!/#/ && /${BSP_NAME}/ {match(${dollar}0,/.+[>]/); \
+	if [  x${PLATFORM_NAME} != x ] ; then
+	    awk_string="!/#/ && /${PLATFORM_NAME}/ {match(${dollar}0,/.+[>]/); \
 	    prjpart = substr(${dollar}0,RSTART,RLENGTH); \
-	    bsppart = substr(${dollar}0,RLENGTH+1);
-	    match(bsppart,/${BSP_NAME}!?/); \
-	    bsp = substr(bsppart,RSTART,RLENGTH); \
-	    if(length(bsp) > 0) \
-	        print prjpart \" \" bsp}"
+	    platformpart = substr(${dollar}0,RLENGTH+1);
+	    match(platformpart,/${PLATFORM_NAME}!?/); \
+	    platform = substr(platformpart,RSTART,RLENGTH); \
+	    if(length(platform) > 0) \
+	        print prjpart \" \" platform}"
 	else
 	    awk_string="!/#/ {match(${dollar}0,/.+[>]/); \
 	    prjpart = substr(${dollar}0,RSTART,RLENGTH); \
-	    bsppart = substr(${dollar}0,RLENGTH+1);
-	    match(bsppart,/[-a-zA-Z0-9_]+!?/); \
-	    bsp = substr(bsppart,RSTART,RLENGTH); \
-	    print prjpart \" \" bsp}"
+	    platformpart = substr(${dollar}0,RLENGTH+1);
+	    match(platformpart,/[-a-zA-Z0-9_]+!?/); \
+	    platform = substr(platformpart,RSTART,RLENGTH); \
+	    print prjpart \" \" platform}"
 	fi
 
 	${ECHO} "${awk_string}" > ${TEMP_AWK_PROG}
-	${ECHO} -e ${PRJ_LIST} | ${AWK} -f ${TEMP_AWK_PROG} > ${TEMP_PRJ_LIST}
+	${AWK} -f ${TEMP_AWK_PROG} ${PRJ_LIST} > ${TEMP_PRJ_LIST}
 
 	# deconstruct the filtered project list file
 	# into a set of arrays containing project info
@@ -219,54 +248,41 @@ proj_info_set() {
 		PRJ_FLAG[${NUM_PROJ}]=`${AWK} '{match($0,/<.*>/); \
 			print substr($0,RSTART+1,RLENGTH-2)}' <<< ${line}`
 		if [ ${PRJ_FLAG[${NUM_PROJ}]:0:1} = "u" ] ; then
-			PRJ_TYPE[${NUM_PROJ}]="microkernel"
+			PRJ_TYPE[${NUM_PROJ}]="micro"
 		elif [ ${PRJ_FLAG[${NUM_PROJ}]:0:1} = "n" ] ; then
-			PRJ_TYPE[${NUM_PROJ}]="nanokernel"
+			PRJ_TYPE[${NUM_PROJ}]="nano"
 		else
 			${ECHO} "unrecognized project type"
 			exit 1
 		fi
 
-		bsp2use_tmp=`${AWK} '{match($0,/[>] [-a-zA-Z0-9_]+/); \
+		_platform=`${AWK} '{match($0,/[>] [-a-zA-Z0-9_]+/); \
 			print substr($0,RSTART+1,RLENGTH-1)}' <<< ${line}`
-		bsp2use="$(${ECHO} -e "${bsp2use_tmp}" | ${SED} -e 's/^[[:space:]]*//')"
+		platform="$(${ECHO} -e "${_platform}" | ${SED} -e 's/^[[:space:]]*//')"
 
-		${ECHO} ${_BSP_LIST} | ${GREP} -q -w ${bsp2use}
+		${ECHO} ${_PLATFORM_LIST} | ${GREP} -q -w ${platform}
 		if [ $? -ne 0 ]; then
-			${ECHO} "Unrecognized BSP or BSP variant"
+			${ECHO} "Unrecognized platform"
 			exit 1
 		fi
 
 		if [ x${ARCH_NAME} != x ] ; then
 			# An architecture has been specified.
-			bsp_list=${ARCH_NAME}_BSP_LIST
-			${ECHO} ${!bsp_list} | ${GREP} -q -w ${bsp2use}
+			platform_list=${ARCH_NAME}_PLATFORM_LIST
+			${ECHO} ${!platform_list} | ${GREP} -q -w ${platform}
 			if [ $? -ne 0 ] ; then
 				# The specified architecture does not support the
-				# BSP or BSP variant ${bsp2use}
+				# specified platform
 				let NUM_PROJ--
 				continue
 			fi
 		fi
 
-		if [ ${bsp2use} = "pentium4" ] ; then
-			BSP_INFO[${NUM_PROJ}]="BSP=generic_pc BSP_VARIANT=pentium4"
-			BSP[${NUM_PROJ}]=generic_pc
-		elif [ ${bsp2use} = "minuteia" ] ; then
-			BSP_INFO[${NUM_PROJ}]="BSP=generic_pc BSP_VARIANT=minuteia"
-			BSP[${NUM_PROJ}]=generic_pc
-		elif [ ${bsp2use} = "atom" ] ; then
-			BSP_INFO[${NUM_PROJ}]="BSP=generic_pc BSP_VARIANT=atom_n28xx"
-			BSP[${NUM_PROJ}]=generic_pc
-		elif [ ${bsp2use} = "quark" ] ; then
-			BSP_INFO[${NUM_PROJ}]="BSP=quark"
-			BSP[${NUM_PROJ}]=quark
-		else
-			BSP_INFO[${NUM_PROJ}]="BSP=${bsp2use}"
-			BSP[${NUM_PROJ}]=${bsp2use}
-		fi
+		PLATFORM[${NUM_PROJ}]=${platform}
 
-		BSP_FLAG[${NUM_PROJ}]=`${AWK} '/!/ {print "!"}' <<< ${line}`
+		PLATFORM_BUILD[${NUM_PROJ}]="KBUILD_DEFCONFIG=${PRJ_TYPE[${NUM_PROJ}]}_${PLATFORM[${NUM_PROJ}]}_defconfig"
+
+		PLATFORM_FLAG[${NUM_PROJ}]=`${AWK} '/!/ {print "!"}' <<< ${line}`
 	done < ${TEMP_PRJ_LIST}
 
 	# clean up temporary files
@@ -280,9 +296,10 @@ proj_info_set() {
 # ON ENTRY: ${PRJ_PATH} is path to master project directory
 #           ${PRJ_NAME} array specifies project directory name
 #           ${PRJ_ARGS} array specifies any additional project build arguments
-#           ${PRJ_TYPE} array specifies project type ("nanokernel" or "microkernel")
+#           ${PRJ_TYPE} array specifies project type ("nano" or "micro")
 #           ${PRJ_FLAG} array specifies project flags ('u' or 'n'; optional 'q')
-#           ${BSP_INFO} array specifies project BSP and BSP_VARIANT
+#           ${PLATFORM} array specifies the platform name
+#           ${PLATFORM_BUILD} array specifies the platform's kbuild defconfig
 #           ${BUILD_INFO} specifies build options
 #           ${NUM_PROJ} specifies # of projects described in arrays
 #           ${PRJ_CLASS} specifies type of projects being sanitized
@@ -302,9 +319,10 @@ skip_project() {
 # ON ENTRY: ${PRJ_PATH} is path to master project directory
 #           ${PRJ_NAME} array specifies project directory name
 #           ${PRJ_ARGS} array specifies any additional project build arguments
-#           ${PRJ_TYPE} array specifies project type ("nanokernel" or "microkernel")
+#           ${PRJ_TYPE} array specifies project type ("nano" or "micro")
 #           ${PRJ_FLAG} array specifies project flags ('u' or 'n'; optional 'q')
-#           ${BSP_INFO} array specifies project BSP and BSP_VARIANT
+#           ${PLATFORM} array specifies the platform name
+#           ${PLATFORM_BUILD} array specifies the platform's kbuild defconfig
 #           ${BUILD_INFO} specifies build options
 #           ${NUM_PROJ} specifies # of projects described in arrays
 #           ${PRJ_CLASS} specifies type of projects being sanitized
@@ -314,7 +332,7 @@ build_project() {
 
 	${ECHO} "Building ${proj_name} [${PRJ_CLASS} project $1 of ${NUM_PROJ}]"
 	${ECHO}
-	${ECHO} "target:    ${BSP_INFO[$1]}"
+	${ECHO} "target:    ${PLATFORM[$1]}"
 	${ECHO} "arguments: ${PRJ_ARGS[$1]}"
 	${ECHO}
 
@@ -325,7 +343,7 @@ build_project() {
 	${MAKE} distclean
 	[ $? -eq 0 ] || fail_exit $? $FUNCNAME $LINENO
 
-	if [[ $arm_BSP_LIST == *"${BSP[$1]}"* ]]; then
+	if [[ $arm_PLATFORM_LIST == *"${PLATFORM[$1]}"* ]]; then
 		arch=arm
 	elif [[ $arc_BSP_LIST == *"${BSP[$1]}"* ]]; then
 		arch=arc
@@ -336,11 +354,11 @@ build_project() {
 		arch=${ARCH_NAME}
 	fi
 
-	${MAKE} ARCH=${arch} ${BUILD_INFO} ${PRJ_ARGS[$1]} ${BSP_INFO[$1]}
+	${MAKE} ARCH=${arch} ${BUILD_INFO} ${PRJ_ARGS[$1]} ${PLATFORM_BUILD[$1]}
 	[ $? -eq 0 ] || fail_exit $? $FUNCNAME $LINENO
 
 	if [ x$2 == x ] ; then
-		elf_name=`${LS} outdir/${PRJ_TYPE[$1]}.elf`
+		elf_name=`${LS} outdir/${PRJ_TYPE[$1]}kernel.elf`
 		[ x${elf_name} != "x" ] || \
 			fail_exit $? $FUNCNAME $LINENO "couldn't build ${proj_name}"
 	fi
@@ -353,9 +371,10 @@ build_project() {
 # ON ENTRY: ${PRJ_PATH} is path to master project directory
 #           ${PRJ_NAME} array specifies project directory name
 #           ${PRJ_ARGS} array specifies any additional project build arguments
-#           ${PRJ_TYPE} array specifies project type ("nanokernel" or "microkernel")
+#           ${PRJ_TYPE} array specifies project type ("nano" or "micro")
 #           ${PRJ_FLAG} array specifies project flags ('u' or 'n'; optional 'q')
-#           ${BSP_INFO} array specifies project BSP and BSP_VARIANT
+#           ${PLATFORM} array specifies the platform name
+#           ${PLATFORM_BUILD} array specifies the platform's kbuild defconfig
 #           ${BUILD_INFO} specifies build options
 #           ${NUM_PROJ} specifies # of projects described in arrays
 #           ${PRJ_CLASS} specifies type of projects being sanitized
@@ -366,7 +385,7 @@ qemu_project() {
 	${ECHO}
 	${ECHO} "Running ${proj_name} using QEMU [${PRJ_CLASS} project $1 of ${NUM_PROJ}]"
 	${ECHO}
-	${ECHO} "target:    ${BSP_INFO[$1]}"
+	${ECHO} "target:    ${PLATFORM[$1]}"
 	${ECHO} "arguments: ${PRJ_ARGS[$1]}"
 	${ECHO}
 
@@ -378,7 +397,7 @@ qemu_project() {
 	# create the file by the time the grep loop starts
 	${RM} -f ${SANITY_CHK_LOG}
 	:> ${SANITY_CHK_LOG}
-	if [[ $arm_BSP_LIST == *"${BSP[$1]}"* ]]; then
+	if [[ $arm_PLATFORM_LIST == *"${PLATFORM[$1]}"* ]]; then
 		arch=arm
 	else
 		arch=x86
@@ -390,7 +409,7 @@ qemu_project() {
 	# and append the logs into the empty log file created above
 	# (supply all build-related arguments to allow final linking
 	# to be done using the same arguments as the original build)
-	( ${MAKE} ARCH=${arch} qemu ${PRJ_ARGS[$1]} ${BSP_INFO[$1]} \
+	( ${MAKE} ARCH=${arch} qemu ${PRJ_ARGS[$1]} ${PLATFORM_BUILD[$1]} \
 	    ${BUILD_INFO} | tee ${SANITY_CHK_LOG} )&
 
 	# get QEMU's pid
@@ -434,7 +453,7 @@ qemu_project() {
 		$ECHO >> ${SANITY_CHK_LOG}
 		$ECHO "Project name: ${PRJ_NAME[$1]}" >> ${SANITY_CHK_LOG}
 		$ECHO "Project arguments: ${PRJ_ARGS[$1]}" >> ${SANITY_CHK_LOG}
-		$ECHO "BSP info: ${BSP_INFO[$1]}" >> ${SANITY_CHK_LOG}
+		$ECHO "Platform name: ${PLATFORM[$1]}" >> ${SANITY_CHK_LOG}
 		$ECHO "Build info: ${BUILD_INFO}" >> ${SANITY_CHK_LOG}
 
 		# ensure log file name is unique to avoid overwriting

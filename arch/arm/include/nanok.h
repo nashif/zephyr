@@ -55,6 +55,7 @@ extern "C" {
 #ifndef _ASMLANGUAGE
 #include <../../../kernel/nanokernel/include/nano_internal.h>
 #include <stdint.h>
+#include <misc/dlist.h>
 #endif
 
 #ifndef _ASMLANGUAGE
@@ -125,8 +126,8 @@ typedef struct preempt tPreempt;
 #endif
 
 #ifndef _ASMLANGUAGE
-struct s_CCS {
-	struct s_CCS *link; /* singly-linked list in _nanokernel.fibers */
+struct ccs {
+	struct ccs *link; /* singly-linked list in _nanokernel.fibers */
 	uint32_t flags;
 	uint32_t basepri;
 	int prio;
@@ -136,7 +137,10 @@ struct s_CCS {
 	struct coop coopReg;
 	struct preempt preempReg;
 #if defined(CONFIG_CONTEXT_MONITOR)
-	struct s_CCS *next_context; /* next item in list of ALL fiber+tasks */
+	struct ccs *next_context; /* next item in list of ALL fiber+tasks */
+#endif
+#ifdef CONFIG_NANO_TIMEOUTS
+	struct _nano_timeout nano_timeout;
 #endif
 };
 
@@ -157,6 +161,10 @@ struct s_NANO {
 #ifdef CONFIG_ADVANCED_POWER_MANAGEMENT
 	int32_t idle; /* Number of ticks for kernel idling */
 #endif		      /* CONFIG_ADVANCED_POWER_MANAGEMENT */
+
+#ifdef CONFIG_NANO_TIMEOUTS
+	sys_dlist_t timeout_q;
+#endif
 };
 
 typedef struct s_NANO tNANO;

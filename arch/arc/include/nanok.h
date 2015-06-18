@@ -56,6 +56,7 @@ extern "C" {
 #include <nanokernel.h>            /* public nanokernel API */
 #include <../../../kernel/nanokernel/include/nano_internal.h>
 #include <stdint.h>
+#include <misc/dlist.h>
 #endif
 
 #ifndef _ASMLANGUAGE
@@ -173,8 +174,8 @@ typedef struct firq_regs tFirqRegs;
 
 #ifndef _ASMLANGUAGE
 
-struct s_CCS {
-	struct s_CCS *link;        /* node in singly-linked list
+struct ccs {
+	struct ccs *link;        /* node in singly-linked list
 								* _nanokernel.fibers */
 	uint32_t flags;            /* bitmask of flags above */
 	uint32_t intlock_key;      /* interrupt key when relinquishing control */
@@ -187,7 +188,10 @@ struct s_CCS {
 	struct coop coopReg;
 	struct preempt preempReg;
 #ifdef CONFIG_CONTEXT_MONITOR
-	struct s_CCS *next_context;  /* next item in list of ALL fiber+tasks */
+	struct ccs *next_context;  /* next item in list of ALL fiber+tasks */
+#endif
+#ifdef CONFIG_NANO_TIMEOUTS
+	struct _nano_timeout nano_timeout;
 #endif
 };
 
@@ -216,6 +220,9 @@ struct s_NANO {
 	 */
 
 	struct firq_regs firq_regs;
+#ifdef CONFIG_NANO_TIMEOUTS
+	sys_dlist_t timeout_q;
+#endif
 };
 
 typedef struct s_NANO tNANO;

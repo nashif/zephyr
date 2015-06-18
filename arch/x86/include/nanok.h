@@ -60,6 +60,7 @@ offsets.o module.
  * constructs an IDT entry.
  */
 #include <idtEnt.h>
+#include <misc/dlist.h>
 #endif
 
 /* increase to 16 bytes (or more?) to support SSE/SSE2 instructions? */
@@ -628,7 +629,7 @@ typedef struct s_preempFloatReg {
  * _NewContext() call.
  */
 
-struct s_CCS {
+struct ccs {
 	/*
 	 * Link to next context in singly-linked context list (such as
 	 * prioritized
@@ -636,7 +637,7 @@ struct s_CCS {
 	 * FIFO).
 	 */
 
-	struct s_CCS *link;
+	struct ccs *link;
 
 	/*
 	 * See the above flag definitions above for valid bit settings.  This
@@ -658,7 +659,7 @@ struct s_CCS {
 	tPreempReg preempReg; /* volatile integer register storage */
 
 #if defined(CONFIG_CONTEXT_MONITOR)
-	struct s_CCS *next_context; /* next item in list of ALL fiber+tasks */
+	struct ccs *next_context; /* next item in list of ALL fiber+tasks */
 #endif
 #ifdef CONFIG_GDB_INFO
 	void *esfPtr; /* pointer to exception stack frame saved by */
@@ -679,6 +680,9 @@ struct s_CCS {
 	void *custom_data;     /* available for custom use */
 #endif
 
+#ifdef CONFIG_NANO_TIMEOUTS
+	struct _nano_timeout nano_timeout;
+#endif
 
 	/*
 	 * The location of all floating point related structures/fields MUST be
@@ -735,6 +739,9 @@ typedef struct s_NANO {
 
 	tCCS *current_fp; /* context (fiber or task) that owns the FP regs */
 #endif			  /* CONFIG_FP_SHARING */
+#ifdef CONFIG_NANO_TIMEOUTS
+	sys_dlist_t timeout_q;
+#endif
 } tNANO;
 
 /* stack alignment related macros: STACK_ALIGN_SIZE is defined above */

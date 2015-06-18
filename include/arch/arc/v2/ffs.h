@@ -64,7 +64,7 @@ static ALWAYS_INLINE unsigned int nanoFfsMsb_inline(unsigned int op)
 
 	__asm__ volatile(
 
-		/* see explanation in ffs.s */
+		/* see explanation in ffs.S */
 		"fls.f %0, %1;\n\t"
 		"add.nz %0, %0, 1;\n\t"
 		: "=r"(bit)
@@ -93,7 +93,7 @@ static ALWAYS_INLINE unsigned int nanoFfsLsb_inline(unsigned int op)
 
 	__asm__ volatile(
 
-		/* see explanation in ffs.s */
+		/* see explanation in ffs.S */
 		"ffs.f %0, %1;\n\t"
 		"add.nz %0, %0, 1;\n\t"
 		"mov.z %0, 0;\n\t"

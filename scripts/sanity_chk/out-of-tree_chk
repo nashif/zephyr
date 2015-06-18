@@ -29,10 +29,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-# Script to verify if projects and BSPs can reside out of tree
-
-# Test is disabled until building out-of-the-tree is supported
-exit 0
+# Script to verify that projects can reside out of tree
 
 # Import common sanity check definitions
 #
@@ -47,72 +44,30 @@ fi
 source ${ZEPHYR_BASE}/scripts/sanity_chk/common.defs
 
 # Out of tree location
-OUT_OF_TREE_BASE_REL=${ZEPHYR_BASE}/../$(basename ${ZEPHYR_BASE})-sanity
-OUT_OF_TREE_BASE=$(${ABS_PATH} ${OUT_OF_TREE_BASE_REL})
+OUT_OF_TREE_BASE=/tmp/${ZEPHYR_BASE}/$(basename ${ZEPHYR_BASE})-sanity
 
 # Location of master project directory
 #
 PRJ_PATH=${OUT_OF_TREE_BASE}/samples
 
-# Pseudo-file describing sample projects to be sanitized
+# Identify the file containing the projects to be built (or cleaned)
 #
-# Project info must be specified on a single line
-# (which must terminate with a '\n' character, EXCEPT for the final entry).
-#
-# Project info consists of:
-# - project directory (relative to PRJ_PATH)
-# - build arguments (optional)
-# - project flags, enclosed in angle brackets "<>"
-#   - 'u' => microkernel; 'n' => nanokernel (required; must be first flag)
-#   - 'q' => run as part of quick sanity check (optional)
-# - list of BSP names that can be used with the project
-#
-# A BSP name followed by "!" indicates the project can executed using QEMU.
-#
-# Sanity check will select first BSP name listed if the user does not specify
-# a BSP name when running sanity check (i.e. is the "default" BSP).
-#
-# A given project can appear more than once, allowing the project to be
-# sanitized multiple times. This can be useful if the project has multiple
-# configurations, or if the project should be run on more than one BSP
-# during a default BSP sanity check.
-#
-# List of sample projects can contain comment lines (denoted by '#'),
-# but be sure to terminate line with a '\n' character!
-#
-
-PRJ_LIST="\
-	# Nanokernel projects \n\
-nanokernel/test/test_fifo   ZEPHYR_BSP_BASE=${OUT_OF_TREE_BASE}/bsp  <n>  ti_lm3s6965! fsl_frdm_k64f \n\
-nanokernel/test/test_lifo   ZEPHYR_BSP_BASE=${OUT_OF_TREE_BASE}/bsp  <n>  ti_lm3s6965! fsl_frdm_k64f \n\
-nanokernel/test/test_sema   ZEPHYR_BSP_BASE=${OUT_OF_TREE_BASE}/bsp  <n>  ti_lm3s6965! fsl_frdm_k64f \n\
-	# Microkernel projects \n\
-microkernel/test/test_fifo   ZEPHYR_BSP_BASE=${OUT_OF_TREE_BASE}/bsp  <u>  ti_lm3s6965! fsl_frdm_k64f \n\
-microkernel/test/test_events ZEPHYR_BSP_BASE=${OUT_OF_TREE_BASE}/bsp  <u>  ti_lm3s6965! fsl_frdm_k64f \n\
-microkernel/test/test_sema   ZEPHYR_BSP_BASE=${OUT_OF_TREE_BASE}/bsp  <u>  ti_lm3s6965! fsl_frdm_k64f \n\
-	# Nanokernel projects \n\
-nanokernel/test/test_fifo   ZEPHYR_BSP_BASE=${OUT_OF_TREE_BASE}/bsp  <n>  pentium4!  minuteia!  quark \n\
-nanokernel/test/test_lifo   ZEPHYR_BSP_BASE=${OUT_OF_TREE_BASE}/bsp  <n>  pentium4!  minuteia!  quark \n\
-nanokernel/test/test_sema   ZEPHYR_BSP_BASE=${OUT_OF_TREE_BASE}/bsp  <n>  pentium4!  minuteia!  quark \n\
-	# Microkernel projects \n\
-microkernel/test/test_fifo   ZEPHYR_BSP_BASE=${OUT_OF_TREE_BASE}/bsp  <u>  pentium4!  minuteia!  quark \n\
-microkernel/test/test_events ZEPHYR_BSP_BASE=${OUT_OF_TREE_BASE}/bsp  <u>  pentium4!  minuteia!  quark \n\
-microkernel/test/test_sema   ZEPHYR_BSP_BASE=${OUT_OF_TREE_BASE}/bsp  <u>  pentium4!  minuteia!  quark "
+PRJ_LIST=${ZEPHYR_BASE}/scripts/sanity_chk/out-of-tree_chk.data
 
 # print script usage
 #
 help() {
 cat << EOF
 
-Usage : ${SCRIPT_NAME} [-hHcqbl] [-A <arch>] [-B <board>]
+Usage : ${SCRIPT_NAME} [-hHcqbl] [-A <arch>] [-P <platform>]
        -h display this help message
        -H display more detailed documentation
-       -c just delete copied samples and BSPs
+       -c just delete copied samples
        -q just do quick sanity check
        -b just build projects
        -l keep successful project execution logs
        -A build projects for the specified architecture
-       -B build projects for the specified BSP or BSP variant
+       -P build projects for the specified platform
 
 EOF
 }
@@ -122,18 +77,15 @@ EOF
 long_help() {
 cat << EOF
 
-Script to verify projects can be built out of tree with a BSP
-residing out of tree.
+Script to verify projects can be built out of tree.
 
 The sanity check builds a selection of sample of projects supported by the
-specified BSP variant; if no BSP has been specified, a default BSP for each
-project is used. The script also runs each sample project using QEMU, where
-possible; if desired the script can be instructed to skip the QEMU execution
-step.
+specified platform; if no platform has been specified, a default platform for
+each project is used. The script also runs each sample project using QEMU,
+where possible; if desired the script can be instructed to skip the QEMU
+execution step.
 
-BSPs and samples are copied to:
-	ZEPHYR_BASE/../sanity/bsp
-	ZEPHYR_BASE/../sanity/samples
+Samples are copied to a directory under /tmp.
 
 The script returns 0 on success. If an error is encountered at any point
 the script returns the exit value of the command that failed, the function
@@ -166,10 +118,11 @@ main() {
 	build_only=0
 	ARCH_NAME=""
 	BSP_NAME=""
+	PLATFORM_NAME=""
 	KEEP_LOGS=0
 
 	# process command options
-	while getopts ":hHcqblA:B:" arg $*
+	while getopts ":hHcqblA:B:P:" arg $*
 	do
 		case $arg in
 		h)
@@ -196,7 +149,14 @@ main() {
 			ARCH_NAME=$OPTARG
 			;;
 		B)
+			# Unlisted option.  Exists only until migration to
+			# -P <platform> is complete
 			BSP_NAME=$OPTARG
+			BSP_SPECIFIED=1
+			;;
+		P)
+			PLATFORM_NAME=$OPTARG
+			PLATFORM_SPECIFIED=1
 			;;
 		\?)
 			${ECHO} "invalid option -$OPTARG"
@@ -218,8 +178,14 @@ main() {
 		exit 1
 	fi
 
+	# Do not permit the use of both -P and deprecated -B options
+	if [ x${BSP_SPECIFIED} != x ] && [ x${PLATFORM_SPECIFIED} != x ] ; then
+		${ECHO} "Do not use both the -P and the deprecated -B options"
+		exit 1;
+	fi
+
 	print_header
-	${ECHO} "Deleting all **OUT OF TREE** BSPs and sample projects"
+	${ECHO} "Deleting all **OUT OF TREE** sample projects"
 
 	${RM} -rf ${OUT_OF_TREE_BASE}
 
@@ -244,10 +210,6 @@ main() {
 	proj_info_set
 
 	${MKDIR} -p ${OUT_OF_TREE_BASE}
-
-	# copy the BSPs
-	${CP} -r ${ZEPHYR_BASE}/target/bsp ${OUT_OF_TREE_BASE}
-	[ $? -eq 0 ] || fail_exit $? $FUNCNAME $LINENO
 
 	# copy the samples/include directory used by certain projects
 	${MKDIR} -p ${PRJ_PATH}
@@ -279,7 +241,7 @@ main() {
 		let build_proj++
 
 		# skip non-executable projects (or when doing "build only")
-		if [ ${build_only} = 1 -o x${BSP_FLAG[${cur_proj}]} = x ] ; then
+		if [ ${build_only} = 1 -o x${PLATFORM_FLAG[${cur_proj}]} = x ] ; then
 			continue
 		fi
 

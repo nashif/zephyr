@@ -30,12 +30,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef CONFIG_NANOKERNEL
 
 #include <nanok.h>
 #include <toolchain.h>
 #include <sections.h>
+#include <wait_q.h>
 #include <drivers/system_timer.h>
+
+#ifdef CONFIG_NANOKERNEL
 
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 int sys_clock_us_per_tick = 1000000 / sys_clock_ticks_per_sec;
@@ -47,8 +49,6 @@ int sys_clock_us_per_tick;
 int sys_clock_hw_cycles_per_tick;
 #endif
 
-int64_t _nano_ticks = 0;
-struct nano_timer *_nano_timer_list = NULL;
 
 /* updated by timer driver for tickless, stays at 1 for non-tickless */
 uint32_t _sys_idle_elapsed_ticks = 1;
@@ -67,6 +67,10 @@ void nano_time_init(void)
 }
 
 SYS_PREKERNEL_INIT(nano_time_init, 250);
+
+#endif /*  CONFIG_NANOKERNEL */
+
+int64_t _nano_ticks = 0;
 
 /*******************************************************************************
 *
@@ -190,21 +194,30 @@ uint32_t nano_tick_delta_32(int64_t *reftime)
 	return (uint32_t)_nano_tick_delta(reftime);
 }
 
-/*******************************************************************************
-*
-* _do_sys_clock_tick_announce - announce a tick to the nanokernel
-*
-* This function is only to be called by the system clock timer driver when a
-* tick is to be announced to the nanokernel. It takes care of dequeuing the
-* timers that have expired and wake up the fibers pending on them.
-*
-* RETURNS: N/A
-*/
+/* handle the expired timeouts in the nano timeout queue */
 
-void _do_sys_clock_tick_announce(uint32_t ticks)
+#ifdef CONFIG_NANO_TIMEOUTS
+#include <wait_q.h>
+
+static inline void handle_expired_nano_timeouts(int ticks)
 {
-	_nano_ticks += ticks;
+	struct _nano_timeout *head =
+		(struct _nano_timeout *)sys_dlist_peek_head(&_nanokernel.timeout_q);
 
+	if (head) {
+		head->delta_ticks_from_prev -= ticks;
+		_nano_timeout_handle_timeouts();
+	}
+}
+#else
+	#define handle_expired_nano_timeouts(ticks) do { } while((0))
+#endif
+
+/* handle the expired nano timers in the nano timers queue */
+#ifdef CONFIG_NANO_TIMERS
+#include <clock_vars.h>
+static inline void handle_expired_nano_timers(int ticks)
+{
 	if (_nano_timer_list) {
 		_nano_timer_list->ticks -= ticks;
 
@@ -216,5 +229,49 @@ void _do_sys_clock_tick_announce(uint32_t ticks)
 		}
 	}
 }
+#else
+	#define handle_expired_nano_timers(ticks) do { } while((0))
+#endif
 
-#endif /*  CONFIG_NANOKERNEL */
+#if defined(CONFIG_NANO_TIMEOUTS) || defined(CONFIG_NANO_TIMERS)
+/*******************************************************************************
+*
+* _nano_sys_clock_tick_announce - announce a tick to the nanokernel
+*
+* This function is only to be called by the system clock timer driver when a
+* tick is to be announced to the nanokernel. It takes care of dequeuing the
+* timers that have expired and wake up the fibers pending on them.
+*
+* RETURNS: N/A
+*/
+
+void _nano_sys_clock_tick_announce(uint32_t ticks)
+{
+	_nano_ticks += ticks;
+	handle_expired_nano_timeouts((int)ticks);
+	handle_expired_nano_timers((int)ticks);
+}
+#endif
+
+/* get closest nano timers deadline expiry, (uint32_t)TICKS_UNLIMITED if none */
+#ifdef CONFIG_NANO_TIMERS
+static inline uint32_t _nano_get_earliest_timers_deadline(void)
+{
+	return _nano_timer_list ? _nano_timer_list->ticks : TICKS_UNLIMITED;
+}
+#else
+static inline uint32_t _nano_get_earliest_timers_deadline(void)
+{
+	return TICKS_UNLIMITED;
+}
+#endif
+
+/*
+ * Get closest nano timeouts/timers deadline expiry, (uint32_t)TICKS_UNLIMITED
+ * if none.
+ */
+uint32_t _nano_get_earliest_deadline(void)
+{
+	return min(_nano_get_earliest_timeouts_deadline(),
+				_nano_get_earliest_timers_deadline());
+}
