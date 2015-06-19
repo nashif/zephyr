@@ -34,6 +34,7 @@
 #include <nanok.h>
 #include <toolchain.h>
 #include <sections.h>
+#include <misc/util.h>
 #include <wait_q.h>
 #include <drivers/system_timer.h>
 
