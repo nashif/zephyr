@@ -80,7 +80,8 @@ RUN_FAILED="PROJECT EXECUTION FAILED"
 # architecture platform lists
 arc_PLATFORM_LIST="atlas_peak-arc"
 arm_PLATFORM_LIST="fsl_frdm_k64f ti_lm3s6965"
-x86_PLATFORM_LIST="generic_pc_pentium4   \
+x86_PLATFORM_LIST="atlas_peak-x86 \
+				   generic_pc_pentium4   \
 				   generic_pc_minuteia   \
 				   generic_pc_atom_n28xx \
 				   quark"
