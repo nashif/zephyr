@@ -3,12 +3,14 @@ nanokernel/apps/bluetooth/init               <n>  generic_pc_pentium4   generic_
 nanokernel/apps/bluetooth/init               <n>  fsl_frdm_k64f ti_lm3s6965
 nanokernel/apps/bluetooth/shell              <n>  generic_pc_pentium4   generic_pc_minuteia  generic_pc_atom_n28xx
 nanokernel/apps/bluetooth/shell              <n>  fsl_frdm_k64f ti_lm3s6965
+nanokernel/apps/hello_world                  <n>  atlas_peak-arc
+nanokernel/apps/philosophers                 <n>  atlas_peak-arc
 nanokernel/apps/hello_world                  <n>  quark generic_pc_pentium4  generic_pc_minuteia
 nanokernel/apps/philosophers                 <n>  generic_pc_pentium4   generic_pc_minuteia  generic_pc_atom_n28xx quark
 nanokernel/apps/hello_world                  <n>  fsl_frdm_k64f ti_lm3s6965
 nanokernel/apps/philosophers                 <n>  fsl_frdm_k64f ti_lm3s6965
-microkernel/apps/hello_world                 <u>  generic_pc_atom_n28xx generic_pc_pentium4  generic_pc_minuteia   quark
-microkernel/apps/philosophers                <u>  generic_pc_pentium4   generic_pc_minuteia  generic_pc_atom_n28xx quark
+microkernel/apps/hello_world                 <u>  generic_pc_atom_n28xx generic_pc_pentium4  generic_pc_minuteia   quark atlas_peak-x86
+microkernel/apps/philosophers                <u>  generic_pc_pentium4   generic_pc_minuteia  generic_pc_atom_n28xx quark atlas_peak-x86
 microkernel/apps/hello_world                 <u>  fsl_frdm_k64f ti_lm3s6965
 microkernel/apps/philosophers                <u>  fsl_frdm_k64f ti_lm3s6965
     # projects that have been temporarily disabled
