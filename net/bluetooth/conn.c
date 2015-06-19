@@ -39,11 +39,12 @@
 #include <misc/byteorder.h>
 #include <misc/util.h>
 
+#include <bluetooth/log.h>
 #include <bluetooth/hci.h>
 #include <bluetooth/bluetooth.h>
 
 #include "hci_core.h"
-#include "conn.h"
+#include "conn_internal.h"
 #include "l2cap.h"
 
 #if !defined(CONFIG_BLUETOOTH_DEBUG_CONN)
@@ -305,7 +306,7 @@ struct bt_conn *bt_conn_lookup_handle(uint16_t handle)
 		}
 
 		if (conns[i].handle == handle) {
-			return &conns[i];
+			return bt_conn_get(&conns[i]);
 		}
 	}
 
@@ -322,7 +323,7 @@ struct bt_conn *bt_conn_lookup_addr_le(const bt_addr_le_t *peer)
 		}
 
 		if (!bt_addr_le_cmp(peer, &conns[i].dst)) {
-			return &conns[i];
+			return bt_conn_get(&conns[i]);
 		}
 	}
 
@@ -349,4 +350,9 @@ void bt_conn_put(struct bt_conn *conn)
 	}
 
 	conn->handle = 0;
+}
+
+const bt_addr_le_t *bt_conn_get_dst(const struct bt_conn *conn)
+{
+	return &conn->dst;
 }

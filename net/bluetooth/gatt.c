@@ -34,9 +34,11 @@
 #include <toolchain.h>
 #include <string.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <misc/byteorder.h>
 #include <misc/util.h>
 
+#include <bluetooth/log.h>
 #include <bluetooth/hci.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/buf.h>
@@ -44,7 +46,8 @@
 #include <bluetooth/gatt.h>
 
 #include "hci_core.h"
-#include "conn.h"
+#include "conn_internal.h"
+#include "keys.h"
 #include "l2cap.h"
 #include "att.h"
 
@@ -74,7 +77,8 @@ int bt_gatt_attr_read(const bt_addr_le_t *peer, const struct bt_gatt_attr *attr,
 
 	len = min(buf_len, value_len - offset);
 
-	BT_DBG("handle %u offset %u length %u\n", attr->handle, offset, len);
+	BT_DBG("handle 0x%04x offset %u length %u\n", attr->handle, offset,
+	       len);
 
 	memcpy(buf, value + offset, len);
 
@@ -216,6 +220,8 @@ static void gatt_ccc_changed(struct _bt_gatt_ccc *ccc)
 		}
 	}
 
+	BT_DBG("ccc %p value 0x%04x\n", ccc, value);
+
 	if (value != ccc->value) {
 		ccc->value = value;
 		ccc->cfg_changed(value);
@@ -227,19 +233,18 @@ int bt_gatt_attr_write_ccc(const bt_addr_le_t *peer,
 			   uint8_t len, uint16_t offset)
 {
 	struct _bt_gatt_ccc *ccc = attr->user_data;
-	struct bt_conn *conn;
 	const uint16_t *data = buf;
+	bool bonded;
 	size_t i;
 
 	if (len != sizeof(*data) || offset) {
 		return -EINVAL;
 	}
 
-	conn = bt_conn_lookup_addr_le(peer);
-	if (!conn) {
-		BT_WARN("%s not connected", bt_addr_le_str(peer));
-		return -ENOTCONN;
-	}
+	if (bt_keys_get_addr(peer))
+		bonded = true;
+	else
+		bonded = false;
 
 	for (i = 0; i < ccc->cfg_len; i++) {
 		/* Check for existing configuration */
@@ -254,7 +259,7 @@ int bt_gatt_attr_write_ccc(const bt_addr_le_t *peer,
 			if (!ccc->cfg[i].valid) {
 				bt_addr_le_copy(&ccc->cfg[i].peer, peer);
 				/* Only set valid if bonded */
-				ccc->cfg[i].valid = conn->keys ? 1 : 0;
+				ccc->cfg[i].valid = bonded;
 				break;
 			}
 		}
@@ -267,7 +272,7 @@ int bt_gatt_attr_write_ccc(const bt_addr_le_t *peer,
 
 	ccc->cfg[i].value = sys_le16_to_cpu(*data);
 
-	BT_DBG("handle %u value %u\n", attr->handle, ccc->cfg[i].value);
+	BT_DBG("handle 0x%04x value %u\n", attr->handle, ccc->cfg[i].value);
 
 	/* Update cfg if don't match */
 	if (ccc->cfg[i].value != ccc->value) {
@@ -337,10 +342,11 @@ static uint8_t notify_cb(const struct bt_gatt_attr *attr, void *user_data)
 					sizeof(*nfy) + data->len);
 		if (!buf) {
 			BT_WARN("No buffer available to send notification");
+			bt_conn_put(conn);
 			return BT_GATT_ITER_STOP;
 		}
 
-		BT_DBG("conn %p handle %u\n", conn, data->handle);
+		BT_DBG("conn %p handle 0x%04x\n", conn, data->handle);
 
 		nfy = bt_buf_add(buf, sizeof(*nfy));
 		nfy->handle = sys_cpu_to_le16(data->handle);
@@ -349,6 +355,7 @@ static uint8_t notify_cb(const struct bt_gatt_attr *attr, void *user_data)
 		memcpy(nfy->value, data->data, data->len);
 
 		bt_l2cap_send(conn, BT_L2CAP_CID_ATT, buf);
+		bt_conn_put(conn);
 	}
 
 	return BT_GATT_ITER_CONTINUE;
@@ -363,4 +370,94 @@ void bt_gatt_notify(uint16_t handle, const void *data, size_t len)
 	nfy.len = len;
 
 	bt_gatt_foreach_attr(handle, 0xffff, notify_cb, &nfy);
+}
+
+static uint8_t connected_cb(const struct bt_gatt_attr *attr, void *user_data)
+{
+	struct bt_conn *conn = user_data;
+	struct _bt_gatt_ccc *ccc;
+	size_t i;
+
+	/* Check attribute user_data must be of type struct _bt_gatt_ccc */
+	if (attr->write != bt_gatt_attr_write_ccc) {
+		return BT_GATT_ITER_CONTINUE;
+	}
+
+	ccc = attr->user_data;
+
+	/* If already enabled skip */
+	if (ccc->value) {
+		return BT_GATT_ITER_CONTINUE;
+	}
+
+	for (i = 0; i < ccc->cfg_len; i++) {
+		/* Ignore configuration for different peer */
+		if (bt_addr_le_cmp(&conn->dst, &ccc->cfg[i].peer)) {
+			continue;
+		}
+
+		if (ccc->cfg[i].value) {
+			gatt_ccc_changed(ccc);
+			return BT_GATT_ITER_CONTINUE;
+		}
+	}
+
+	return BT_GATT_ITER_CONTINUE;
+}
+
+void bt_gatt_connected(struct bt_conn *conn)
+{
+	BT_DBG("conn %p\n", conn);
+	bt_gatt_foreach_attr(0x0001, 0xffff, connected_cb, conn);
+}
+
+static uint8_t disconnected_cb(const struct bt_gatt_attr *attr, void *user_data)
+{
+	struct bt_conn *conn = user_data;
+	struct _bt_gatt_ccc *ccc;
+	size_t i;
+
+	/* Check attribute user_data must be of type struct _bt_gatt_ccc */
+	if (attr->write != bt_gatt_attr_write_ccc) {
+		return BT_GATT_ITER_CONTINUE;
+	}
+
+	ccc = attr->user_data;
+
+	/* If already disabled skip */
+	if (!ccc->value) {
+		return BT_GATT_ITER_CONTINUE;
+	}
+
+	for (i = 0; i < ccc->cfg_len; i++) {
+		/* Ignore configurations with disabled value */
+		if (!ccc->cfg[i].value) {
+			continue;
+		}
+
+		if (bt_addr_le_cmp(&conn->dst, &ccc->cfg[i].peer)) {
+			struct bt_conn *tmp;
+
+			/* Skip if there is another peer connected */
+			tmp = bt_conn_lookup_addr_le(&ccc->cfg[i].peer);
+			if (tmp) {
+				bt_conn_put(tmp);
+				return BT_GATT_ITER_CONTINUE;
+			}
+		}
+	}
+
+	/* Reset value while disconnected */
+	memset(&ccc->value, 0, sizeof(ccc->value));
+	ccc->cfg_changed(ccc->value);
+
+	BT_DBG("ccc %p reseted\n", ccc);
+
+	return BT_GATT_ITER_CONTINUE;
+}
+
+void bt_gatt_disconnected(struct bt_conn *conn)
+{
+	BT_DBG("conn %p\n", conn);
+	bt_gatt_foreach_attr(0x0001, 0xffff, disconnected_cb, conn);
 }

@@ -1,4 +1,6 @@
-/* btshell.h - Bluetooth shell headers */
+/*! @file
+ *  @brief Bluetooth HCI driver API.
+ */
 
 /*
  * Copyright (c) 2015 Intel Corporation
@@ -29,25 +31,29 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef __BT_DRIVER_H
+#define __BT_DRIVER_H
 
-/*! @brief Callback called when command is entered.
- *
- *  @param argc Number of parameters passed.
- *  @param argv Array of option strings. First option is always command name.
- */
-typedef void (*cmd_function_t)(int argc, char *argv[]);
+#include <bluetooth/buf.h>
 
-/*! @brief Initialize shell with optional prompt, NULL in case no prompt is
- *         needed.
- *
- *  @param prompt Prompt to be printed on serial console.
- */
-void shell_init(const char *prompt);
+/* Receive data from the controller/HCI driver */
+void bt_recv(struct bt_buf *buf);
 
-/*! @brief Register callback which would be run when string is entered in
- *         console.
- *
- *  @param string Command name.
- *  @param cb Command handler.
- */
-void shell_cmd_register(const char *string, cmd_function_t cb);
+struct bt_driver {
+	/* How much headroom is needed for HCI transport headers */
+	size_t head_reserve;
+
+	/* Open the HCI transport */
+	int (*open)(void);
+
+	/* Send data to HCI */
+	int (*send)(struct bt_buf *buf);
+};
+
+/* Register a new HCI driver to the Bluetooth stack */
+int bt_driver_register(struct bt_driver *drv);
+
+/* Unregister a previously registered HCI driver */
+void bt_driver_unregister(struct bt_driver *drv);
+
+#endif /* __BT_DRIVER_H */

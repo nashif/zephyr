@@ -1,4 +1,6 @@
-/* btshell.h - Bluetooth shell headers */
+/*! @file
+ *  @brief Internal APIs for Bluetooth connection handling.
+ */
 
 /*
  * Copyright (c) 2015 Intel Corporation
@@ -30,24 +32,62 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*! @brief Callback called when command is entered.
- *
- *  @param argc Number of parameters passed.
- *  @param argv Array of option strings. First option is always command name.
- */
-typedef void (*cmd_function_t)(int argc, char *argv[]);
+#include <bluetooth/conn.h>
 
-/*! @brief Initialize shell with optional prompt, NULL in case no prompt is
- *         needed.
- *
- *  @param prompt Prompt to be printed on serial console.
- */
-void shell_init(const char *prompt);
+enum {
+	BT_CONN_DISCONNECTED,
+	BT_CONN_CONNECTED,
+};
 
-/*! @brief Register callback which would be run when string is entered in
- *         console.
- *
- *  @param string Command name.
- *  @param cb Command handler.
- */
-void shell_cmd_register(const char *string, cmd_function_t cb);
+/* L2CAP signaling channel specific context */
+struct bt_conn_l2cap {
+	uint8_t			ident;
+};
+
+struct bt_conn {
+	struct bt_dev		*dev;
+	uint16_t		handle;
+	uint8_t			role;
+
+	bt_addr_le_t		src;
+	bt_addr_le_t		dst;
+
+	uint8_t			encrypt;
+
+	uint16_t		rx_len;
+	struct bt_buf		*rx;
+
+	/* Queue for outgoing ACL data */
+	struct nano_fifo	tx_queue;
+
+	struct bt_keys		*keys;
+
+	/* Fixed channel contexts */
+	struct bt_conn_l2cap	l2cap;
+	void			*att;
+	void			*smp;
+
+	uint8_t			le_conn_interval;
+
+	uint8_t			ref;
+
+	uint8_t			state;
+
+	/* TX fiber stack */
+	BT_STACK(tx_stack, 256);
+};
+
+/* Process incoming data for a connection */
+void bt_conn_recv(struct bt_conn *conn, struct bt_buf *buf, uint8_t flags);
+
+/* Send data over a connection */
+void bt_conn_send(struct bt_conn *conn, struct bt_buf *buf);
+
+/* Add a new connection */
+struct bt_conn *bt_conn_add(struct bt_dev *dev, uint16_t handle, uint8_t role);
+
+/* Delete an existing connection */
+void bt_conn_del(struct bt_conn *conn);
+
+/* Look up an existing connection */
+struct bt_conn *bt_conn_lookup_handle(uint16_t handle);

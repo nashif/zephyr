@@ -1,4 +1,4 @@
-/* conn.h - Bluetooth connection handling */
+/* uip-log.c - Logging support */
 
 /*
  * Copyright (c) 2015 Intel Corporation
@@ -30,69 +30,32 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-enum {
-	BT_CONN_DISCONNECTED,
-	BT_CONN_CONNECTED,
-};
+#include <misc/printk.h>
 
-/* L2CAP signaling channel specific context */
-struct bt_conn_l2cap {
-	uint8_t			ident;
-};
+#if defined(CONFIG_STDOUT_CONSOLE)
+#include <stdio.h>
+#define PRINT           printf
+#else
+#include <misc/printk.h>
+#define PRINT           printk
+#endif
 
-struct bt_conn {
-	struct bt_dev		*dev;
-	uint16_t		handle;
-	uint8_t			role;
+#include "ip/uipopt.h"
+#include "sys/log.h"
 
-	bt_addr_le_t		src;
-	bt_addr_le_t		dst;
+#if UIP_LOGGING
+void uip_log(char *message)
+{
+	PRINT(message);
+	PRINT("\n");
+}
+#endif /* UIP_LOGGING */
 
-	uint8_t			encrypt;
-
-	uint16_t		rx_len;
-	struct bt_buf		*rx;
-
-	/* Queue for outgoing ACL data */
-	struct nano_fifo	tx_queue;
-
-	struct bt_keys		*keys;
-
-	/* Fixed channel contexts */
-	struct bt_conn_l2cap	l2cap;
-	void			*att;
-	void			*smp;
-
-	uint8_t			le_conn_interval;
-
-	uint8_t			ref;
-
-	uint8_t			state;
-
-	/* TX fiber stack */
-	BT_STACK(tx_stack, 256);
-};
-
-/* Process incoming data for a connection */
-void bt_conn_recv(struct bt_conn *conn, struct bt_buf *buf, uint8_t flags);
-
-/* Send data over a connection */
-void bt_conn_send(struct bt_conn *conn, struct bt_buf *buf);
-
-/* Add a new connection */
-struct bt_conn *bt_conn_add(struct bt_dev *dev, uint16_t handle, uint8_t role);
-
-/* Delete an existing connection */
-void bt_conn_del(struct bt_conn *conn);
-
-/* Look up an existing connection */
-struct bt_conn *bt_conn_lookup_handle(uint16_t handle);
-
-/* Look up an existing connection by address */
-struct bt_conn *bt_conn_lookup_addr_le(const bt_addr_le_t *peer);
-
-/* Increment conn reference count */
-struct bt_conn *bt_conn_get(struct bt_conn *conn);
-
-/* Decrement conn reference count */
-void bt_conn_put(struct bt_conn *conn);
+#if LOG_CONF_ENABLED
+void log_message(const char *part1, const char *part2)
+{
+	PRINT(part1);
+	PRINT(part2);
+	PRINT("\n");
+}
+#endif /* LOG_CONF_ENABLED */

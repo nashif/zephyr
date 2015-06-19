@@ -50,6 +50,13 @@ typedef struct {
 #define BT_ADDR_ANY    (&(bt_addr_t) {{0, 0, 0, 0, 0, 0}})
 #define BT_ADDR_LE_ANY (&(bt_addr_le_t) { 0, {0, 0, 0, 0, 0, 0}})
 
+/* HCI Error Codes */
+#define BT_HCI_ERR_AUTHENTICATION_FAIL		0x05
+#define BT_HCI_ERR_REMOTE_USER_TERM_CONN	0x13
+#define BT_HCI_ERR_UNSUPP_REMOTE_FEATURE	0x1a
+#define BT_HCI_ERR_PAIRING_NOT_SUPPORTED	0x29
+#define BT_HCI_ERR_UNACCEPT_CONN_PARAMS		0x3b
+
 /* EIR/AD definitions */
 #define BT_EIR_FLAGS			0x01 /* AD flags */
 #define BT_EIR_UUID16_SOME		0x02 /* 16-bit UUID, more available */
@@ -97,12 +104,19 @@ struct bt_hci_cmd_hdr {
 #define BT_HCI_LE_ENCRYPTION			0x01
 
 /* OpCode Group Fields */
+#define BT_OGF_LINK_CTRL			0x01
 #define BT_OGF_BASEBAND				0x03
 #define BT_OGF_INFO				0x04
 #define BT_OGF_LE				0x08
 
 /* Construct OpCode from OGF and OCF */
 #define BT_OP(ogf, ocf)				((ocf) | ((ogf) << 10))
+
+#define BT_HCI_OP_DISCONNECT			BT_OP(BT_OGF_LINK_CTRL, 0x0006)
+struct bt_hci_cp_disconnect {
+	uint16_t handle;
+	uint8_t  reason;
+} __packed;
 
 #define BT_HCI_OP_SET_EVENT_MASK		BT_OP(BT_OGF_BASEBAND, 0x0001)
 struct bt_hci_cp_set_event_mask {
@@ -240,6 +254,32 @@ struct bt_hci_cp_le_set_scan_params {
 struct bt_hci_cp_le_set_scan_enable {
 	uint8_t  enable;
 	uint8_t  filter_dup;
+} __packed;
+
+#define BT_HCI_OP_LE_CREATE_CONN		BT_OP(BT_OGF_LE, 0x000d)
+struct bt_hci_cp_le_create_conn {
+	uint16_t     scan_interval;
+	uint16_t     scan_window;
+	uint8_t      filter_policy;
+	bt_addr_le_t peer_addr;
+	uint8_t      own_addr_type;
+	uint16_t     conn_interval_min;
+	uint16_t     conn_interval_max;
+	uint16_t     conn_latency;
+	uint16_t     supervision_timeout;
+	uint16_t     min_ce_len;
+	uint16_t     max_ce_len;
+} __packed;
+
+#define BT_HCI_OP_LE_CONN_UPDATE		BT_OP(BT_OGF_LE, 0x0013)
+struct hci_cp_le_conn_update {
+	uint16_t handle;
+	uint16_t conn_interval_min;
+	uint16_t conn_interval_max;
+	uint16_t conn_latency;
+	uint16_t supervision_timeout;
+	uint16_t min_ce_len;
+	uint16_t max_ce_len;
 } __packed;
 
 #define BT_HCI_OP_LE_ENCRYPT			BT_OP(BT_OGF_LE, 0x0017)

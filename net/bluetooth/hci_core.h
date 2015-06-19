@@ -32,6 +32,7 @@
 
 #include <stdbool.h>
 #include <arch/cpu.h>
+#include <bluetooth/driver.h>
 
 /* Enabling debug increases stack size requirement considerably */
 #if defined(CONFIG_BLUETOOTH_DEBUG)
@@ -154,3 +155,6 @@ int bt_hci_cmd_send_sync(uint16_t opcode, struct bt_buf *buf,
 const char *bt_addr_str(const bt_addr_t *addr);
 const char *bt_addr_le_str(const bt_addr_le_t *addr);
 #endif
+
+int bt_hci_le_conn_update(uint16_t handle, uint16_t min, uint16_t max,
+			  uint16_t latency, uint16_t timeout);

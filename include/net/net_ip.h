@@ -89,8 +89,13 @@ struct net_addr {
 	union {
 		struct in6_addr in6_addr;
 		struct in_addr in_addr;
-	} addr;
+	};
 };
+
+#define IN6ADDR_ANY_INIT { { { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 } } }
+#define IN6ADDR_LOOPBACK_INIT { { { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 } } }
+
+#define INET6_ADDRSTRLEN 46
 
 /*! IPv6/IPv4 network connection tuple */
 struct net_tuple {

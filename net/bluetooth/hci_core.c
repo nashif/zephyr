@@ -40,12 +40,13 @@
 #include <misc/util.h>
 #include <misc/byteorder.h>
 
+#include <bluetooth/log.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
 
 #include "hci_core.h"
 #include "keys.h"
-#include "conn.h"
+#include "conn_internal.h"
 #include "l2cap.h"
 
 #if !defined(CONFIG_BLUETOOTH_DEBUG_HCI_CORE)
@@ -69,6 +70,7 @@ static nano_context_id_t rx_prio_fiber_id;
 static struct bt_dev dev;
 
 static struct bt_conn_cb *callback_list;
+static bt_le_scan_cb_t *scan_dev_found_cb;
 
 #if defined(CONFIG_BLUETOOTH_DEBUG)
 const char *bt_addr_str(const bt_addr_t *addr)
@@ -79,10 +81,7 @@ const char *bt_addr_str(const bt_addr_t *addr)
 
 	str = bufs[cur++];
 	cur %= ARRAY_SIZE(bufs);
-
-	sprintf(str, "%2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X",
-		addr->val[5], addr->val[4], addr->val[3],
-		addr->val[2], addr->val[1], addr->val[0]);
+	bt_addr_to_str(addr, str, sizeof(bufs[cur]));
 
 	return str;
 }
@@ -91,26 +90,11 @@ const char *bt_addr_le_str(const bt_addr_le_t *addr)
 {
 	static char bufs[2][27];
 	static uint8_t cur;
-	char *str, type[7];
+	char *str;
 
 	str = bufs[cur++];
 	cur %= ARRAY_SIZE(bufs);
-
-	switch (addr->type) {
-	case BT_ADDR_LE_PUBLIC:
-		strcpy(type, "public");
-		break;
-	case BT_ADDR_LE_RANDOM:
-		strcpy(type, "random");
-		break;
-	default:
-		sprintf(type, "0x%02x", addr->type);
-		break;
-	}
-
-	sprintf(str, "%2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X (%s)",
-		addr->val[5], addr->val[4], addr->val[3],
-		addr->val[2], addr->val[1], addr->val[0], type);
+	bt_addr_le_to_str(addr, str, sizeof(bufs[cur]));
 
 	return str;
 }
@@ -122,7 +106,7 @@ static void bt_connected(struct bt_conn *conn)
 
 	for (cb = callback_list; cb; cb = cb->_next) {
 		if (cb->connected) {
-			cb->connected(&conn->dst);
+			cb->connected(conn);
 		}
 	}
 }
@@ -133,7 +117,7 @@ static void bt_disconnected(struct bt_conn *conn)
 
 	for (cb = callback_list; cb; cb = cb->_next) {
 		if (cb->disconnected) {
-			cb->disconnected(&conn->dst);
+			cb->disconnected(conn);
 		}
 	}
 }
@@ -276,6 +260,7 @@ static void hci_acl(struct bt_buf *buf)
 	}
 
 	bt_conn_recv(conn, buf, flags);
+	bt_conn_put(conn);
 }
 
 #if defined(CONFIG_INIT_STACKS) && defined(CONFIG_PRINTK)
@@ -379,6 +364,7 @@ static void hci_disconn_complete(struct bt_buf *buf)
 	analyze_stacks(conn, &conn);
 
 	bt_conn_del(conn);
+	bt_conn_put(conn);
 
 	if (dev.adv_enable) {
 		struct bt_buf *buf;
@@ -413,6 +399,7 @@ static void hci_encrypt_change(struct bt_buf *buf)
 	conn->encrypt = evt->encrypt;
 
 	bt_l2cap_encrypt_change(conn);
+	bt_conn_put(conn);
 }
 
 static void hci_reset_complete(struct bt_buf *buf)
@@ -424,6 +411,9 @@ static void hci_reset_complete(struct bt_buf *buf)
 	if (status) {
 		return;
 	}
+
+	scan_dev_found_cb = NULL;
+	dev.scan_enable = BT_LE_SCAN_DISABLE;
 }
 
 static void hci_cmd_done(uint16_t opcode, uint8_t status, struct bt_buf *buf)
@@ -555,6 +545,7 @@ static void hci_encrypt_key_refresh_complete(struct bt_buf *buf)
 	}
 
 	bt_l2cap_encrypt_change(conn);
+	bt_conn_put(conn);
 }
 
 static void copy_id_addr(struct bt_conn *conn, const bt_addr_le_t *addr)
@@ -615,6 +606,7 @@ static void le_adv_report(struct bt_buf *buf)
 	while (num_reports--) {
 		int8_t rssi = info->data[info->length];
 		struct bt_keys *keys;
+		bt_addr_le_t addr;
 
 		BT_DBG("%s event %u, len %u, rssi %d dBm\n",
 			bt_addr_le_str(&info->addr),
@@ -622,9 +614,17 @@ static void le_adv_report(struct bt_buf *buf)
 
 		keys = bt_keys_find_irk(&info->addr);
 		if (keys) {
+			bt_addr_le_copy(&addr, &keys->addr);
 			BT_DBG("Identity %s matched RPA %s\n",
 			       bt_addr_le_str(&keys->addr),
 			       bt_addr_le_str(&info->addr));
+		} else {
+			bt_addr_le_copy(&addr, &info->addr);
+		}
+
+		if (scan_dev_found_cb) {
+			scan_dev_found_cb(&addr, rssi, info->evt_type,
+					  info->data, info->length);
 		}
 
 		/* Get next report iteration by moving pointer to right offset
@@ -651,8 +651,9 @@ static void le_ltk_request(struct bt_buf *buf)
 		return;
 	}
 
-	if (!conn->keys)
+	if (!conn->keys) {
 		conn->keys = bt_keys_find(BT_KEYS_SLAVE_LTK, &conn->dst);
+	}
 
 	if (conn->keys && (conn->keys->keys & BT_KEYS_SLAVE_LTK) &&
 	    conn->keys->slave_ltk.rand == evt->rand &&
@@ -663,7 +664,7 @@ static void le_ltk_request(struct bt_buf *buf)
 					sizeof(*cp));
 		if (!buf) {
 			BT_ERR("Out of command buffers\n");
-			return;
+			goto done;
 		}
 
 		cp = bt_buf_add(buf, sizeof(*cp));
@@ -678,7 +679,7 @@ static void le_ltk_request(struct bt_buf *buf)
 					sizeof(*cp));
 		if (!buf) {
 			BT_ERR("Out of command buffers\n");
-			return;
+			goto done;
 		}
 
 		cp = bt_buf_add(buf, sizeof(*cp));
@@ -686,6 +687,9 @@ static void le_ltk_request(struct bt_buf *buf)
 
 		bt_hci_cmd_send(BT_HCI_OP_LE_LTK_REQ_NEG_REPLY, buf);
 	}
+
+done:
+	bt_conn_put(conn);
 }
 
 static void hci_le_meta_event(struct bt_buf *buf)
@@ -1067,11 +1071,6 @@ static int hci_init(void)
 	return 0;
 }
 
-int bt_hci_reset(void)
-{
-	return hci_init();
-}
-
 /* Interface to HCI driver layer */
 
 void bt_recv(struct bt_buf *buf)
@@ -1266,7 +1265,7 @@ send_set_param:
 	return bt_hci_cmd_send_sync(BT_HCI_OP_LE_SET_ADV_ENABLE, buf, NULL);
 }
 
-int bt_start_scanning(uint8_t scan_type, uint8_t scan_filter)
+int bt_start_scanning(uint8_t scan_filter, bt_le_scan_cb_t cb)
 {
 	struct bt_buf *buf, *rsp;
 	struct bt_hci_cp_le_set_scan_params *set_param;
@@ -1274,6 +1273,10 @@ int bt_start_scanning(uint8_t scan_type, uint8_t scan_filter)
 	int err;
 
 	if (dev.scan_enable == BT_LE_SCAN_ENABLE) {
+		return -EALREADY;
+	}
+
+	if (scan_dev_found_cb != NULL) {
 		return -EALREADY;
 	}
 
@@ -1285,7 +1288,7 @@ int bt_start_scanning(uint8_t scan_type, uint8_t scan_filter)
 
 	set_param = bt_buf_add(buf, sizeof(*set_param));
 	memset(set_param, 0, sizeof(*set_param));
-	set_param->scan_type = scan_type;
+	set_param->scan_type = BT_LE_SCAN_ACTIVE;
 
 	/* for the rest parameters apply default values according to
 	 *  spec 4.2, vol2, part E, 7.8.10
@@ -1315,6 +1318,7 @@ int bt_start_scanning(uint8_t scan_type, uint8_t scan_filter)
 	/* Update scan state in case of success (0) status */
 	if (!rsp->data[0]) {
 		dev.scan_enable = BT_LE_SCAN_ENABLE;
+		scan_dev_found_cb = cb;
 	}
 
 	bt_buf_put(rsp);
@@ -1322,7 +1326,7 @@ int bt_start_scanning(uint8_t scan_type, uint8_t scan_filter)
 	return 0;
 }
 
-int bt_stop_scanning()
+int bt_stop_scanning(void)
 {
 	struct bt_buf *buf, *rsp;
 	struct bt_hci_cp_le_set_scan_enable *scan_enable;
@@ -1351,9 +1355,77 @@ int bt_stop_scanning()
 	/* Update scan state in case of success (0) status */
 	if (!rsp->data[0]) {
 		dev.scan_enable = BT_LE_SCAN_DISABLE;
+		scan_dev_found_cb = NULL;
 	}
 
 	bt_buf_put(rsp);
 
 	return 0;
+}
+
+int bt_hci_le_conn_update(uint16_t handle, uint16_t min, uint16_t max,
+			  uint16_t latency, uint16_t timeout)
+{
+	struct hci_cp_le_conn_update *conn_update;
+	struct bt_buf *buf;
+
+	buf = bt_hci_cmd_create(BT_HCI_OP_LE_CONN_UPDATE,
+				sizeof(*conn_update));
+	if (!buf) {
+		return -ENOBUFS;
+	}
+
+	conn_update = bt_buf_add(buf, sizeof(*conn_update));
+	memset(conn_update, 0, sizeof(*conn_update));
+	conn_update->handle = sys_cpu_to_le16(handle);
+	conn_update->conn_interval_min = sys_cpu_to_le16(min);
+	conn_update->conn_interval_max = sys_cpu_to_le16(max);
+	conn_update->conn_latency = sys_cpu_to_le16(latency);
+	conn_update->supervision_timeout = sys_cpu_to_le16(timeout);
+
+	return bt_hci_cmd_send(BT_HCI_OP_LE_CONN_UPDATE, buf);
+}
+
+static int hci_le_create_conn(const bt_addr_le_t *addr)
+{
+	struct bt_buf *buf;
+	struct bt_hci_cp_le_create_conn *cp;
+
+	buf = bt_hci_cmd_create(BT_HCI_OP_LE_CREATE_CONN, sizeof(*cp));
+	if (!buf) {
+		return -ENOBUFS;
+	}
+
+	cp = bt_buf_add(buf, sizeof(*cp));
+	memset(cp, 0x0, sizeof(*cp));
+	bt_addr_le_copy(&cp->peer_addr, addr);
+	cp->conn_interval_max = sys_cpu_to_le16(0x0028);
+	cp->conn_interval_min = sys_cpu_to_le16(0x0018);
+	cp->scan_interval = sys_cpu_to_le16(0x0060);
+	cp->scan_window = sys_cpu_to_le16(0x0030);
+	cp->supervision_timeout = sys_cpu_to_le16(0x07D0);
+
+	return bt_hci_cmd_send(BT_HCI_OP_LE_CREATE_CONN, buf);
+}
+
+int bt_connect_le(const bt_addr_le_t *peer)
+{
+	return hci_le_create_conn(peer);
+}
+
+int bt_disconnect(struct bt_conn *conn, uint8_t reason)
+{
+	struct bt_buf *buf;
+	struct bt_hci_cp_disconnect *disconn;
+
+	buf = bt_hci_cmd_create(BT_HCI_OP_DISCONNECT, sizeof(*disconn));
+	if (!buf) {
+		return -ENOBUFS;
+	}
+
+	disconn = bt_buf_add(buf, sizeof(*disconn));
+	disconn->handle = sys_cpu_to_le16(conn->handle);
+	disconn->reason = reason;
+
+	return bt_hci_cmd_send(BT_HCI_OP_DISCONNECT, buf);
 }

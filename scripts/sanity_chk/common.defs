@@ -345,7 +345,7 @@ build_project() {
 
 	if [[ $arm_PLATFORM_LIST == *"${PLATFORM[$1]}"* ]]; then
 		arch=arm
-	elif [[ $arc_BSP_LIST == *"${BSP[$1]}"* ]]; then
+	elif [[ $arc_PLATFORM_LIST == *"${PLATFORM[$1]}"* ]]; then
 		arch=arc
 	else
 		arch=x86

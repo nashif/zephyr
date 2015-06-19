@@ -1,4 +1,6 @@
-/* btshell.h - Bluetooth shell headers */
+/*! @file
+ *  @brief Bluetooth subsystem logging helpers.
+ */
 
 /*
  * Copyright (c) 2015 Intel Corporation
@@ -29,25 +31,22 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef __BT_LOG_H
+#define __BT_LOG_H
 
-/*! @brief Callback called when command is entered.
- *
- *  @param argc Number of parameters passed.
- *  @param argv Array of option strings. First option is always command name.
- */
-typedef void (*cmd_function_t)(int argc, char *argv[]);
+#include <stdio.h>
 
-/*! @brief Initialize shell with optional prompt, NULL in case no prompt is
- *         needed.
- *
- *  @param prompt Prompt to be printed on serial console.
- */
-void shell_init(const char *prompt);
+#if defined(CONFIG_BLUETOOTH_DEBUG)
+#define BT_DBG(fmt, ...) printf("bt: %s (%p): " fmt, __func__, \
+				context_self_get(), ##__VA_ARGS__)
+#define BT_ERR(fmt, ...) printf("bt: %s: " fmt, __func__, ##__VA_ARGS__)
+#define BT_WARN(fmt, ...) printf("bt: %s: " fmt, __func__, ##__VA_ARGS__)
+#define BT_INFO(fmt, ...) printf("bt: " fmt,  ##__VA_ARGS__)
+#else
+#define BT_DBG(fmt, ...)
+#define BT_ERR(fmt, ...)
+#define BT_WARN(fmt, ...)
+#define BT_INFO(fmt, ...)
+#endif /* CONFIG_BLUETOOTH_DEBUG */
 
-/*! @brief Register callback which would be run when string is entered in
- *         console.
- *
- *  @param string Command name.
- *  @param cb Command handler.
- */
-void shell_cmd_register(const char *string, cmd_function_t cb);
+#endif /* __BT_LOG_H */

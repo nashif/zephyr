@@ -1,4 +1,6 @@
-/* bluetooth.h - HCI core Bluetooth definitions */
+/*! @file
+ *  @brief Bluetooth subsystem core APIs.
+ */
 
 /*
  * Copyright (c) 2015 Intel Corporation
@@ -33,59 +35,20 @@
 #define __BT_BLUETOOTH_H
 
 #include <stdio.h>
+#include <string.h>
+
 #include <bluetooth/buf.h>
+#include <bluetooth/conn.h>
 #include <bluetooth/hci.h>
-
-/* Bluetooth subsystem logging helpers */
-
-#if defined(CONFIG_BLUETOOTH_DEBUG)
-#define BT_DBG(fmt, ...) printf("bt: %s (%p): " fmt, __func__, \
-				context_self_get(), ##__VA_ARGS__)
-#define BT_ERR(fmt, ...) printf("bt: %s: " fmt, __func__, ##__VA_ARGS__)
-#define BT_WARN(fmt, ...) printf("bt: %s: " fmt, __func__, ##__VA_ARGS__)
-#define BT_INFO(fmt, ...) printf("bt: " fmt,  ##__VA_ARGS__)
-#else
-#define BT_DBG(fmt, ...)
-#define BT_ERR(fmt, ...)
-#define BT_WARN(fmt, ...)
-#define BT_INFO(fmt, ...)
-#endif /* CONFIG_BLUETOOTH_DEBUG */
-
-/* HCI control APIs */
-
-/* Reset the state of the controller (i.e. perform full HCI init */
-int bt_hci_reset(void);
 
 /** @brief Initialize the Bluetooth Subsystem.
  *
  *  Initialize Bluetooth. Must be the called before anything else.
  *  Caller shall be either task or a fiber.
  *
- *  @return zero in success or error code otherwise
+ *  @return Zero on success or (negative) error code otherwise.
  */
 int bt_init(void);
-
-/* HCI driver API */
-
-/* Receive data from the controller/HCI driver */
-void bt_recv(struct bt_buf *buf);
-
-struct bt_driver {
-	/* How much headroom is needed for HCI transport headers */
-	size_t head_reserve;
-
-	/* Open the HCI transport */
-	int (*open)(void);
-
-	/* Send data to HCI */
-	int (*send)(struct bt_buf *buf);
-};
-
-/* Register a new HCI driver to the Bluetooth stack */
-int bt_driver_register(struct bt_driver *drv);
-
-/* Unregister a previously registered HCI driver */
-void bt_driver_unregister(struct bt_driver *drv);
 
 /* Advertising API */
 
@@ -95,29 +58,145 @@ struct bt_eir {
 	uint8_t data[29];
 } __packed;
 
-/** @brief Start advertising
+/*! @brief Define a type allowing user to implement a function that can
+ *  be used to get back active LE scan results.
  *
- *  Set advertisement data,  scan response data, advertisement parameters
+ *  A function of this type will be called back when user application
+ *  triggers active LE scan. The caller will populate all needed
+ *  parameters based on data coming from scan result.
+ *  Such function can be set by user when LE active scan API is used.
+ *
+ *  @param addr Advertiser LE address and type.
+ *  @param rssi Strength of advertiser signal.
+ *  @param adv_type Type of advertising response from advertiser.
+ *  @param adv_data Address of buffer containig advertiser data.
+ *  @param len Length of advertiser data contained in buffer.
+ */
+typedef void bt_le_scan_cb_t(const bt_addr_le_t *addr, int8_t rssi,
+		             uint8_t adv_type, const uint8_t *adv_data,
+		             uint8_t len);
+
+/*! @brief Start advertising
+ *
+ *  Set advertisement data, scan response data, advertisement parameters
  *  and start advertising.
  *
- *  @param type advertising type
- *  @param ad data to be used in advertisement packets
- *  @param sd data to be used in scan response packets
+ *  @param type Advertising type.
+ *  @param ad Data to be used in advertisement packets.
+ *  @param sd Data to be used in scan response packets.
  *
- *  @return zero in success or error code otherwise.
+ *  @return Zero on success or (negative) error code otherwise.
  */
 int bt_start_advertising(uint8_t type, const struct bt_eir *ad,
 			 const struct bt_eir *sd);
-int bt_start_scanning(uint8_t scan_type, uint8_t scan_filter);
-int bt_stop_scanning();
 
-struct bt_conn_cb {
-	void (*connected)(const bt_addr_le_t *addr);
-	void (*disconnected)(const bt_addr_le_t *addr);
+/*! @brief Start (LE) scanning
+ *
+ *  Start LE scanning with and provide results through the specified
+ *  callback.
+ *
+ *  @param filter_dups Enable duplicate filtering (or not).
+ *  @param cb Callback to notify scan results.
+ *
+ *  @return Zero on success or (negative) error code otherwise.
+ */
+int bt_start_scanning(uint8_t filter_dups, bt_le_scan_cb_t cb);
 
-	struct bt_conn_cb *_next;
-};
+/*! @brief Stop (LE) scanning.
+ *
+ *  Stops ongoing LE scanning.
+ *
+ *  @return Zero on success or (negative) error code otherwise.
+ */
+int bt_stop_scanning(void);
 
-void bt_conn_cb_register(struct bt_conn_cb *cb);
+/*! @brief Initiate an LE connection to a remote device.
+ *
+ *  Allows initiate new LE link to remote peer using its address.
+ *
+ *  @param Remote address.
+ *
+ *  @return Zero in success or (negative) error code otherwise.
+ */
+int bt_connect_le(const bt_addr_le_t *peer);
 
+/*! @brief Disconnect from a remote device.
+ *
+ *  Disconnect an active connection with the specified reason code.
+ *
+ *  @param conn Connection to disconnect.
+ *  @param reason Reason code for the disconnection.
+ *
+ *  @return Zero on success or (negative) error code on failure.
+ */
+int bt_disconnect(struct bt_conn *conn, uint8_t reason);
+
+/*! @def BT_ADDR_STR_LEN
+ *
+ *  @brief Recommended length of user string buffer for Bluetooth address
+ *
+ *  @details The recommended length guarantee the output of address
+ *  conversion will not lose valuable information about address being
+ *  processed.
+ */
+#define BT_ADDR_STR_LEN 18
+
+/*! @def BT_ADDR_LE_STR_LEN
+ *
+ *  @brief Recommended length of user string buffer for Bluetooth LE address
+ *
+ *  @details The recommended length guarantee the output of address
+ *  conversion will not lose valuable information about address being
+ *  processed.
+ */
+#define BT_ADDR_LE_STR_LEN 27
+
+/*! @brief Converts binary Bluetooth address to string.
+ *
+ *  @param addr Address of buffer containing binary Bluetooth address.
+ *  @param str Address of user buffer with enough room to store formatted
+ *  string containing binary address.
+ *  @param len Length of data to be copied to user string buffer. Refer to
+ *  BT_ADDR_STR_LEN about recommended value.
+ *
+ *  @return Number of successfully formatted bytes from binary address.
+ */
+static inline int bt_addr_to_str(const bt_addr_t *addr, char *str, size_t len)
+{
+	return snprintf(str, len, "%2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X",
+			addr->val[5], addr->val[4], addr->val[3],
+			addr->val[2], addr->val[1], addr->val[0]);
+}
+
+/*! @brief Converts binary LE Bluetooth address to string.
+ *
+ *  @param addr Address of buffer containing binary LE Bluetooth address.
+ *  @param user_buf Address of user buffer with enough room to store
+ *  formatted string containing binary LE address.
+ *  @param len Length of data to be copied to user string buffer. Refer to
+ *  BT_ADDR_LE_STR_LEN about recommended value.
+ *
+ *  @return Number of successfully formatted bytes from binary address.
+ */
+static inline int bt_addr_le_to_str(const bt_addr_le_t *addr, char *str,
+				    size_t len)
+{
+	char type[7];
+
+	switch (addr->type) {
+	case BT_ADDR_LE_PUBLIC:
+		strcpy(type, "public");
+		break;
+	case BT_ADDR_LE_RANDOM:
+		strcpy(type, "random");
+		break;
+	default:
+		sprintf(type, "0x%02x", addr->type);
+		break;
+	}
+
+	return snprintf(str, len, "%2.2X:%2.2X:%2.2X:%2.2X:%2.2X:%2.2X (%s)",
+			addr->val[5], addr->val[4], addr->val[3],
+			addr->val[2], addr->val[1], addr->val[0], type);
+}
 #endif /* __BT_BLUETOOTH_H */
