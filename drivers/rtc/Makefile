@@ -3,4 +3,4 @@ ccflags-y +=-I$(srctree)/arch/$(ARCH)
 ccflags-y +=-I$(srctree)/arch/$(ARCH)/$(subst $(DQUOTE),,$(CONFIG_PLATFORM))
 asflags-y +=-I$(srctree)/arch/$(ARCH)/$(subst $(DQUOTE),,$(CONFIG_PLATFORM))
 
-obj-y += dw_rtc.o
+obj-$(CONFIG_DW_RTC) += dw_rtc.o
