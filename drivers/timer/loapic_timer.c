@@ -268,11 +268,18 @@ static inline void one_shot_mode_set(void)
  *
  * \NOMANUAL
  */
+#if defined(CONFIG_LOAPIC_TIMER_DIVIDER_UNSUPPORTED)
 
+#define divide_configuration_register_set() \
+do {/* nothing */              \
+} while (0)
+
+#else
 static inline void divide_configuration_register_set(void)
 {
 	*_REG_TIMER_CFG = (*_REG_TIMER_CFG & ~0xf) | LOAPIC_TIMER_DIVBY_1;
 }
+#endif
 
 /**
  *

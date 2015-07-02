@@ -114,6 +114,7 @@ config LOAPIC_TIMER
 	help
 	This option selects LOAPIC timer as a system timer.
 
+
 config LOAPIC_TIMER_IRQ
 	int "Local APIC Timer IRQ"
 	default 24
@@ -125,6 +126,26 @@ config LOAPIC_TIMER_IRQ_PRIORITY
 	int "Local APIC Timer IRQ Priority"
 	default 2
 	depends on LOAPIC_TIMER
+
+config LOAPIC_TIMER_FREQ
+	int "LOAPIC timer frequency"
+	depends on LOAPIC_TIMER && X86_32
+	default 0
+	help
+	This option specifies LOAPIC timer frequency in HZ.
+
+config LOAPIC_TIMER_DIVIDER_UNSUPPORTED
+	bool "LOAPIC timer divider unsupported"
+	depends on LOAPIC_TIMER && X86_32
+	default n
+	help
+	This option selects if Local Apic Timer divider register is supported.
+
+config PIT
+	bool "PIT (i8253)"
+	default n
+	depends on PIC && X86_32
+
 	help
 	This options specifies the IRQ priority used by the LOAPIC timer.
 
