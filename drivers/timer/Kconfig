@@ -48,6 +48,20 @@ config LOAPIC_TIMER
 	help
 	This option selects LOAPIC timer as a system timer.
 
+config LOAPIC_TIMER_FREQ
+	int "LOAPIC timer frequency"
+	depends on LOAPIC_TIMER && X86_32
+	default 0
+	help
+	This option specifies LOAPIC timer frequency in HZ.
+
+config LOAPIC_TIMER_DIVIDER_UNSUPPORTED
+	bool "LOAPIC timer divider unsupported"
+	depends on LOAPIC_TIMER && X86_32
+	default n
+	help
+	This option selects if Local Apic Timer divider register is supported.
+
 config PIT
 	bool "PIT (i8253)"
 	default n

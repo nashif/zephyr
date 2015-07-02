@@ -234,11 +234,18 @@ static inline void _loApicTimerOneShot(void)
  *
  * \NOMANUAL
  */
+#if defined(CONFIG_LOAPIC_TIMER_DIVIDER_UNSUPPORTED)
 
+#define _loApicTimerSetDivider() \
+do {/* nothing */              \
+} while (0)
+
+#else
 static inline void _loApicTimerSetDivider(void)
 {
 	*_REG_TIMER_CFG = (*_REG_TIMER_CFG & ~0xf) | LOAPIC_TIMER_DIVBY_1;
 }
+#endif
 
 /**
  *
