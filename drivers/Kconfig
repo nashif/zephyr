@@ -50,4 +50,6 @@ source "drivers/random/Kconfig"
 source "drivers/pinmux/Kconfig"
 
 source "drivers/rtc/Kconfig"
+
+source "drivers/wdt/Kconfig"
 endmenu
