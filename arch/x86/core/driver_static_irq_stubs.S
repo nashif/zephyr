@@ -63,6 +63,13 @@ by x86 platforms.
 #endif /* CONFIG_IOAPIC */
 #endif /* CONFIG_CONSOLE_HANDLER */
 
+#if defined(CONFIG_DW_RTC)
+#if defined(CONFIG_PIC)
+	pic_master_mkstub rtc dw_rtc_isr
+#elif defined(CONFIG_IOAPIC)
+	ioapic_mkstub rtc dw_rtc_isr
+#endif /* CONFIG_PIC */
+#endif
 #if defined(CONFIG_UART_SIMPLE)
 #if defined(CONFIG_IOAPIC)
 	ioapic_mkstub uart_simple uart_simple_isr
