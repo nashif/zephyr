@@ -102,6 +102,25 @@ by x86 BSPs.
 #endif /* CONFIG_PIC */
 #endif /* CONFIG_UART_SIMPLE */
 
+#if defined(CONFIG_GPIO_DW)
+
+#if CONFIG_GPIO_DW_0
+#if defined(CONFIG_PIC)
+	pic_master_mkstub gpio_dw_0 gpio_dw_isr_0
+#elif defined(CONFIG_IOAPIC)
+	ioapic_mkstub gpio_dw_0 gpio_dw_isr_0
+#endif /* CONFIG_PIC */
+#endif /* CONFIG_GPIO_DW_0 */
+
+#if CONFIG_GPIO_DW_1
+#if defined(CONFIG_PIC)
+	pic_master_mkstub gpio_dw_1 gpio_dw_isr_1
+#elif defined(CONFIG_IOAPIC)
+	ioapic_mkstub gpio_dw_1 gpio_dw_isr_1
+#endif /* CONFIG_PIC */
+#endif /* CONFIG_GPIO_DW_1 */
+
+#endif
 	/* externs (internal APIs) */
 
 	GTEXT(_IntEnt)
