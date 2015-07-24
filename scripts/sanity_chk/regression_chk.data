@@ -3,8 +3,8 @@ nanokernel/apps/bluetooth/init               <n>  basic_minuteia basic_atom
 nanokernel/apps/bluetooth/init               <n>  fsl_frdm_k64f  basic_cortex_m3
 nanokernel/apps/bluetooth/shell              <n>  basic_minuteia basic_atom
 nanokernel/apps/bluetooth/shell              <n>  fsl_frdm_k64f  basic_cortex_m3
-nanokernel/apps/hello_world                  <n>  galileo        basic_minuteia
-nanokernel/apps/philosophers                 <n>  basic_minuteia basic_atom      galileo
+nanokernel/apps/hello_world                  <n>  galileo        basic_minuteia mint_valley atlas_peak-x86
+nanokernel/apps/philosophers                 <n>  basic_minuteia basic_atom      galileo atlas_peak-x86
 nanokernel/apps/hello_world                  <n>  fsl_frdm_k64f  basic_cortex_m3
 nanokernel/apps/philosophers                 <n>  fsl_frdm_k64f  basic_cortex_m3
 microkernel/apps/hello_world                 <u>  basic_atom     basic_minuteia  galileo atlas_peak-x86
