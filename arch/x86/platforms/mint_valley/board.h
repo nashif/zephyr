@@ -72,6 +72,7 @@ the Mint Valley BSP.
 #error CONFIG_MVIC_LVTTIMER_VECTOR out of valid range.
 #endif
 #define LOAPIC_TIMER_IRQ	    (CONFIG_MVIC_LOAPIC_TIMER_VEC - INT_VEC_IRQ0)
+#define LOAPIC_TIMER_INT_PRI 0 /* Ignored for this BSP but required for OS build. */
 #define LOAPIC_IRQ_BASE			LOAPIC_TIMER_IRQ
 #define LOAPIC_IRQ_COUNT		1
 #define LOAPIC_LVT_REG_SPACING  0x10
