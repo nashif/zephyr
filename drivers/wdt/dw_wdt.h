@@ -56,7 +56,7 @@ struct dw_wdt {
 };
 
 /** WDT register block */
-#define DW_WDT ((dw_wdt *)WDT_BASE_ADDR)
+#define DW_WDT ((struct dw_wdt *)WDT_BASE_ADDR)
 
 
 #define WDT_CRR_VAL                 0x76
