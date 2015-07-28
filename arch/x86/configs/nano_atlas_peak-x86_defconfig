@@ -103,6 +103,12 @@ CONFIG_CPU_SSE_UNSUPPORTED=y
 CONFIG_CACHE_LINE_SIZE=0
 
 #
+# Specific Board support
+#
+CONFIG_BOARD_CTB=y
+# CONFIG_BOARD_APP is not set
+
+#
 # Specific Platform Capability Support
 #
 CONFIG_NUM_DYNAMIC_STUBS=0
@@ -125,6 +131,7 @@ CONFIG_UART_CONSOLE_INDEX=0
 # CONFIG_EXTRA_SERIAL_PORT is not set
 CONFIG_VERSION_HEADER=y
 CONFIG_TEST_COMMAND=y
+CONFIG_PINMUX_NUM_PINS=69
 
 #
 # Device Drivers
@@ -165,6 +172,13 @@ CONFIG_LOAPIC_TIMER=y
 #
 # CONFIG_RANDOM_GENERATOR is not set
 # CONFIG_TEST_RANDOM_GENERATOR is not set
+
+#
+# Pinmux Configuration
+#
+# CONFIG_PINMUX is not set
+# CONFIG_DW_RTC is not set
+# CONFIG_DW_WDT is not set
 
 #
 # Networking
