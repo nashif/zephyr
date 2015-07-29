@@ -300,6 +300,16 @@ struct scss_interrupt {
 
 #define INT_RTC_IRQ  		        0xb
 
+/*ARC INIT*/
+#define RESET_VECTOR                   0x40034000
+#define SCSS_SS_CFG                    0x0600
+#define SCSS_SS_STS                    0x0604
+#define ARC_HALT_INT_REDIR             (1 << 26)
+#define ARC_HALT_REQ_A                 (1 << 25)
+#define ARC_RUN_REQ_A                  (1 << 24)
+#define ARC_RUN (ARC_HALT_INT_REDIR | ARC_RUN_REQ_A)
+#define ARC_HALT (ARC_HALT_INT_REDIR | ARC_HALT_REQ_A)
+
 #ifndef _ASMLANGUAGE
 
 /**************************************************************************
