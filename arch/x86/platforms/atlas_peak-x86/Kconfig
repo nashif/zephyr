@@ -66,3 +66,18 @@ choice
 endchoice
 
 
+
+config ARC_INIT
+	bool "Atlas Peak ARC Kickoff"
+	default n
+	help
+	Allows x86 processor to kickoff the ARC slave processor.
+
+config ARC_INIT_DEBUG
+	bool "Allows the usage of GDB with the ARC processor."
+	depends on ARC_INIT
+	default n
+	help
+	This option will stop the master processor from kicking-off
+	the ARC slave processor. This will allow GDB to halt an
+	engage the ARC processor.

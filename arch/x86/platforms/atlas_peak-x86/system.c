@@ -89,6 +89,34 @@ static void consoleInit(void)
 #define consoleInit() do { /* nothing */ } while ((0))
 #endif /* defined(CONFIG_PRINTK) || defined(CONFIG_STDOUT_CONSOLE) */
 
+#ifdef CONFIG_ARC_INIT
+struct shared_mem_{
+	unsigned int arc_start;
+};
+
+#define SHARED_DATA ((volatile struct shared_mem_ *) VIRT_ADDR_START)
+#define SCSS_REG_VAL(offset) \
+	(*((volatile uint32_t *)(SCSS_REGISTER_BASE+offset)))
+
+/**
+ *
+ * @brief ARC Init
+ *
+ * This routine initialize the ARC reset vector and
+ * starts the ARC processor.
+ * @return N/A
+ */
+static void arc_init()
+{
+	unsigned int *reset_vector;
+	reset_vector = (unsigned int*)(RESET_VECTOR+1024);
+	SCSS_REG_VAL(SCSS_SS_CFG) |= ARC_HALT_REQ_A;
+	SHARED_DATA->arc_start = *reset_vector;
+#ifndef CONFIG_ARC_INIT_DEBUG
+	SCSS_REG_VAL(SCSS_SS_CFG) |= ARC_RUN_REQ_A;
+#endif /*CONFIG_ARC_INIT_DEBUG*/
+}
+#endif /*CONFIG_ARC_INIT*/
 
 /**
  *
@@ -100,7 +128,6 @@ static void consoleInit(void)
  *
  * RETURNS: N/A
  */
-
 static int atp_init(struct device *arg)
 {
 	ARG_UNUSED(arg);
@@ -109,6 +136,11 @@ static int atp_init(struct device *arg)
 	_ioapic_init();
 
 	consoleInit(); /* NOP if not needed */
+
+#ifdef CONFIG_ARC_INIT
+	arc_init();
+#endif /*CONFIG_ARC_INIT*/
+
 	return 0;
 }
 DECLARE_DEVICE_INIT_CONFIG(atp_0, "", atp_init, NULL);
