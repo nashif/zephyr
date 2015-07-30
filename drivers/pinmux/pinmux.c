@@ -36,7 +36,7 @@
 
 extern struct pin_config mux_config[];
 
-static void pinmux_set(uint32_t base, uint32_t pin, uint32_t mode)
+static void _pinmux_set(uint32_t base, uint32_t pin, uint32_t mode)
 {
 	/*
 	 * the registers are 32-bit wide, but each pin requires 2 bits
@@ -66,9 +66,8 @@ static void pinmux_set(uint32_t base, uint32_t pin, uint32_t mode)
 }
 
 
-static uint32_t void pinmux_get(uint32_t base, uint32_t pin, uint32_t mode)
+static uint32_t _pinmux_get(uint32_t base, uint32_t pin, uint32_t mode)
 {
-	uint32_t value;
 	/*
 	 * the registers are 32-bit wide, but each pin requires 2 bits
 	 * to set the mode (A, B, C, or D).  As such we only get 16
@@ -97,33 +96,31 @@ static uint32_t void pinmux_get(uint32_t base, uint32_t pin, uint32_t mode)
 }
 
 
-static uint32_t atp_pinmux_set(struct device *dev, uint32_t pin, uint8_t func)
+static uint32_t pinmux_dev_set(struct device *dev, uint32_t pin, uint8_t func)
 {
-	struct device_config *dev_cfg = dev->config;
-	struct pinmux_config *pmux = dev_cfg->config_info;
+	struct pinmux_config * const pmux = dev->config->config_info;
 
-	pinmux_set(pmux->base_address, pin, func);
+	_pinmux_set(pmux->base_address, pin, func);
 
-	return DEV_OK;
+	return 0;
 }
 
 
-static uint32_t atp_pinmux_get(struct device *dev, uint32_t pin, uint8_t *func)
+static uint32_t pinmux_dev_get(struct device *dev, uint32_t pin, uint8_t *func)
 {
-	struct device_config *dev_cfg = dev->config;
-	struct pinmux_config *pmux = dev_cfg->config_info;
+	struct pinmux_config * const pmux = dev->config->config_info;
 	uint32_t ret;
 
-	ret = pinmux_get(pmux->base_address, pin, *func);
+	ret = _pinmux_get(pmux->base_address, pin, *func);
 
 	*func = ret;
-	return DEV_OK;
+	return 0;
 }
 
 
 struct pinmux_driver_api api_funcs = {
-	.set = atp_pinmux_set,
-	.get = atp_pinmux_get
+	.set = pinmux_dev_set,
+	.get = pinmux_dev_get
 };
 
 
@@ -136,7 +133,7 @@ int pinmux_initialize(struct device *dev)
 	dev->driver_api = &api_funcs;
 
 	for (i = 0; i < CONFIG_PINMUX_NUM_PINS; i++) {
-		pinmux_set(pmux->base_address,
+		_pinmux_set(pmux->base_address,
 			    mux_config[i].pin_num,
 			    mux_config[i].mode);
 	}

@@ -39,6 +39,10 @@ config PINMUX
         bool "Enable pinmux driver for the platform"
         default n
 
+config PINMUX_BASE
+        hex "Base Address"
+	depends on PINMUX
+
 config PINMUX_NUM_PINS
 	int "Number of Pins to configure"
 	depends on PINMUX

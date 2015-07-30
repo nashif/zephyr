@@ -40,8 +40,8 @@
 #define PINMUX_FUNC_C		2
 #define PINMUX_FUNC_D		3
 
-typedef int (*pmux_set)(struct device *dev, uint32_t pin, uint8_t func);
-typedef int (*pmux_get)(struct device *dev, uint32_t pin, uint8_t *func);
+typedef uint32_t (*pmux_set)(struct device *dev, uint32_t pin, uint8_t func);
+typedef uint32_t (*pmux_get)(struct device *dev, uint32_t pin, uint8_t *func);
 
 struct pinmux_driver_api {
 	pmux_set set;
@@ -57,7 +57,7 @@ inline uint32_t pinmux_set_pin(struct device *dev, uint32_t pin, uint8_t func)
 	return api->set(dev, pin, func);
 }
 
-inline uint32_t pinmux_get_pin(struct device *dev, uint32_t pin, uint8_t func)
+inline uint32_t pinmux_get_pin(struct device *dev, uint32_t pin, uint8_t *func)
 {
 	struct pinmux_driver_api *api;
 

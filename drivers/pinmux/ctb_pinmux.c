@@ -31,6 +31,7 @@
  */
 
 #include <pinmux.h>
+#include "pinmux.h"
 
 struct pin_config mux_config[CONFIG_PINMUX_NUM_PINS] = {
 	/* pin, selected mode           ball, mode A, mode B, mode C */

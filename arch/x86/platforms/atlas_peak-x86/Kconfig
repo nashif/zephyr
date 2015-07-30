@@ -46,6 +46,11 @@ config SERIAL_INTERRUPT_LOW
 
 endmenu
 
+config PINMUX_BASE
+        default 0xB0800930
+
+config PINMUX_NUM_PINS
+	default 69
 
 config VERSION_HEADER
 	bool "Add version header"
