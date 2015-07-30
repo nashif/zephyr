@@ -41,4 +41,10 @@ config DW_AIO_COMPARATOR
         help
         DesignWare AIO/Comparator driver.
 
+config DW_AIO_COMPARATOR_BASE_ADDR
+	hex "Base address for DesignWare AIO/comparator"
+	depends on DW_AIO_COMPARATOR
+	help
+	Base address for memory mapped registers.
+
 endmenu

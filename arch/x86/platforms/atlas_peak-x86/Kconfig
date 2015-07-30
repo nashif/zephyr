@@ -72,6 +72,11 @@ config PINMUX_NUM_PINS
 	default 69
 	depends on PINMUX
 
+config DW_AIO_COMPARATOR_BASE_ADDR
+	hex
+	depends on DW_AIO_COMPARATOR
+	default 0xb0800300
+
 config VERSION_HEADER
 	bool "Add version header"
 	default y
