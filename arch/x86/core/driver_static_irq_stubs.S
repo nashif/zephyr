@@ -121,6 +121,15 @@ by x86 BSPs.
 #endif /* CONFIG_GPIO_DW_1 */
 
 #endif
+
+#if defined(CONFIG_DW_AIO_COMPARATOR)
+#if defined(CONFIG_PIC)
+	pic_master_mkstub dw_aio_cmp dw_aio_cmp_isr_dispatcher
+#elif defined(CONFIG_IOAPIC)
+	ioapic_mkstub dw_aio_cmp dw_aio_cmp_isr_dispatcher
+#endif /* CONFIG_PIC */
+#endif /* CONFIG_DW_AIO_COMPARATOR */
+
 	/* externs (internal APIs) */
 
 	GTEXT(_IntEnt)
