@@ -1,4 +1,4 @@
-# Kconfig - drivers configuration options
+# Kconfig - Pinmux configuration options
 
 #
 # Copyright (c) 2015 Intel Corporation
@@ -30,33 +30,19 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+#
+# PinMux options
+#
+menu "Pinmux Configuration"
 
-menu "Device Drivers"
+config PINMUX
+        bool "Enable pinmux driver for the platform"
+        default n
 
-source "drivers/simple/Kconfig"
-
-source "drivers/bluetooth/Kconfig"
-
-source "drivers/console/Kconfig"
-
-source "drivers/serial/Kconfig"
-
-source "drivers/interrupt_controller/Kconfig"
-
-source "drivers/timer/Kconfig"
-
-source "drivers/random/Kconfig"
-
-source "drivers/pci/Kconfig"
-
-source "drivers/gpio/Kconfig"
-
-source "drivers/spi/Kconfig"
-
-source "drivers/i2c/Kconfig"
-
-source "drivers/pwm/Kconfig"
-
-source "drivers/pinmux/Kconfig"
+config PINMUX_NUM_PINS
+	int "Number of Pins to configure"
+	depends on PINMUX
+        help
+        Select the number of pins for the pinmux to operate upon.
 
 endmenu
