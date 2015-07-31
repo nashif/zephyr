@@ -81,6 +81,14 @@ SECTIONS
 	{
 	GROUP_START(ROMABLE_REGION)
 
+#if defined(CONFIG_VERSION_HEADER)
+        SECTION_PROLOGUE (version_header_section, (OPTIONAL),)
+        {
+                *(.version_header)
+                KEEP(*(".version_header*"))
+        } GROUP_LINK_IN(ROMABLE_REGION)
+#endif
+
 	SECTION_PROLOGUE(_TEXT_SECTION_NAME, (OPTIONAL),)
 	{
 	*(.text_start)
