@@ -50,6 +50,31 @@ for the atlas_peak-arc BSP.
 #if defined(CONFIG_PRINTK) || defined(CONFIG_STDOUT_CONSOLE)
 #include <console/uart_console.h>
 
+
+#define MBX(_offset_) (*(volatile unsigned int *) (0xb0800a60 + (_offset_)))
+
+int _mbxPollOut(int data) {
+    //while((* (volatile unsigned int *)(0xB0800000 + 0xA60 + 20)) & 1)
+    //    ; // STS
+    int flags = irq_lock_inline();
+    MBX(4) = (unsigned int)data; //DAT0
+    MBX(8) = 1; // DAT1
+    MBX(0) = 0x80000000;// CTRL
+    while(!MBX(20) & 1)
+        ;
+
+    while(MBX(20) & 1)
+        ; // STS
+    irq_unlock_inline(flags);
+    /* If end of line, delay to give lakemont
+     * a chance to do some processing */
+    if (data == '\r') {
+        volatile int count = 10000;
+        while (count --);
+    }
+    return data;
+}
+
 /**
  *
  * @brief initialize target-only console
@@ -59,19 +84,13 @@ for the atlas_peak-arc BSP.
  * RETURNS: N/A
  *
  */
+extern void __printk_hook_install(int (*fn)(int));
+extern void __stdout_hook_install(int (*fn)(int));
+
 static void consoleInit(void)
 {
-	struct uart_init_info info = {
-		.baud_rate = CONFIG_UART_CONSOLE_BAUDRATE,
-		.options = 0,
-		.sys_clk_freq = CONFIG_UART_CONSOLE_CLK_FREQ,
-		.regs = CONFIG_UART_CONSOLE_REGS,
-		.irq = CONFIG_UART_CONSOLE_IRQ,
-		.int_pri = CONFIG_UART_CONSOLE_INT_PRI,
-	};
-
-	uart_init(CONFIG_UART_CONSOLE_INDEX, &info);
-	uartConsoleInit();
+	__printk_hook_install(_mbxPollOut);
+	__stdout_hook_install(_mbxPollOut);
 }
 
 #else
