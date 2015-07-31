@@ -59,6 +59,7 @@ GTEXT(__ev_div_zero)
 GTEXT(__ev_dc_error)
 GTEXT(__ev_maligned)
 GDATA(_firq_stack)
+GDATA(saved_stack_pointer)
 
 SECTION_VAR(BSS, saved_stack_pointer)
 	.word 0

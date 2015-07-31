@@ -261,5 +261,6 @@ SECTIONS
  */
 __data_size = (__data_ram_end - __data_ram_start);
 __data_num_words = (__data_size + 3) >> 2;
+__ram_phys_end = PHYS_RAM_ADDR + LENGTH(RAM);
 
 #endif
