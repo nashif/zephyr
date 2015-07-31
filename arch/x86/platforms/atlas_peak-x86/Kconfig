@@ -1,3 +1,4 @@
+# bsp.kconf - Mint Valley BSP configuration options
 
 config PLATFORM
         string

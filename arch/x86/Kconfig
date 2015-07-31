@@ -97,6 +97,17 @@ config  PLATFORM_ATLASPEAK_X86
         select DRV_NS16550
         select DRV_SERIAL
 
+config  PLATFORM_MINT_VALLEY
+        bool "Minimum configuration for Mint Valley"
+        select CPU_MINUTEIA
+        select IOAPIC
+        select LOAPIC
+        select LOAPIC_TIMER
+        select EOI_HANDLER_SUPPORTED
+        select BOOTLOADER_UNKNOWN
+        select XIP
+        select MVIC
+
 endchoice
 
 config PLATFORM_GENERIC_PC
@@ -363,6 +374,11 @@ endif
 if PLATFORM_ATLASPEAK_X86
 source "arch/x86/platforms/atlas_peak-x86/Kconfig"
 endif
+
+if PLATFORM_MINT_VALLEY
+source "arch/x86/platforms/mint_valley/Kconfig"
+endif
+
 
 source "drivers/Kconfig"
 
