@@ -39,45 +39,13 @@ for the atlas_peak-arc BSP.
 #include <nanokernel.h>
 #include <board.h>
 #include <init.h>
-#include <drivers/uart.h>
 #include <atlas_peak-x86/shared_mem.h>
+#include <ipi/ipi_atp.h>
 
 /* Cannot use microkernel, since only nanokernel is supported */
 #if defined(CONFIG_MICROKERNEL)
 #error "Microkernel support is not available"
 #endif
-
-
-#if defined(CONFIG_PRINTK) || defined(CONFIG_STDOUT_CONSOLE)
-#include <console/uart_console.h>
-
-/**
- *
- * @brief initialize target-only console
- *
- * Only used for debugging, no host driver involved.
- *
- * RETURNS: N/A
- *
- */
-static void consoleInit(void)
-{
-	struct uart_init_info info = {
-		.baud_rate = CONFIG_UART_CONSOLE_BAUDRATE,
-		.options = 0,
-		.sys_clk_freq = CONFIG_UART_CONSOLE_CLK_FREQ,
-		.regs = CONFIG_UART_CONSOLE_REGS,
-		.irq = CONFIG_UART_CONSOLE_IRQ,
-		.int_pri = CONFIG_UART_CONSOLE_INT_PRI,
-	};
-
-	uart_init(CONFIG_UART_CONSOLE_INDEX, &info);
-	uartConsoleInit();
-}
-
-#else
-#define consoleInit() do { /* do nothing */ } while ((0))
-#endif /* defined(CONFIG_PRINTK) || defined(CONFIG_STDOUT_CONSOLE) */
 
 /**
  *
@@ -85,7 +53,6 @@ static void consoleInit(void)
  *
  * Hardware initialized:
  * - interrupt unit
- * - serial port and console driver
  *
  * RETURNS: N/A
  */
@@ -94,7 +61,6 @@ static int atp_init(struct device *arg)
         ARG_UNUSED(arg);
 
 	_arc_v2_irq_unit_init();
-        consoleInit(); /* NOP if not needed */
 	shared_data->flags |= ARC_READY;
         return 0;
 }

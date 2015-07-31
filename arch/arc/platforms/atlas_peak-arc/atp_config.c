@@ -71,3 +71,37 @@ DECLARE_DEVICE_INIT_CONFIG(adc,		/* config name*/
 pure_init(adc, &adc_info_dev);
 
 #endif /* CONFIG_DW_ADC */
+
+#if CONFIG_IPI_ATP
+#include <ipi.h>
+#include <ipi/ipi_atp.h>
+
+static int arc_atp_ipi_init(void) {
+	irq_connect(ATP_IPI_INTERRUPT, ATP_IPI_INTERRUPT_PRI, atp_ipi_isr,
+		    NULL);
+	irq_enable(ATP_IPI_INTERRUPT);
+	return DEV_OK;
+}
+
+static struct atp_ipi_controller_config_info ipi_controller_config = {
+	.controller_init = arc_atp_ipi_init
+};
+DECLARE_DEVICE_INIT_CONFIG(atp_ipi, "", atp_ipi_controller_initialize,
+			   &ipi_controller_config);
+pure_late_init(atp_ipi, NULL);
+
+#if CONFIG_IPI_CONSOLE_SENDER
+#include <console/ipi_console.h>
+ATP_IPI_DEFINE(atp_ipi4, 4, ATP_IPI_OUTBOUND);
+
+struct ipi_console_sender_config_info atp_ipi_sender_config = {
+	.bind_to = "atp_ipi4",
+	.flags = IPI_CONSOLE_PRINTK | IPI_CONSOLE_STDOUT,
+};
+DECLARE_DEVICE_INIT_CONFIG(ipi_console, "ipi_console",
+			   ipi_console_sender_init,
+			   &atp_ipi_sender_config);
+nano_early_init(ipi_console, NULL);
+
+#endif /* CONFIG_IPI_CONSOLE_SENDER */
+#endif /* CONFIG_IPI_ATP */

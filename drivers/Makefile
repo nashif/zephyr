@@ -22,3 +22,4 @@ obj-$(CONFIG_PWM) += pwm/
 obj-$(CONFIG_PINMUX) += pinmux/
 obj-$(CONFIG_ADC) += adc/
 obj-$(CONFIG_CLOCK_CONTROL) += clock_control/
+obj-$(CONFIG_IPI) += ipi/

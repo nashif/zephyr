@@ -1,0 +1,24 @@
+menuconfig IPI
+	bool
+	prompt "IPI drivers"
+	default n
+	help
+		Include interrupt-based inter-processor communication
+		drivers in system configuration
+
+config IPI_ATP
+	bool "Atlas Peak Mailbox IPI driver"
+	default n
+	depends on IPI
+	help
+		IPI driver for Atlas Peak mailboxes
+
+config IPI_ATP_MASTER
+	bool "Atlas Peak Mailbox IPI master controller"
+	default n
+	depends on IPI_ATP
+	help
+		Enable this for the first CPU that initializes IPI.
+		Sets up the initial interrupt mask and clears out all
+		channels. Only needs to be turned on for one CPU.
+
