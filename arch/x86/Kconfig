@@ -85,6 +85,18 @@ config PLATFORM_QUARK
 	select NS16550
 	select PCI
 
+config  PLATFORM_ATLASPEAK_X86
+        bool "Minimum configuration for Atlas Peak"
+        select CPU_MINUTEIA
+        select IOAPIC
+        select LOAPIC
+        select LOAPIC_TIMER
+        select EOI_HANDLER_SUPPORTED
+        select BOOTLOADER_UNKNOWN
+        select XIP
+        select DRV_NS16550
+        select DRV_SERIAL
+
 endchoice
 
 config PLATFORM_GENERIC_PC
@@ -319,9 +331,6 @@ config  AUTOMATIC_FP_ENABLING
 	if SSE is configured, otherwise it is enabled for using x87 FPU or
 	MMX instructions only.
 
-config XIP
-	default n
-
 endmenu
 
 menu "Bus options (PCI etc.)"
@@ -349,6 +358,10 @@ endif
 
 if PLATFORM_QUARK
 source "arch/x86/platforms/ia32_pci/Kconfig"
+endif
+
+if PLATFORM_ATLASPEAK_X86
+source "arch/x86/platforms/atlas_peak-x86/Kconfig"
 endif
 
 source "drivers/Kconfig"
