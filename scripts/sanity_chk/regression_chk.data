@@ -7,10 +7,12 @@ nanokernel/apps/hello_world                  <n>  galileo        basic_minuteia
 nanokernel/apps/philosophers                 <n>  basic_minuteia basic_atom      galileo
 nanokernel/apps/hello_world                  <n>  fsl_frdm_k64f  basic_cortex_m3
 nanokernel/apps/philosophers                 <n>  fsl_frdm_k64f  basic_cortex_m3
-microkernel/apps/hello_world                 <u>  basic_atom     basic_minuteia  galileo
-microkernel/apps/philosophers                <u>  basic_minuteia basic_atom      galileo
+microkernel/apps/hello_world                 <u>  basic_atom     basic_minuteia  galileo atlas_peak-x86
+microkernel/apps/philosophers                <u>  basic_minuteia basic_atom      galileo atlas_peak-x86
 microkernel/apps/hello_world                 <u>  fsl_frdm_k64f basic_cortex_m3
 microkernel/apps/philosophers                <u>  fsl_frdm_k64f basic_cortex_m3
+nanokernel/apps/hello_world                  <n>  atlas_peak-arc
+nanokernel/apps/philosophers                 <n>  atlas_peak-arc
     # projects that have been temporarily disabled
     # projects that don't require any special capabilities
 nanokernel/test/test_bluetooth          <nq> basic_minuteia! basic_atom!
