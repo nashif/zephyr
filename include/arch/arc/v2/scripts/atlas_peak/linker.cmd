@@ -105,6 +105,7 @@ SECTIONS {
 		__devconfig_end = .;
 	} GROUP_LINK_IN(ROMABLE_REGION)
 
+
 	SECTION_PROLOGUE(_CTOR_SECTION_NAME,,) {
 		/*
 		 * The compiler fills the constructor pointers table below, hence
@@ -126,6 +127,16 @@ SECTIONS {
 		*(".rodata.*")
 	} GROUP_LINK_IN(ROMABLE_REGION)
 
+#if defined(CONFIG_TEST_COMMAND)
+        SECTION_PROLOGUE (tcmd_section, (OPTIONAL),)
+        {
+                 /* This section is used to store test commands.  */
+                . = ALIGN(8);
+                __test_cmds_start = .;
+                KEEP(*(SORT(.test_cmd.*)))
+                __test_cmds_end = .;
+        } GROUP_LINK_IN(ROMABLE_REGION)
+#endif
 	__data_rom_start = ALIGN(4);	/* XIP imaged DATA ROM start addr */
 
 	GROUP_END(ROMABLE_REGION)

@@ -120,6 +120,17 @@ SECTIONS
 		__devconfig_end = .;
 	} GROUP_LINK_IN(ROMABLE_REGION)
 
+#if defined(CONFIG_TEST_COMMAND)
+	SECTION_PROLOGUE (tcmd_section, (OPTIONAL),)
+	{
+		 /* This section is used to store test commands.  */
+		. = ALIGN(8);
+		__test_cmds_start = .;
+		KEEP(*(SORT(.test_cmd.*)))
+		__test_cmds_end = .;
+	} GROUP_LINK_IN(ROMABLE_REGION)
+#endif
+
 	SECTION_PROLOGUE(_RODATA_SECTION_NAME, (OPTIONAL),)
 	{
 	*(.rodata)
