@@ -3,3 +3,5 @@ lib-y += source/stdout/prf.o
 lib-y += source/stdout/sprintf.o
 lib-y += source/stdout/stdout_console.o
 lib-y += source/string/string.o
+lib-y += source/stdlib/strtol.o
+lib-y += source/stdlib/strtoul.o
