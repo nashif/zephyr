@@ -95,6 +95,8 @@ static inline void _vprintk(const char *fmt, va_list ap)
 	while (*fmt) {
 		if (!might_format) {
 			if (*fmt != '%') {
+				if (*fmt == '\n')
+					_char_out('\r');
 				_char_out((int)*fmt);
 			} else {
 				might_format = 1;
