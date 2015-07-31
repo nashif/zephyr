@@ -17,6 +17,8 @@ config	SYS_CLOCK_HW_CYCLES_PER_SEC
 config  PHYS_LOAD_ADDR
 	default 0x40010000 if XIP
 	default 0xA8000000 if !XIP
+
+
 menu "Serial Ports"
 
 config EXTRA_SERIAL_PORT
@@ -42,3 +44,18 @@ config SERIAL_INTERRUPT_LOW
         instead of high
 
 endmenu
+
+
+config VERSION_HEADER
+	bool "Add version header"
+	default y
+	depends on PLATFORM_ATLASPEAK_X86
+	help
+	Adds a version header
+
+config TEST_COMMAND
+	bool "Add test commands"
+	default y
+	depends on PLATFORM_ATLASPEAK_X86
+	help
+	Adds a version header

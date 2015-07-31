@@ -54,6 +54,19 @@ config  NUM_IRQS
 
 menu "Atlaspeak BSP Options"
 
+config VERSION_HEADER
+        bool "Add version header"
+        default y
+        depends on PLATFORM_ATLASPEAK_ARC
+        help
+        Adds a version header
+
+config TEST_COMMAND
+        bool "Add test commands"
+        default y
+        depends on PLATFORM_ATLASPEAK_ARC
+        help
+        Adds a version header
 
 config	SYS_CLOCK_HW_CYCLES_PER_SEC
 	default 32000000
