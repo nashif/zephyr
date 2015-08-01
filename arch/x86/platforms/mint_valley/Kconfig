@@ -47,29 +47,6 @@ config  PHYS_LOAD_ADDR
 	default 0x00180000 if XIP
 	default 0x00280000 if !XIP
 
-menu "Serial Ports"
-
-config EXTRA_SERIAL_PORT
-	bool "Extra serial port"
-	default n
-	help
-	This option signifies the number of serial ports the target has.
-
-config SERIAL_INTERRUPT_LEVEL
-	bool "Serial interrupt level"
-	depends on IOAPIC && EXTRA_SERIAL_PORT
-	default y
-	help
-	Option signifies that the serial controller uses level interrupts
-	instead of edge
-
-config SERIAL_INTERRUPT_LOW
-	bool "Serial interrupt low"
-	depends on IOAPIC && EXTRA_SERIAL_PORT
-	default n
-	help
-	Option signifies that the serial controller uses low level interrupts
-	instead of high
 
 config PHYS_SRAM_ADDR
 	hex "Physical SRAM address"
@@ -82,4 +59,3 @@ config MVIC_LOAPIC_TIMER_VEC
 	help
 	Mint Valley Interrupt Controller (MVIC) LVT Timer vector.
 
-endmenu
