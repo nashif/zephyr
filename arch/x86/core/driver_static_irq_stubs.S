@@ -70,6 +70,16 @@ by x86 platforms.
 	ioapic_mkstub rtc dw_rtc_isr
 #endif /* CONFIG_PIC */
 #endif
+
+#if defined(CONFIG_DW_WDT)
+#if defined(CONFIG_PIC)
+        pic_master_mkstub dw_wdt dw_wdt_isr
+#elif defined(CONFIG_IOAPIC)
+        ioapic_mkstub dw_wdt dw_wdt_isr
+#endif /* CONFIG_PIC */
+#endif
+
+
 #if defined(CONFIG_UART_SIMPLE)
 #if defined(CONFIG_IOAPIC)
 	ioapic_mkstub uart_simple uart_simple_isr
