@@ -59,6 +59,22 @@ config VERSION_HEADER
 	help
 	Adds a version header
 
+choice
+        prompt "Board Type"
+        depends on PLATFORM_ATLASPEAK_X86
+        default BOARD_CTB
+
+        config BOARD_CTB
+        bool "CTB - Curie Platform"
+
+        config BOARD_APP
+        bool "APP - Atlas Peak Platform"
+
+        config BOARD_AAE
+        bool "AAE - AtlasPeak AtlasEdge"
+endchoice
+
+
 config TEST_COMMAND
 	bool "Add test commands"
 	default y
