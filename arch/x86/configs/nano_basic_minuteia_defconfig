@@ -103,10 +103,6 @@ CONFIG_CPU_SSE_UNSUPPORTED=y
 CONFIG_CACHE_LINE_SIZE=0
 
 #
-# Specific Board support
-#
-
-#
 # Specific Platform Capability Support
 #
 CONFIG_NUM_DYNAMIC_STUBS=0
@@ -119,7 +115,6 @@ CONFIG_NUM_DYNAMIC_STUBS=0
 # CONFIG_PCI is not set
 CONFIG_PLATFORM="ia32"
 CONFIG_UART_CONSOLE_INDEX=0
-CONFIG_EXTRA_SERIAL_PORT=y
 
 #
 # Device Drivers
@@ -134,6 +129,7 @@ CONFIG_EXTRA_SERIAL_PORT=y
 #
 # Serial Port Options
 #
+CONFIG_EXTRA_SERIAL_PORT=y
 CONFIG_NS16550=y
 # CONFIG_K20_UART is not set
 # CONFIG_STELLARIS_UART is not set
@@ -144,7 +140,6 @@ CONFIG_NS16550=y
 #
 CONFIG_PIC=y
 # CONFIG_LOAPIC is not set
-# CONFIG_IOAPIC is not set
 # CONFIG_MVIC is not set
 
 #
