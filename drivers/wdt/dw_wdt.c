@@ -134,7 +134,7 @@ static uint32_t dw_wdt_timeout(void)
 
 #endif
 
-struct wdt_driver_api dw_wdt_funcs = {
+static struct wdt_driver_api dw_wdt_funcs = {
         .set_config = dw_wdt_set_config,
         .get_config = dw_wdt_get_config,
         .enable = dw_wdt_enable,
