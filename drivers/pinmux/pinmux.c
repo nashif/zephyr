@@ -118,7 +118,7 @@ static uint32_t pinmux_dev_get(struct device *dev, uint32_t pin, uint8_t *func)
 }
 
 
-struct pinmux_driver_api api_funcs = {
+static struct pinmux_driver_api api_funcs = {
 	.set = pinmux_dev_set,
 	.get = pinmux_dev_get
 };
