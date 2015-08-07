@@ -172,7 +172,7 @@ static void dw_rtc_clk_disable(void)
 #endif
 
 
-struct rtc_driver_api funcs = {
+static struct rtc_driver_api funcs = {
 	.set_config = dw_rtc_set_config,
 	.read = dw_rtc_read,
 	.enable = dw_rtc_enable,
