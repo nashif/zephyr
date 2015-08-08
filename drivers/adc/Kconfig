@@ -33,17 +33,16 @@
 #
 # ADC options
 #
-menu "ADC"
-
-config ADC
-	bool "ADC Driver"
+menuconfig ADC
+	bool
+	prompt "ADC Driver"
 	default n
 	help
 	Enable the ADC driver for the platform
 
 config DW_ADC
 	bool "ARC Designware Driver"
-	depends on ADC && ARCH="arc"
+	depends on ADC && ARC
 	default n
 	help
 	Enable the driver implementation of the Designware ADC IP.
@@ -178,4 +177,3 @@ config ADC_CLOCK_RATIO
 	help
 	ADC Clock Ratio
 
-endmenu
