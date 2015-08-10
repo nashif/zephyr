@@ -110,6 +110,7 @@ CONFIG_UART_CONSOLE_INDEX=0
 CONFIG_K20_UART=y
 # CONFIG_STELLARIS_UART is not set
 # CONFIG_UART_INTERRUPT_DRIVEN is not set
+# CONFIG_GPIO is not set
 
 #
 # Interrupt Controllers
@@ -132,6 +133,8 @@ CONFIG_CORTEX_M_TIMER=y
 # CONFIG_PINMUX is not set
 # CONFIG_DW_RTC is not set
 # CONFIG_DW_WDT is not set
+# CONFIG_AIO_COMPARATOR is not set
+# CONFIG_ADC is not set
 
 #
 # Networking
