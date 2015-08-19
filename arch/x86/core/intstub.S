@@ -212,8 +212,9 @@ BRANCH_LABEL(alreadyOnIntStack)
 	call	_int_latency_stop
 	popl	%eax
 #endif
-
+#if  !defined(CONFIG_NO_NESTED_INTERRUPTS)
 	sti			/* re-enable interrupts */
+#endif
 	jmp	*%eax		/* "return" back to stub */
 
 #ifdef CONFIG_ADVANCED_POWER_MANAGEMENT
