@@ -109,6 +109,7 @@ the Atlas Peak BSP.
 #define CONFIG_UART_HOSTDRV_IRQ             COM2_INT_LVL
 #define CONFIG_UART_HOSTDRV_INT_PRI         COM2_INT_PRI
 
+#if (CONFIG_UART_NUM_SYSTEM_PORTS == 1)
 #define UART_PORTS_CONFIGURE(__type, __name)                    \
         static __type __name[CONFIG_UART_NUM_PORTS] = {         \
                 {                                               \
@@ -116,7 +117,19 @@ the Atlas Peak BSP.
                         .irq = CONFIG_UART_CONSOLE_IRQ           \
                 },                                              \
         }
-
+#else
+#define UART_PORTS_CONFIGURE(__type, __name)                    \
+        static __type __name[CONFIG_UART_NUM_PORTS] = {         \
+                {                                               \
+                        .port = COM1_BASE_ADRS,                 \
+                        .irq = COM1_INT_LVL                     \
+                },                                              \
+                {                                               \
+                        .port = COM2_BASE_ADRS,                 \
+                        .irq = COM2_INT_LVL                     \
+                },                                              \
+        }
+#endif
 
 /* uart interface */
 #define UART_POLL_IN            uart_poll_in
