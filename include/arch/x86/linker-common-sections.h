@@ -134,7 +134,7 @@ SECTIONS
 		 /* This section is used to store test commands.  */
 		. = ALIGN(8);
 		__test_cmds_start = .;
-		KEEP(*(SORT(.test_cmd.*)))
+		KEEP(*(SORT(.test_cmds.*)))
 		__test_cmds_end = .;
 	} GROUP_LINK_IN(ROMABLE_REGION)
 #endif
