@@ -66,7 +66,7 @@ static void _pinmux_set(uint32_t base, uint32_t pin, uint32_t mode)
 }
 
 
-static uint32_t _pinmux_get(uint32_t base, uint32_t pin, uint32_t mode)
+static uint32_t _pinmux_get(uint32_t base, uint32_t pin)
 {
 	/*
 	 * the registers are 32-bit wide, but each pin requires 2 bits
@@ -90,9 +90,10 @@ static uint32_t _pinmux_get(uint32_t base, uint32_t pin, uint32_t mode)
 	 * pin.  The value 2 repesents the bits needed for each pin's mode.
 	 */
 	uint32_t pin_mask = 3 << (pin_no * 2);
-	uint32_t mode_mask = mode << (pin_no * 2);
+	uint32_t mode_mask = (*(mux_register)) & pin_mask;
+	uint32_t mode = mode_mask >> (pin_no * 2);
 	/* (*((volatile uint32_t *)mux_address)) = ((*mux_address) & */
-	return ( ((*(mux_register)) & ~pin_mask) | mode_mask );
+	return mode;
 }
 
 
@@ -111,7 +112,7 @@ static uint32_t pinmux_dev_get(struct device *dev, uint32_t pin, uint8_t *func)
 	struct pinmux_config * const pmux = dev->config->config_info;
 	uint32_t ret;
 
-	ret = _pinmux_get(pmux->base_address, pin, *func);
+	ret = _pinmux_get(pmux->base_address, pin);
 
 	*func = ret;
 	return 0;
