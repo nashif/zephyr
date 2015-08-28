@@ -38,11 +38,11 @@
 /** Number of RTC ticks in a second */
 #define RTC_ALARM_SECOND (32768 / RTC_DIVIDER)
 /** Number of RTC ticks in a minute */
-#define RTC_ALARM_MINUTE ((RTC_ALARM_SECOND * 60) / RTC_DIVIDER)
+#define RTC_ALARM_MINUTE (RTC_ALARM_SECOND * 60)
 /** Number of RTC ticks in an hour */
-#define RTC_ALARM_HOUR ((RTC_ALARM_MINUTE * 60) / RTC_DIVIDER)
+#define RTC_ALARM_HOUR (RTC_ALARM_MINUTE * 60)
 /** Number of RTC ticks in a day */
-#define RTC_ALARM_DAY ((RTC_ALARM_HOUR * 24) / RTC_DIVIDER)
+#define RTC_ALARM_DAY (RTC_ALARM_HOUR * 24)
 
 
 
