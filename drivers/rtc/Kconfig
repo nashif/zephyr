@@ -1,0 +1,4 @@
+
+config RTC
+	bool "Build RTC Driver"
+	default n
