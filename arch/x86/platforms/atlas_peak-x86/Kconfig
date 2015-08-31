@@ -43,3 +43,10 @@ config SERIAL_INTERRUPT_LOW
         instead of high
 
 endmenu
+
+config PINMUX_BASE
+        default 0xB0800930
+
+config PINMUX_NUM_PINS
+	default 69
+
