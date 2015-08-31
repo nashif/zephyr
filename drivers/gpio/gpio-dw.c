@@ -242,6 +242,38 @@ static inline int gpio_resume_port_dw(struct device *port)
 	return 0;
 }
 
+#ifdef CONFIG_BSP_ATLAS_PEAK_X86
+#define GPIO_CLKENA_POS (31)
+#define LS_SYNC_POS (0)
+/* The atlas peak SOC has a clock enable bit in the INT_CLOCK_SYNC
+ * register which only has bit 0 as valid in the synopsys
+ * documentation. These functions handle this bit if we are being
+ * built for the AtlasPeak SOC
+ */
+static inline void gpio_enable_clock_dw(uint32_t base_addr)
+{
+	dw_set_bit(base_addr, INT_CLOCK_SYNC, GPIO_CLKENA_POS, 1);
+	dw_set_bit(base_addr, INT_CLOCK_SYNC, LS_SYNC_POS, 1);
+}
+
+static inline void gpio_disable_clock_dw(uint32_t base_addr)
+{
+	dw_set_bit(base_addr, INT_CLOCK_SYNC, GPIO_CLKENA_POS, 0);
+	dw_set_bit(base_addr, INT_CLOCK_SYNC, LS_SYNC_POS, 0);
+}
+
+static inline void gpio_unmask_int_dw(uint32_t irq)
+{
+	SCSS_INTERRUPT->int_gpio_mask &= INT_UNMASK_IA;
+}
+#else
+static inline void gpio_enable_clock_dw(uint32_t base_addr) {}
+static inline void gpio_disable_clock_dw(uint32_t base_addr) {}
+static inline void gpio_unmask_int_dw(uint32_t irq) {}
+#endif
+
+
+
 void gpio_dw_isr(struct device *port)
 {
 	struct gpio_runtime_dw *context = port->driver_data;
@@ -316,6 +348,7 @@ int gpio_initialize_dw(struct device *port)
 	if (!gpio_dw_setup(port)) {
 		return DEV_NOT_CONFIG;
 	}
+	gpio_enable_clock_dw(base_addr);
 
 	/* interrupts in sync with system clock */
 	dw_set_bit(base_addr, INT_CLOCK_SYNC, 0, 1);
@@ -328,6 +361,7 @@ int gpio_initialize_dw(struct device *port)
 	port->driver_api = &api_funcs;
 
 	config->config_func(port);
+	gpio_unmask_int_dw(config->irq_num);
 	irq_enable(config->irq_num);
 
 	return 0;

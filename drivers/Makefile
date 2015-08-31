@@ -5,6 +5,7 @@ subdir-asflags-y +=-I$(srctree)/arch/$(ARCH)/platforms/$(subst $(DQUOTE),,$(CONF
 obj-y = console/
 obj-y += random/
 obj-y += serial/
+obj-y += gpio/
 obj-y += timer/
 obj-y += interrupt_controller/
 obj-y += rtc/
