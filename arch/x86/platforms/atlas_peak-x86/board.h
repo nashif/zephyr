@@ -48,21 +48,6 @@ the Atlas Peak BSP.
 #define INT_VEC_IRQ0  0x20	/* Vector number for IRQ0 */
 #define HPET_TIMER0_IRQ INT_VEC_IRQ0
 
-/*
- * IO APIC (IOAPIC) device information (Intel ioapic)
- */
-#define IOAPIC_NUM_RTES         64              /* Number of IRQs = 32 */
-#define IOAPIC_BASE_ADRS_PHYS   0xFEC00000      /* base physical address */
-#define IOAPIC_SIZE             MB(1)
-#define IOAPIC_BASE_ADRS      IOAPIC_BASE_ADRS_PHYS
-
-/*
- * Local APIC (LOAPIC) device information (Intel loapic)
- */
-
-#define LOAPIC_BASE_ADRS_PHYS   0xFEE00000      /* base physical address */
-#define LOAPIC_SIZE             KB(4)
-#define LOAPIC_BASE_ADRS      LOAPIC_BASE_ADRS_PHYS
 
 /* serial port (aka COM port) information */
 
