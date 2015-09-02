@@ -71,22 +71,10 @@ config PINMUX_NUM_PINS
 	default 69
 	depends on PINMUX
 
-choice
-        prompt "Board Type"
-        depends on PLATFORM_ATLASPEAK_X86
-        default BOARD_CTB
-
-        config BOARD_CTB
-        bool "CTB - Curie Platform"
-
-        config BOARD_APP
-        bool "APP - Atlas Peak Platform"
-
-        config BOARD_AAE
-        bool "AAE - AtlasPeak AtlasEdge"
-endchoice
-
-
+config DW_AIO_COMPARATOR_BASE_ADDR
+	hex
+	depends on DW_AIO_COMPARATOR
+	default 0xb0800300
 
 config ARC_INIT
 	bool "Atlas Peak ARC Kickoff"

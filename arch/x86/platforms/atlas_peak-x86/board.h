@@ -298,6 +298,9 @@ struct scss_interrupt {
 
 #define INT_RTC_IRQ  		        0xb
 
+/* Comparator */
+#define INT_AIO_CMP_IRQ			(0x16)
+
 /*ARC INIT*/
 #define RESET_VECTOR                   0x40034000
 #define SCSS_SS_CFG                    0x0600

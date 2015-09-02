@@ -134,3 +134,46 @@ void gpio_dw_isr_1(void *unused)
 
 #endif /* CONFIG_GPIO_DW_1 */
 #endif /* CONFIG_GPIO_DW */
+
+#ifdef CONFIG_DW_AIO_COMPARATOR
+#include <aio/dw_aio_comparator.h>
+
+int dw_aio_cmp_config(struct device *dev);
+
+struct dw_aio_cmp_dev_cfg_t dw_aio_cmp_dev_config = {
+	.base_address = CONFIG_DW_AIO_COMPARATOR_BASE_ADDR,
+	.interrupt_num = INT_AIO_CMP_IRQ,
+	.config_func = dw_aio_cmp_config,
+};
+
+DECLARE_DEVICE_INIT_CONFIG(dw_aio_cmp,
+			   DW_AIO_CMP_DRV_NAME,
+			   &dw_aio_cmp_init,
+			   &dw_aio_cmp_dev_config);
+
+struct dw_aio_cmp_dev_data_t dw_aio_cmp_dev_data = {
+	.num_cmp = DW_AIO_CMP_COUNT,
+};
+
+micro_early_init(dw_aio_cmp, &dw_aio_cmp_dev_data);
+
+extern void dw_aio_cmp_isr(struct device *dev);
+
+void dw_aio_cmp_isr_dispatcher(void *unused)
+{
+	dw_aio_cmp_isr(&__initconfig_dw_aio_cmp4);
+}
+
+IRQ_CONNECT_STATIC(dw_aio_cmp, INT_AIO_CMP_IRQ, 0, dw_aio_cmp_isr_dispatcher, 0);
+
+int dw_aio_cmp_config(struct device *dev)
+{
+	ARG_UNUSED(dev);
+
+	IRQ_CONFIG(dw_aio_cmp, INT_AIO_CMP_IRQ);
+
+	return DEV_OK;
+}
+
+
+#endif
