@@ -10,6 +10,7 @@ obj-y += timer/
 obj-y += interrupt_controller/
 obj-y += rtc/
 obj-y += wdt/
+obj-y += aio/
 
 obj-$(CONFIG_PCI) += pci/
 obj-$(CONFIG_BLUETOOTH) += bluetooth/
