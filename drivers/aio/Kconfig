@@ -33,11 +33,15 @@
 #
 # AIO/Comparator options
 #
-menu "AIO/Comparator Configuration"
+menuconfig AIO_COMPARATOR
+	bool
+	prompt "AIO/Comparator Configuration"
+	default n
 
 config DW_AIO_COMPARATOR
         bool "Enable DesignWare AIO/comparator driver"
         default n
+	depends on AIO_COMPARATOR
         help
         DesignWare AIO/Comparator driver.
 
@@ -47,4 +51,3 @@ config DW_AIO_COMPARATOR_BASE_ADDR
 	help
 	Base address for memory mapped registers.
 
-endmenu
