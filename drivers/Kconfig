@@ -65,4 +65,6 @@ source "drivers/wdt/Kconfig"
 
 source "drivers/aio/Kconfig"
 
+source "drivers/adc/Kconfig"
+
 endmenu

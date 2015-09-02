@@ -47,6 +47,8 @@ This header file is used to specify and describe board-level aspects for the
 
 /* address bases */
 
+#define SCSS_REGISTER_BASE 0xB0800000 /*Sensor Subsystem Base*/
+
 #define PERIPH_ADDR_BASE_ADC 0x80015000 /* ADC */
 
 #define PERIPH_ADDR_BASE_CREG_MST0 0x80018000 /* CREG Master 0 */
