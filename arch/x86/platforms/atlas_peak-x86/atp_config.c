@@ -226,6 +226,8 @@ static struct uart_device_config_t ns16550_uart1_dev_cfg = {
 	.irq = CONFIG_UART_PORT_1_IRQ,
 	.int_pri = CONFIG_UART_PORT_1_IRQ_PRIORITY,
 
+	.port_init = ns16550_uart_port_init,
+
 #if (defined(CONFIG_UART_CONSOLE) && (CONFIG_UART_CONSOLE_INDEX == 0))
 	.config_func = ns16550_uart_console_init,
 #endif
