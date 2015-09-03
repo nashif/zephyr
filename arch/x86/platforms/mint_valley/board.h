@@ -120,6 +120,7 @@ extern struct device * const uart_devs[];
 #endif
 
 /* Setup console from config value, */
+#if defined(CONFIG_UART_CONSOLE)
 
 #if (CONFIG_UART_CONSOLE_INDEX == 0)
 #define CONFIG_UART_BAUDRATE		COM1_BAUD_RATE
@@ -130,6 +131,8 @@ extern struct device * const uart_devs[];
 #endif  /* CONFIG_UART_CONSOLE_INDEX */
 
 #define UART_CONSOLE_DEV (uart_devs[CONFIG_UART_CONSOLE_INDEX])
+
+#endif /* CONFIG_UART_CONSOLE */
 
 #ifndef _ASMLANGUAGE
 

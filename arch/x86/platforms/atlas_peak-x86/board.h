@@ -87,8 +87,12 @@ the Atlas Peak BSP.
 extern struct device * const uart_devs[];
 
  /* Console definitions */
+#if defined(CONFIG_UART_CONSOLE)
+
 #define CONFIG_UART_CONSOLE_INT_PRI	COM2_INT_PRI
 #define UART_CONSOLE_DEV (uart_devs[CONFIG_UART_CONSOLE_INDEX])
+
+#endif /* CONFIG_UART_CONSOLE */
 
 #endif
 
