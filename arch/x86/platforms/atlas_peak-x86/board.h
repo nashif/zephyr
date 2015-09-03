@@ -51,6 +51,8 @@ the Atlas Peak BSP.
 
 /* serial port (aka COM port) information */
 
+#ifdef CONFIG_NS16550
+
 #define COM1_BASE_ADRS		0xB0002000
 #define COM1_INT_LVL		0x05		/* COM1 connected to IRQ5 */
 #define COM1_INT_VEC		(INT_VEC_IRQ0 + COM1_INT_LVL)
@@ -74,46 +76,22 @@ the Atlas Peak BSP.
 /* uart configuration settings */
 
 /* Generic definitions */
-#define CONFIG_UART_NUM_SYSTEM_PORTS   2
-#define CONFIG_UART_NUM_EXTRA_PORTS    0
-#define CONFIG_UART_BAUDRATE	        COM2_BAUD_RATE
-#define CONFIG_UART_NUM_PORTS \
-	(CONFIG_UART_NUM_SYSTEM_PORTS + CONFIG_UART_NUM_EXTRA_PORTS)
+#define CONFIG_UART_BAUDRATE		COM2_BAUD_RATE
+#define CONFIG_UART_PORT_0_REGS		COM1_BASE_ADRS
+#define CONFIG_UART_PORT_0_IRQ		COM1_INT_VEC
+#define CONFIG_UART_PORT_0_IRQ_PRIORITY	COM1_INT_PRI
+#define CONFIG_UART_PORT_1_REGS		COM2_BASE_ADRS
+#define CONFIG_UART_PORT_1_IRQ		COM2_INT_VEC
+#define CONFIG_UART_PORT_1_IRQ_PRIORITY	COM2_INT_PRI
 
  /* Console definitions */
-#define CONFIG_UART_CONSOLE_REGS	    COM2_BASE_ADRS
-#define CONFIG_UART_CONSOLE_IRQ	    COM2_INT_LVL
-#define CONFIG_UART_CONSOLE_INT_PRI    COM2_INT_PRI
+#define CONFIG_UART_CONSOLE_INT_PRI	COM2_INT_PRI
 
-/* Host driver definitions */
-#define CONFIG_UART_HOSTDRV_INDEX                   0
-#define CONFIG_UART_HOSTDRV_INTERRUPT_DRIVEN   1
-#define CONFIG_HOSTDRV_RX_EVENT             2
-#define CONFIG_HOSTDRV_TX_EVENT             3
-#define CONFIG_UART_HOSTDRV_REGS                    COM2_BASE_ADRS
-#define CONFIG_UART_HOSTDRV_IRQ             COM2_INT_LVL
-#define CONFIG_UART_HOSTDRV_INT_PRI         COM2_INT_PRI
+extern struct device uart_devs[];
+extern struct device * const uart_console_dev;
+#define UART_CONSOLE_DEV uart_console_dev
 
-#if (CONFIG_UART_NUM_SYSTEM_PORTS == 1)
-#define UART_PORTS_CONFIGURE(__type, __name)                    \
-        static __type __name[CONFIG_UART_NUM_PORTS] = {         \
-                {                                               \
-                        .port = CONFIG_UART_CONSOLE_REGS,        \
-                        .irq = CONFIG_UART_CONSOLE_IRQ           \
-                },                                              \
-        }
-#else
-#define UART_PORTS_CONFIGURE(__type, __name)                    \
-        static __type __name[CONFIG_UART_NUM_PORTS] = {         \
-                {                                               \
-                        .port = COM1_BASE_ADRS,                 \
-                        .irq = COM1_INT_LVL                     \
-                },                                              \
-                {                                               \
-                        .port = COM2_BASE_ADRS,                 \
-                        .irq = COM2_INT_LVL                     \
-                },                                              \
-        }
+
 #endif
 
 /*

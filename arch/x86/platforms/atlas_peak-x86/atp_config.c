@@ -174,6 +174,40 @@ int dw_aio_cmp_config(struct device *dev)
 
 	return DEV_OK;
 }
+#endif
 
+#ifdef CONFIG_NS16550
+#include <drivers/uart.h>
+#include <serial/ns16550.h>
+
+static struct uart_device_config_t _uart_dev_cfg_info[] = {
+	{
+		.port = CONFIG_UART_PORT_1_REGS,
+		.irq = CONFIG_UART_PORT_1_IRQ,
+		.int_pri = CONFIG_UART_PORT_1_IRQ_PRIORITY,
+	},
+};
+
+static struct device_config _uart_dev_cfg[] = {
+	{
+		.name = CONFIG_UART_PORT_1_NAME,
+		.init = NULL,
+		.config_info = &_uart_dev_cfg_info[0],
+	},
+};
+
+static struct uart_ns16550_dev_data_t _uart_dev_data[1];
+
+struct device uart_devs[] = {
+	{
+		.config = &_uart_dev_cfg[0],
+		.driver_api = NULL,
+		.driver_data = &_uart_dev_data[0],
+	},
+};
+
+#if defined(CONFIG_UART_CONSOLE_INDEX)
+struct device * const uart_console_dev = &uart_devs[CONFIG_UART_CONSOLE_INDEX];
+#endif
 
 #endif

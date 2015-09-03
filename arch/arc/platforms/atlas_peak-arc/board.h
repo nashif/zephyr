@@ -155,11 +155,6 @@ This header file is used to specify and describe board-level aspects for the
  * - only polled mode is supported (interrupt-driven mode is NOT supported); and
  * - only the target console is supported (hostserver driver is NOT supported).
  */
-#define CONFIG_UART_NUM_SYSTEM_PORTS 1
-#define CONFIG_UART_NUM_EXTRA_PORTS 0
-#define CONFIG_UART_NUM_PORTS \
-	(CONFIG_UART_NUM_SYSTEM_PORTS + CONFIG_UART_NUM_EXTRA_PORTS)
-
 #define CONFIG_UART_CONSOLE_CLK_FREQ SYSCLK_DEFAULT_IOSC_HZ
 #define CONFIG_UART_CONSOLE_BAUDRATE 115200
 #define CONFIG_UART_CONSOLE_REGS PERIPH_ADDR_BASE_UART0
@@ -167,16 +162,6 @@ This header file is used to specify and describe board-level aspects for the
 #define CONFIG_UART_CONSOLE_INT_PRI 0
 
 #define UART_REG_ADDR_INTERVAL 4 /* for ns16550 driver */
-
-#define UART_PORTS_CONFIGURE(__type, __name)                    \
-        static __type __name[CONFIG_UART_NUM_PORTS] = {         \
-                {                                               \
-                        .port = CONFIG_UART_CONSOLE_REGS,        \
-                        .irq = CONFIG_UART_CONSOLE_IRQ           \
-                },                                              \
-        }
-
-
 
 /*
  * Device drivers utilize the macros PLB_BYTE_REG_WRITE() and

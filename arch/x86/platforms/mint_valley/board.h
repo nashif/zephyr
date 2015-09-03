@@ -107,13 +107,6 @@ the Mint Valley BSP.
 
 /* uart configuration settings */
 
-/* Generic definitions */
-
-#define CONFIG_UART_NUM_SYSTEM_PORTS   2
-#define CONFIG_UART_NUM_EXTRA_PORTS    0
-#define CONFIG_UART_NUM_PORTS \
-	(CONFIG_UART_NUM_SYSTEM_PORTS + CONFIG_UART_NUM_EXTRA_PORTS)
-
 /* Setup console from config value, */
 
 #if (CONFIG_UART_CONSOLE_INDEX == 0)
@@ -136,13 +129,14 @@ the Mint Valley BSP.
 
 #endif  /* CONFIG_UART_CONSOLE_INDEX == 0 */
 
-#define UART_PORTS_CONFIGURE(__type, __name)                    \
-        static __type __name[CONFIG_UART_NUM_PORTS] = {         \
-                {                                               \
-                        .port = CONFIG_UART_CONSOLE_REGS,        \
-                        .irq = CONFIG_UART_CONSOLE_IRQ           \
-                },                                              \
-        }
+#ifndef _ASMLANGUAGE
+
+/* UART structures */
+extern struct device uart_devs[];
+extern struct device * const uart_console_dev;
+#define UART_CONSOLE_DEV uart_console_dev
+
+#endif
 
 #ifndef _ASMLANGUAGE
 
