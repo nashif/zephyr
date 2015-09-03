@@ -63,7 +63,7 @@ static int ns16550_uart_console_init(struct device *dev)
 	struct uart_init_info info = {
 		.baud_rate = CONFIG_UART_CONSOLE_BAUDRATE,
 		.sys_clk_freq = UART_XTAL_FREQ,
-		.int_pri = CONFIG_UART_CONSOLE_INT_PRI
+		.irq_pri = CONFIG_UART_CONSOLE_INT_PRI
 	};
 
 	uart_init(UART_CONSOLE_DEV, &info);
@@ -87,7 +87,7 @@ struct uart_device_config_t ns16550_uart_dev_cfg[] = {
 	{
 		.port = CONFIG_UART0_CONSOLE_REGS,
 		.irq = CONFIG_UART0_CONSOLE_IRQ,
-		.int_pri = CONFIG_UART0_CONSOLE_INT_PRI,
+		.irq_pri = CONFIG_UART0_CONSOLE_INT_PRI,
 
 		.port_init = ns16550_uart_port_init,
 
@@ -99,7 +99,7 @@ struct uart_device_config_t ns16550_uart_dev_cfg[] = {
 	{
 		.port = CONFIG_UART1_CONSOLE_REGS,
 		.irq = CONFIG_UART1_CONSOLE_IRQ,
-		.int_pri = CONFIG_UART1_CONSOLE_INT_PRI,
+		.irq_pri = CONFIG_UART1_CONSOLE_INT_PRI,
 
 		.port_init = ns16550_uart_port_init,
 
