@@ -116,23 +116,6 @@ the Atlas Peak BSP.
         }
 #endif
 
-/* uart interface */
-#define UART_POLL_IN            uart_poll_in
-#define UART_POLL_OUT           uart_poll_out
-#define UART_FIFO_FILL          uart_fifo_fill
-#define UART_FIFO_READ          uart_fifo_read
-#define UART_IRQ_TX_ENABLE      uart_irq_tx_enable
-#define UART_IRQ_TX_DISABLE     uart_irq_tx_disable
-#define UART_IRQ_TX_READY       uart_irq_tx_ready
-#define UART_IRQ_RX_ENABLE      uart_irq_rx_enable
-#define UART_IRQ_RX_DISABLE     uart_irq_rx_disable
-#define UART_IRQ_RX_READY       uart_irq_rx_ready
-#define UART_IRQ_ERROR          _Ns16550IrqError
-#define UART_IRQ_TIMEOUT        _Ns16550IrqTimeout
-#define UART_IRQ_IS_PENDING     uart_irq_is_pending
-#define UART_IRQ_HW_UPDATE      uart_irq_update
-#define UART_IRQ_INT_CONNECT	uart_int_connect
-
 /*
  * The nanoCpuIntConnect() API connects to a (virtualized) IRQ and the
  * associated interrupt controller is programmed with the allocated vector.

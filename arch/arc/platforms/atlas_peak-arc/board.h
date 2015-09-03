@@ -155,7 +155,6 @@ This header file is used to specify and describe board-level aspects for the
  * - only polled mode is supported (interrupt-driven mode is NOT supported); and
  * - only the target console is supported (hostserver driver is NOT supported).
  */
-#define UART_POLL_OUT           uart_poll_out
 #define CONFIG_UART_NUM_SYSTEM_PORTS 1
 #define CONFIG_UART_NUM_EXTRA_PORTS 0
 #define CONFIG_UART_NUM_PORTS \
