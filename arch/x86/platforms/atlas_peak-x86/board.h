@@ -84,13 +84,11 @@ the Atlas Peak BSP.
 #define CONFIG_UART_PORT_1_IRQ		COM2_INT_VEC
 #define CONFIG_UART_PORT_1_IRQ_PRIORITY	COM2_INT_PRI
 
+extern struct device * const uart_devs[];
+
  /* Console definitions */
 #define CONFIG_UART_CONSOLE_INT_PRI	COM2_INT_PRI
-
-extern struct device uart_devs[];
-extern struct device * const uart_console_dev;
-#define UART_CONSOLE_DEV uart_console_dev
-
+#define UART_CONSOLE_DEV (uart_devs[CONFIG_UART_CONSOLE_INDEX])
 
 #endif
 

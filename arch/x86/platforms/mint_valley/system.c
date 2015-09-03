@@ -47,54 +47,6 @@ hardware for the Mint Valley BSP.
 #include <drivers/mvic.h>
 #include <init.h>
 
-#if defined(CONFIG_PRINTK) || defined(CONFIG_STDOUT_CONSOLE)
-#include <console/uart_console.h>
-
-/**
- *
- * uart_info_init - initialize initialization information for one UART
- *
- * RETURNS: N/A
- *
- */
-static void uart_info_init(struct uart_init_info *p_info)
-{
-	p_info->options = 0;
-	p_info->sys_clk_freq = UART_XTAL_FREQ;
-	p_info->baud_rate = CONFIG_UART_BAUDRATE;
-	p_info->int_pri = CONFIG_UART_CONSOLE_INT_PRI;
-}
-
-
-/**
- *
- * consoleInit - initialize target-only console
- *
- * Only used for debugging, no host driver involved.
- *
- * RETURNS: N/A
- *
- */
-static void consoleInit(void)
-{
-	struct uart_init_info info;
-
-	uart_info_init(&info);
-
-	/*
-	 * Need type casting to avoid compiler warnings about assigning a
-	 * pointer to a smaller integer. We know the size is right...
-	 */
-	info.int_pri = CONFIG_UART_CONSOLE_INT_PRI;
-	uart_init(CONFIG_UART_CONSOLE_INDEX, &info);
-
-	uart_console_init();
-}
-
-#else
-#define consoleInit() do { /* nothing */ } while ((0))
-#endif /* defined(CONFIG_PRINTK) || defined(CONFIG_STDOUT_CONSOLE) */
-
 /**
  *
  * _InitHardware - perform basic hardware initialization
@@ -115,7 +67,6 @@ static int mv_init(struct device *arg)
 
 	_mvic_init();
 
-	consoleInit(); /* NOP if not needed */
 	return 0;
 }
 DECLARE_DEVICE_INIT_CONFIG(mv_0, "", mv_init, NULL);

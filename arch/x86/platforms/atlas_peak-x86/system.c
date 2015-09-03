@@ -47,47 +47,6 @@ hardware for the Atlas Peak BSP.
 #include <drivers/loapic.h>
 #include <init.h>
 
-#if defined(CONFIG_PRINTK) || defined(CONFIG_STDOUT_CONSOLE)
-#include <console/uart_console.h>
-
-/**
- *
- * @brief Initialize initialization information for one UART
- *
- * RETURNS: N/A
- *
- */
-void uart_generic_info_init(struct uart_init_info *p_info)
-{
-	p_info->options = 0;
-	p_info->sys_clk_freq = UART_XTAL_FREQ;
-	p_info->baud_rate = CONFIG_UART_BAUDRATE;
-	p_info->int_pri = CONFIG_UART_CONSOLE_INT_PRI;
-}
-
-/**
- *
- * consoleInit - initialize target-only console
- *
- * Only used for debugging, no host driver involved.
- *
- * RETURNS: N/A
- *
- */
-static void consoleInit(void)
-{
-        struct uart_init_info info;
-
-        uart_generic_info_init(&info);
-        uart_init(UART_CONSOLE_DEV, &info);
-        uart_console_init();
-
-}
-
-#else
-#define consoleInit() do { /* nothing */ } while ((0))
-#endif /* defined(CONFIG_PRINTK) || defined(CONFIG_STDOUT_CONSOLE) */
-
 #ifdef CONFIG_ARC_INIT
 struct shared_mem_{
 	unsigned int arc_start;
@@ -133,8 +92,6 @@ static int atp_init(struct device *arg)
 
 	_loapic_init();
 	_ioapic_init();
-
-	consoleInit(); /* NOP if not needed */
 
 #ifdef CONFIG_ARC_INIT
 	arc_init();

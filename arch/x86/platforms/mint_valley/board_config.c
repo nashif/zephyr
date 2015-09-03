@@ -41,34 +41,92 @@
 
 #ifdef CONFIG_NS16550
 #include <drivers/uart.h>
+#include <console/uart_console.h>
 #include <serial/ns16550.h>
 
-static struct uart_device_config_t _uart_dev_cfg_info[] = {
+
+#if defined(CONFIG_PRINTK) || defined(CONFIG_STDOUT_CONSOLE)
+
+/**
+ * @brief Initialize NS16550 serial port #1
+ *
+ * UART #1 is being used as console. So initialize it
+ * for console I/O.
+ *
+ * @param dev The UART device struct
+ *
+ * @return DEV_OK if successful, otherwise failed.
+ */
+static int ns16550_uart_console_init(struct device *dev)
+{
+	struct uart_init_info info = {
+		.baud_rate = CONFIG_UART_BAUDRATE,
+		.sys_clk_freq = UART_XTAL_FREQ,
+		.int_pri = CONFIG_UART_CONSOLE_INT_PRI
+	};
+
+	uart_init(UART_CONSOLE_DEV, &info);
+	uart_console_init();
+
+	return DEV_OK;
+}
+
+#else
+
+static int ns16550_uart_console_init(struct device *dev)
+{
+	ARG_UNUSED(dev);
+
+	return DEV_OK;
+}
+
+#endif
+
+struct uart_device_config_t ns16550_uart_dev_cfg[] = {
 	{
-		.port = CONFIG_UART_CONSOLE_REGS,
-		.irq = CONFIG_UART_CONSOLE_IRQ,
-		.int_pri = CONFIG_UART_CONSOLE_INT_PRI,
+		.port = CONFIG_UART0_CONSOLE_REGS,
+		.irq = CONFIG_UART0_CONSOLE_IRQ,
+		.int_pri = CONFIG_UART0_CONSOLE_INT_PRI,
+
+		#if (CONFIG_UART_CONSOLE_INDEX == 0)
+			.config_func = ns16550_uart_console_init,
+		#endif
+	},
+	{
+		.port = CONFIG_UART1_CONSOLE_REGS,
+		.irq = CONFIG_UART1_CONSOLE_IRQ,
+		.int_pri = CONFIG_UART1_CONSOLE_INT_PRI,
+
+		#if (CONFIG_UART_CONSOLE_INDEX == 1)
+			.config_func = ns16550_uart_console_init,
+		#endif
 	},
 };
 
-static struct device_config _uart_dev_cfg[] = {
-	{
-		.name = CONFIG_UART_PORT_0_NAME,
-		.init = NULL,
-		.config_info = &_uart_dev_cfg_info[0],
-	},
+struct uart_ns16550_dev_data_t ns16550_uart_dev_data[2];
+
+
+/* UART 0 */
+DECLARE_DEVICE_INIT_CONFIG(ns16550_uart0,
+			   CONFIG_UART_PORT_0_NAME,
+			   &uart_platform_init,
+			   &ns16550_uart_dev_cfg[0]);
+
+pure_early_init(ns16550_uart0, &ns16550_uart_dev_data[0]);
+
+
+/* UART 1 */
+DECLARE_DEVICE_INIT_CONFIG(ns16550_uart1,
+			   CONFIG_UART_PORT_1_NAME,
+			   &uart_platform_init,
+			   &ns16550_uart_dev_cfg[1]);
+
+pure_early_init(ns16550_uart1, &ns16550_uart_dev_data[1]);
+
+
+struct device * const uart_devs[] = {
+	&__initconfig_ns16550_uart00,
+	&__initconfig_ns16550_uart10,
 };
-
-static struct uart_ns16550_dev_data_t _uart_dev_data[2];
-
-struct device uart_devs[] = {
-	{
-		.config = &_uart_dev_cfg[0],
-		.driver_api = NULL,
-		.driver_data = &_uart_dev_data[0],
-	},
-};
-
-struct device * const uart_console_dev = &uart_devs[0];
 
 #endif

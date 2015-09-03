@@ -178,36 +178,77 @@ int dw_aio_cmp_config(struct device *dev)
 
 #ifdef CONFIG_NS16550
 #include <drivers/uart.h>
+#include <console/uart_console.h>
 #include <serial/ns16550.h>
 
-static struct uart_device_config_t _uart_dev_cfg_info[] = {
-	{
-		.port = CONFIG_UART_PORT_1_REGS,
-		.irq = CONFIG_UART_PORT_1_IRQ,
-		.int_pri = CONFIG_UART_PORT_1_IRQ_PRIORITY,
-	},
-};
+#if defined(CONFIG_PRINTK) || defined(CONFIG_STDOUT_CONSOLE)
 
-static struct device_config _uart_dev_cfg[] = {
-	{
-		.name = CONFIG_UART_PORT_1_NAME,
-		.init = NULL,
-		.config_info = &_uart_dev_cfg_info[0],
-	},
-};
+/**
+ * @brief Initialize NS16550 serial port #1
+ *
+ * UART #1 is being used as console. So initialize it
+ * for console I/O.
+ *
+ * @param dev The UART device struct
+ *
+ * @return DEV_OK if successful, otherwise failed.
+ */
+static int ns16550_uart_console_init(struct device *dev)
+{
+	struct uart_init_info info = {
+		.baud_rate = CONFIG_UART_BAUDRATE,
+		.sys_clk_freq = UART_XTAL_FREQ,
+		.int_pri = CONFIG_UART_CONSOLE_INT_PRI
+	};
 
-static struct uart_ns16550_dev_data_t _uart_dev_data[1];
+	uart_init(UART_CONSOLE_DEV, &info);
+	uart_console_init();
 
-struct device uart_devs[] = {
-	{
-		.config = &_uart_dev_cfg[0],
-		.driver_api = NULL,
-		.driver_data = &_uart_dev_data[0],
-	},
-};
+	return DEV_OK;
+}
 
-#if defined(CONFIG_UART_CONSOLE_INDEX)
-struct device * const uart_console_dev = &uart_devs[CONFIG_UART_CONSOLE_INDEX];
+#else
+
+static int ns16550_uart_console_init(struct device *dev)
+{
+	ARG_UNUSED(dev);
+
+	return DEV_OK;
+}
+
 #endif
+
+
+/* UART 1 */
+static struct uart_device_config_t ns16550_uart1_dev_cfg = {
+	.port = CONFIG_UART_PORT_1_REGS,
+	.irq = CONFIG_UART_PORT_1_IRQ,
+	.int_pri = CONFIG_UART_PORT_1_IRQ_PRIORITY,
+
+#if (CONFIG_UART_CONSOLE_INDEX == 0)
+	.config_func = ns16550_uart_console_init,
+#endif
+};
+
+DECLARE_DEVICE_INIT_CONFIG(ns16550_uart1,
+			   CONFIG_UART_PORT_1_NAME,
+			   &uart_platform_init,
+			   &ns16550_uart1_dev_cfg);
+
+static struct uart_ns16550_dev_data_t ns16550_uart1_dev_data;
+
+pure_early_init(ns16550_uart1, &ns16550_uart1_dev_data);
+
+
+/**
+ * @brief UART devices
+ *
+ * Note that UART 0 is being used by OpenOCD, so the first
+ * UART entry is actually the UART#1 on board.
+ */
+struct device * const uart_devs[] = {
+	&__initconfig_ns16550_uart10,
+};
+
 
 #endif

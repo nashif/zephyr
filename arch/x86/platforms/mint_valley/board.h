@@ -107,36 +107,29 @@ the Mint Valley BSP.
 
 /* uart configuration settings */
 
+#define CONFIG_UART0_CONSOLE_REGS	COM1_BASE_ADRS
+#define CONFIG_UART0_CONSOLE_IRQ	COM1_INT_LVL
+#define CONFIG_UART0_CONSOLE_INT_PRI	COM1_INT_PRI
+
+#define CONFIG_UART1_CONSOLE_REGS	COM2_BASE_ADRS
+#define CONFIG_UART1_CONSOLE_IRQ	COM2_INT_LVL
+#define CONFIG_UART1_CONSOLE_INT_PRI	COM2_INT_PRI
+
+#ifndef _ASMLANGUAGE
+extern struct device * const uart_devs[];
+#endif
+
 /* Setup console from config value, */
 
 #if (CONFIG_UART_CONSOLE_INDEX == 0)
+#define CONFIG_UART_BAUDRATE		COM1_BAUD_RATE
+#define CONFIG_UART_CONSOLE_INT_PRI	COM1_INT_PRI
+#elif (CONFIG_UART_CONSOLE_INDEX == 1)
+#define CONFIG_UART_BAUDRATE		COM2_BAUD_RATE
+#define CONFIG_UART_CONSOLE_INT_PRI	COM2_INT_PRI
+#endif  /* CONFIG_UART_CONSOLE_INDEX */
 
-#define CONFIG_UART_BAUDRATE            COM1_BAUD_RATE
- /* Console definitions */
-#define CONFIG_UART_CONSOLE_REGS        COM1_BASE_ADRS
-#define CONFIG_UART_CONSOLE_IRQ         COM1_INT_LVL
-#define CONFIG_UART_CONSOLE_INT_PRI     COM1_INT_PRI
-
-#else /* CONFIG_UART_CONSOLE_INDEX */
-
-#if (CONFIG_UART_CONSOLE_INDEX == 1)
-#define CONFIG_UART_BAUDRATE	        COM2_BAUD_RATE
- /* Console definitions */
-#define CONFIG_UART_CONSOLE_REGS	    COM2_BASE_ADRS
-#define CONFIG_UART_CONSOLE_IRQ	        COM2_INT_LVL
-#define CONFIG_UART_CONSOLE_INT_PRI     COM2_INT_PRI
-#endif  /* CONFIG_UART_CONSOLE_INDEX == 1 */
-
-#endif  /* CONFIG_UART_CONSOLE_INDEX == 0 */
-
-#ifndef _ASMLANGUAGE
-
-/* UART structures */
-extern struct device uart_devs[];
-extern struct device * const uart_console_dev;
-#define UART_CONSOLE_DEV uart_console_dev
-
-#endif
+#define UART_CONSOLE_DEV (uart_devs[CONFIG_UART_CONSOLE_INDEX])
 
 #ifndef _ASMLANGUAGE
 
