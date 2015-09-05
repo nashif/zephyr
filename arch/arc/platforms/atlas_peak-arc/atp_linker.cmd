@@ -44,8 +44,6 @@ Linker script for the Atlas Peak ARC BSPs.
 #if defined(CONFIG_NSIM)
 	#define KENTRY __reset
 	EXTERN(_VectorTable)
-#else
-	#define KENTRY _VxMicroStart
 #endif
 
 #include <linker-tool.h>
