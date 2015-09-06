@@ -48,6 +48,9 @@ default PLATFORM_GENERIC_ARC
 config PLATFORM_GENERIC_ARC
 	bool "Minimum configuration for generic arc"
 
+config PLATFORM_ATLASPEAK_ARC
+	bool "Minimum configuration for Atlas Peak"
+
 endchoice
 
 menu "ARC EM4 processor options"
@@ -246,6 +249,7 @@ endmenu
 
 
 source "arch/arc/platforms/generic_arc/Kconfig"
+source "arch/arc/platforms/atlas_peak-arc/Kconfig"
 
 source "drivers/Kconfig"
 
