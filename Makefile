@@ -569,6 +569,11 @@ libs-y += $(KCRYPTO_DIR)/
  ZEPHYRINCLUDE += -I$(srctree)/lib/crypto/tinycrypt/include
 endif
 
+ifdef CONFIG_QMI_DRIVERS
+LDFLAGS_zephyr += -L$(CONFIG_LIBQMI_PATH:"%"=%)/lib
+ALL_LIBS += qmi
+endif
+
 ifdef ZEPHYR_GCC_VARIANT
 include $(srctree)/scripts/Makefile.toolchain.$(ZEPHYR_GCC_VARIANT)
 else

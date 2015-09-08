@@ -1,4 +1,4 @@
-# Kconfig - drivers configuration options
+# Kconfig - QMI drivers configuration options
 
 #
 # Copyright (c) 2015 Intel Corporation
@@ -30,45 +30,18 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+config QMI_DRIVERS
+	depends on X86_32 && EXPERIMENTAL
+	bool "Enable QMI drivers [EXPERIMENTAL]"
+	default n
+	help
+	This option enables QMI device drivers. These drivers are actually shim
+	drivers based on drivers provided by QMI BSP. The BSP provides a static
+	library (libqmi) which implements several drivers for peripherals from
+	Intel MCUs (e.g. AtlasPeak and Mint Valley). If unsure, say N.
 
-menu "Device Drivers"
-
-source "drivers/qmi/Kconfig"
-
-source "drivers/simple/Kconfig"
-
-source "drivers/bluetooth/Kconfig"
-
-source "drivers/console/Kconfig"
-
-source "drivers/serial/Kconfig"
-
-source "drivers/interrupt_controller/Kconfig"
-
-source "drivers/timer/Kconfig"
-
-source "drivers/random/Kconfig"
-
-source "drivers/pci/Kconfig"
-
-source "drivers/gpio/Kconfig"
-
-source "drivers/spi/Kconfig"
-
-source "drivers/i2c/Kconfig"
-
-source "drivers/pwm/Kconfig"
-
-source "drivers/pinmux/Kconfig"
-
-source "drivers/rtc/Kconfig"
-
-source "drivers/wdt/Kconfig"
-
-source "drivers/aio/Kconfig"
-
-source "drivers/adc/Kconfig"
-
-source "drivers/clock_control/Kconfig"
-
-endmenu
+config LIBQMI_PATH
+	depends on QMI_DRIVERS
+	string "Path to libqmi"
+	help
+	Set path to libqmi.
