@@ -95,26 +95,6 @@ by x86 platforms.
 #endif /* CONFIG_SPI_INTEL_PORT_1 */
 #endif /* CONFIG_SPI_INTEL */
 
-#if defined(CONFIG_GPIO_DW)
-
-#if CONFIG_GPIO_DW_0
-#if defined(CONFIG_PIC)
-	pic_master_mkstub gpio_dw_0 gpio_dw_isr_0
-#elif defined(CONFIG_IOAPIC)
-	ioapic_mkstub gpio_dw_0 gpio_dw_isr_0
-#endif /* CONFIG_PIC */
-#endif /* CONFIG_GPIO_DW_0 */
-
-#if CONFIG_GPIO_DW_1
-#if defined(CONFIG_PIC)
-	pic_master_mkstub gpio_dw_1 gpio_dw_isr_1
-#elif defined(CONFIG_IOAPIC)
-	ioapic_mkstub gpio_dw_1 gpio_dw_isr_1
-#endif /* CONFIG_PIC */
-#endif /* CONFIG_GPIO_DW_1 */
-
-#endif
-
 #if defined(CONFIG_DW_AIO_COMPARATOR)
 #if defined(CONFIG_PIC)
 	pic_master_mkstub dw_aio_cmp dw_aio_cmp_isr_dispatcher
