@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Intel Corportation.
+ * Copyright (c) 2015 Intel Corporation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -11,7 +11,7 @@
  * this list of conditions and the following disclaimer in the documentation
  * and/or other materials provided with the distribution.
  *
- * 3) Neither the name of Intel Corportation nor the names of its contributors
+ * 3) Neither the name of Intel Corporation nor the names of its contributors
  * may be used to endorse or promote products derived from this software without
  * specific prior written permission.
  *
@@ -28,25 +28,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _QMI_RTC_H_
+#define _QMI_RTC_H_
 
-#define _ASMLANGUAGE
+#define RTC_DRV_NAME "rtc"
 
-#include <arch/x86/asm.h>
-#include <drivers/ioapic.h>
+int qmi_rtc_init(struct device *dev);
 
-#if defined(CONFIG_RTC_DW)
-#if defined(CONFIG_IOAPIC)
-	ioapic_mkstub rtc rtc_dw_isr
-#endif /* CONFIG_PIC */
-#endif
-
-#if defined(CONFIG_QMI_RTC)
-#if defined(CONFIG_IOAPIC)
-	ioapic_mkstub rtc qm_rtc_isr
-#endif
-#endif /* CONFIG_QMI_RTC */
-
-	/* externs (internal APIs) */
-
-	GTEXT(_IntEnt)
-	GTEXT(_IntExit)
+#endif /* _QMI_RTC_H_ */

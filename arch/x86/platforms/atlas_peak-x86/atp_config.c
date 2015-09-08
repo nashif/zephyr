@@ -28,6 +28,20 @@ pure_init(pmux, NULL);
 
 #endif /* CONFIG_PINMUX */
 
+#ifdef CONFIG_QMI_RTC
+
+#include <rtc/qmi_rtc.h>
+
+DECLARE_DEVICE_INIT_CONFIG(rtc,
+			   RTC_DRV_NAME,
+			   &qmi_rtc_init,
+			   NULL);
+
+micro_early_init(rtc, NULL);
+
+#endif /* CONFIG_QMI_RTC */
+
+
 
 #ifdef CONFIG_DW_AIO_COMPARATOR
 #include <aio/dw_aio_comparator.h>
