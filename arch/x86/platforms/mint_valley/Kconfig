@@ -33,9 +33,8 @@ config PLATFORM
 	string
 	default mint_valley
 	help
-	This option holds the directory name used by sysgen to identify
-	the location of the config1p.vpf file and is used by the build system
-	to locate the correct linker file.
+	This option holds the directory name used by the build system to locate
+	the correct linker file.
 
 config  LOAPIC_TIMER_FREQ
 	default 32000000
