@@ -118,7 +118,7 @@ void _mvic_init(void)
 	uint32_t rteValue; /* value to copy into interrupt line register */
 
 	/*
-	 * The BSP must define the IOAPIC_NUM_RTES macro to indicate the number
+	 * The BSP must define the CONFIG_IOAPIC_NUM_RTES macro to indicate the number
 	 * of redirection table entries supported by the IOAPIC on the board.
 	 *
 
@@ -128,7 +128,7 @@ void _mvic_init(void)
 
 	rteValue = IOAPIC_EDGE | IOAPIC_INT_MASK;
 
-	for (ix = 0; ix < IOAPIC_NUM_RTES; ix++) {
+	for (ix = 0; ix < CONFIG_IOAPIC_NUM_RTES; ix++) {
 		MvicRteSet(ix, rteValue);
 	}
 
@@ -468,7 +468,7 @@ static uint32_t MvicRteGet(unsigned int irq /* INTIN number */
 	rte = (unsigned int *)(CONFIG_IOAPIC_BASE_ADDRESS + IOAPIC_DATA);
 
 	/* Set index in the IOREGSEL */
-	__ASSERT(irq < IOAPIC_NUM_RTES, "INVL");
+	__ASSERT(irq < CONFIG_IOAPIC_NUM_RTES, "INVL");
 
 	low_nibble = ((irq & MVIC_LOW_NIBBLE_MASK) << 0x1);
 	high_nibble = ((irq & MVIC_HIGH_NIBBLE_MASK) << 0x2);
@@ -507,7 +507,7 @@ static void MvicRteSet(unsigned int irq, /* INTIN number */
 	rte = (unsigned int *)(CONFIG_IOAPIC_BASE_ADDRESS + IOAPIC_DATA);
 
 	/* Set index in the IOREGSEL */
-	__ASSERT(irq < IOAPIC_NUM_RTES, "INVL");
+	__ASSERT(irq < CONFIG_IOAPIC_NUM_RTES, "INVL");
 
 	low_nibble = ((irq & MVIC_LOW_NIBBLE_MASK) << 0x1);
 	high_nibble = ((irq & MVIC_HIGH_NIBBLE_MASK) << 0x2);
