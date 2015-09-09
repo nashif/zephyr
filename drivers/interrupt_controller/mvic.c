@@ -138,18 +138,18 @@ void _mvic_init(void)
 
 	/* reset the TPR, and TIMER_ICR */
 
-	*(volatile int *)(LOAPIC_BASE_ADRS + LOAPIC_TPR) = (int)0x0;
-	*(volatile int *)(LOAPIC_BASE_ADRS + LOAPIC_TIMER_ICR) = (int)0x0;
+	*(volatile int *)(CONFIG_LOAPIC_BASE_ADDRESS + LOAPIC_TPR) = (int)0x0;
+	*(volatile int *)(CONFIG_LOAPIC_BASE_ADDRESS + LOAPIC_TIMER_ICR) = (int)0x0;
 
 	/* program Local Vector Table for the Virtual Wire Mode */
 
 	/* lock the MVIC timer interrupt */
 
-	*(volatile int *)(LOAPIC_BASE_ADRS + LOAPIC_TIMER) = LOAPIC_LVT_MASKED;
+	*(volatile int *)(CONFIG_LOAPIC_BASE_ADDRESS + LOAPIC_TIMER) = LOAPIC_LVT_MASKED;
 
 	/* discard a pending interrupt if any */
 
-	*(volatile int *)(LOAPIC_BASE_ADRS + LOAPIC_EOI) = 0;
+	*(volatile int *)(CONFIG_LOAPIC_BASE_ADDRESS + LOAPIC_EOI) = 0;
 
 }
 
@@ -291,7 +291,7 @@ void _loapic_enable(void)
 {
 	int32_t oldLevel = irq_lock(); /* LOCK INTERRUPTS */
 
-	*(volatile int *)(LOAPIC_BASE_ADRS + LOAPIC_SVR) |= LOAPIC_ENABLE;
+	*(volatile int *)(CONFIG_LOAPIC_BASE_ADDRESS + LOAPIC_SVR) |= LOAPIC_ENABLE;
 
 	irq_unlock(oldLevel); /* UNLOCK INTERRUPTS */
 }
@@ -309,7 +309,7 @@ void _loapic_disable(void)
 {
 	int32_t oldLevel = irq_lock(); /* LOCK INTERRUPTS */
 
-	*(volatile int *)(LOAPIC_BASE_ADRS + LOAPIC_SVR) &= ~LOAPIC_ENABLE;
+	*(volatile int *)(CONFIG_LOAPIC_BASE_ADDRESS + LOAPIC_SVR) &= ~LOAPIC_ENABLE;
 
 	irq_unlock(oldLevel); /* UNLOCK INTERRUPTS */
 }
@@ -326,7 +326,7 @@ void _loapic_disable(void)
 void _loapic_eoi(unsigned int irq)
 {
 	ARG_UNUSED(irq);
-	*(volatile int *)(LOAPIC_BASE_ADRS + LOAPIC_EOI) = 0;
+	*(volatile int *)(CONFIG_LOAPIC_BASE_ADDRESS + LOAPIC_EOI) = 0;
 }
 
 /*******************************************************************************
@@ -364,7 +364,7 @@ void _loapic_int_vec_set(unsigned int irq, /* IRQ number of the
 	* It's assumed that LVTs are spaced by LOAPIC_LVT_REG_SPACING bytes
 	*/
 
-	pLvt = (volatile int *)(LOAPIC_BASE_ADRS + LOAPIC_TIMER + (irq * LOAPIC_LVT_REG_SPACING));
+	pLvt = (volatile int *)(CONFIG_LOAPIC_BASE_ADDRESS + LOAPIC_TIMER + (irq * LOAPIC_LVT_REG_SPACING));
 
 	/* update the 'vector' bits in the LVT */
 
@@ -401,7 +401,7 @@ void _loapic_irq_enable(unsigned int irq /* IRQ number of
 	* and ths assumption concerning LVT spacing.
 	*/
 
-	pLvt = (volatile int *)(LOAPIC_BASE_ADRS + LOAPIC_TIMER + (irq * LOAPIC_LVT_REG_SPACING));
+	pLvt = (volatile int *)(CONFIG_LOAPIC_BASE_ADDRESS + LOAPIC_TIMER + (irq * LOAPIC_LVT_REG_SPACING));
 
 	/* clear the mask bit in the LVT */
 
@@ -438,7 +438,7 @@ void _loapic_irq_disable(unsigned int irq /* IRQ number of the
 	* and ths assumption concerning LVT spacing.
 	*/
 
-	pLvt = (volatile int *)(LOAPIC_BASE_ADRS + LOAPIC_TIMER + (irq * LOAPIC_LVT_REG_SPACING));
+	pLvt = (volatile int *)(CONFIG_LOAPIC_BASE_ADDRESS + LOAPIC_TIMER + (irq * LOAPIC_LVT_REG_SPACING));
 
 	/* set the mask bit in the LVT */
 
@@ -464,8 +464,8 @@ static uint32_t MvicRteGet(unsigned int irq /* INTIN number */
 	unsigned int low_nibble;
 	unsigned int high_nibble;
 
-	index = (unsigned int *)(IOAPIC_BASE_ADRS + IOAPIC_IND);
-	rte = (unsigned int *)(IOAPIC_BASE_ADRS + IOAPIC_DATA);
+	index = (unsigned int *)(CONFIG_IOAPIC_BASE_ADDRESS + IOAPIC_IND);
+	rte = (unsigned int *)(CONFIG_IOAPIC_BASE_ADDRESS + IOAPIC_DATA);
 
 	/* Set index in the IOREGSEL */
 	__ASSERT(irq < IOAPIC_NUM_RTES, "INVL");
@@ -503,8 +503,8 @@ static void MvicRteSet(unsigned int irq, /* INTIN number */
 	unsigned int low_nibble;
 	unsigned int high_nibble;
 
-	index = (unsigned int *)(IOAPIC_BASE_ADRS + IOAPIC_IND);
-	rte = (unsigned int *)(IOAPIC_BASE_ADRS + IOAPIC_DATA);
+	index = (unsigned int *)(CONFIG_IOAPIC_BASE_ADDRESS + IOAPIC_IND);
+	rte = (unsigned int *)(CONFIG_IOAPIC_BASE_ADDRESS + IOAPIC_DATA);
 
 	/* Set index in the IOREGSEL */
 	__ASSERT(irq < IOAPIC_NUM_RTES, "INVL");
