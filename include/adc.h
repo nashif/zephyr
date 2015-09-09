@@ -204,7 +204,7 @@ struct adc_driver_api
  *
  * @return N/A
  */
-inline void adc_enable(struct device *dev)
+static inline void adc_enable(struct device *dev)
 {
 	struct adc_driver_api *api;
 
@@ -223,7 +223,7 @@ inline void adc_enable(struct device *dev)
  *
  * @return N/A
  */
-inline void adc_disable(struct device *dev)
+static inline void adc_disable(struct device *dev)
 {
 	struct adc_driver_api *api;
 
@@ -242,7 +242,7 @@ inline void adc_disable(struct device *dev)
  *
  * @return Returns zero if the driver was locked succesfully.
  */
-inline uint8_t adc_lock(struct device *dev)
+static inline uint8_t adc_lock(struct device *dev)
 {
 	struct adc_driver_api *api;
 
@@ -261,7 +261,7 @@ inline uint8_t adc_lock(struct device *dev)
  *
  * @return N/A
  */
-inline void adc_unlock(struct device *dev)
+static inline void adc_unlock(struct device *dev)
 {
 	struct adc_driver_api *api;
 
@@ -283,7 +283,7 @@ inline void adc_unlock(struct device *dev)
  *
  * @return N/A
  */
-inline void adc_set_cb(struct device *dev, adc_callback cb_rx,
+static inline void adc_set_cb(struct device *dev, adc_callback cb_rx,
 	adc_callback cb_err)
 {
 	struct adc_driver_api *api;
@@ -307,7 +307,7 @@ inline void adc_set_cb(struct device *dev, adc_callback cb_rx,
  *
  * @return Returns zero if the read was requested succesfully.
  */
-inline uint8_t adc_read(struct device *dev,
+static inline uint8_t adc_read(struct device *dev,
 	struct io_adc_seq_table *seq_tbl,
 	uint32_t *data, uint32_t data_len)
 {

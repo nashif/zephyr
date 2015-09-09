@@ -126,7 +126,7 @@ static inline int spi_configure(struct device *dev, struct spi_config *config)
  *
  * @return DEV_OK if successful, another DEV_* code otherwise.
  */
-inline int spi_slave_select(struct device *dev, uint32_t slave)
+static inline int spi_slave_select(struct device *dev, uint32_t slave)
 {
 	struct spi_driver_api *api = (struct spi_driver_api *)dev->driver_api;
 

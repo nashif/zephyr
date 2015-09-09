@@ -49,7 +49,7 @@ struct pinmux_driver_api {
 };
 
 
-inline uint32_t pinmux_set_pin(struct device *dev, uint32_t pin, uint8_t func)
+static inline uint32_t pinmux_set_pin(struct device *dev, uint32_t pin, uint8_t func)
 {
 	struct pinmux_driver_api *api;
 
@@ -57,7 +57,7 @@ inline uint32_t pinmux_set_pin(struct device *dev, uint32_t pin, uint8_t func)
 	return api->set(dev, pin, func);
 }
 
-inline uint32_t pinmux_get_pin(struct device *dev, uint32_t pin, uint8_t *func)
+static inline uint32_t pinmux_get_pin(struct device *dev, uint32_t pin, uint8_t *func)
 {
 	struct pinmux_driver_api *api;
 

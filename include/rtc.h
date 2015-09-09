@@ -74,7 +74,7 @@ struct rtc_driver_api {
 	rtc_api_set_alarm set_alarm;
 };
 
-inline uint32_t rtc_read(struct device *dev)
+static inline uint32_t rtc_read(struct device *dev)
 {
 	struct rtc_driver_api *api;
 
@@ -82,7 +82,7 @@ inline uint32_t rtc_read(struct device *dev)
 	return api->read();
 }
 
-inline void rtc_enable(struct device *dev)
+static inline void rtc_enable(struct device *dev)
 {
 	struct rtc_driver_api *api;
 
@@ -90,7 +90,7 @@ inline void rtc_enable(struct device *dev)
 	api->enable();
 }
 
-inline void rtc_clock_disable(struct device *dev)
+static inline void rtc_clock_disable(struct device *dev)
 {
 	struct rtc_driver_api *api;
 
@@ -98,7 +98,7 @@ inline void rtc_clock_disable(struct device *dev)
 	api->clock_disable();
 }
 
-inline void rtc_disable(struct device *dev)
+static inline void rtc_disable(struct device *dev)
 {
 	struct rtc_driver_api *api;
 
@@ -106,7 +106,7 @@ inline void rtc_disable(struct device *dev)
 	api->disable();
 }
 
-inline int rtc_set_config(struct device *dev, rtc_config_t *cfg)
+static inline int rtc_set_config(struct device *dev, rtc_config_t *cfg)
 {
 	struct rtc_driver_api *api;
 
@@ -114,7 +114,7 @@ inline int rtc_set_config(struct device *dev, rtc_config_t *cfg)
 	return api->set_config(cfg);
 }
 
-inline int rtc_set_alarm(struct device *dev, rtc_alarm_t *alarm)
+static inline int rtc_set_alarm(struct device *dev, rtc_alarm_t *alarm)
 {
 	struct rtc_driver_api *api;
 
