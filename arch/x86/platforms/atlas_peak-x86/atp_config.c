@@ -246,8 +246,6 @@ pure_early_init(ns16550_uart1, &ns16550_uart1_dev_data);
 /**
  * @brief UART devices
  *
- * Note that UART 0 is being used by OpenOCD, so the first
- * UART entry is actually the UART#1 on board.
  */
 struct device * const uart_devs[] = {
 	&__initconfig_ns16550_uart10,
