@@ -118,9 +118,6 @@ extern struct device * const uart_devs[];
  */
 #define LOAPIC_VEC_BASE(x) (x + INT_VEC_IRQ0 + IOAPIC_NUM_RTES)
 
-/* local APIC timer definitions */
-#define LOAPIC_TIMER_IRQ	IOAPIC_NUM_RTES
-#define LOAPIC_TIMER_INT_PRI	2
 #define LOAPIC_TIMER_VEC	LOAPIC_VEC_BASE(0)
 
 #ifndef _ASMLANGUAGE
