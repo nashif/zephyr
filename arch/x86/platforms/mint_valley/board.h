@@ -53,8 +53,6 @@ the Mint Valley BSP.
 /*
  * IO APIC (IOAPIC) device information (Intel ioapic)
  */
-#define IOAPIC_NUM_RTES         32              /* Number of IRQs = 32 */
-
 #define IOAPIC_BASE_ADRS_PHYS   0xFEC00000      /* base physical address */
 #define IOAPIC_SIZE             MB(1)
 #define IOAPIC_BASE_ADRS        IOAPIC_BASE_ADRS_PHYS
