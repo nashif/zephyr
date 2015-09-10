@@ -35,14 +35,7 @@
 #include <stdint.h>
 #include <device.h>
 
-/*
- * Error codes
- */
-#define PINMUX_ERROR		-1
-#define PINMUX_OK		0
-
 #define PINMUX_NAME		"pinmux"
-
 
 struct pin_config {
 	uint8_t pin_num;

@@ -32,6 +32,16 @@
 #include <device.h>
 #include <pinmux.h>
 #include "pinmux.h"
+#ifndef CONFIG_PINMUX_DEV
+#define PRINT(...) {;}
+#else
+#if defined(CONFIG_PRINTK)
+#include <misc/printk.h>
+#define PRINT printk
+#elif defined(CONFIG_STDOUT_CONSOLE)
+#include <stdio.h>
+#define PRINT printf
+#endif /* CONFIG_PRINTK */
 
 
 extern struct pin_config mux_config[];
@@ -97,16 +107,30 @@ static uint32_t _pinmux_get(uint32_t base, uint32_t pin)
 }
 
 
+#ifdef CONFIG_PINMUX_DEV
 static uint32_t pinmux_dev_set(struct device *dev, uint32_t pin, uint8_t func)
 {
 	struct pinmux_config * const pmux = dev->config->config_info;
 
 	_pinmux_set(pmux->base_address, pin, func);
 
-	return 0;
+	return DEV_OK;
 }
+#else
+static uint32_t pinmux_dev_set(struct device *dev, uint32_t pin, uint8_t func)
+{
+	ARG_UNUSED(dev);
+	ARG_UNUSED(pin);
+	ARG_UNUSED(func);
+
+	PRINT("ERROR: %s is not enabled", __FUNCTION__);
+
+	return DEV_NOT_CONFIG;
+}
+#endif /* CONFIG_PINMUX_DEV */
 
 
+#ifdef CONFIG_PINMUX_DEV
 static uint32_t pinmux_dev_get(struct device *dev, uint32_t pin, uint8_t *func)
 {
 	struct pinmux_config * const pmux = dev->config->config_info;
@@ -115,8 +139,20 @@ static uint32_t pinmux_dev_get(struct device *dev, uint32_t pin, uint8_t *func)
 	ret = _pinmux_get(pmux->base_address, pin);
 
 	*func = ret;
-	return 0;
+	return DEV_OK;
 }
+#else
+static uint32_t pinmux_dev_get(stuct device *dev, uint32_t pin, uint8_t *func)
+{
+	ARG_UNUSED(dev);
+	ARG_UNUSED(pin);
+	ARG_UNUSED(func);
+
+	PRINT("ERROR: %s is not enabled", __FUNCTION__);
+
+	return DEV_NOT_CONFIG;
+}
+#endif /* CONFIG_PINMUX_DEV */
 
 
 static struct pinmux_driver_api api_funcs = {
@@ -139,5 +175,5 @@ int pinmux_initialize(struct device *dev)
 			    mux_config[i].mode);
 	}
 
-	return PINMUX_OK;
+	return DEV_OK;
 }
