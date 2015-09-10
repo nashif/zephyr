@@ -184,6 +184,16 @@ CONFIG_LOAPIC_TIMER_IRQ_PRIORITY=2
 # CONFIG_ADC is not set
 
 #
+# Clock controller drivers
+#
+# CONFIG_CLOCK_CONTROL is not set
+# CONFIG_CLOCK_CONTROL_DEBUG is not set
+# CONFIG_CLOCK_CONTROL_ATP is not set
+# CONFIG_CLOCK_CONTROL_ATP_PERIPHERAL is not set
+# CONFIG_CLOCK_CONTROL_ATP_EXTERNAL is not set
+# CONFIG_CLOCK_CONTROL_ATP_SENSOR is not set
+
+#
 # Networking
 #
 # CONFIG_BLUETOOTH is not set

@@ -253,3 +253,51 @@ struct device * const uart_devs[] = {
 
 
 #endif
+
+
+#ifdef CONFIG_CLOCK_CONTROL_ATP
+#include <clock_control/atp_clock_control.h>
+
+#ifdef CONFIG_CLOCK_CONTROL_ATP_PERIPHERAL
+
+struct atp_clock_control_config clock_atp_peripheral_config = {
+	.base_address = CLOCK_PERIPHERAL_BASE_ADDR
+};
+
+DECLARE_DEVICE_INIT_CONFIG(clock_atp_peripheral,
+			   CONFIG_CLOCK_CONTROL_ATP_PERIPHERAL_DRV_NAME,
+			   &atp_clock_control_init,
+			   &clock_atp_peripheral_config);
+
+pure_early_init(clock_atp_peripheral, NULL);
+
+#endif /* CONFIG_CLOCK_CONTROL_ATP_PERIPHERAL */
+#ifdef CONFIG_CLOCK_CONTROL_ATP_EXTERNAL
+
+struct atp_clock_control_config clock_atp_external_config = {
+	.base_address = CLOCK_EXTERNAL_BASE_ADDR
+};
+
+DECLARE_DEVICE_INIT_CONFIG(clock_atp_external,
+			   CONFIG_CLOCK_CONTROL_ATP_EXTERNAL_DRV_NAME,
+			   &atp_clock_control_init,
+			   &clock_atp_external_config);
+
+pure_early_init(clock_atp_external, NULL);
+
+#endif /* CONFIG_CLOCK_CONTROL_ATP_EXTERNAL */
+#ifdef CONFIG_CLOCK_CONTROL_ATP_SENSOR
+
+struct atp_clock_control_config clock_atp_sensor_config = {
+	.base_address = CLOCK_SENSOR_BASE_ADDR
+};
+
+DECLARE_DEVICE_INIT_CONFIG(clock_atp_sensor,
+			   CONFIG_CLOCK_CONTROL_ATP_SENSOR_DRV_NAME,
+			   &atp_clock_control_init,
+			   &clock_atp_sensor_config);
+
+pure_early_init(clock_atp_sensor, NULL);
+
+#endif /* CONFIG_CLOCK_CONTROL_ATP_SENSOR */
+#endif /* CONFIG_CLOCK_CONTROL_ATP */

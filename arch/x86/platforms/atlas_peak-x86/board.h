@@ -258,6 +258,11 @@ struct scss_interrupt {
 
 #define INT_RTC_IRQ  		        0xb
 
+/* Clock */
+#define CLOCK_PERIPHERAL_BASE_ADDR     SCSS_REGISTER_BASE + 0x18
+#define CLOCK_EXTERNAL_BASE_ADDR       SCSS_REGISTER_BASE + 0x24
+#define CLOCK_SENSOR_BASE_ADDR         SCSS_REGISTER_BASE + 0x28
+
 /* Comparator */
 #define INT_AIO_CMP_IRQ			(0x16)
 
