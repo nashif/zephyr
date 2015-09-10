@@ -103,6 +103,17 @@ by x86 platforms.
 #endif /* CONFIG_PIC */
 #endif /* CONFIG_DW_AIO_COMPARATOR */
 
+
+#if defined(CONFIG_SPI_DW)
+#if defined(CONFIG_SPI_DW_PORT_0)
+	ioapic_mkstub spi_dw_irq_port_0 spi_dw_isr_0
+#endif /* CONFIG_SPI_DW_PORT_0 */
+#if defined(CONFIG_SPI_DW_PORT_1)
+	ioapic_mkstub spi_dw_irq_port_1 spi_dw_isr_1
+#endif /* CONFIG_SPI_DW_PORT_1 */
+#endif /* CONFIG_SPI_DW */
+
+>>>>>>> 5c1441a... spi: Add support for Designware SPI controller
 	/* externs (internal APIs) */
 
 	GTEXT(_IntEnt)
