@@ -263,6 +263,10 @@ struct scss_interrupt {
 #define CLOCK_EXTERNAL_BASE_ADDR       SCSS_REGISTER_BASE + 0x24
 #define CLOCK_SENSOR_BASE_ADDR         SCSS_REGISTER_BASE + 0x28
 
+/* SPI */
+#define SPI_DW_PORT_0_INT_MASK		SCSS_INT_BASE + 0x54
+#define SPI_DW_PORT_1_INT_MASK		SCSS_INT_BASE + 0x58
+
 /* Comparator */
 #define INT_AIO_CMP_IRQ			(0x16)
 

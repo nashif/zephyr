@@ -105,6 +105,13 @@ DEFINE_TEST_BIT_OP(sr_tfnf, DW_SPI_REG_SR, DW_SPI_SR_TFNF_BIT)
 DEFINE_TEST_BIT_OP(sr_rfne, DW_SPI_REG_SR, DW_SPI_SR_RFNE_BIT)
 DEFINE_TEST_BIT_OP(icr, DW_SPI_REG_ICR, DW_SPI_SR_ICR_BIT)
 
+#ifdef CONFIG_PLATFORM_ATLASPEAK_X86
+#define int_unmask(__mask)						\
+	sys_write32(sys_read32(__mask) & INT_UNMASK_IA, __mask)
+#else
+#define int_unmask(...) {;}
+#endif
+
 static void completed(struct device *dev, int error)
 {
 	struct spi_dw_config *info = dev->config->config_info;
@@ -399,6 +406,7 @@ int spi_dw_init(struct device *dev)
 	write_imr(DW_SPI_IMR_MASK, info->regs);
 	clear_bit_ssienr(info->regs);
 
+	int_unmask(info->int_mask);
 	irq_enable(info->irq);
 
 	DBG("Designware SPI driver initialized on device: %p\n", dev);

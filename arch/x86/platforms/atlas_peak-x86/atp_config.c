@@ -301,3 +301,80 @@ pure_early_init(clock_atp_sensor, NULL);
 
 #endif /* CONFIG_CLOCK_CONTROL_ATP_SENSOR */
 #endif /* CONFIG_CLOCK_CONTROL_ATP */
+
+#ifdef CONFIG_SPI_DW
+
+#include <spi/dw_spi.h>
+#include <misc/util.h>
+
+#ifdef CONFIG_SPI_DW_PORT_0
+
+void spi_config_0_irq(struct device *dev);
+
+struct spi_dw_data spi_dw_data_port_0;
+
+struct spi_dw_config spi_dw_config_0 = {
+	.regs = CONFIG_SPI_DW_PORT_0_REGS,
+	.irq = CONFIG_SPI_DW_PORT_0_IRQ,
+	.int_mask = SPI_DW_PORT_0_INT_MASK,
+	.clock = &__initconfig_clock_atp_peripheral0,
+	.clock_data = UINT_TO_POINTER(ATP_CCU_SPI_M0_PCLK_EN_SW),
+	.config_func = spi_config_0_irq
+};
+
+DECLARE_DEVICE_INIT_CONFIG(spi_dw_port_0, CONFIG_SPI_DW_PORT_0_DRV_NAME,
+			   spi_dw_init, &spi_dw_config_0);
+
+pure_init(spi_dw_port_0, &spi_dw_data_port_0);
+
+void spi_dw_isr_0(void *unused)
+{
+	spi_dw_isr(&__initconfig_spi_dw_port_01);
+}
+
+IRQ_CONNECT_STATIC(spi_dw_irq_port_0, CONFIG_SPI_DW_PORT_0_IRQ,
+		   CONFIG_SPI_DW_PORT_0_PRI, spi_dw_isr_0, 0);
+
+void spi_config_0_irq(struct device *dev)
+{
+	struct spi_dw_config *config = dev->config->config_info;
+	IRQ_CONFIG(spi_dw_irq_port_0, config->irq);
+}
+
+#endif /* CONFIG_SPI_DW_PORT_0 */
+#ifdef CONFIG_SPI_DW_PORT_1
+
+void spi_config_1_irq(struct device *dev);
+
+struct spi_dw_data spi_dw_data_port_1;
+
+struct spi_dw_config spi_dw_config_1 = {
+	.regs = CONFIG_SPI_DW_PORT_1_REGS,
+	.irq = CONFIG_SPI_DW_PORT_1_IRQ,
+	.int_mask = SPI_DW_PORT_1_INT_MASK,
+	.clock = &__initconfig_clock_atp_peripheral0,
+	.clock_data = UINT_TO_POINTER(ATP_CCU_SPI_M1_PCLK_EN_SW),
+	.config_func = spi_config_1_irq
+};
+
+DECLARE_DEVICE_INIT_CONFIG(spi_dw_port_1, CONFIG_SPI_DW_PORT_1_DRV_NAME,
+			   spi_dw_init, &spi_dw_config_1);
+
+pure_init(spi_dw_port_1, &spi_dw_data_port_1);
+
+void spi_dw_isr_1(void *unused)
+{
+	spi_dw_isr(&__initconfig_spi_dw_port_11);
+}
+
+IRQ_CONNECT_STATIC(spi_dw_irq_port_1, CONFIG_SPI_DW_PORT_1_IRQ,
+		   CONFIG_SPI_DW_PORT_1_PRI, spi_dw_isr_1, 0);
+
+void spi_config_1_irq(struct device *dev)
+{
+	struct spi_dw_config *config = dev->config->config_info;
+	IRQ_CONFIG(spi_dw_irq_port_1, config->irq);
+}
+
+#endif /* CONFIG_SPI_DW_PORT_1 */
+#endif /* CONFIG_SPI_DW */
