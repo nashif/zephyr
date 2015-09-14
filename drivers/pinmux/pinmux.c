@@ -77,6 +77,7 @@ static void _pinmux_set(uint32_t base, uint32_t pin, uint32_t mode)
 	(*(mux_register)) = ((*(mux_register)) & ~pin_mask) | mode_mask;
 }
 
+#ifdef CONFIG_PINMUX_DEV
 
 static uint32_t _pinmux_get(uint32_t base, uint32_t pin)
 {
@@ -109,7 +110,6 @@ static uint32_t _pinmux_get(uint32_t base, uint32_t pin)
 }
 
 
-#ifdef CONFIG_PINMUX_DEV
 static uint32_t pinmux_dev_set(struct device *dev, uint32_t pin, uint8_t func)
 {
 	struct pinmux_config * const pmux = dev->config->config_info;
