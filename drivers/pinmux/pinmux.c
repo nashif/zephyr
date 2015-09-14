@@ -31,6 +31,7 @@
  */
 #include <device.h>
 #include <pinmux.h>
+#include <toolchain.h>
 #include "pinmux.h"
 #ifndef CONFIG_PINMUX_DEV
 #define PRINT(...) {;}
@@ -42,6 +43,7 @@
 #include <stdio.h>
 #define PRINT printf
 #endif /* CONFIG_PRINTK */
+#endif /*CONFIG_PINMUX_DEV */
 
 
 extern struct pin_config mux_config[];
@@ -142,7 +144,7 @@ static uint32_t pinmux_dev_get(struct device *dev, uint32_t pin, uint8_t *func)
 	return DEV_OK;
 }
 #else
-static uint32_t pinmux_dev_get(stuct device *dev, uint32_t pin, uint8_t *func)
+static uint32_t pinmux_dev_get(struct device *dev, uint32_t pin, uint8_t *func)
 {
 	ARG_UNUSED(dev);
 	ARG_UNUSED(pin);
