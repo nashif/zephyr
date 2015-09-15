@@ -71,6 +71,9 @@ by x86 platforms.
 #endif /* CONFIG_PIC */
 #endif
 
+#if defined(CONFIG_QMI_WDT)
+        ioapic_mkstub wdt qm_wdt_isr
+#endif /* CONFIG_QMI_WDT */
 
 #if defined(CONFIG_UART_SIMPLE)
 #if defined(CONFIG_IOAPIC)

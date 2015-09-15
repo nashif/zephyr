@@ -41,6 +41,20 @@ micro_early_init(rtc, NULL);
 
 #endif /* CONFIG_QMI_RTC */
 
+#ifdef CONFIG_QMI_WDT
+
+#include <wdt/qmi_wdt.h>
+
+DECLARE_DEVICE_INIT_CONFIG(wdt,
+			   WDT_DRV_NAME,
+			   &qmi_wdt_init,
+			   NULL);
+
+micro_early_init(wdt, NULL);
+
+#endif /* CONFIG_QMI_WDT */
+
+
 
 
 #ifdef CONFIG_DW_AIO_COMPARATOR

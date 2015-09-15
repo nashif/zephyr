@@ -1,6 +1,16 @@
+menu "Watchdog"
 
 config WDT_DW
 	bool "Enable DesignWare Watchdog"
 	default n
 	help
 	Enable watchdog timer.
+
+config QMI_WDT
+	depends on QMI_DRIVERS && !DW_WDT
+	bool "QMI Watchdog driver [EXPERIMENTAL]"
+	default n
+	help
+	Build QMI Watchdog driver.
+
+endmenu
