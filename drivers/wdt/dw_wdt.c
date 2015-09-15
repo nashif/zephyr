@@ -93,7 +93,7 @@ static int dw_wdt_set_config(struct wdt_config *config)
 	DW_WDT->wdt_torr = i;
 
 	/* Set response mode */
-	if (DW_WDT_MODE_RESET == config->mode) {
+	if (WDT_MODE_RESET == config->mode) {
 		DW_WDT->wdt_cr &= ~WDT_CR_INT_ENABLE;
 	} else {
 		if (config->interrupt_fn)

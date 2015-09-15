@@ -32,7 +32,7 @@
 #define _WDT_H_
 #include <stdint.h>
 
-typedef enum { DW_WDT_MODE_RESET = 0, DW_WDT_MODE_INTERRUPT_RESET } wdt_mode_t;
+typedef enum { WDT_MODE_RESET = 0, WDT_MODE_INTERRUPT_RESET } wdt_mode_t;
 
 /**
  * WDT configuration struct.
