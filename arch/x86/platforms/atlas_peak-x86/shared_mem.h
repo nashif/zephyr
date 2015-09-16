@@ -1,7 +1,5 @@
-/* linker.cmd - Linker command/script file */
-
 /*
- * Copyright (c) 2014 Wind River Systems, Inc.
+ * Copyright (c) Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -13,7 +11,7 @@
  * this list of conditions and the following disclaimer in the documentation
  * and/or other materials provided with the distribution.
  *
- * 3) Neither the name of Wind River Systems nor the names of its contributors
+ * 3) Neither the name of Intel Corporation nor the names of its contributors
  * may be used to endorse or promote products derived from this software without
  * specific prior written permission.
  *
@@ -30,27 +28,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
-DESCRIPTION
-This is the linker script for both standard images and XIP images.
-*/
+#ifndef _SHARED_MEM_H_
+#define _SHARED_MEM_H_
 
-/* Flash base address and size */
-#define FLASH_START     0x40000000  /* Flash bank 1 */
-#define FLASH_SIZE      152K
+/* Start of the shared 80K RAM */
+#define SHARED_ADDR_START 0xA8000000
 
-/*
- * SRAM base address and size
- *
- * Internal SRAM includes the exception vector table at reset, which is at
- * the beginning of the region.
- */
-#define SRAM_START		CONFIG_RAM_START
-#define SRAM_SIZE		CONFIG_RAM_SIZE
+struct shared_mem {
+	uint32_t arc_start;
+	uint32_t flags;
+};
 
-/* Data Closely Coupled Memory (DCCM) base address and size */
-#define DCCM_START		0x80000000
-#define DCCM_SIZE		8K
+#define ARC_READY	(1 << 0)
 
+#define shared_data ((volatile struct shared_mem *) SHARED_ADDR_START)
 
-#include "atp_linker.cmd"
+#endif

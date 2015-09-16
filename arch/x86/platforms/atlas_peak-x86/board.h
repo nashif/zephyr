@@ -129,9 +129,6 @@ extern struct device * const uart_devs[];
 	NANO_CPU_INT_REGISTER(s, INT_VEC_IRQ0 + (irq), 0)
 #endif
 
-/* Start of the 4 MB virtual address space */
-#define VIRT_ADDR_START 0xA8000000
-
 /*
  * Start of the pool in virtual memory where space for MMIO memory can be
  * allocated from. We allow a total of 1024 KB total space for static and
@@ -271,7 +268,7 @@ struct scss_interrupt {
 #define INT_AIO_CMP_IRQ			(0x16)
 
 /*ARC INIT*/
-#define RESET_VECTOR                   0x40034000
+#define RESET_VECTOR                   0x40000000
 #define SCSS_SS_CFG                    0x0600
 #define SCSS_SS_STS                    0x0604
 #define ARC_HALT_INT_REDIR             (1 << 26)

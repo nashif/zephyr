@@ -40,6 +40,7 @@ for the atlas_peak-arc BSP.
 #include <board.h>
 #include <init.h>
 #include <drivers/uart.h>
+#include <atlas_peak-x86/shared_mem.h>
 
 /* Cannot use microkernel, since only nanokernel is supported */
 #if defined(CONFIG_MICROKERNEL)
@@ -94,6 +95,7 @@ static int atp_init(struct device *arg)
 
 	_arc_v2_irq_unit_init();
         consoleInit(); /* NOP if not needed */
+	shared_data->flags |= ARC_READY;
         return 0;
 }
 DECLARE_DEVICE_INIT_CONFIG(atp_0, "", atp_init, NULL);

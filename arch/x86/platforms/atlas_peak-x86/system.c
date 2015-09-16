@@ -46,15 +46,17 @@ hardware for the Atlas Peak BSP.
 #include <drivers/ioapic.h>
 #include <drivers/loapic.h>
 #include <init.h>
+#include <shared_mem.h>
 
 #ifdef CONFIG_ARC_INIT
-struct shared_mem_{
-	unsigned int arc_start;
-};
-
-#define SHARED_DATA ((volatile struct shared_mem_ *) VIRT_ADDR_START)
 #define SCSS_REG_VAL(offset) \
 	(*((volatile uint32_t *)(SCSS_REGISTER_BASE+offset)))
+
+#ifdef CONFIG_ARC_INIT_DEBUG
+#define arc_init_debug	printk
+#else
+#define arc_init_debug(x...) do { } while (0)
+#endif
 
 /**
  *
@@ -64,16 +66,43 @@ struct shared_mem_{
  * starts the ARC processor.
  * @return N/A
  */
-static void arc_init()
+static int arc_init(struct device *arg)
 {
-	unsigned int *reset_vector;
-	reset_vector = (unsigned int*)(RESET_VECTOR+1024);
-	SCSS_REG_VAL(SCSS_SS_CFG) |= ARC_HALT_REQ_A;
-	SHARED_DATA->arc_start = *reset_vector;
-#ifndef CONFIG_ARC_INIT_DEBUG
+	uint32_t *reset_vector;
+
+	ARG_UNUSED(arg);
+
+	if (!SCSS_REG_VAL(SCSS_SS_STS)) {
+		/* ARC shouldn't already be running! */
+		printk("ARC core already running!");
+		return DEV_FAIL;
+	}
+
+	/* Address of ARC side __reset stored in the first 4 bytes of arc.bin,
+	 * we read the value and stick it in shared_mem->arc_start which is
+	 * the beginning of the address space at 0xA8000000 */
+	reset_vector = (uint32_t *)RESET_VECTOR;
+	arc_init_debug("Reset vector address: %x\n", *reset_vector);
+	shared_data->arc_start = *reset_vector;
+	shared_data->flags = 0;
+	/* Start the CPU */
 	SCSS_REG_VAL(SCSS_SS_CFG) |= ARC_RUN_REQ_A;
-#endif /*CONFIG_ARC_INIT_DEBUG*/
+
+	arc_init_debug("Waiting for arc to start...\n");
+	/* Block until the ARC core actually starts up */
+	while (SCSS_REG_VAL(SCSS_SS_STS) & 0x4000) { }
+
+	/* Block until ARC's atp_init() sets a flag indicating it is ready,
+	 * if we get stuck here ARC has run but has exploded very early */
+	arc_init_debug("Waiting for arc to init...\n");
+	while (!shared_data->flags & ARC_READY) { }
+
+	return DEV_OK;
 }
+
+DECLARE_DEVICE_INIT_CONFIG(atp_ss_0, "", arc_init, NULL);
+pure_init(atp_ss_0, NULL);
+
 #endif /*CONFIG_ARC_INIT*/
 
 /**
@@ -92,10 +121,6 @@ static int atp_init(struct device *arg)
 
 	_loapic_init();
 	_ioapic_init();
-
-#ifdef CONFIG_ARC_INIT
-	arc_init();
-#endif /*CONFIG_ARC_INIT*/
 
 	return 0;
 }

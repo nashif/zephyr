@@ -44,7 +44,7 @@ This is the linker script for both standard images and XIP images.
 
 /* physical address of RAM (needed for correct __ram_phys_end symbol) */
 #ifdef CONFIG_XIP
-  #define PHYS_RAM_ADDR    0xA8000400
+  #define PHYS_RAM_ADDR    0xA8006400
 #else  /* !CONFIG_XIP */
   #define PHYS_RAM_ADDR    PHYS_LOAD_ADDR
 #endif /* CONFIG_XIP */

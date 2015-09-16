@@ -61,13 +61,13 @@ config RAM_START
 	prompt "RAM start address"
 	hex
 	default 0x4000 if NSIM
-	default 0xa8000000
+	default 0xa8000400
 
 config RAM_SIZE
 	prompt "RAM size (in bytes)"
 	hex
 	default 0x4000 if NSIM
-	default 0x14000
+	default 0x6000
 
 config NSIM
 	prompt "Running on the MetaWare nSIM simulator"
