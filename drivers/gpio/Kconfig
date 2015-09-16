@@ -6,6 +6,12 @@ menuconfig GPIO
           Include GPIO drivers in system config
 
 if GPIO
+config QMI_GPIO
+       prompt "Use QMI GPIO implementation"
+       default n
+       depends on QMI_DRIVERS && GPIO && !GPIO_DW
+       bool
+
 config GPIO_DW
 	prompt "Designware GPIO"
 	default n
@@ -31,7 +37,7 @@ config	GPIO_DW_CLASS
 
 config GPIO_DW_0
        bool "Designware GPIO block 0"
-       depends on GPIO_DW
+       depends on GPIO_DW || QMI_GPIO
        default n
        help
        Include Designware GPIO driver

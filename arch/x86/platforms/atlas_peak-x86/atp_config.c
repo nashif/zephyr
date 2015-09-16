@@ -55,6 +55,14 @@ micro_early_init(wdt, NULL);
 #endif /* CONFIG_QMI_WDT */
 
 
+#if CONFIG_QMI_GPIO
+#include <gpio/qmi_gpio.h>
+DECLARE_DEVICE_INIT_CONFIG(gpio_0,
+			   CONFIG_GPIO_DW_0_NAME,
+			   &qmi_gpio_init,
+			   NULL);
+micro_early_init(gpio_0, NULL);
+#endif /* CONFIG_QMI_GPIO */
 
 
 #ifdef CONFIG_DW_AIO_COMPARATOR

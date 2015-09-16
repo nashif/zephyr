@@ -98,7 +98,11 @@ by x86 platforms.
 #endif /* CONFIG_PIC */
 #endif /* CONFIG_DW_AIO_COMPARATOR */
 
-#if defined(CONFIG_GPIO_DW)
+#if defined(CONFIG_QMI_GPIO)
+#if defined(CONFIG_IOAPIC)
+       ioapic_mkstub gpio_0 qm_gpio_isr
+#endif /* CONFIG_IOAPIC */
+#elif defined(CONFIG_GPIO_DW)
 
 #if CONFIG_GPIO_DW_0
 #if defined(CONFIG_PIC)
