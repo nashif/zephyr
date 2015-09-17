@@ -38,7 +38,7 @@ typedef enum { DW_WDT_MODE_RESET = 0, DW_WDT_MODE_INTERRUPT_RESET } wdt_mode_t;
  * WDT configuration struct.
  */
 struct wdt_config{
-        uint8_t timeout;
+        uint32_t timeout;
         wdt_mode_t mode;
         void (*interrupt_fn)(void);
 };
@@ -48,9 +48,6 @@ typedef void (*wdt_api_disable)(void);
 typedef int (*wdt_api_set_config)(struct wdt_config *config);
 typedef void (*wdt_api_get_config)(struct wdt_config *config);
 typedef void (*wdt_api_reload)(void);
-
-
-
 
 struct wdt_driver_api {
 	wdt_api_enable enable;
