@@ -40,7 +40,7 @@ config  LOAPIC_TIMER_FREQ
 	default 32000000
 
 config  SYS_CLOCK_HW_CYCLES_PER_SEC
-	default 16000000
+	default 32000000
 
 config  PHYS_LOAD_ADDR
 	default 0x00180000 if XIP
@@ -52,9 +52,3 @@ config PHYS_SRAM_ADDR
 	default 0x00280000
 	help
 	This option specifies the physical SRAM address of this Soc.
-
-config MVIC_LOAPIC_TIMER_VEC
-	hex "Vector for MVIC LVT Timer."
-	help
-	Mint Valley Interrupt Controller (MVIC) LVT Timer vector.
-
