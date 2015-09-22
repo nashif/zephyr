@@ -63,14 +63,6 @@ by x86 platforms.
 #endif /* CONFIG_IOAPIC */
 #endif /* CONFIG_CONSOLE_HANDLER */
 
-#if defined(CONFIG_RTC_DW)
-#if defined(CONFIG_PIC)
-	pic_master_mkstub rtc rtc_dw_isr
-#elif defined(CONFIG_IOAPIC)
-	ioapic_mkstub rtc rtc_dw_isr
-#endif /* CONFIG_PIC */
-#endif
-
 #if defined(CONFIG_WDT_DW)
 #if defined(CONFIG_PIC)
         pic_master_mkstub wdt_dw wdt_dw_isr
