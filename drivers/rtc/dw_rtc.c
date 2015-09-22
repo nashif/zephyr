@@ -41,9 +41,9 @@
 
 #define UPDATE_DELAY 4
 
-static void (*dw_rtc_cb_fn)(void);
+static void (*rtc_dw_cb_fn)(void);
 
-static void dw_rtc_clock_frequency(uint32_t frequency)
+static void rtc_dw_clock_frequency(uint32_t frequency)
 {
 	SCSS_CCU->ccu_sys_clk_ctl &= ~RTC_CLK_DIV_EN;
 	SCSS_CCU->ccu_sys_clk_ctl &= ~RTC_CLK_DIV_MASK;
@@ -56,7 +56,7 @@ static void dw_rtc_clock_frequency(uint32_t frequency)
  *  @brief   Function to enable clock gating for the RTC
  *  @return  N/A
  */
-static void dw_rtc_enable(void)
+static void rtc_dw_enable(void)
 {
 	SCSS_CCU->ccu_periph_clk_gate_ctl |= CCU_RTC_PCLK_EN_SW;
 }
@@ -65,12 +65,12 @@ static void dw_rtc_enable(void)
  *  @brief   Function to disable clock gating for the RTC
  *  @return  N/A
  */
-static void dw_rtc_disable(void)
+static void rtc_dw_disable(void)
 {
 	SCSS_CCU->ccu_periph_clk_gate_ctl &= ~CCU_RTC_PCLK_EN_SW;
 }
 
-static void dw_rtc_clock_disable(void)
+static void rtc_dw_clock_disable(void)
 {
 	RTC_DW->rtc_ccr &= ~RTC_CLK_DIV_EN;
 }
@@ -79,14 +79,14 @@ static void dw_rtc_clock_disable(void)
  *  @brief   RTC alarm ISR, if specified calls a user defined callback
  *  @return  N/A
  */
-void dw_rtc_isr(void)
+void rtc_dw_isr(void)
 {
 	/* clear interrupt */
 	RTC_DW->rtc_eoi;
 
-	if (dw_rtc_cb_fn)
+	if (rtc_dw_cb_fn)
 	{
-		(*dw_rtc_cb_fn)();
+		(*rtc_dw_cb_fn)();
 	}
 }
 
@@ -96,13 +96,13 @@ void dw_rtc_isr(void)
  *  @param   config  pointer to a RTC configuration structure
  *  @return  0 on success
  */
-static int dw_rtc_set_config(rtc_config_t *config)
+static int rtc_dw_set_config(rtc_config_t *config)
 {
 
 	/*  Set RTC divider - 32.768khz / 32768 = 1 second.
 	 *   Note: Divider not implemented in standard emulation image.
 	 */
-	dw_rtc_clock_frequency(RTC_CLK_DIV_1_HZ);
+	rtc_dw_clock_frequency(RTC_CLK_DIV_1_HZ);
 
 	RTC_DW->rtc_ccr |= RTC_INTERRUPT_MASK;
 
@@ -118,13 +118,13 @@ static int dw_rtc_set_config(rtc_config_t *config)
 	return 0;
 }
 
-IRQ_CONNECT_STATIC(rtc, INT_RTC_IRQ, 0, dw_rtc_isr, 0);
+IRQ_CONNECT_STATIC(rtc, INT_RTC_IRQ, 0, rtc_dw_isr, 0);
 
 /**
  * @brief Read current RTC value
  * @return current rtc value
  */
-static uint32_t dw_rtc_read(void)
+static uint32_t rtc_dw_read(void)
 {
 	return RTC_DW->rtc_ccvr;
 }
@@ -134,14 +134,14 @@ static uint32_t dw_rtc_read(void)
  * @param alarm Alarm configuration
  * @return 0 on success
  */
-static int dw_rtc_set_alarm(rtc_alarm_t *alarm)
+static int rtc_dw_set_alarm(rtc_alarm_t *alarm)
 {
 	RTC_DW->rtc_ccr &= ~RTC_INTERRUPT_ENABLE;
 
 	if (alarm->alarm_enable == 1) {
 		if (alarm->cb_fn)
 		{
-			dw_rtc_cb_fn = alarm->cb_fn;
+			rtc_dw_cb_fn = alarm->cb_fn;
 		}
 		RTC_DW->rtc_eoi;
 		RTC_DW->rtc_cmr = alarm->alarm_val;
@@ -158,14 +158,14 @@ static int dw_rtc_set_alarm(rtc_alarm_t *alarm)
 		SCSS_INTERRUPT->int_rtc_mask = ~(0);
 	}
 
-	uint32_t t =  dw_rtc_read();
+	uint32_t t =  rtc_dw_read();
 	while ((t + UPDATE_DELAY) !=  RTC_DW->rtc_ccvr) {
 	}
 	return 0;
 }
 
 #if 0
-static void dw_rtc_clk_disable(void)
+static void rtc_dw_clk_disable(void)
 {
 	RTC_DW->rtc_ccr  &= ~RTC_ENABLE;
 }
@@ -173,15 +173,15 @@ static void dw_rtc_clk_disable(void)
 
 
 static struct rtc_driver_api funcs = {
-	.set_config = dw_rtc_set_config,
-	.read = dw_rtc_read,
-	.enable = dw_rtc_enable,
-	.disable = dw_rtc_disable,
-	.clock_disable = dw_rtc_clock_disable,
-	.set_alarm = dw_rtc_set_alarm,
+	.set_config = rtc_dw_set_config,
+	.read = rtc_dw_read,
+	.enable = rtc_dw_enable,
+	.disable = rtc_dw_disable,
+	.clock_disable = rtc_dw_clock_disable,
+	.set_alarm = rtc_dw_set_alarm,
 };
 
-int dw_rtc_init(struct device* dev) {
+int rtc_dw_init(struct device* dev) {
 
 	dev->driver_api = &funcs;
 
@@ -197,7 +197,7 @@ int dw_rtc_init(struct device* dev) {
 	 */
 	if (expected_freq != curr_freq) {
 		//  Set RTC divider 4096HZ for fast uptade
-		dw_rtc_clock_frequency(RTC_CLK_DIV_4096_HZ);
+		rtc_dw_clock_frequency(RTC_CLK_DIV_4096_HZ);
 
 		/* set intial RTC value 0 */
 		RTC_DW->rtc_clr = 0;
@@ -206,6 +206,6 @@ int dw_rtc_init(struct device* dev) {
 		}
 	}
 	//  Set RTC divider 1HZ
-	dw_rtc_clock_frequency(RTC_CLK_DIV_1_HZ);
+	rtc_dw_clock_frequency(RTC_CLK_DIV_1_HZ);
 	return 0;
 }

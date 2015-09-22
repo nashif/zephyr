@@ -65,9 +65,9 @@ by x86 platforms.
 
 #if defined(CONFIG_RTC_DW)
 #if defined(CONFIG_PIC)
-	pic_master_mkstub rtc dw_rtc_isr
+	pic_master_mkstub rtc rtc_dw_isr
 #elif defined(CONFIG_IOAPIC)
-	ioapic_mkstub rtc dw_rtc_isr
+	ioapic_mkstub rtc rtc_dw_isr
 #endif /* CONFIG_PIC */
 #endif
 

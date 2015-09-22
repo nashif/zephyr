@@ -49,11 +49,11 @@ typedef struct {
         volatile uint32_t rtc_rstat;        /**< Interrupt Raw Status Register */
         volatile uint32_t rtc_eoi;          /**< End of Interrupt Register */
         volatile uint32_t rtc_comp_version; /**< End of Interrupt Register */
-} dw_rtc_t;
+} rtc_dw_t;
 
 
 /** RTC register block */
-#define RTC_DW ((dw_rtc_t *)RTC_BASE_ADDR)
+#define RTC_DW ((rtc_dw_t *)RTC_BASE_ADDR)
 
 
 #define RTC_INTERRUPT_ENABLE        (1 << 0)
@@ -68,10 +68,10 @@ typedef struct {
 #define RTC_CLK_DIV_8192_HZ         (0x2 << 3)
 #define RTC_CLK_DIV_4096_HZ         (0x3 << 3)
 
-struct dw_rtc_dev_config {
+struct rtc_dw_dev_config {
         uint32_t        base_address;
 };
 
-int dw_rtc_init(struct device* dev);
+int rtc_dw_init(struct device* dev);
 
 #endif
