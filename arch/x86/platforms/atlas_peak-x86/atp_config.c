@@ -28,21 +28,6 @@ pure_init(pmux, NULL);
 
 #endif /* CONFIG_PINMUX */
 
-#ifdef CONFIG_RTC_DW
-#include <rtc/rtc_dw.h>
-
-struct rtc_dw_dev_config rtc_dev = {
-	.base_address = RTC_BASE_ADDR,
-};
-
-DECLARE_DEVICE_INIT_CONFIG(rtc,
-			   RTC_DRV_NAME,
-			   &rtc_dw_init,
-			   &rtc_dev);
-
-micro_early_init(rtc, NULL);
-
-#endif
 
 #ifdef CONFIG_WDT_DW
 #include <wdt/wdt_dw.h>
