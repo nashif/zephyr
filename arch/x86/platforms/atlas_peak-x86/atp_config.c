@@ -29,23 +29,6 @@ pure_init(pmux, NULL);
 #endif /* CONFIG_PINMUX */
 
 
-#ifdef CONFIG_WDT_DW
-#include <wdt/wdt_dw.h>
-
-struct wdt_dw_dev_config wdt_dev = {
-	.base_address = WDT_BASE_ADDR,
-};
-
-DECLARE_DEVICE_INIT_CONFIG(wdt,
-			   WDT_DRV_NAME,
-			   &wdt_dw_init,
-			   &wdt_dev);
-
-micro_early_init(wdt, NULL);
-
-#endif
-
-
 #ifdef CONFIG_DW_AIO_COMPARATOR
 #include <aio/dw_aio_comparator.h>
 

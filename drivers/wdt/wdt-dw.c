@@ -30,6 +30,7 @@
 
 #include <nanokernel.h>
 #include <arch/cpu.h>
+#include <init.h>
 #include "wdt-dw.h"
 
 void (*cb_fn)(void);
@@ -148,3 +149,14 @@ int wdt_dw_init(struct device *dev)
 	return 0;
 }
 
+
+struct wdt_dw_dev_config wdt_dev = {
+        .base_address = WDT_BASE_ADDR,
+};
+
+DECLARE_DEVICE_INIT_CONFIG(wdt,
+                           WDT_DRV_NAME,
+                           &wdt_dw_init,
+                           &wdt_dev);
+
+micro_early_init(wdt, NULL);
