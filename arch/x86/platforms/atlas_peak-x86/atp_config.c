@@ -28,7 +28,7 @@ pure_init(pmux, NULL);
 
 #endif /* CONFIG_PINMUX */
 
-#ifdef CONFIG_DW_RTC
+#ifdef CONFIG_RTC_DW
 #include <rtc/dw_rtc.h>
 
 struct dw_rtc_dev_config rtc_dev = {

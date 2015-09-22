@@ -1,5 +1,5 @@
 
-config DW_RTC
+config RTC_DW
 	bool "Build Designware RTC Driver"
 	default n
 	help

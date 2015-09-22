@@ -72,7 +72,7 @@ static void dw_rtc_disable(void)
 
 static void dw_rtc_clock_disable(void)
 {
-	DW_RTC->rtc_ccr &= ~RTC_CLK_DIV_EN;
+	RTC_DW->rtc_ccr &= ~RTC_CLK_DIV_EN;
 }
 
 /**
@@ -82,7 +82,7 @@ static void dw_rtc_clock_disable(void)
 void dw_rtc_isr(void)
 {
 	/* clear interrupt */
-	DW_RTC->rtc_eoi;
+	RTC_DW->rtc_eoi;
 
 	if (dw_rtc_cb_fn)
 	{
@@ -104,16 +104,16 @@ static int dw_rtc_set_config(rtc_config_t *config)
 	 */
 	dw_rtc_clock_frequency(RTC_CLK_DIV_1_HZ);
 
-	DW_RTC->rtc_ccr |= RTC_INTERRUPT_MASK;
+	RTC_DW->rtc_ccr |= RTC_INTERRUPT_MASK;
 
 	/* set intial RTC value */
-	DW_RTC->rtc_clr = config->init_val;
+	RTC_DW->rtc_clr = config->init_val;
 
 	/* wait UPDATE_DELAY second for ther rtc value to be written */
-	while ((DW_RTC->rtc_clr + UPDATE_DELAY) != DW_RTC->rtc_ccvr) {
+	while ((RTC_DW->rtc_clr + UPDATE_DELAY) != RTC_DW->rtc_ccvr) {
 	}
 
-	DW_RTC->rtc_ccr &= ~RTC_INTERRUPT_MASK;
+	RTC_DW->rtc_ccr &= ~RTC_INTERRUPT_MASK;
 
 	return 0;
 }
@@ -126,7 +126,7 @@ IRQ_CONNECT_STATIC(rtc, INT_RTC_IRQ, 0, dw_rtc_isr, 0);
  */
 static uint32_t dw_rtc_read(void)
 {
-	return DW_RTC->rtc_ccvr;
+	return RTC_DW->rtc_ccvr;
 }
 
 /**
@@ -136,15 +136,15 @@ static uint32_t dw_rtc_read(void)
  */
 static int dw_rtc_set_alarm(rtc_alarm_t *alarm)
 {
-	DW_RTC->rtc_ccr &= ~RTC_INTERRUPT_ENABLE;
+	RTC_DW->rtc_ccr &= ~RTC_INTERRUPT_ENABLE;
 
 	if (alarm->alarm_enable == 1) {
 		if (alarm->cb_fn)
 		{
 			dw_rtc_cb_fn = alarm->cb_fn;
 		}
-		DW_RTC->rtc_eoi;
-		DW_RTC->rtc_cmr = alarm->alarm_val;
+		RTC_DW->rtc_eoi;
+		RTC_DW->rtc_cmr = alarm->alarm_val;
 
 		IRQ_CONFIG(rtc, INT_RTC_IRQ);
 		irq_enable(INT_RTC_IRQ);
@@ -152,14 +152,14 @@ static int dw_rtc_set_alarm(rtc_alarm_t *alarm)
 		/* unmask RTC interrupts to lmt  */
 		SCSS_INTERRUPT->int_rtc_mask = INT_UNMASK_IA;
 
-		DW_RTC->rtc_ccr |= RTC_INTERRUPT_ENABLE;
-		DW_RTC->rtc_ccr &= ~RTC_INTERRUPT_MASK;
+		RTC_DW->rtc_ccr |= RTC_INTERRUPT_ENABLE;
+		RTC_DW->rtc_ccr &= ~RTC_INTERRUPT_MASK;
 	} else {
 		SCSS_INTERRUPT->int_rtc_mask = ~(0);
 	}
 
 	uint32_t t =  dw_rtc_read();
-	while ((t + UPDATE_DELAY) !=  DW_RTC->rtc_ccvr) {
+	while ((t + UPDATE_DELAY) !=  RTC_DW->rtc_ccvr) {
 	}
 	return 0;
 }
@@ -167,7 +167,7 @@ static int dw_rtc_set_alarm(rtc_alarm_t *alarm)
 #if 0
 static void dw_rtc_clk_disable(void)
 {
-	DW_RTC->rtc_ccr  &= ~RTC_ENABLE;
+	RTC_DW->rtc_ccr  &= ~RTC_ENABLE;
 }
 #endif
 
@@ -189,8 +189,8 @@ int dw_rtc_init(struct device* dev) {
 	uint32_t curr_freq = SCSS_CCU->ccu_sys_clk_ctl & (RTC_CLK_DIV_EN | RTC_CLK_DIV_MASK);
 
 	// disable interrupt
-	DW_RTC->rtc_ccr &= ~RTC_INTERRUPT_ENABLE;
-	DW_RTC->rtc_eoi;
+	RTC_DW->rtc_ccr &= ~RTC_INTERRUPT_ENABLE;
+	RTC_DW->rtc_eoi;
 
 	/* Reset initial value only if RTC wasn't enabled at right frequency at
 	 * beginning of init
@@ -200,9 +200,9 @@ int dw_rtc_init(struct device* dev) {
 		dw_rtc_clock_frequency(RTC_CLK_DIV_4096_HZ);
 
 		/* set intial RTC value 0 */
-		DW_RTC->rtc_clr = 0;
-		while (0 != DW_RTC->rtc_ccvr) {
-			DW_RTC->rtc_clr = 0;
+		RTC_DW->rtc_clr = 0;
+		while (0 != RTC_DW->rtc_ccvr) {
+			RTC_DW->rtc_clr = 0;
 		}
 	}
 	//  Set RTC divider 1HZ

@@ -28,8 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DW_RTC_H_
-#define _DW_RTC_H_
+#ifndef _RTC_DW_H_
+#define _RTC_DW_H_
 
 #include <board.h>
 #include <device.h>
@@ -53,7 +53,7 @@ typedef struct {
 
 
 /** RTC register block */
-#define DW_RTC ((dw_rtc_t *)RTC_BASE_ADDR)
+#define RTC_DW ((dw_rtc_t *)RTC_BASE_ADDR)
 
 
 #define RTC_INTERRUPT_ENABLE        (1 << 0)
