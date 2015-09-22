@@ -39,7 +39,7 @@
 /**
  * Watchdog timer register block type.
  */
-struct dw_wdt {
+struct wdt_dw {
         volatile uint32_t wdt_cr;           /**< Control Register */
         volatile uint32_t wdt_torr;         /**< Timeout Range Register */
         volatile uint32_t wdt_ccvr;         /**< Current Counter Value Register */
@@ -56,7 +56,7 @@ struct dw_wdt {
 };
 
 /** WDT register block */
-#define WDT_DW ((struct dw_wdt *)WDT_BASE_ADDR)
+#define WDT_DW ((struct wdt_dw *)WDT_BASE_ADDR)
 
 
 #define WDT_CRR_VAL                 0x76
@@ -64,12 +64,12 @@ struct dw_wdt {
 #define WDT_CR_INT_ENABLE           (1 << 1)        /* interrupt mode enable - mode1 */
 
 
-#define WDT_DRV_NAME "dw_wdt"
+#define WDT_DRV_NAME "wdt_dw"
 
-struct dw_wdt_dev_config {
+struct wdt_dw_dev_config {
         uint32_t        base_address;
 };
 
-int dw_wdt_init(struct device *dev);
+int wdt_dw_init(struct device *dev);
 
 #endif /* WDT_DW_H_ */

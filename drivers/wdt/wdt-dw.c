@@ -37,20 +37,20 @@ void (*cb_fn)(void);
 /**
  * Enables the clock for the peripheral watchdog
  */
-static void dw_wdt_enable(void)
+static void wdt_dw_enable(void)
 {
 	SCSS_PERIPHERAL->periph_cfg0 |= SCSS_PERIPH_CFG0_WDT_ENABLE;
 }
 
 
-static void dw_wdt_disable(void)
+static void wdt_dw_disable(void)
 {
 	/* Disable the clock for the peripheral watchdog */
 	SCSS_PERIPHERAL->periph_cfg0 &= ~SCSS_PERIPH_CFG0_WDT_ENABLE;
 }
 
 
-void dw_wdt_isr(void)
+void wdt_dw_isr(void)
 {
 	if (cb_fn)
 	{
@@ -59,21 +59,21 @@ void dw_wdt_isr(void)
 }
 
 
-static void dw_wdt_get_config(struct wdt_config *config)
+static void wdt_dw_get_config(struct wdt_config *config)
 {
 }
 
-IRQ_CONNECT_STATIC(dw_wdt, INT_WDT_IRQ, 0, dw_wdt_isr, 0);
+IRQ_CONNECT_STATIC(wdt_dw, INT_WDT_IRQ, 0, wdt_dw_isr, 0);
 
-static void dw_wdt_reload(void) {
+static void wdt_dw_reload(void) {
 	WDT_DW->wdt_crr = WDT_CRR_VAL;
 }
 
-static int dw_wdt_set_config(struct wdt_config *config)
+static int wdt_dw_set_config(struct wdt_config *config)
 {
 	int ret = 0;
 
-	dw_wdt_enable();
+	wdt_dw_enable();
 	/*  Set timeout value
 	 *  [7:4] TOP_INIT - the initial timeout value is hardcoded in silicon,
 	 *  only bits [3:0] TOP are relevant.
@@ -105,7 +105,7 @@ static int dw_wdt_set_config(struct wdt_config *config)
 
 		WDT_DW->wdt_cr |= WDT_CR_INT_ENABLE;
 
-		IRQ_CONFIG(dw_wdt, INT_WDT_IRQ);
+		IRQ_CONFIG(wdt_dw, INT_WDT_IRQ);
 		irq_enable(INT_WDT_IRQ);
 
 		/* unmask WDT interrupts to lmt  */
@@ -115,36 +115,36 @@ static int dw_wdt_set_config(struct wdt_config *config)
 	/* Enable WDT, cannot be disabled until soc reset */
 	WDT_DW->wdt_cr |= WDT_CR_ENABLE;
 
-	dw_wdt_reload();
+	wdt_dw_reload();
 	return ret;
 }
 
 
 #if 0
 
-static uint32_t dw_wdt_read_counter(void)
+static uint32_t wdt_dw_read_counter(void)
 {
 	return WDT_DW->wdt_ccvr;
 }
 
-static uint32_t dw_wdt_timeout(void)
+static uint32_t wdt_dw_timeout(void)
 {
 	return WDT_DW->wdt_torr;
 }
 
 #endif
 
-static struct wdt_driver_api dw_wdt_funcs = {
-        .set_config = dw_wdt_set_config,
-        .get_config = dw_wdt_get_config,
-        .enable = dw_wdt_enable,
-        .disable = dw_wdt_disable,
-        .reload = dw_wdt_reload,
+static struct wdt_driver_api wdt_dw_funcs = {
+        .set_config = wdt_dw_set_config,
+        .get_config = wdt_dw_get_config,
+        .enable = wdt_dw_enable,
+        .disable = wdt_dw_disable,
+        .reload = wdt_dw_reload,
 };
 
-int dw_wdt_init(struct device *dev)
+int wdt_dw_init(struct device *dev)
 {
-	dev->driver_api = &dw_wdt_funcs;
+	dev->driver_api = &wdt_dw_funcs;
 	return 0;
 }
 

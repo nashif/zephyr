@@ -45,15 +45,15 @@ micro_early_init(rtc, NULL);
 #endif
 
 #ifdef CONFIG_WDT_DW
-#include <wdt/dw_wdt.h>
+#include <wdt/wdt_dw.h>
 
-struct dw_wdt_dev_config wdt_dev = {
+struct wdt_dw_dev_config wdt_dev = {
 	.base_address = WDT_BASE_ADDR,
 };
 
 DECLARE_DEVICE_INIT_CONFIG(wdt,
 			   WDT_DRV_NAME,
-			   &dw_wdt_init,
+			   &wdt_dw_init,
 			   &wdt_dev);
 
 micro_early_init(wdt, NULL);
