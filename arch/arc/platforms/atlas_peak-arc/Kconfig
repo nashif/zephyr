@@ -48,7 +48,7 @@ config NUM_REGULAR_IRQ_PRIO_LEVELS
 
 config  NUM_IRQS
 	# must be >= the highest interrupt number used
-	default 17
+	default 68
 
 
 menu "Atlaspeak BSP Options"
