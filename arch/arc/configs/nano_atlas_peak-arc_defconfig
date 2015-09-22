@@ -132,7 +132,7 @@ CONFIG_ARCV2_TIMER=y
 #
 # CONFIG_PINMUX is not set
 # CONFIG_RTC_DW is not set
-# CONFIG_DW_WDT is not set
+# CONFIG_WDT_DW is not set
 # CONFIG_AIO_COMPARATOR is not set
 # CONFIG_ADC is not set
 

@@ -1,5 +1,5 @@
 
-config DW_WDT
+config WDT_DW
 	bool "Enable DesignWare Watchdog"
 	default n
 	help

@@ -28,8 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef DW_WDT_H_
-#define DW_WDT_H_
+#ifndef WDT_DW_H_
+#define WDT_DW_H_
 
 #include <board.h>
 #include <device.h>
@@ -56,7 +56,7 @@ struct dw_wdt {
 };
 
 /** WDT register block */
-#define DW_WDT ((struct dw_wdt *)WDT_BASE_ADDR)
+#define WDT_DW ((struct dw_wdt *)WDT_BASE_ADDR)
 
 
 #define WDT_CRR_VAL                 0x76
@@ -72,4 +72,4 @@ struct dw_wdt_dev_config {
 
 int dw_wdt_init(struct device *dev);
 
-#endif /* DW_WDT_H_ */
+#endif /* WDT_DW_H_ */

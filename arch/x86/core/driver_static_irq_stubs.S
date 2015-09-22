@@ -71,7 +71,7 @@ by x86 platforms.
 #endif /* CONFIG_PIC */
 #endif
 
-#if defined(CONFIG_DW_WDT)
+#if defined(CONFIG_WDT_DW)
 #if defined(CONFIG_PIC)
         pic_master_mkstub dw_wdt dw_wdt_isr
 #elif defined(CONFIG_IOAPIC)

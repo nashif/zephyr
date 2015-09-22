@@ -44,7 +44,7 @@ micro_early_init(rtc, NULL);
 
 #endif
 
-#ifdef CONFIG_DW_WDT
+#ifdef CONFIG_WDT_DW
 #include <wdt/dw_wdt.h>
 
 struct dw_wdt_dev_config wdt_dev = {

@@ -66,7 +66,7 @@ static void dw_wdt_get_config(struct wdt_config *config)
 IRQ_CONNECT_STATIC(dw_wdt, INT_WDT_IRQ, 0, dw_wdt_isr, 0);
 
 static void dw_wdt_reload(void) {
-	DW_WDT->wdt_crr = WDT_CRR_VAL;
+	WDT_DW->wdt_crr = WDT_CRR_VAL;
 }
 
 static int dw_wdt_set_config(struct wdt_config *config)
@@ -90,11 +90,11 @@ static int dw_wdt_set_config(struct wdt_config *config)
 		ret = -1;
 		i = 15;
 	}
-	DW_WDT->wdt_torr = i;
+	WDT_DW->wdt_torr = i;
 
 	/* Set response mode */
 	if (WDT_MODE_RESET == config->mode) {
-		DW_WDT->wdt_cr &= ~WDT_CR_INT_ENABLE;
+		WDT_DW->wdt_cr &= ~WDT_CR_INT_ENABLE;
 	} else {
 		if (config->interrupt_fn)
 		{
@@ -103,7 +103,7 @@ static int dw_wdt_set_config(struct wdt_config *config)
 			return -1;
 		}
 
-		DW_WDT->wdt_cr |= WDT_CR_INT_ENABLE;
+		WDT_DW->wdt_cr |= WDT_CR_INT_ENABLE;
 
 		IRQ_CONFIG(dw_wdt, INT_WDT_IRQ);
 		irq_enable(INT_WDT_IRQ);
@@ -113,7 +113,7 @@ static int dw_wdt_set_config(struct wdt_config *config)
 	}
 
 	/* Enable WDT, cannot be disabled until soc reset */
-	DW_WDT->wdt_cr |= WDT_CR_ENABLE;
+	WDT_DW->wdt_cr |= WDT_CR_ENABLE;
 
 	dw_wdt_reload();
 	return ret;
@@ -124,12 +124,12 @@ static int dw_wdt_set_config(struct wdt_config *config)
 
 static uint32_t dw_wdt_read_counter(void)
 {
-	return DW_WDT->wdt_ccvr;
+	return WDT_DW->wdt_ccvr;
 }
 
 static uint32_t dw_wdt_timeout(void)
 {
-	return DW_WDT->wdt_torr;
+	return WDT_DW->wdt_torr;
 }
 
 #endif
