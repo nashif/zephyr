@@ -30,7 +30,7 @@
 
 #include <nanokernel.h>
 #include <arch/cpu.h>
-#include "dw_wdt.h"
+#include "wdt-dw.h"
 
 void (*cb_fn)(void);
 
