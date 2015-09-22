@@ -38,7 +38,7 @@
 #include <stdio.h>
 #include <init.h>
 
-#include "dw_rtc.h"
+#include "rtc-dw.h"
 
 #define UPDATE_DELAY 4
 
