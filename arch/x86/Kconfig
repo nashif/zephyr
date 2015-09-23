@@ -323,9 +323,6 @@ config SSE_FP_MATH
 	Disabling this option means that the compiler utilizes only the
 	x87 instruction set for floating point operations.
 
-config XIP
-	default n
-	
 endmenu
 
 
