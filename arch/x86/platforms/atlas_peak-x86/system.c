@@ -105,26 +105,15 @@ pure_init(atp_ss_0, NULL);
 
 #endif /*CONFIG_ARC_INIT*/
 
-/**
- *
- * @brief perform basic hardware initialization
- *
- * Initialize the Intel LOAPIC and IOAPIC device driver and the
- * Intel 8250 UART device driver.
- * Also initialize the timer device driver, if required.
- *
- * RETURNS: N/A
- */
-static int atp_init(struct device *arg)
-{
-	ARG_UNUSED(arg);
+#ifdef CONFIG_IOAPIC
+DECLARE_DEVICE_INIT_CONFIG(ioapic_0, "", _ioapic_init, NULL);
+pure_early_init(ioapic_0, NULL);
 
-	_loapic_init();
-	_ioapic_init();
+#endif /* CONFIG_IOAPIC */
 
-	return 0;
-}
-DECLARE_DEVICE_INIT_CONFIG(atp_0, "", atp_init, NULL);
-pure_early_init(atp_0, NULL);
+#ifdef CONFIG_LOAPIC
+DECLARE_DEVICE_INIT_CONFIG(loapic_0, "", _loapic_init, NULL);
+pure_early_init(loapic_0, NULL);
 
+#endif /* CONFIG_LOAPIC */
 
