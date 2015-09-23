@@ -48,3 +48,54 @@ config  CLOCK_CONTROL_DEBUG
 	prompt "Hardware clock controller drivers debug output"
 	depends on CLOCK_CONTROL
 	default n
+
+config  CLOCK_CONTROL_ATP
+       bool
+       prompt "AtlasPeak Clock controller support"
+       depends on CLOCK_CONTROL && PLATFORM_ATLASPEAK_X86
+       default n
+       help
+         Enable support for the AtlasPeak clock driver.
+
+config  CLOCK_CONTROL_ATP_PERIPHERAL
+       bool
+       prompt "AtlasPeak peripheral clock support"
+       depends on CLOCK_CONTROL_ATP
+       default n
+       help
+         Enable support for AtlasPeak peripheral clock which controls the
+         clock of ATP's I2C, SPI, GPIO controllers and more.
+
+config  CLOCK_CONTROL_ATP_PERIPHERAL_DRV_NAME
+       string
+       prompt "AtlasPeak peripheral clock device name"
+       depends on CLOCK_CONTROL_ATP_PERIPHERAL
+       default "atp_clock_peripheral"
+
+config  CLOCK_CONTROL_ATP_EXTERNAL
+       bool
+       prompt "AtlasPeak external clock support"
+       depends on CLOCK_CONTROL_ATP
+       default n
+       help
+         Enable support for AtlasPeak external sub-system clock.
+
+config  CLOCK_CONTROL_ATP_EXTERNAL_DRV_NAME
+       string
+       prompt "AtlasPeak external clock device name"
+       depends on CLOCK_CONTROL_ATP_PERIPHERAL
+       default "atp_clock_external"
+
+config  CLOCK_CONTROL_ATP_SENSOR
+       bool
+       prompt "AtlasPeak sensor clock support"
+       depends on CLOCK_CONTROL_ATP
+       default n
+       help
+         Enable support for AtlasPeak sensor sub-system clock.
+
+config  CLOCK_CONTROL_ATP_SENSOR_DRV_NAME
+       string
+       prompt "AtlasPeak sensor clock device name"
+       depends on CLOCK_CONTROL_ATP_PERIPHERAL
+       default "atp_clock_sensor"

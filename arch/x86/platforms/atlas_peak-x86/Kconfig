@@ -96,3 +96,49 @@ config ARC_INIT_DEBUG
 	the ARC slave processor. This will allow GDB to halt an
 	engage the ARC processor.
 
+if I2C_DW
+config I2C_DW_0
+        default y
+
+config I2C_DW_0_BASE
+        default 0xb0002800
+
+config I2C_DW_0_NAME
+        default "I2C0"
+
+config I2C_DW_0_INT_PRIORITY
+        default 0
+
+config I2C_DW_1
+        default y
+
+config I2C_DW_1_BASE
+        default 0xb0002c00
+
+config I2C_DW_1_NAME
+        default "I2C1"
+
+config I2C_DW_1_INT_PRIORITY
+        default 0
+endif
+
+config  CLOCK_CONTROL_ATP
+       def_bool n
+
+config  CLOCK_CONTROL_ATP_PERIPHERAL
+       default n
+
+config  CLOCK_CONTROL_ATP_PERIPHERAL_DRV_NAME
+       default "atp_clock_peripheral"
+
+config  CLOCK_CONTROL_ATP_EXTERNAL
+       default n
+
+config  CLOCK_CONTROL_ATP_EXTERNAL_DRV_NAME
+       default "atp_clock_external"
+
+config  CLOCK_CONTROL_ATP_SENSOR
+       default n
+
+config  CLOCK_CONTROL_ATP_SENSOR_DRV_NAME
+       default "atp_clock_sensor"
