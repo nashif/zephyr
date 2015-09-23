@@ -59,8 +59,14 @@ config	SYS_CLOCK_HW_CYCLES_PER_SEC
 	default 32000000
 
 config  PHYS_LOAD_ADDR
-	default 0x40010000 if XIP
+	default 0x40030000 if XIP
 	default 0xA8000000 if !XIP
+
+config IOAPIC_NUM_RTES
+	default 64
+
+config LOAPIC_TIMER_IRQ
+	default 64
 
 config PINMUX_BASE
         default 0xB0800930
