@@ -248,8 +248,13 @@ config  ARCH_HAS_NANO_FIBER_ABORT
 endmenu
 
 
+if PLATFORM_GENERIC_ARC
 source "arch/arc/platforms/generic_arc/Kconfig"
+endif
+
+if PLATFORM_ATLASPEAK_ARC
 source "arch/arc/platforms/atlas_peak-arc/Kconfig"
+endif
 
 source "drivers/Kconfig"
 
