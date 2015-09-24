@@ -135,8 +135,7 @@ config I2C_DW_1_INT_PRIORITY
         default 0
 endif
 
-config  CLOCK_CONTROL_ATP
-       def_bool n
+if CLOCK_CONTROL_ATP
 
 config  CLOCK_CONTROL_ATP_PERIPHERAL
        default n
@@ -155,3 +154,4 @@ config  CLOCK_CONTROL_ATP_SENSOR
 
 config  CLOCK_CONTROL_ATP_SENSOR_DRV_NAME
        default "atp_clock_sensor"
+endif
