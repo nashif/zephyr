@@ -136,6 +136,28 @@ config I2C_DW_0_BAR
 	depends on I2C_DW_0 && PCI
 	default 0
 
+config I2C_DW_1_BASE
+        hex "Base address for I2C1"
+        default 0x00000000
+        depends on I2C_DW_1
+
+config I2C_DW_1_NAME
+        string "Select a name for finding the device"
+        depends on I2C_DW_1
+        default "I2C1"
+
+config I2C_DW_1_IRQ
+	int "Controller interrupt"
+	depends on I2C_DW_1
+	default 0
+
+config I2C_DW_1_INT_PRIORITY
+        int "Controller interrupt priority"
+        depends on I2C_DW_1
+        default 0
+        help
+        IRQ priority
+
 config I2C_STATUS_DELAY
 	int "Delay for controller response"
 	depends on I2C
