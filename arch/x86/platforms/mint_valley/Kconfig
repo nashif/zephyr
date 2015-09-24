@@ -46,6 +46,17 @@ config  PHYS_LOAD_ADDR
 	default 0x00180000 if XIP
 	default 0x00280000 if !XIP
 
+config IDT_NUM_VECTORS
+	default 64
+
+config IOAPIC_NUM_RTES
+	default 32
+
+config LOAPIC_TIMER_IRQ
+	default 10
+
+config LOAPIC_TIMER_IRQ_PRIORITY
+	default 0
 
 config PHYS_SRAM_ADDR
 	hex "Physical SRAM address"
