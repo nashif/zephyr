@@ -7,7 +7,7 @@ config WDT_DW
 	Enable watchdog timer.
 
 config QMI_WDT
-	depends on QMI_DRIVERS && !DW_WDT
+	depends on QMI_DRIVERS && !WDT_DW
 	bool "QMI Watchdog driver [EXPERIMENTAL]"
 	default n
 	help
