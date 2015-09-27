@@ -1,4 +1,10 @@
-menu "Real-Time Clock"
+menuconfig RTC
+	bool "Real-Time Clock"
+	default n
+	help
+	Enable options for Real-Time Clock drivers.
+
+if RTC
 
 config RTC_DW
 	bool "Build Designware RTC Driver"
@@ -13,4 +19,4 @@ config QMI_RTC
 	help
 	Build QMI RTC driver.
 
-endmenu
+endif
