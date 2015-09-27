@@ -13,7 +13,7 @@ config RTC_DW
 	Designware RTC driver.
 
 config QMI_RTC
-	depends on QMI_DRIVERS && !DW_RTC
+	depends on QMI_DRIVERS && !RTC_DW
 	bool "QMI RTC Driver [EXPERIMENTAL]"
 	default n
 	help
