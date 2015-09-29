@@ -39,9 +39,7 @@ config ARCH_DEFCONFIG
 
 source "kernel/Kconfig"
 
-source "misc/Kconfig"
-
-menu "General Platform Configuration"
+menu "X86 Platform Configuration options"
 
 choice
 prompt "Platform Selection"
@@ -308,3 +306,5 @@ endif
 source "drivers/Kconfig"
 
 source "net/Kconfig"
+
+source "misc/Kconfig"
