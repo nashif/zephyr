@@ -70,5 +70,5 @@ static int mv_init(struct device *arg)
 	return 0;
 }
 DECLARE_DEVICE_INIT_CONFIG(mv_0, "", mv_init, NULL);
-pure_early_init(mv_0, NULL);
+pre_kernel_early_init(mv_0, NULL);
 

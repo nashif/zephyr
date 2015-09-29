@@ -65,4 +65,4 @@ static int atp_init(struct device *arg)
         return 0;
 }
 DECLARE_DEVICE_INIT_CONFIG(atp_0, "", atp_init, NULL);
-pure_early_init(atp_0, NULL);
+pre_kernel_early_init(atp_0, NULL);

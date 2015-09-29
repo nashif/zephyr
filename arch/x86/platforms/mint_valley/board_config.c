@@ -119,7 +119,7 @@ DECLARE_DEVICE_INIT_CONFIG(ns16550_uart0,
 			   &uart_platform_init,
 			   &ns16550_uart_dev_cfg[0]);
 
-pure_early_init(ns16550_uart0, &ns16550_uart_dev_data[0]);
+pre_kernel_early_init(ns16550_uart0, &ns16550_uart_dev_data[0]);
 
 
 /* UART 1 */
@@ -128,12 +128,12 @@ DECLARE_DEVICE_INIT_CONFIG(ns16550_uart1,
 			   &uart_platform_init,
 			   &ns16550_uart_dev_cfg[1]);
 
-pure_early_init(ns16550_uart1, &ns16550_uart_dev_data[1]);
+pre_kernel_early_init(ns16550_uart1, &ns16550_uart_dev_data[1]);
 
 
 struct device * const uart_devs[] = {
-	&__initconfig_ns16550_uart00,
-	&__initconfig_ns16550_uart10,
+	&__initconfig_ns16550_uart01,
+	&__initconfig_ns16550_uart11,
 };
 
 #endif

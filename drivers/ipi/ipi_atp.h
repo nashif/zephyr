@@ -149,7 +149,7 @@ int atp_ipi_controller_initialize(struct device *d);
 	DECLARE_DEVICE_INIT_CONFIG(name, _STRINGIFY(name), \
 				   atp_ipi_initialize, \
 				   &atp_ipi_config_##name); \
-	pure_late_init(name, &atp_ipi_runtime_##name);
+	pre_kernel_late_init(name, &atp_ipi_runtime_##name);
 
 
 #endif /* __INCatp_mailboxh */

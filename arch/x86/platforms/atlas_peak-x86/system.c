@@ -101,19 +101,19 @@ static int arc_init(struct device *arg)
 }
 
 DECLARE_DEVICE_INIT_CONFIG(atp_ss_0, "", arc_init, NULL);
-pure_init(atp_ss_0, NULL);
+pre_kernel_late_init(atp_ss_0, NULL);
 
 #endif /*CONFIG_ARC_INIT*/
 
 #ifdef CONFIG_IOAPIC
 DECLARE_DEVICE_INIT_CONFIG(ioapic_0, "", _ioapic_init, NULL);
-pure_early_init(ioapic_0, NULL);
+pre_kernel_early_init(ioapic_0, NULL);
 
 #endif /* CONFIG_IOAPIC */
 
 #ifdef CONFIG_LOAPIC
 DECLARE_DEVICE_INIT_CONFIG(loapic_0, "", _loapic_init, NULL);
-pure_early_init(loapic_0, NULL);
+pre_kernel_early_init(loapic_0, NULL);
 
 #endif /* CONFIG_LOAPIC */
 

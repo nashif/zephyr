@@ -68,7 +68,7 @@ DECLARE_DEVICE_INIT_CONFIG(adc,		/* config name*/
 			&dw_adc_init,	/* init function*/
 			&adc_config_dev); /* config options*/
 
-pure_init(adc, &adc_info_dev);
+pre_kernel_late_init(adc, &adc_info_dev);
 
 #endif /* CONFIG_DW_ADC */
 
@@ -88,7 +88,7 @@ static struct atp_ipi_controller_config_info ipi_controller_config = {
 };
 DECLARE_DEVICE_INIT_CONFIG(atp_ipi, "", atp_ipi_controller_initialize,
 			   &ipi_controller_config);
-pure_late_init(atp_ipi, NULL);
+pre_kernel_late_init(atp_ipi, NULL);
 
 #if CONFIG_IPI_CONSOLE_SENDER
 #include <console/ipi_console.h>

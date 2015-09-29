@@ -24,7 +24,7 @@ DECLARE_DEVICE_INIT_CONFIG(pmux,			/* config name */
 			   PINMUX_NAME,			/* driver name */
 			   &pinmux_initialize,		/* init function */
 			   &atp_pmux);			/* config options*/
-pure_init(pmux, NULL);
+pre_kernel_late_init(pmux, NULL);
 
 #endif /* CONFIG_PINMUX */
 
@@ -162,7 +162,7 @@ DECLARE_DEVICE_INIT_CONFIG(ns16550_uart1,
 
 static struct uart_ns16550_dev_data_t ns16550_uart1_dev_data;
 
-pure_early_init(ns16550_uart1, &ns16550_uart1_dev_data);
+pre_kernel_early_init(ns16550_uart1, &ns16550_uart1_dev_data);
 
 
 /**
@@ -170,7 +170,7 @@ pure_early_init(ns16550_uart1, &ns16550_uart1_dev_data);
  *
  */
 struct device * const uart_devs[] = {
-	&__initconfig_ns16550_uart10,
+	&__initconfig_ns16550_uart11,
 };
 
 
@@ -191,7 +191,7 @@ DECLARE_DEVICE_INIT_CONFIG(clock_atp_peripheral,
 			   &atp_clock_control_init,
 			   &clock_atp_peripheral_config);
 
-pure_early_init(clock_atp_peripheral, NULL);
+pre_kernel_early_init(clock_atp_peripheral, NULL);
 
 #endif /* CONFIG_CLOCK_CONTROL_ATP_PERIPHERAL */
 #ifdef CONFIG_CLOCK_CONTROL_ATP_EXTERNAL
@@ -205,7 +205,7 @@ DECLARE_DEVICE_INIT_CONFIG(clock_atp_external,
 			   &atp_clock_control_init,
 			   &clock_atp_external_config);
 
-pure_early_init(clock_atp_external, NULL);
+pre_kernel_early_init(clock_atp_external, NULL);
 
 #endif /* CONFIG_CLOCK_CONTROL_ATP_EXTERNAL */
 #ifdef CONFIG_CLOCK_CONTROL_ATP_SENSOR
@@ -219,7 +219,7 @@ DECLARE_DEVICE_INIT_CONFIG(clock_atp_sensor,
 			   &atp_clock_control_init,
 			   &clock_atp_sensor_config);
 
-pure_early_init(clock_atp_sensor, NULL);
+pre_kernel_early_init(clock_atp_sensor, NULL);
 
 #endif /* CONFIG_CLOCK_CONTROL_ATP_SENSOR */
 #endif /* CONFIG_CLOCK_CONTROL_ATP */
@@ -247,7 +247,7 @@ struct spi_dw_config spi_dw_config_0 = {
 DECLARE_DEVICE_INIT_CONFIG(spi_dw_port_0, CONFIG_SPI_DW_PORT_0_DRV_NAME,
 			   spi_dw_init, &spi_dw_config_0);
 
-pure_init(spi_dw_port_0, &spi_dw_data_port_0);
+pre_kernel_late_init(spi_dw_port_0, &spi_dw_data_port_0);
 
 void spi_dw_isr_0(void *unused)
 {
@@ -282,7 +282,7 @@ struct spi_dw_config spi_dw_config_1 = {
 DECLARE_DEVICE_INIT_CONFIG(spi_dw_port_1, CONFIG_SPI_DW_PORT_1_DRV_NAME,
 			   spi_dw_init, &spi_dw_config_1);
 
-pure_init(spi_dw_port_1, &spi_dw_data_port_1);
+pre_kernel_late_init(spi_dw_port_1, &spi_dw_data_port_1);
 
 void spi_dw_isr_1(void *unused)
 {
@@ -320,7 +320,7 @@ static struct atp_ipi_controller_config_info ipi_controller_config = {
 };
 DECLARE_DEVICE_INIT_CONFIG(atp_ipi, "", atp_ipi_controller_initialize,
 			   &ipi_controller_config);
-pure_early_init(atp_ipi, NULL);
+pre_kernel_early_init(atp_ipi, NULL);
 
 #if defined(CONFIG_IPI_CONSOLE_RECEIVER) && defined(CONFIG_PRINTK)
 #include <console/ipi_console.h>
