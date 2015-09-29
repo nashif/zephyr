@@ -391,7 +391,7 @@ struct gpio_runtime_dw gpio_0_runtime;
 
 DECLARE_DEVICE_INIT_CONFIG(gpio_0, CONFIG_GPIO_DW_0_NAME,
 			   gpio_initialize_dw, &gpio_config_dw_0);
-pure_init(gpio_0, &gpio_0_runtime);
+pure_late_init(gpio_0, &gpio_0_runtime);
 
 IRQ_CONNECT_STATIC(gpio_dw_0, CONFIG_GPIO_DW_0_IRQ,
 		   CONFIG_GPIO_DW_0_PRI, gpio_dw_isr_0, 0);
@@ -404,7 +404,7 @@ void gpio_config_0_irq(struct device *port)
 
 void gpio_dw_isr_0(void *unused)
 {
-	gpio_dw_isr(&__initconfig_gpio_01);
+	gpio_dw_isr(&__initconfig_gpio_02);
 }
 
 #endif /* CONFIG_GPIO_DW_0 */
@@ -433,7 +433,7 @@ struct gpio_runtime_dw gpio_1_runtime;
 
 DECLARE_DEVICE_INIT_CONFIG(gpio_1, CONFIG_GPIO_DW_1_NAME,
 			   gpio_initialize_dw, &gpio_config_dw_1);
-pure_init(gpio_1, &gpio_1_runtime);
+pure_late_init(gpio_1, &gpio_1_runtime);
 
 IRQ_CONNECT_STATIC(gpio_dw_1, CONFIG_GPIO_DW_1_IRQ,
 		   CONFIG_GPIO_DW_1_PRI, gpio_dw_isr_1, 0);
@@ -446,7 +446,7 @@ void gpio_config_1_irq(struct device *port)
 
 void gpio_dw_isr_1(void *unused)
 {
-	gpio_dw_isr(&__initconfig_gpio_11);
+	gpio_dw_isr(&__initconfig_gpio_12);
 }
 
 #endif /* CONFIG_GPIO_DW_1 */
