@@ -31,20 +31,6 @@
 #
 
 
-menu "General Setup"
-config  EXPERIMENTAL
-	bool
-	prompt "Experimental Options"
-	default n
-	help
-	This option enables all experimental options in the project.
-	If it is disabled, all options marked as EXPERIMENTAL will
-	be disabled.
-	If it is enabled, all options marked as EXPERIMENTAL will
-	be available for selection.
-
-endmenu
-
 menu "Cryptography"
 source "lib/crypto/tinycrypt/Kconfig"
 endmenu
@@ -86,14 +72,11 @@ config  COMPILER_OPT
 	default ""
 	help
 	This option is a free-form string that is passed to the compiler
-	when building all parts of a project (i.e. kernel, LKMs, and USAPs).
+	when building all parts of a project (i.e. kernel).
 	The compiler options specified by this string supplement the
 	pre-defined set of compiler supplied by the build system,
 	and can be used to change compiler optimization, warning and error
 	messages, and so on.
-
-	A given LKM or USAP can override this setting by means of the
-	OVERRIDE_COMPILER_OPT make variable in its Makefile.
 
 config TOOLCHAIN_VARIANT
 	string "Cross-compiler variant name"
@@ -125,9 +108,9 @@ endchoice
 
 
 config MINIMAL_LIBC_EXTENDED
-	bool "Build additional libc functions"
+	bool "Build additional libc functions [EXPERIMENTAL]"
 	default n
-	depends on MINIMAL_LIBC && EXPERIMENTAL
+	depends on MINIMAL_LIBC
 	help
 	This option enables building some optional libc functions that
         are not used directly by the kernel but can be used in applications.
@@ -225,34 +208,14 @@ config BOOTLOADER_UNKNOWN
 	at build time which method is to be used. When this option is enabled
 	the platform may have to do extra work to ensure a proper startup.
 
-config PROT_MODE_SWITCH
-	bool
-	prompt "Switch to 32-bit protected mode when booting"
-	default n
-	depends on X86_32
-	help
-	This option causes the kernel to transition from real mode (16-bit)
-	to protected mode (32-bit) during its initial booting sequence.
-
-config BOOT_A20_ENABLE
-	bool "Boot A20 enable"
-	depends on PROT_MODE_SWITCH
-	default n
-	help
-	This option causes the A20 line to be enabled during the transition
-	from real mode (16-bit) to protected mode (32-bit) during its initial
-	booting sequence.
-
 endmenu
 
 menu "System Monitoring Options"
-	depends on EXPERIMENTAL
 
 config  PERFORMANCE_METRICS
 	bool
-	prompt "Enable performance metrics"
+	prompt "Enable performance metrics [EXPERIMENTAL]"
 	default n
-	depends on EXPERIMENTAL
 	help
 	Enable Performance Metrics.
 
@@ -260,7 +223,7 @@ config  BOOT_TIME_MEASUREMENT
 	bool
 	prompt "Boot time measurements [EXPERIMENTAL]"
 	default n
-	depends on EXPERIMENTAL && PERFORMANCE_METRICS
+	depends on PERFORMANCE_METRICS
 	help
 	This option enables the recording of timestamps during system start
 	up. The global variable __start_tsc records the time kernel begins

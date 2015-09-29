@@ -33,14 +33,7 @@
 DESCRIPTION
 This module contains the initial code executed by the Zephyr Kernel ELF image
 after having been loaded into RAM.
-
-INTERNAL
-The CONFIG_PROT_MODE_SWITCH configuration option is no longer used and *all*
-booting scenarios (e.g. via GRUB or any other multiboot compliant bootloader)
-now assume that the system is already in 32-bit protected mode and address line
-A20 is enabled. However, the code associated with CONFIG_PROT_MODE_SWITCH has
-been left in place should future booting scenarios arise which require its use.
- */
+*/	
 
 #define _ASMLANGUAGE
 
@@ -70,156 +63,6 @@ been left in place should future booting scenarios arise which require its use.
 	GDATA(_AdvIdleStart)
 #endif /* CONFIG_ADVANCED_IDLE */
 
-#ifdef CONFIG_PROT_MODE_SWITCH
-
-	/* cold start code in 16-bit real mode */
-
-	/*
-	 * Switch 'gas' into 16-bit mode, i.e. use a default operand and
-	 * address size of 16 bits since the processor is executing in
-	 * 16-bit real mode.  The prevents the assembler from inserting
-	 * 0x66 or 0x67 instruction prefixes when using 16-bit data values
-	 * or 16-bit pointers.
-	 */
-
-	.code16
-
-	.section ".xreset", "ax"
-	.balign 16,0x90
-
-__start:
-#ifdef CONFIG_BOOT_TIME_MEASUREMENT
-	/*
-	 * Record BootTime from start of Kernel.
-	 * Store value temporarily in Register EDI & ESI and
-         * write to memory once memory access is allowed.
-         * That is, once the data segment register has been setup to access
-         * the .data/.rodata/.bss section of the linked image.
-	 */
-        rdtsc
-        mov  %eax, %esi			/* low  value */
-        mov  %edx, %edi			/* high value */
-#endif
-	/*
-	 * Ensure interrupts are disabled.  Interrupts are enabled when
-	 * the first context switch occurs.
-	 */
-
-	cli
-
-
-/*
- * Platforms that need to enable the A20 line to boot properly wil enable this
- * option.
- */
-#ifdef CONFIG_BOOT_A20_ENABLE
-
-	/*
-	 * Set the stack pointer to just before the start of the .text
-	 * section.  This needs to be performed before any BIOS invocations.
-	 *
-	 * Note that attempting to set the stack pointer to beyond the end of
-	 * the static ELF image (indicated via the _end symbol) may result
-	 * in pointer wrap-around for images with large BSS sections
-	 * (since the processor is still in "real" mode and thus the stack
-	 * pointer is only a 16 bits).
-	 */
-
-	movl	$__start, %esp
-
-	/*
-	 * Before switching to 32-bit protected mode, Gate-A20 must be
-	 * enabled (legacy PC hardware issue).
-	 *
-	 * The classical method of enabling address line A20 via the 8042
-	 * keyboard controller will not be performed.  Instead, it will be
-	 * assumed that the board has a relatively modern BIOS which supports
-	 * the following int 15h function:
-	 *
-	 *      - int 15h: ax=2400 -> disable A20
-	 *      - int 15h: ax=2401 -> enable A20
-	 *           If successful: CF clear, AH = 00h
-	 *           On error: CF set, AH = status
-	 *           Status: 01h keyboard controller is in secure mode
-	 *                   86h function not supported
-	 *      - int 15h: ax=2402 -> query status A20
-	 *           status (0: disabled, 1: enabled) is returned in AL
-	 *      - int 15h: ax=2403 -> query A20 support (kbd or port 92)
-	 *           status (bit 0: kbd, bit 1: port 92) is returned in BX
-	 *
-	 *      Return values:
-	 *      If successful: carry flag (CF) clear, AH = 00h
-	 *      On error: carry flag (CF) set, AH = status
-	 *      Status: 01h keyboard controller is in secure mode
-	 *              86h function not supported
-	 *
-	 * If the int15h method fails, then the system control port A
-	 * (I/O port 0x92) method will be used.
-	 */
-
-	movw	$0x2401, %ax		/* ax=2401 -> enable A20 */
-	int	$0x15
-	jnc	A20Enabled		/* CF = 1 -> try I/O port 0x92 method */
-
-	/* try enabling Gate-A20 via system control port A (I/O port 0x92) */
-
-	movb	$0x02, %al
-	outb	%al, $0x92
-
-	xorl	%ecx, %ecx
-A20EnableWait:
-	inb	$0x92, %al
-	andb	$0x02, %al
-	loopz	A20EnableWait
-
-A20Enabled:
-#endif /* CONFIG_BOOT_A20_ENABLE */
-
-	/* load Interrupt Descriptor and Global Descriptor tables (IDT & GDT) */
-
-	lgdt	%cs:_GdtRom		/* load 32-bit operand size GDT */
-
-	movl	%cr0, %eax		/* move CR0 to EAX */
-	orl	$0x1, %eax		/* set the Protection Enable (PE) bit */
-	andl	$0x9fffffff, %eax	/* Enable write-back caching */
-	movl	%eax, %cr0		/* move EAX to CR0 */
-	jmp	%cs:vstartProtMode	/* flush prefetch input queue */
-
-vstartProtMode:
-
-	/*
-	 * At this point, the processor is executing in 32-bit protected
-	 * mode, but the CS selector hasn't been loaded yet, i.e. the
-	 * processor is still effectively executing instructions from a
-	 * 16-bit code segment (thus the .code16 assembler directive still
-	 * needs to be in effect.
-	 */
-
-	movw	$0x10,%ax		/* data segment selector (entry = 3) */
-	movw	%ax,%ds			/* set DS */
-	movw	%ax,%es			/* set ES */
-	movw	%ax,%fs			/* set FS */
-	movw	%ax,%gs			/* set GS */
-	movw	%ax,%ss			/* set SS */
-
-	/* this is 'ljmp $0x08:$vstart32BitCode': diab 5.9.1.0 does not encode
-	 * it correctly */
-	.byte 0xea
-	.long vstart32BitCode
-	.byte 0x08
-	.byte 0x00
-
-	/*
-	 * Switch 'gas' back to 32-bit data and address defaults.  This
-	 * can only be performed after loading the CS segment register
-	 * (via an lcall instruction, for example) with a segment selector
-	 * that describes a 32-bit code segment.
-	 */
-	.code32
-
-SECTION_FUNC(TEXT_START, vstart32BitCode)
-
-#else /* !CONFIG_PROT_MODE_SWITCH */
 
 	/* processor is executing in 32-bit protected mode */
 
@@ -259,14 +102,8 @@ SECTION_FUNC(TEXT_START, __start)
 	 */
 
 	lgdt	_GdtRom		/* load 32-bit operand size GDT */
-
-#endif /* !CONFIG_PROT_MODE_SWITCH */
-
-
 	lidt	_Idt		/* load 32-bit operand size IDT */
 
-
-#ifndef CONFIG_PROT_MODE_SWITCH
 
 #ifdef CONFIG_BOOTLOADER_UNKNOWN
 	/*
@@ -295,7 +132,6 @@ SECTION_FUNC(TEXT_START, __start)
 __csSet:
 #endif /* CONFIG_BOOTLOADER_UNKNOWN */
 
-#endif /* CONFIG_PROT_MODE_SWITCH */
 
 #ifdef CONFIG_BOOT_TIME_MEASUREMENT
 	/*
@@ -561,12 +397,6 @@ _Idt:
 #endif /* CONFIG_BOOTLOADER_UNKNOWN */
 
 
-#ifdef CONFIG_PROT_MODE_SWITCH
-	/* Global Descriptor Table (GDT) definition */
-	.section ".xreset", "ax"
-	.align 8
-#endif /* CONFIG_PROT_MODE_SWITCH */
-
 _GdtRom:
 	.word _GdtRomEnd - _GdtRomEntries - 1   /* Limit on GDT */
 	.long _GdtRomEntries			/* table address: _GdtRomEntries */
@@ -617,15 +447,6 @@ _GdtRomEntries:
 	.byte   0x92		/* Data r/w, Present, DPL0 */
 	.byte   0xcf		/* limit: fxxxx, Page Gra, 32bit */
 	.byte   0x00		/* base : 00xxxxxx */
-
-
-#ifdef CONFIG_PROT_MODE_SWITCH
-	/* Reset vector */
-	.code16
-	.section ".xresetv", "ax"
-_ResetVector:
-	jmp	__start
-#endif /* CONFIG_PROT_MODE_SWITCH */
 
 _GdtRomEnd:
 

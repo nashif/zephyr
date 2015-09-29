@@ -88,19 +88,6 @@ config  XIP
 	  supply a linker command file when building your image. Enabling this
 	  option increases both the code and data footprint of the image.
 
-config ENHANCED_SECURITY
-	bool
-	prompt "Enhanced security features"
-	default y if ARCH="x86"
-	default n
-	help
-	This option enables all security features supported by the kernel,
-	including those that can have a significant impact on system
-	footprint or performance; it also prevents the use of certain kernel
-	features that have known security risks.
-
-	Users can customize these settings using the CUSTOM_SECURITY option
-	in the "Security Options" menu.
 
 config RING_BUFFER
 	bool
@@ -139,6 +126,7 @@ config PROFILER_BUFFER_SIZE
 	help
 	Buffer size in 32-bit words.
 
+
 menu "Profiler points"
 depends on KERNEL_PROFILER
 
@@ -173,7 +161,6 @@ config PROFILER_SLEEP
 endmenu
 
 menu "Security Options"
-	depends on ENHANCED_SECURITY
 
 config CUSTOM_SECURITY
 	bool
@@ -185,12 +172,10 @@ config CUSTOM_SECURITY
 
 config STACK_CANARIES
 	bool
-	prompt "Compiler stack canaries" if CUSTOM_SECURITY
+	prompt "Compiler stack canaries"
 	default n
 	help
-	This option enables compiler stack canaries support on most functions
-	in the kernel. (Kernel functions that reside in LKMs do NOT have
-	stack canary support, due to limitations of the LKM technology.)
+	This option enables compiler stack canaries support kernel functions.
 
 	If stack canaries are supported by the compiler, it will emit
 	extra code that inserts a canary value into the stack frame when
