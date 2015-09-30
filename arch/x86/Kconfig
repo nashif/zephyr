@@ -299,7 +299,7 @@ source "arch/x86/platforms/quark_se-x86/Kconfig"
 endif
 
 if PLATFORM_QUARK_D2000
-source "arch/x86/platforms/mint_valley/Kconfig"
+source "arch/x86/platforms/quark_d2000/Kconfig"
 endif
 
 

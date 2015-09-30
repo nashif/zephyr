@@ -57,7 +57,7 @@ hardware for the Mint Valley BSP.
  *
  * RETURNS: N/A
  */
-static int mv_init(struct device *arg)
+static int quark_d2000_init(struct device *arg)
 {
 	ARG_UNUSED(arg);
 	*((unsigned char *)(COM1_BASE_ADRS + SYNOPSIS_UART_DLF_OFFSET)) =
@@ -69,6 +69,6 @@ static int mv_init(struct device *arg)
 
 	return 0;
 }
-DECLARE_DEVICE_INIT_CONFIG(mv_0, "", mv_init, NULL);
-pre_kernel_early_init(mv_0, NULL);
+DECLARE_DEVICE_INIT_CONFIG(quark_d2000_0, "", quark_d2000_init, NULL);
+pre_kernel_early_init(quark_d2000_0, NULL);
 
