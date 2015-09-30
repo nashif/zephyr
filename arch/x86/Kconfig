@@ -80,7 +80,7 @@ config  PLATFORM_QUARK_SE_X86
         select BOOTLOADER_UNKNOWN
         select XIP
 
-config  PLATFORM_MINT_VALLEY
+config  PLATFORM_QUARK_D2000
         bool "Minimum configuration for Mint Valley"
         select CPU_MINUTEIA
         select IOAPIC
@@ -298,7 +298,7 @@ if PLATFORM_QUARK_SE_X86
 source "arch/x86/platforms/quark_se-x86/Kconfig"
 endif
 
-if PLATFORM_MINT_VALLEY
+if PLATFORM_QUARK_D2000
 source "arch/x86/platforms/mint_valley/Kconfig"
 endif
 
