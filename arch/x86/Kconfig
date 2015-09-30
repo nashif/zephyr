@@ -70,7 +70,7 @@ config PLATFORM_IA32
 	select EOI_HANDLER_SUPPORTED
 	select BOOTLOADER_UNKNOWN
 
-config  PLATFORM_ATLASPEAK_X86
+config  PLATFORM_QUARK_SE_X86
         bool "Minimum configuration for Atlas Peak"
         select CPU_MINUTEIA
         select IOAPIC
@@ -294,7 +294,7 @@ if PLATFORM_GALILEO
 source "arch/x86/platforms/galileo/Kconfig"
 endif
 
-if PLATFORM_ATLASPEAK_X86
+if PLATFORM_QUARK_SE_X86
 source "arch/x86/platforms/atlas_peak-x86/Kconfig"
 endif
 

@@ -43,14 +43,14 @@
 #define ATP_IPI_OUTBOUND	0
 #define ATP_IPI_INBOUND		1
 
-#if defined(CONFIG_PLATFORM_ATLASPEAK_X86)
+#if defined(CONFIG_PLATFORM_QUARK_SE_X86)
 /* First byte of the ATP_IPI_MASK register is for the Lakemont */
 #define ATP_IPI_MASK_START_BIT		0
 #define ATP_IPI_INTERRUPT		21
 #define ATP_IPI_ARC_LMT_DIR		ATP_IPI_INBOUND
 #define ATP_IPI_LMT_ARC_DIR		ATP_IPI_OUTBOUND
 
-#elif defined(CONFIG_PLATFORM_ATLASPEAK_ARC)
+#elif defined(CONFIG_PLATFORM_QUARK_SE_ARC)
 /* Second byte is for ARC */
 #define ATP_IPI_MASK_START_BIT		8
 #define ATP_IPI_INTERRUPT		57

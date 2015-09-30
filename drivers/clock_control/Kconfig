@@ -52,7 +52,7 @@ config  CLOCK_CONTROL_DEBUG
 config  CLOCK_CONTROL_ATP
        bool
        prompt "AtlasPeak Clock controller support"
-       depends on CLOCK_CONTROL && PLATFORM_ATLASPEAK_X86
+       depends on CLOCK_CONTROL && PLATFORM_QUARK_SE_X86
        default n
        help
          Enable support for the AtlasPeak clock driver.

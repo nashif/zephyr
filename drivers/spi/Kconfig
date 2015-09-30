@@ -177,7 +177,7 @@ config SPI_DW
 
 config  SPI_DW_CLOCK_GATE
 	bool
-	depends on SPI_DW && PLATFORM_ATLASPEAK_X86
+	depends on SPI_DW && PLATFORM_QUARK_SE_X86
 	select CLOCK_CONTROL
 	default y
 

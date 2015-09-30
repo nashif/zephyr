@@ -48,7 +48,7 @@ default PLATFORM_GENERIC_ARC
 config PLATFORM_GENERIC_ARC
 	bool "Minimum configuration for generic arc"
 
-config PLATFORM_ATLASPEAK_ARC
+config PLATFORM_QUARK_SE_ARC
 	bool "Minimum configuration for Atlas Peak"
 
 endchoice
@@ -244,7 +244,7 @@ if PLATFORM_GENERIC_ARC
 source "arch/arc/platforms/generic_arc/Kconfig"
 endif
 
-if PLATFORM_ATLASPEAK_ARC
+if PLATFORM_QUARK_SE_ARC
 source "arch/arc/platforms/atlas_peak-arc/Kconfig"
 endif
 

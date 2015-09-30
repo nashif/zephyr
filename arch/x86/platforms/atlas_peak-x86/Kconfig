@@ -39,7 +39,7 @@ config PLATFORM
 
 choice
         prompt "Board Type"
-        depends on PLATFORM_ATLASPEAK_X86
+        depends on PLATFORM_QUARK_SE_X86
         default BOARD_CTB
 
         config BOARD_CTB

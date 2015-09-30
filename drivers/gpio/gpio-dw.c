@@ -242,7 +242,7 @@ static inline int gpio_resume_port_dw(struct device *port)
 	return 0;
 }
 
-#ifdef CONFIG_PLATFORM_ATLASPEAK_X86
+#ifdef CONFIG_PLATFORM_QUARK_SE_X86
 #define GPIO_CLKENA_POS (31)
 #define LS_SYNC_POS (0)
 /* The atlas peak SOC has a clock enable bit in the INT_CLOCK_SYNC
