@@ -1,4 +1,4 @@
-/* mvic.c - Mint Valley Interrupt Controller (MVIC) */
+/* mvic.c - Quark D2000 Interrupt Controller (MVIC) */
 
 /*
  * Copyright (c) 1997-1998, 2000-2002, 2004, 2006-2008, 2011-2015 Wind River
@@ -37,10 +37,10 @@ DESCRIPTION
 This module is based on the standard Local APIC and IO APIC source modules.
 This modules combines these modules into one source module that exports the
 same APIs defined by the Local APIC and IO APIC header modules. These
-routine have been adapted for the Mint Valley Interrupt Controller which has
+routine have been adapted for the Quark D2000 Interrupt Controller which has
 a cutdown implementation of the Local APIC & IO APIC register sets.
 
-The MVIC (Mint Valley Interrupt Controller) is configured by default
+The MVIC (Quark D2000 Interrupt Controller) is configured by default
 to support 32 external interrupt lines.
 Unlike the traditional IA LAPIC/IOAPIC, the interrupt vectors in MVIC are fixed
 and not programmable.
@@ -106,7 +106,7 @@ static void MvicRteUpdate(unsigned int irq, uint32_t value,
 *
 * _mvic_init - initialize the MVIC IO APIC and local APIC register sets.
 *
-* This routine initializes the Mint Valley Interrupt Controller (MVIC).
+* This routine initializes the Quark D2000 Interrupt Controller (MVIC).
 * This routine replaces the standard Local APIC / IO APIC init routines.
 *
 * RETURNS: N/A
@@ -159,7 +159,7 @@ void _mvic_init(void)
 *
 * This routine sends an EOI signal to the IO APIC's interrupting source.
 *
-* All line interrupts on Mint Valley are EOI'ed with local APIC EOI register.
+* All line interrupts on Quark D2000 are EOI'ed with local APIC EOI register.
 *
 * RETURNS: N/A
 */

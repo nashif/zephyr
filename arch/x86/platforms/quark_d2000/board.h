@@ -1,4 +1,4 @@
-/* board.h - board configuration macros for the Mint Valley BSP */
+/* board.h - board configuration macros for the Quark D2000 BSP */
 
 /*
  * Copyright (c) 2015 Wind River Systems, Inc.
@@ -35,7 +35,7 @@
 /*
 DESCRIPTION
 This header file is used to specify and describe board-level aspects for
-the Mint Valley BSP.
+the Quark D2000 BSP.
 */
 
 #ifndef __INCboardh

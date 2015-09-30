@@ -1,4 +1,4 @@
-/* mvic.h - Mint Valley Interrupt Controller (MVIC) public  APIs */
+/* mvic.h - Quark D2000 Interrupt Controller (MVIC) public  APIs */
 
 /*
  * Copyright (c) 2015 Wind River Systems, Inc.

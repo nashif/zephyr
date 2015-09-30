@@ -29,7 +29,7 @@
  */
 
 /**
- * @file Board config file for Mint Valley
+ * @file Board config file for Quark D2000
  */
 
 #include <device.h>

@@ -81,7 +81,7 @@ config  PLATFORM_QUARK_SE_X86
         select XIP
 
 config  PLATFORM_QUARK_D2000
-        bool "Minimum configuration for Mint Valley"
+        bool "Minimum configuration for Quark D2000"
         select CPU_MINUTEIA
         select IOAPIC
         select LOAPIC

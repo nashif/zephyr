@@ -1,4 +1,4 @@
-/* system.c - system/hardware module for the Mint Valley BSP */
+/* system.c - system/hardware module for the Quark D2000 BSP */
 
 /*
  * Copyright (c) 2015 Wind River Systems, Inc.
@@ -35,7 +35,7 @@
 /*
 DESCRIPTION
 This module provides routines to initialize and support board-level
-hardware for the Mint Valley BSP.
+hardware for the Quark D2000 BSP.
 */
 
 #include <nanokernel.h>
@@ -51,7 +51,7 @@ hardware for the Mint Valley BSP.
  *
  * _InitHardware - perform basic hardware initialization
  *
- * Initialize the Mint Valley Interrupt Controller (MVIC) device driver and the
+ * Initialize the Quark D2000 Interrupt Controller (MVIC) device driver and the
  * Intel 8250 UART device driver.
  * Also initialize the timer device driver, if required.
  *
