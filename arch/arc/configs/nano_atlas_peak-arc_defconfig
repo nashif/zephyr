@@ -33,7 +33,6 @@ CONFIG_NANO_TIMERS=y
 #
 # General Setup
 #
-# CONFIG_EXPERIMENTAL is not set
 CONFIG_CROSS_COMPILE=""
 
 #

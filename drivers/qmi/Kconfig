@@ -31,7 +31,7 @@
 #
 
 config QMI_DRIVERS
-	depends on X86_32 && EXPERIMENTAL
+	depends on X86_32
 	bool "Enable QMI drivers [EXPERIMENTAL]"
 	default n
 	help
