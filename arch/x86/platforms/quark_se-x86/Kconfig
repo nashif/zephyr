@@ -32,7 +32,7 @@
 
 config PLATFORM
         string
-        default atlas_peak-x86
+        default quark_se-x86
         help
         This option holds the directory name used by the build system to locate
         the correct linker file.

@@ -1,6 +1,6 @@
 CONF_basic_minuteia = ia32/prj.conf
 CONF_mint_valley    = mintvalley_prj.conf
-CONF_atlas_peak-x86 = atlaspeak_prj.conf
+CONF_quark_se-x86 = atlaspeak_prj.conf
 CONF_basic_atom     = ia32/prj_expert_test.conf
 CONF_galileo        = ia32_pci/prj.conf
 

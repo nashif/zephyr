@@ -39,7 +39,7 @@ for the atlas_peak-arc BSP.
 #include <nanokernel.h>
 #include <board.h>
 #include <init.h>
-#include <atlas_peak-x86/shared_mem.h>
+#include <quark_se-x86/shared_mem.h>
 #include <ipi/ipi_atp.h>
 
 /* Cannot use microkernel, since only nanokernel is supported */

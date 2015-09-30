@@ -295,7 +295,7 @@ source "arch/x86/platforms/galileo/Kconfig"
 endif
 
 if PLATFORM_QUARK_SE_X86
-source "arch/x86/platforms/atlas_peak-x86/Kconfig"
+source "arch/x86/platforms/quark_se-x86/Kconfig"
 endif
 
 if PLATFORM_MINT_VALLEY
