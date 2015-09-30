@@ -51,51 +51,51 @@ config  CLOCK_CONTROL_DEBUG
 
 config  CLOCK_CONTROL_ATP
        bool
-       prompt "AtlasPeak Clock controller support"
+       prompt "Quark SE Clock controller support"
        depends on CLOCK_CONTROL && PLATFORM_QUARK_SE_X86
        default n
        help
-         Enable support for the AtlasPeak clock driver.
+         Enable support for the Quark SE clock driver.
 
 config  CLOCK_CONTROL_ATP_PERIPHERAL
        bool
-       prompt "AtlasPeak peripheral clock support"
+       prompt "Quark SE peripheral clock support"
        depends on CLOCK_CONTROL_ATP
        default n
        help
-         Enable support for AtlasPeak peripheral clock which controls the
+         Enable support for Quark SE peripheral clock which controls the
          clock of ATP's I2C, SPI, GPIO controllers and more.
 
 config  CLOCK_CONTROL_ATP_PERIPHERAL_DRV_NAME
        string
-       prompt "AtlasPeak peripheral clock device name"
+       prompt "Quark SE peripheral clock device name"
        depends on CLOCK_CONTROL_ATP_PERIPHERAL
        default "atp_clock_peripheral"
 
 config  CLOCK_CONTROL_ATP_EXTERNAL
        bool
-       prompt "AtlasPeak external clock support"
+       prompt "Quark SE external clock support"
        depends on CLOCK_CONTROL_ATP
        default n
        help
-         Enable support for AtlasPeak external sub-system clock.
+         Enable support for Quark SE external sub-system clock.
 
 config  CLOCK_CONTROL_ATP_EXTERNAL_DRV_NAME
        string
-       prompt "AtlasPeak external clock device name"
+       prompt "Quark SE external clock device name"
        depends on CLOCK_CONTROL_ATP_PERIPHERAL
        default "atp_clock_external"
 
 config  CLOCK_CONTROL_ATP_SENSOR
        bool
-       prompt "AtlasPeak sensor clock support"
+       prompt "Quark SE sensor clock support"
        depends on CLOCK_CONTROL_ATP
        default n
        help
-         Enable support for AtlasPeak sensor sub-system clock.
+         Enable support for Quark SE sensor sub-system clock.
 
 config  CLOCK_CONTROL_ATP_SENSOR_DRV_NAME
        string
-       prompt "AtlasPeak sensor clock device name"
+       prompt "Quark SE sensor clock device name"
        depends on CLOCK_CONTROL_ATP_PERIPHERAL
        default "atp_clock_sensor"

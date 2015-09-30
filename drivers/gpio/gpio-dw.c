@@ -245,10 +245,10 @@ static inline int gpio_resume_port_dw(struct device *port)
 #ifdef CONFIG_PLATFORM_QUARK_SE_X86
 #define GPIO_CLKENA_POS (31)
 #define LS_SYNC_POS (0)
-/* The atlas peak SOC has a clock enable bit in the INT_CLOCK_SYNC
+/* The Quark SE SOC has a clock enable bit in the INT_CLOCK_SYNC
  * register which only has bit 0 as valid in the synopsys
  * documentation. These functions handle this bit if we are being
- * built for the AtlasPeak SOC
+ * built for the Quark SE SOC
  */
 static inline void gpio_enable_clock_dw(uint32_t base_addr)
 {

@@ -32,7 +32,7 @@
 
 /*
 DESCRIPTION
-Linker script for the Atlas Peak ARC BSPs.
+Linker script for the Quark SE ARC BSPs.
 */
 
 #define _LINKER

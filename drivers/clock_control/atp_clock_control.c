@@ -1,4 +1,4 @@
-/* atp_clock_control.c - Clock controller driver for AtlasPeak */
+/* atp_clock_control.c - Clock controller driver for Quark SE */
 
 /*
  * Copyright (c) 2015 Intel Corporation.

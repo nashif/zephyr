@@ -38,7 +38,7 @@ config QMI_DRIVERS
 	This option enables QMI device drivers. These drivers are actually shim
 	drivers based on drivers provided by QMI BSP. The BSP provides a static
 	library (libqmi) which implements several drivers for peripherals from
-	Intel MCUs (e.g. AtlasPeak and Mint Valley). If unsure, say N.
+	Intel MCUs (e.g. Quark SE and Mint Valley). If unsure, say N.
 
 config LIBQMI_PATH
 	depends on QMI_DRIVERS

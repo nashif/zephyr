@@ -7,14 +7,14 @@ menuconfig IPI
 		drivers in system configuration
 
 config IPI_ATP
-	bool "Atlas Peak Mailbox IPI driver"
+	bool "Quark SE Mailbox IPI driver"
 	default n
 	depends on IPI
 	help
-		IPI driver for Atlas Peak mailboxes
+		IPI driver for Quark SE mailboxes
 
 config IPI_ATP_MASTER
-	bool "Atlas Peak Mailbox IPI master controller"
+	bool "Quark SE Mailbox IPI master controller"
 	default n
 	depends on IPI_ATP
 	help

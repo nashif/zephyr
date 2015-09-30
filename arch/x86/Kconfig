@@ -71,7 +71,7 @@ config PLATFORM_IA32
 	select BOOTLOADER_UNKNOWN
 
 config  PLATFORM_QUARK_SE_X86
-        bool "Minimum configuration for Atlas Peak"
+        bool "Minimum configuration for Quark SE"
         select CPU_MINUTEIA
         select IOAPIC
         select LOAPIC

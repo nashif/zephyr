@@ -1,4 +1,4 @@
-# Kconfig - atlas peak configuration options
+# Kconfig - Quark SE configuration options
 
 #
 # Copyright (c) 2015 Intel Corp.
@@ -46,10 +46,10 @@ choice
         bool "CTB - Curie Platform"
 
         config BOARD_APP
-        bool "APP - Atlas Peak Platform"
+        bool "APP - Quark SE Platform"
 
         config BOARD_AAE
-        bool "AAE - AtlasPeak AtlasEdge"
+        bool "AAE - Quark SE AtlasEdge"
 endchoice
 
 config  LOAPIC_TIMER_FREQ
@@ -82,7 +82,7 @@ config DW_AIO_COMPARATOR_BASE_ADDR
 	default 0xb0800300
 
 config ARC_INIT
-	bool "Atlas Peak ARC Kickoff"
+	bool "Quark SE ARC Kickoff"
 	default n
 	help
 	Allows x86 processor to kickoff the ARC slave processor.

@@ -1,4 +1,4 @@
-/* atp_clock_control.h - Clock controller header for AtlasPeak */
+/* atp_clock_control.h - Clock controller header for Quark SE */
 
 /*
  * Copyright (c) 2015 Intel Corporation.

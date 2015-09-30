@@ -82,7 +82,7 @@ CONFIG_IRQ_VECTOR_TABLE_BSP=y
 CONFIG_PLATFORM="quark_se-arc"
 
 #
-# Atlaspeak BSP Options
+# Quark SE BSP Options
 #
 CONFIG_RAM_START=0xa8000400
 CONFIG_RAM_SIZE=0x6000

@@ -1,4 +1,4 @@
-/* drvIntStubs.s - interrupt stubs for Atlas Peak board */
+/* drvIntStubs.s - interrupt stubs for Quark SE board */
 
 /*
  * Copyright (c) 2015 Wind River Systems, Inc.
@@ -35,7 +35,7 @@
 /*
 DESCRIPTION
 This module contains the static interrupt stubs for the various drivers employed
-by the Atlas Peak BSP.
+by the Quark SE BSP.
 */
 
 #define _ASMLANGUAGE

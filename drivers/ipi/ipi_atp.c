@@ -1,4 +1,4 @@
-/* ipi_atp.c - Atlas Peak mailbox driver */
+/* ipi_atp.c - Quark SE mailbox driver */
 
 /*
  * Copyright (c) 2015 Intel Corporation

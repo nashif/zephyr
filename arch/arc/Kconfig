@@ -49,7 +49,7 @@ config PLATFORM_GENERIC_ARC
 	bool "Minimum configuration for generic arc"
 
 config PLATFORM_QUARK_SE_ARC
-	bool "Minimum configuration for Atlas Peak"
+	bool "Minimum configuration for Quark SE"
 
 endchoice
 

@@ -1,4 +1,4 @@
-/* system.c - system/hardware module for the Atlas Peak BSP */
+/* system.c - system/hardware module for the Quark SE BSP */
 
 /*
  * Copyright (c) 2015 Wind River Systems, Inc.
@@ -35,7 +35,7 @@
 /*
 DESCRIPTION
 This module provides routines to initialize and support board-level
-hardware for the Atlas Peak BSP.
+hardware for the Quark SE BSP.
 */
 
 #include <nanokernel.h>

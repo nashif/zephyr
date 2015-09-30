@@ -1,4 +1,4 @@
-/* board.h - board configuration macros for the Atlas Peak BSP */
+/* board.h - board configuration macros for the Quark SE BSP */
 
 /*
  * Copyright (c) 2015 Wind River Systems, Inc.
@@ -35,7 +35,7 @@
 /*
 DESCRIPTION
 This header file is used to specify and describe board-level aspects for
-the Atlas Peak BSP.
+the Quark SE BSP.
 */
 
 #ifndef __INCboardh
@@ -99,7 +99,7 @@ extern struct device * const uart_devs[];
 /*
  * The nanoCpuIntConnect() API connects to a (virtualized) IRQ and the
  * associated interrupt controller is programmed with the allocated vector.
- * The Atlas Peak board virtualizes IRQs as follows:
+ * The Quark SE board virtualizes IRQs as follows:
  *
  *   - The first IOAPIC_NUM_RTES IRQs are provided by the IOAPIC
  *   - The remaining IRQs are provided by the LOAPIC.

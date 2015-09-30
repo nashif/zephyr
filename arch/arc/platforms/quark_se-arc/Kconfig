@@ -1,4 +1,4 @@
-# bsp.kconf - Atlas Peak ARC BSP configuration options
+# bsp.kconf - Quark SE ARC BSP configuration options
 
 #
 # Copyright (c) 2014 Wind River Systems, Inc.
@@ -51,7 +51,7 @@ config  NUM_IRQS
 	default 68
 
 
-menu "Atlaspeak BSP Options"
+menu "Quark SE BSP Options"
 
 
 config	SYS_CLOCK_HW_CYCLES_PER_SEC
