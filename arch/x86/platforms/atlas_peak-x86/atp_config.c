@@ -13,7 +13,7 @@
  ***
  *****************************************************************************/
 #ifdef CONFIG_PINMUX
-
+#include <pinmux.h>
 #include <pinmux/pinmux.h>
 
 struct pinmux_config atp_pmux = {
