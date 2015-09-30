@@ -1,4 +1,4 @@
-/* irq_vector_table.c - IRQ part of vector table for atlas_peak-arc BSP */
+/* irq_vector_table.c - IRQ part of vector table for quark_se-arc BSP */
 
 /*
  * Copyright (c) 2014 Wind River Systems, Inc.

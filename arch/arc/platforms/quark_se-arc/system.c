@@ -1,4 +1,4 @@
-/* system.c - system/hardware module for atlas_peak-arc BSP */
+/* system.c - system/hardware module for quark_se-arc BSP */
 
 /*
  * Copyright (c) 2014-2015 Wind River Systems, Inc.
@@ -33,7 +33,7 @@
 /*
 DESCRIPTION
 This module provides routines to initialize and support board-level hardware
-for the atlas_peak-arc BSP.
+for the quark_se-arc BSP.
 */
 
 #include <nanokernel.h>

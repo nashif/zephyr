@@ -1,5 +1,5 @@
 ARCH = arc
-PLATFORM_CONFIG  = atlas_peak-arc
+PLATFORM_CONFIG  = quark_se-arc
 KERNEL_TYPE = nano
 CONF_FILE = prj_$(ARCH).conf
 
