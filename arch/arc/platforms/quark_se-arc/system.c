@@ -56,7 +56,7 @@ for the quark_se-arc BSP.
  *
  * RETURNS: N/A
  */
-static int atp_init(struct device *arg)
+static int quark_se_arc_init(struct device *arg)
 {
         ARG_UNUSED(arg);
 
@@ -64,5 +64,5 @@ static int atp_init(struct device *arg)
 	shared_data->flags |= ARC_READY;
         return 0;
 }
-DECLARE_DEVICE_INIT_CONFIG(atp_0, "", atp_init, NULL);
-pre_kernel_early_init(atp_0, NULL);
+DECLARE_DEVICE_INIT_CONFIG(quark_se_arc_0, "", quark_se_arc_init, NULL);
+pre_kernel_early_init(quark_se_arc_0, NULL);

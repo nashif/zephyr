@@ -1,4 +1,4 @@
-/* atp_config.c - AtP Configuration. */
+/* platform_config.c - Quark SE Configuration. */
 
 /*
  * Copyright (c) 2015 Intel Corporation

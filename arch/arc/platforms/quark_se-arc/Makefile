@@ -8,7 +8,6 @@ asflags-y +=-I$(srctree)/arch/arc/platforms/$(subst $(DQUOTE),,$(CONFIG_PLATFORM
 
 asflags-y := ${ccflags-y}
 
-obj-y = system.o
-obj-y += atp_config.o
+obj-y = system.o platform_config.o
 obj-$(CONFIG_IRQ_VECTOR_TABLE_BSP) += irq_vector_table.o
 obj-$(CONFIG_SW_ISR_TABLE_BSP) += sw_isr_table.o

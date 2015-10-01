@@ -53,4 +53,4 @@ This is the linker script for both standard images and XIP images.
 #define DCCM_SIZE		8K
 
 
-#include "atp_linker.cmd"
+#include "quark_se_arc_linker.cmd"
