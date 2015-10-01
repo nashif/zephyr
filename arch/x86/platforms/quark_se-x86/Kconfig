@@ -95,9 +95,9 @@ config ARC_INIT_DEBUG
 	depends on ARC_INIT
 	default n
 	help
-	This option will stop the master processor from kicking-off
-	the ARC slave processor. This will allow GDB to halt an
-	engage the ARC processor.
+	This option will stop the master processor from boot-strapping
+	the ARC slave processor. This will allow GDB to halt and
+	engage the ARC processor to proceed step by step execution.
 
 if GPIO_DW
 

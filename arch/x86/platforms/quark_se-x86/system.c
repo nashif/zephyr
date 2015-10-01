@@ -85,6 +85,7 @@ static int arc_init(struct device *arg)
 	arc_init_debug("Reset vector address: %x\n", *reset_vector);
 	shared_data->arc_start = *reset_vector;
 	shared_data->flags = 0;
+#ifndef CONFIG_ARC_INIT_DEBUG
 	/* Start the CPU */
 	SCSS_REG_VAL(SCSS_SS_CFG) |= ARC_RUN_REQ_A;
 
@@ -96,6 +97,7 @@ static int arc_init(struct device *arg)
 	 * if we get stuck here ARC has run but has exploded very early */
 	arc_init_debug("Waiting for arc to init...\n");
 	while (!shared_data->flags & ARC_READY) { }
+#endif
 
 	return DEV_OK;
 }
