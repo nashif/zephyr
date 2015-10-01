@@ -3,4 +3,4 @@ ccflags-y +=-I$(srctree)/include/drivers
 ccflags-y +=-I$(srctree)/drivers
 asflags-y := ${ccflags-y}
 
-obj-y = system.o drvIntStubs.o atp_config.o
+obj-y = system.o drvIntStubs.o platform_config.o

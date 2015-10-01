@@ -92,7 +92,7 @@ static int arc_init(struct device *arg)
 	/* Block until the ARC core actually starts up */
 	while (SCSS_REG_VAL(SCSS_SS_STS) & 0x4000) { }
 
-	/* Block until ARC's atp_init() sets a flag indicating it is ready,
+	/* Block until ARC's quark_se_init() sets a flag indicating it is ready,
 	 * if we get stuck here ARC has run but has exploded very early */
 	arc_init_debug("Waiting for arc to init...\n");
 	while (!shared_data->flags & ARC_READY) { }
@@ -100,8 +100,8 @@ static int arc_init(struct device *arg)
 	return DEV_OK;
 }
 
-DECLARE_DEVICE_INIT_CONFIG(atp_ss_0, "", arc_init, NULL);
-pre_kernel_late_init(atp_ss_0, NULL);
+DECLARE_DEVICE_INIT_CONFIG(quark_se_ss_0, "", arc_init, NULL);
+pre_kernel_late_init(quark_se_ss_0, NULL);
 
 #endif /*CONFIG_ARC_INIT*/
 
