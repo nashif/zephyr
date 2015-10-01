@@ -1,4 +1,4 @@
-/* ctb_pinmux.c - pin out mapping for the CTB board */
+/* app_pinmux.c - pinmux configuration for APP */
 
 /*
  * Copyright (c) 2015 Intel Corporation
@@ -31,19 +31,19 @@
  */
 
 #include <pinmux.h>
-#include "pinmux.h"
+#include <pinmux/pinmux.h>
 
 struct pin_config mux_config[CONFIG_PINMUX_NUM_PINS] = {
 	/* pin, selected mode           ball, mode A, mode B, mode C */
 	/* Analog Inputs */
-	{ 0, PINMUX_FUNC_B }, /* F02, gpio_0, ain_0, spi_s_cs */
-	{ 1, PINMUX_FUNC_B }, /* G04, gpio_1, ain_1, spi_s_miso */
-	{ 2, PINMUX_FUNC_B }, /* H05, gpio_2, ain_2, spi_s_sck */
+	{ 0, PINMUX_FUNC_A }, /* F02, gpio_0, ain_0, spi_s_cs */
+	{ 1, PINMUX_FUNC_A }, /* G04, gpio_1, ain_1, spi_s_miso */
+	{ 2, PINMUX_FUNC_A }, /* H05, gpio_2, ain_2, spi_s_sck */
 	{ 3, PINMUX_FUNC_B }, /* J06, gpio_3, ain_3, spi_s_mosi */
 	{ 4, PINMUX_FUNC_B }, /* K06, gpio_4, ain_4, NA */
 	{ 5, PINMUX_FUNC_B }, /* L06, gpio_5, ain_5, NA */
-	{ 6, PINMUX_FUNC_A }, /* H04, gpio_6, ain_6, NA */
-	{ 7, PINMUX_FUNC_B }, /* G03, gpio_7, ain_7, NA */
+	{ 6, PINMUX_FUNC_B }, /* H04, gpio_6, ain_6, NA */
+	{ 7, PINMUX_FUNC_A }, /* G03, gpio_7, ain_7, NA */
 	/* Sensor subsystem GPIOs */
 	{ 8, PINMUX_FUNC_C },  /* L05, gpio_ss_0, ain_8, uart1_cts */
 	{ 9, PINMUX_FUNC_C },  /* M05, gpio_ss_1, ain_9, uart1_rts */

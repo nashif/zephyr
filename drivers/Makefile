@@ -20,7 +20,6 @@ obj-$(CONFIG_SPI) += spi/
 obj-$(CONFIG_GPIO) += gpio/
 obj-$(CONFIG_I2C) += i2c/
 obj-$(CONFIG_PWM) += pwm/
-obj-$(CONFIG_PINMUX) += pinmux/
 obj-$(CONFIG_ADC) += adc/
 obj-$(CONFIG_CLOCK_CONTROL) += clock_control/
 obj-$(CONFIG_IPI) += ipi/

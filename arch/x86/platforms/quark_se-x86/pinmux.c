@@ -34,7 +34,7 @@
 #include <init.h>
 #include <pinmux.h>
 #include <toolchain.h>
-#include "pinmux.h"
+#include "pinmux/pinmux.h"
 
 
 #ifndef CONFIG_PINMUX_DEV
