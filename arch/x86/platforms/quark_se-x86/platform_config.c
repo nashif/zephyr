@@ -7,22 +7,6 @@
 #include <nanokernel.h>
 #include <arch/cpu.h>
 
-#ifdef CONFIG_PINMUX
-#include <pinmux.h>
-#include <pinmux/pinmux.h>
-
-struct pinmux_config board_pmux = {
-	.base_address = CONFIG_PINMUX_BASE,
-};
-
-DECLARE_DEVICE_INIT_CONFIG(pmux,			/* config name */
-			   PINMUX_NAME,			/* driver name */
-			   &pinmux_initialize,		/* init function */
-			   &board_pmux);		/* config options*/
-pre_kernel_late_init(pmux, NULL);
-
-#endif /* CONFIG_PINMUX */
-
 #ifdef CONFIG_QMI_RTC
 
 #include <rtc/qmi_rtc.h>

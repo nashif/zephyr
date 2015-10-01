@@ -29,10 +29,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <stdio.h>
 #include <device.h>
+#include <init.h>
 #include <pinmux.h>
 #include <toolchain.h>
 #include "pinmux.h"
+
+
 #ifndef CONFIG_PINMUX_DEV
 #define PRINT(...) {;}
 #else
@@ -40,7 +44,6 @@
 #include <misc/printk.h>
 #define PRINT printk
 #elif defined(CONFIG_STDOUT_CONSOLE)
-#include <stdio.h>
 #define PRINT printf
 #endif /* CONFIG_PRINTK */
 #endif /*CONFIG_PINMUX_DEV */
@@ -179,3 +182,14 @@ int pinmux_initialize(struct device *dev)
 
 	return DEV_OK;
 }
+
+struct pinmux_config board_pmux = {
+	.base_address = CONFIG_PINMUX_BASE,
+};
+
+DECLARE_DEVICE_INIT_CONFIG(pmux,			/* config name */
+			   PINMUX_NAME,			/* driver name */
+			   &pinmux_initialize,		/* init function */
+			   &board_pmux);		/* config options*/
+
+pre_kernel_late_init(pmux, NULL);
