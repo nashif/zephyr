@@ -94,21 +94,21 @@ pre_kernel_early_init(gpioirq_0, NULL);
 
 #if defined(CONFIG_SHARED_IRQ_0_FALLING_EDGE)
 #define SHARED_IRQ_0_IOAPIC_FLAGS	(IOAPIC_EDGE | IOAPIC_LOW)
-#elif defined(CONFIG_SHARED_IRQ_0__RISING_EDGE)
+#elif defined(CONFIG_SHARED_IRQ_0_RISING_EDGE)
 #define SHARED_IRQ_0_IOAPIC_FLAGS	(IOAPIC_EDGE | IOAPIC_HIGH)
-#elif defined(CONFIG_SHARED_IRQ_0__LEVEL_HIGH)
+#elif defined(CONFIG_SHARED_IRQ_0_LEVEL_HIGH)
 #define SHARED_IRQ_0_IOAPIC_FLAGS	(IOAPIC_LEVEL | IOAPIC_HIGH)
-#elif defined(CONFIG_SHARED_IRQ_0__LEVEL_LOW)
+#elif defined(CONFIG_SHARED_IRQ_0_LEVEL_LOW)
 #define SHARED_IRQ_0_IOAPIC_FLAGS	(IOAPIC_LEVEL | IOAPIC_LOW)
 #endif
 
 #if defined(CONFIG_SHARED_IRQ_1_FALLING_EDGE)
 #define SHARED_IRQ_1_IOAPIC_FLAGS	(IOAPIC_EDGE | IOAPIC_LOW)
-#elif defined(CONFIG_SHARED_IRQ_1__RISING_EDGE)
+#elif defined(CONFIG_SHARED_IRQ_1_RISING_EDGE)
 #define SHARED_IRQ_1_IOAPIC_FLAGS	(IOAPIC_EDGE | IOAPIC_HIGH)
-#elif defined(CONFIG_SHARED_IRQ_1__LEVEL_HIGH)
+#elif defined(CONFIG_SHARED_IRQ_1_LEVEL_HIGH)
 #define SHARED_IRQ_1_IOAPIC_FLAGS	(IOAPIC_LEVEL | IOAPIC_HIGH)
-#elif defined(CONFIG_SHARED_IRQ_1__LEVEL_LOW)
+#elif defined(CONFIG_SHARED_IRQ_1_LEVEL_LOW)
 #define SHARED_IRQ_1_IOAPIC_FLAGS	(IOAPIC_LEVEL | IOAPIC_LOW)
 #endif
 
@@ -180,7 +180,7 @@ static int hpet_irq_set(struct device *unused)
 }
 
 DECLARE_DEVICE_INIT_CONFIG(hpetirq, "", hpet_irq_set, NULL);
-pre_kernel_core_init(hpetirq, NULL);
+pre_kernel_early_init(hpetirq, NULL);
 
 #endif /* CONFIG_HPET_TIMER */
 
@@ -225,7 +225,7 @@ static int shared_irq_config(struct device *unused)
 }
 
 DECLARE_DEVICE_INIT_CONFIG(sharedirqcfg, "", shared_irq_config, NULL);
-pre_kernel_late_init(sharedirqcfg, NULL);
+pre_kernel_early_init(sharedirqcfg, NULL);
 
 #endif /* CONFIG_SHARED_IRQ */
 
