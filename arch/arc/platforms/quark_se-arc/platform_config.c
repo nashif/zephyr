@@ -72,36 +72,36 @@ pre_kernel_late_init(adc, &adc_info_dev);
 
 #endif /* CONFIG_DW_ADC */
 
-#if CONFIG_IPI_ATP
+#if CONFIG_IPI_QUARK_SE
 #include <ipi.h>
-#include <ipi/ipi_atp.h>
+#include <ipi/ipi_quark_se.h>
 
-static int arc_atp_ipi_init(void) {
-	irq_connect(ATP_IPI_INTERRUPT, ATP_IPI_INTERRUPT_PRI, atp_ipi_isr,
+static int arc_quark_se_ipi_init(void) {
+	irq_connect(QUARK_SE_IPI_INTERRUPT, QUARK_SE_IPI_INTERRUPT_PRI, quark_se_ipi_isr,
 		    NULL);
-	irq_enable(ATP_IPI_INTERRUPT);
+	irq_enable(QUARK_SE_IPI_INTERRUPT);
 	return DEV_OK;
 }
 
-static struct atp_ipi_controller_config_info ipi_controller_config = {
-	.controller_init = arc_atp_ipi_init
+static struct quark_se_ipi_controller_config_info ipi_controller_config = {
+	.controller_init = arc_quark_se_ipi_init
 };
-DECLARE_DEVICE_INIT_CONFIG(atp_ipi, "", atp_ipi_controller_initialize,
+DECLARE_DEVICE_INIT_CONFIG(quark_se_ipi, "", quark_se_ipi_controller_initialize,
 			   &ipi_controller_config);
-pre_kernel_late_init(atp_ipi, NULL);
+pre_kernel_late_init(quark_se_ipi, NULL);
 
 #if CONFIG_IPI_CONSOLE_SENDER
 #include <console/ipi_console.h>
-ATP_IPI_DEFINE(atp_ipi4, 4, ATP_IPI_OUTBOUND);
+QUARK_SE_IPI_DEFINE(quark_se_ipi4, 4, QUARK_SE_IPI_OUTBOUND);
 
-struct ipi_console_sender_config_info atp_ipi_sender_config = {
-	.bind_to = "atp_ipi4",
+struct ipi_console_sender_config_info quark_se_ipi_sender_config = {
+	.bind_to = "quark_se_ipi4",
 	.flags = IPI_CONSOLE_PRINTK | IPI_CONSOLE_STDOUT,
 };
 DECLARE_DEVICE_INIT_CONFIG(ipi_console, "ipi_console",
 			   ipi_console_sender_init,
-			   &atp_ipi_sender_config);
+			   &quark_se_ipi_sender_config);
 nano_early_init(ipi_console, NULL);
 
 #endif /* CONFIG_IPI_CONSOLE_SENDER */
-#endif /* CONFIG_IPI_ATP */
+#endif /* CONFIG_IPI_QUARK_SE */

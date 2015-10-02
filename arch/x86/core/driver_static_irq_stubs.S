@@ -141,9 +141,9 @@ by x86 platforms.
 #endif /* CONFIG_SPI_DW_PORT_1 */
 #endif /* CONFIG_SPI_DW */
 
-#if defined(CONFIG_IPI_ATP)
+#if defined(CONFIG_IPI_QUARK_SE)
 #if defined(CONFIG_IOAPIC)
-	ioapic_mkstub atp_ipi atp_ipi_isr
+	ioapic_mkstub quark_se_ipi quark_se_ipi_isr
 #endif
 #endif
 	/* externs (internal APIs) */

@@ -288,53 +288,53 @@ void spi_config_1_irq(struct device *dev)
 #endif /* CONFIG_SPI_DW_PORT_1 */
 #endif /* CONFIG_SPI_DW */
 
-#if CONFIG_IPI_ATP
+#if CONFIG_IPI_QUARK_SE
 #include <ipi.h>
-#include <ipi/ipi_atp.h>
+#include <ipi/ipi_quark_se.h>
 
-IRQ_CONNECT_STATIC(atp_ipi, ATP_IPI_INTERRUPT, ATP_IPI_INTERRUPT_PRI,
-		   atp_ipi_isr, NULL);
+IRQ_CONNECT_STATIC(quark_se_ipi, QUARK_SE_IPI_INTERRUPT, QUARK_SE_IPI_INTERRUPT_PRI,
+		   quark_se_ipi_isr, NULL);
 
-static int x86_atp_ipi_init(void)
+static int x86_quark_se_ipi_init(void)
 {
-	IRQ_CONFIG(atp_ipi, ATP_IPI_INTERRUPT);
-	irq_enable(ATP_IPI_INTERRUPT);
+	IRQ_CONFIG(quark_se_ipi, QUARK_SE_IPI_INTERRUPT);
+	irq_enable(QUARK_SE_IPI_INTERRUPT);
 	return DEV_OK;
 }
 
-static struct atp_ipi_controller_config_info ipi_controller_config = {
-	.controller_init = x86_atp_ipi_init
+static struct quark_se_ipi_controller_config_info ipi_controller_config = {
+	.controller_init = x86_quark_se_ipi_init
 };
-DECLARE_DEVICE_INIT_CONFIG(atp_ipi, "", atp_ipi_controller_initialize,
+DECLARE_DEVICE_INIT_CONFIG(quark_se_ipi, "", quark_se_ipi_controller_initialize,
 			   &ipi_controller_config);
-pre_kernel_early_init(atp_ipi, NULL);
+pre_kernel_early_init(quark_se_ipi, NULL);
 
 #if defined(CONFIG_IPI_CONSOLE_RECEIVER) && defined(CONFIG_PRINTK)
 #include <console/ipi_console.h>
 
-ATP_IPI_DEFINE(atp_ipi4, 4, ATP_IPI_INBOUND);
+QUARK_SE_IPI_DEFINE(quark_se_ipi4, 4, QUARK_SE_IPI_INBOUND);
 
-#define ATP_IPI_CONSOLE_LINE_BUF_SIZE	80
-#define ATP_IPI_CONSOLE_RING_BUF_SIZE32	128
+#define QUARK_SE_IPI_CONSOLE_LINE_BUF_SIZE	80
+#define QUARK_SE_IPI_CONSOLE_RING_BUF_SIZE32	128
 
-static uint32_t ipi_console_ring_buf_data[ATP_IPI_CONSOLE_RING_BUF_SIZE32];
+static uint32_t ipi_console_ring_buf_data[QUARK_SE_IPI_CONSOLE_RING_BUF_SIZE32];
 static char __stack ipi_console_fiber_stack[IPI_CONSOLE_STACK_SIZE];
-static char ipi_console_line_buf[ATP_IPI_CONSOLE_LINE_BUF_SIZE];
+static char ipi_console_line_buf[QUARK_SE_IPI_CONSOLE_LINE_BUF_SIZE];
 
-struct ipi_console_receiver_config_info atp_ipi_receiver_config = {
-	.bind_to = "atp_ipi4",
+struct ipi_console_receiver_config_info quark_se_ipi_receiver_config = {
+	.bind_to = "quark_se_ipi4",
 	.fiber_stack = ipi_console_fiber_stack,
 	.ring_buf_data = ipi_console_ring_buf_data,
-	.rb_size32 = ATP_IPI_CONSOLE_RING_BUF_SIZE32,
+	.rb_size32 = QUARK_SE_IPI_CONSOLE_RING_BUF_SIZE32,
 	.line_buf = ipi_console_line_buf,
-	.lb_size = ATP_IPI_CONSOLE_LINE_BUF_SIZE,
+	.lb_size = QUARK_SE_IPI_CONSOLE_LINE_BUF_SIZE,
 	.flags = IPI_CONSOLE_PRINTK
 };
-struct ipi_console_receiver_runtime_data atp_ipi_receiver_driver_data;
+struct ipi_console_receiver_runtime_data quark_se_ipi_receiver_driver_data;
 DECLARE_DEVICE_INIT_CONFIG(ipi_console0, "ipi_console0",
 			   ipi_console_receiver_init,
-			   &atp_ipi_receiver_config);
-nano_early_init(ipi_console0, &atp_ipi_receiver_driver_data);
+			   &quark_se_ipi_receiver_config);
+nano_early_init(ipi_console0, &quark_se_ipi_receiver_driver_data);
 
 #endif /* CONFIG_PRINTK && CONFIG_IPI_CONSOLE_RECEIVER */
-#endif /* CONFIG_IPI_ATP */
+#endif /* CONFIG_IPI_QUARK_SE */
