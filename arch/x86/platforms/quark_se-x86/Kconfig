@@ -135,23 +135,23 @@ config I2C_DW_1_INT_PRIORITY
         default 0
 endif
 
-if CLOCK_CONTROL_ATP
+if CLOCK_CONTROL_QUARK_SE
 
-config  CLOCK_CONTROL_ATP_PERIPHERAL
+config  CLOCK_CONTROL_QUARK_SE_PERIPHERAL
        default n
 
-config  CLOCK_CONTROL_ATP_PERIPHERAL_DRV_NAME
-       default "atp_clock_peripheral"
+config  CLOCK_CONTROL_QUARK_SE_PERIPHERAL_DRV_NAME
+       default "clk_peripheral"
 
-config  CLOCK_CONTROL_ATP_EXTERNAL
+config  CLOCK_CONTROL_QUARK_SE_EXTERNAL
        default n
 
-config  CLOCK_CONTROL_ATP_EXTERNAL_DRV_NAME
-       default "atp_clock_external"
+config  CLOCK_CONTROL_QUARK_SE_EXTERNAL_DRV_NAME
+       default "clk_external"
 
-config  CLOCK_CONTROL_ATP_SENSOR
+config  CLOCK_CONTROL_QUARK_SE_SENSOR
        default n
 
-config  CLOCK_CONTROL_ATP_SENSOR_DRV_NAME
-       default "atp_clock_sensor"
+config  CLOCK_CONTROL_QUARK_SE_SENSOR_DRV_NAME
+       default "clk_sensor"
 endif
