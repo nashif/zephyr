@@ -247,8 +247,8 @@ struct spi_dw_config spi_dw_config_0 = {
 	.regs = CONFIG_SPI_DW_PORT_0_REGS,
 	.irq = CONFIG_SPI_DW_PORT_0_IRQ,
 	.int_mask = SPI_DW_PORT_0_INT_MASK,
-	.clock = &__initconfig_clock_atp_peripheral0,
-	.clock_data = UINT_TO_POINTER(ATP_CCU_SPI_M0_PCLK_EN_SW),
+	.clock = &__initconfig_clock_quark_se_peripheral0,
+	.clock_data = UINT_TO_POINTER(QUARK_SE_CCU_SPI_M0_PCLK_EN_SW),
 	.config_func = spi_config_0_irq
 };
 
@@ -282,8 +282,8 @@ struct spi_dw_config spi_dw_config_1 = {
 	.regs = CONFIG_SPI_DW_PORT_1_REGS,
 	.irq = CONFIG_SPI_DW_PORT_1_IRQ,
 	.int_mask = SPI_DW_PORT_1_INT_MASK,
-	.clock = &__initconfig_clock_atp_peripheral0,
-	.clock_data = UINT_TO_POINTER(ATP_CCU_SPI_M1_PCLK_EN_SW),
+	.clock = &__initconfig_clock_quark_se_peripheral0,
+	.clock_data = UINT_TO_POINTER(QUARK_SE_CCU_SPI_M1_PCLK_EN_SW),
 	.config_func = spi_config_1_irq
 };
 
