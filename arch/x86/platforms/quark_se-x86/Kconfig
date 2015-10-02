@@ -68,13 +68,16 @@ config IOAPIC_NUM_RTES
 config LOAPIC_TIMER_IRQ
 	default 64
 
+config PINMUX
+        default y
+
+if PINMUX
 config PINMUX_BASE
         default 0xB0800930
-	depends on PINMUX
 
 config PINMUX_NUM_PINS
 	default 69
-	depends on PINMUX
+endif
 
 config DW_AIO_COMPARATOR_BASE_ADDR
 	hex
