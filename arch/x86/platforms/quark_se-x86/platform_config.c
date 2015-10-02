@@ -7,11 +7,6 @@
 #include <nanokernel.h>
 #include <arch/cpu.h>
 
-/******************************************************************************
- ***
- ***           PURE_INIT functions
- ***
- *****************************************************************************/
 #ifdef CONFIG_PINMUX
 #include <pinmux.h>
 #include <pinmux/pinmux.h>
