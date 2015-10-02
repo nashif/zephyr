@@ -1,4 +1,4 @@
-/* atp_clock_control.c - Clock controller driver for Quark SE */
+/* quark_se_clock_control.c - Clock controller driver for Quark SE */
 
 /*
  * Copyright (c) 2015 Intel Corporation.
@@ -40,7 +40,7 @@
 #include <sys_io.h>
 
 #include <clock_control.h>
-#include <clock_control/atp_clock_control.h>
+#include <clock_control/quark_se_clock_control.h>
 
 #ifndef CONFIG_CLOCK_DEBUG
 #define DBG(...) {;}
@@ -54,10 +54,10 @@
 #endif /* CONFIG_STDOUT_CONSOLE */
 #endif /* CONFIG_CLOCK_DEBUG */
 
-static inline int atp_clock_control_on(struct device *dev,
+static inline int quark_se_clock_control_on(struct device *dev,
 					clock_control_subsys_t sub_system)
 {
-	struct atp_clock_control_config *info = dev->config->config_info;
+	struct quark_se_clock_control_config *info = dev->config->config_info;
 	uint32_t subsys = POINTER_TO_INT(sub_system);
 
 	if (sub_system == CLOCK_CONTROL_SUBSYS_ALL) {
@@ -72,10 +72,10 @@ static inline int atp_clock_control_on(struct device *dev,
 	return sys_test_and_set_bit(info->base_address, subsys);
 }
 
-static inline int atp_clock_control_off(struct device *dev,
+static inline int quark_se_clock_control_off(struct device *dev,
 					clock_control_subsys_t sub_system)
 {
-	struct atp_clock_control_config *info = dev->config->config_info;
+	struct quark_se_clock_control_config *info = dev->config->config_info;
 	uint32_t subsys = POINTER_TO_INT(sub_system);
 
 	if (sub_system == CLOCK_CONTROL_SUBSYS_ALL) {
@@ -90,16 +90,16 @@ static inline int atp_clock_control_off(struct device *dev,
 	return sys_test_and_clear_bit(info->base_address, subsys);
 }
 
-static struct clock_control_driver_api atp_clock_control_api = {
-	.on = atp_clock_control_on,
-	.off = atp_clock_control_off
+static struct clock_control_driver_api quark_se_clock_control_api = {
+	.on = quark_se_clock_control_on,
+	.off = quark_se_clock_control_off
 };
 
-int atp_clock_control_init(struct device *dev)
+int quark_se_clock_control_init(struct device *dev)
 {
-	dev->driver_api = &atp_clock_control_api;
+	dev->driver_api = &quark_se_clock_control_api;
 
-	DBG("ATP clock controller driver initialized on device: %p\n", dev);
-
+	DBG("Quark Se clock controller driver initialized on device: %p\n",
+									dev);
 	return DEV_OK;
 }

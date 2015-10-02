@@ -185,52 +185,52 @@ struct device * const uart_devs[] = {
 #endif
 
 
-#ifdef CONFIG_CLOCK_CONTROL_ATP
-#include <clock_control/atp_clock_control.h>
+#ifdef CONFIG_CLOCK_CONTROL_QUARK_SE
+#include <clock_control/quark_se_clock_control.h>
 
-#ifdef CONFIG_CLOCK_CONTROL_ATP_PERIPHERAL
+#ifdef CONFIG_CLOCK_CONTROL_QUARK_SE_PERIPHERAL
 
-struct atp_clock_control_config clock_atp_peripheral_config = {
+struct quark_se_clock_control_config clock_quark_se_peripheral_config = {
 	.base_address = CLOCK_PERIPHERAL_BASE_ADDR
 };
 
-DECLARE_DEVICE_INIT_CONFIG(clock_atp_peripheral,
-			   CONFIG_CLOCK_CONTROL_ATP_PERIPHERAL_DRV_NAME,
-			   &atp_clock_control_init,
-			   &clock_atp_peripheral_config);
+DECLARE_DEVICE_INIT_CONFIG(clock_quark_se_peripheral,
+			   CONFIG_CLOCK_CONTROL_QUARK_SE_PERIPHERAL_DRV_NAME,
+			   &quark_se_clock_control_init,
+			   &clock_quark_se_peripheral_config);
 
-pre_kernel_early_init(clock_atp_peripheral, NULL);
+pre_kernel_early_init(clock_quark_se_peripheral, NULL);
 
-#endif /* CONFIG_CLOCK_CONTROL_ATP_PERIPHERAL */
-#ifdef CONFIG_CLOCK_CONTROL_ATP_EXTERNAL
+#endif /* CONFIG_CLOCK_CONTROL_QUARK_SE_PERIPHERAL */
+#ifdef CONFIG_CLOCK_CONTROL_QUARK_SE_EXTERNAL
 
-struct atp_clock_control_config clock_atp_external_config = {
+struct quark_se_clock_control_config clock_quark_se_external_config = {
 	.base_address = CLOCK_EXTERNAL_BASE_ADDR
 };
 
-DECLARE_DEVICE_INIT_CONFIG(clock_atp_external,
-			   CONFIG_CLOCK_CONTROL_ATP_EXTERNAL_DRV_NAME,
-			   &atp_clock_control_init,
-			   &clock_atp_external_config);
+DECLARE_DEVICE_INIT_CONFIG(clock_quark_se_external,
+			   CONFIG_CLOCK_CONTROL_QUARK_SE_EXTERNAL_DRV_NAME,
+			   &quark_se_clock_control_init,
+			   &clock_quark_se_external_config);
 
-pre_kernel_early_init(clock_atp_external, NULL);
+pre_kernel_early_init(clock_quark_se_external, NULL);
 
-#endif /* CONFIG_CLOCK_CONTROL_ATP_EXTERNAL */
-#ifdef CONFIG_CLOCK_CONTROL_ATP_SENSOR
+#endif /* CONFIG_CLOCK_CONTROL_QUARK_SE_EXTERNAL */
+#ifdef CONFIG_CLOCK_CONTROL_QUARK_SE_SENSOR
 
-struct atp_clock_control_config clock_atp_sensor_config = {
+struct quark_se_clock_control_config clock_quark_se_sensor_config = {
 	.base_address = CLOCK_SENSOR_BASE_ADDR
 };
 
-DECLARE_DEVICE_INIT_CONFIG(clock_atp_sensor,
-			   CONFIG_CLOCK_CONTROL_ATP_SENSOR_DRV_NAME,
-			   &atp_clock_control_init,
-			   &clock_atp_sensor_config);
+DECLARE_DEVICE_INIT_CONFIG(clock_quark_se_sensor,
+			   CONFIG_CLOCK_CONTROL_QUARK_SE_SENSOR_DRV_NAME,
+			   &quark_se_clock_control_init,
+			   &clock_quark_se_sensor_config);
 
-pre_kernel_early_init(clock_atp_sensor, NULL);
+pre_kernel_early_init(clock_quark_se_sensor, NULL);
 
-#endif /* CONFIG_CLOCK_CONTROL_ATP_SENSOR */
-#endif /* CONFIG_CLOCK_CONTROL_ATP */
+#endif /* CONFIG_CLOCK_CONTROL_QUARK_SE_SENSOR */
+#endif /* CONFIG_CLOCK_CONTROL_QUARK_SE */
 
 #ifdef CONFIG_SPI_DW
 
