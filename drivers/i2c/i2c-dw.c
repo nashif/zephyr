@@ -43,6 +43,10 @@
 #include <errno.h>
 #include <sys_io.h>
 
+#ifdef CONFIG_SHARED_IRQ
+#include <shared_irq.h>
+#endif
+
 #include "i2c-dw.h"
 #include "i2c-dw-registers.h"
 
@@ -157,6 +161,34 @@ static void _i2c_dw_data_send(struct device *dev)
 	}
 }
 
+static inline void _i2c_dw_transfer_complete(struct device *dev)
+{
+	struct i2c_dw_rom_config const * const rom = dev->config->config_info;
+	struct i2c_dw_dev_config * const dw = dev->driver_data;
+	volatile struct i2c_dw_registers * const regs =
+		(struct i2c_dw_registers *)rom->base_address;
+	uint32_t cb_type = 0;
+	uint32_t value;
+
+	if (dw->state == I2C_DW_CMD_ERROR) {
+		cb_type = I2C_CB_ERROR;
+	} else if (dw->tx_buffer && !dw->tx_len) {
+		cb_type = I2C_CB_WRITE;
+	} else if (dw->rx_buffer && !dw->rx_len) {
+		cb_type = I2C_CB_READ;
+	}
+
+	if (cb_type) {
+		regs->ic_intr_mask.raw = DW_DISABLE_ALL_I2C_INT;
+		dw->state = I2C_DW_STATE_READY;
+		value = regs->ic_clr_intr;
+
+		if (dw->cb) {
+			dw->cb(dev, cb_type);
+		}
+	}
+}
+
 void i2c_dw_isr(struct device *port)
 {
 	struct i2c_dw_rom_config const * const rom = port->config->config_info;
@@ -187,10 +219,7 @@ void i2c_dw_isr(struct device *port)
 	 */
 	if (regs->ic_intr_stat.bits.stop_det) {
 		_i2c_dw_data_read(port);
-		regs->ic_intr_mask.raw = DW_DISABLE_ALL_I2C_INT;
-		dw->state = I2C_DW_STATE_READY;
-
-		value = regs->ic_clr_intr;
+		_i2c_dw_transfer_complete(port);
 	}
 
 	/* Check if we are configured as a master device */
@@ -208,10 +237,8 @@ void i2c_dw_isr(struct device *port)
 		if ((DW_INTR_STAT_TX_ABRT | DW_INTR_STAT_TX_OVER |
 		     DW_INTR_STAT_RX_OVER | DW_INTR_STAT_RX_UNDER) &
 		    regs->ic_intr_stat.raw) {
-				dw->state = I2C_DW_CMD_ERROR;
-				regs->ic_intr_mask.raw = DW_DISABLE_ALL_I2C_INT;
-				dw->state = I2C_DW_STATE_READY;
-				value = regs->ic_clr_intr;
+			dw->state = I2C_DW_CMD_ERROR;
+			_i2c_dw_transfer_complete(port);
 		}
 	} else { /* we must be configured as a slave device */
 
@@ -383,6 +410,112 @@ static int _i2c_dw_transfer(struct device *dev,
 	return DEV_OK;
 }
 
+#define POLLING_TIMEOUT		(sys_clock_ticks_per_sec / 10)
+static int i2c_dw_polling_write(struct device *dev,
+				uint8_t *write_buf, uint32_t write_len,
+				uint16_t slave_address)
+{
+	struct i2c_dw_rom_config const * const rom = dev->config->config_info;
+	struct i2c_dw_dev_config * const dw = dev->driver_data;
+	volatile struct i2c_dw_registers * const regs =
+		(struct i2c_dw_registers *)rom->base_address;
+	uint32_t value = 0;
+	uint32_t i;
+	uint32_t data;
+	uint32_t start_time;
+	int ret = DEV_OK;
+
+	if (!regs->ic_con.bits.master_mode) {
+		/* Only acting as master is supported */
+		return DEV_INVALID_OP;
+	}
+
+	/* Wait for bus idle */
+	start_time = nano_tick_get_32();
+	while (regs->ic_status.bits.activity) {
+		if ((nano_tick_get_32() - start_time) > POLLING_TIMEOUT) {
+			return DEV_FAIL;
+		}
+	}
+
+	dw->rx_len = 0;
+	dw->rx_buffer = NULL;
+	dw->tx_len = write_len;
+	dw->tx_buffer = write_buf;
+	dw->rx_tx_len = dw->rx_len + dw->tx_len;
+
+	/* Disable the device controller to be able set TAR */
+	regs->ic_enable.bits.enable = 0;
+
+	ret = _i2c_dw_setup(dev);
+	if (ret) {
+		return ret;
+	}
+
+	/* Disable interrupts */
+	regs->ic_intr_mask.raw = 0;
+
+	/* Clear interrupts */
+	value = regs->ic_clr_intr;
+
+	/* Set address of target slave */
+	regs->ic_tar.bits.ic_tar = slave_address;
+
+	/* Enable controller */
+	regs->ic_enable.bits.enable = 1;
+
+	/* Transmit */
+	i = 0;
+	while (dw->tx_len > 0) {
+		/* We have something to transmit to a specific host */
+		data = dw->tx_buffer[i];
+
+		/* Is this the last byte to write */
+		if (dw->tx_len == 1) {
+			data |= IC_DATA_CMD_STOP;
+		}
+
+		/* Wait for space in TX FIFO */
+		start_time = nano_tick_get_32();
+		while (!regs->ic_status.bits.tfnf) {
+			if ((nano_tick_get_32() - start_time) > POLLING_TIMEOUT) {
+				ret = DEV_FAIL;
+				goto finish;
+			}
+		}
+
+		regs->ic_data_cmd.raw = data;
+
+		i += 1;
+		dw->tx_len -= 1;
+		dw->rx_tx_len -= 1;
+	}
+
+	/* Wait for transfer to complete */
+	start_time = nano_tick_get_32();
+	while (!regs->ic_raw_intr_stat.bits.stop_det) {
+		if ((nano_tick_get_32() - start_time) > POLLING_TIMEOUT) {
+			ret = DEV_FAIL;
+			goto finish;
+		}
+	}
+	value = regs->ic_clr_stop_det;
+
+	/* Wait for bus idle */
+	start_time = nano_tick_get_32();
+	while (regs->ic_status.bits.activity) {
+		if ((nano_tick_get_32() - start_time) > POLLING_TIMEOUT) {
+			ret = DEV_FAIL;
+			goto finish;
+		}
+	}
+
+finish:
+	/* Disable controller when done */
+	regs->ic_enable.bits.enable = 0;
+
+	return ret;
+}
 
 static int i2c_dw_runtime_configure(struct device *dev, uint32_t config)
 {
@@ -489,6 +622,14 @@ static int i2c_dw_runtime_configure(struct device *dev, uint32_t config)
 	return rc;
 }
 
+static int i2c_dw_set_callback(struct device *dev, i2c_callback cb)
+{
+	struct i2c_dw_dev_config * const dw = dev->driver_data;
+
+	dw->cb = cb;
+
+	return DEV_OK;
+}
 
 static int i2c_dw_write(struct device *dev, uint8_t *buf,
 			uint32_t len, uint16_t slave_addr)
@@ -530,10 +671,12 @@ static int i2c_dw_resume(struct device *dev)
 
 static struct i2c_driver_api funcs = {
 	.configure = i2c_dw_runtime_configure,
+	.set_callback = i2c_dw_set_callback,
 	.write = i2c_dw_write,
 	.read = i2c_dw_read,
 	.suspend = i2c_dw_suspend,
 	.resume = i2c_dw_resume,
+	.polling_write = i2c_dw_polling_write,
 };
 
 
@@ -587,8 +730,6 @@ int i2c_dw_initialize(struct device *port)
 
 	dev->app_config.raw = 0;
 
-	rom->config_func(port);
-
 	/*
 	 * grab the default value on initialization.  This should be set to the
 	 * IC_MAX_SPEED_MODE in the hardware.  If it does support high speed we
@@ -602,9 +743,17 @@ int i2c_dw_initialize(struct device *port)
 		dev->support_hs_mode = false;
 	}
 
+	rom->config_func(port);
+
+	if (i2c_dw_runtime_configure(port, dev->app_config.raw) != DEV_OK) {
+		DBG("I2C: Cannot set default configuration 0x%x\n",
+		    dev->app_config.raw);
+		return DEV_NOT_CONFIG;
+	}
+
 	dev->state = I2C_DW_STATE_READY;
 
-	irq_enable(rom->interrupt_vector);
+	dev->state = I2C_DW_STATE_READY;
 
 	return DEV_OK;
 }
@@ -612,11 +761,13 @@ int i2c_dw_initialize(struct device *port)
 /* system bindings */
 #if CONFIG_I2C_DW_0
 #include <init.h>
-void i2c_config_0_irq(struct device *port);
+void i2c_config_0(struct device *port);
 
 struct i2c_dw_rom_config i2c_config_dw_0 = {
 	.base_address = CONFIG_I2C_DW_0_BASE,
+#ifdef CONFIG_I2C_DW_0_IRQ_DIRECT
 	.interrupt_vector = CONFIG_I2C_DW_0_IRQ,
+#endif
 #if CONFIG_PCI
 	.pci_dev.class = CONFIG_I2C_DW_CLASS,
 	.pci_dev.bus = CONFIG_I2C_DW_0_BUS,
@@ -626,10 +777,16 @@ struct i2c_dw_rom_config i2c_config_dw_0 = {
 	.pci_dev.function = CONFIG_I2C_DW_0_FUNCTION,
 	.pci_dev.bar = CONFIG_I2C_DW_0_BAR,
 #endif
-	.config_func = i2c_config_0_irq
+	.config_func = i2c_config_0,
+
+#ifdef CONFIG_GPIO_DW_0_IRQ_SHARED
+	.shared_irq_dev_name = CONFIG_I2C_DW_0_IRQ_SHARED_NAME,
+#endif
 };
 
-struct i2c_dw_dev_config i2c_0_runtime;
+struct i2c_dw_dev_config i2c_0_runtime = {
+	.app_config.raw = CONFIG_I2C_DW_0_DEFAULT_CFG,
+};
 
 DECLARE_DEVICE_INIT_CONFIG(i2c_0,
 			   CONFIG_I2C_DW_0_NAME,
@@ -638,21 +795,36 @@ DECLARE_DEVICE_INIT_CONFIG(i2c_0,
 
 pre_kernel_late_init(i2c_0, &i2c_0_runtime);
 
+#ifdef CONFIG_I2C_DW_0_IRQ_DIRECT
 IRQ_CONNECT_STATIC(i2c_dw_0,
 		   CONFIG_I2C_DW_0_IRQ,
 		   CONFIG_I2C_DW_0_INT_PRIORITY,
 		   i2c_dw_isr_0,
 		   0);
+#endif
 
-void i2c_config_0_irq(struct device *port)
+void i2c_config_0(struct device *port)
 {
-	struct i2c_dw_rom_config *config = port->config->config_info;
+	struct i2c_dw_rom_config * const config = port->config->config_info;
+	struct device *shared_irq_dev;
+
+#if defined(CONFIG_I2C_DW_0_IRQ_DIRECT)
+	ARG_UNUSED(shared_irq_dev);
 	IRQ_CONFIG(i2c_dw_0, config->interrupt_vector);
+	irq_enable(config->interrupt_vector);
+#elif defined(CONFIG_I2C_DW_0_IRQ_SHARED)
+	ARG_UNUSED(config);
+	shared_irq_dev = device_get_binding(config->shared_irq_dev_name);
+	shared_irq_isr_register(shared_irq_dev, (isr_t)i2c_dw_isr, port);
+	shared_irq_enable(shared_irq_dev, port);
+#endif
 }
 
+#ifdef CONFIG_I2C_DW_0_IRQ_DIRECT
 void i2c_dw_isr_0(void *unused)
 {
 	i2c_dw_isr(&__initconfig_i2c_02);
 }
+#endif
 
 #endif /* CONFIG_I2C_DW_0 */

@@ -50,7 +50,23 @@ config UART_CONSOLE_INDEX
 config PINMUX
         def_bool y
 
+config I2C
+	def_bool y
+
+if SHARED_IRQ
+config SHARED_IRQ_0
+	def_bool y
+config SHARED_IRQ_0_NAME
+	default "SHARED_IRQ0"
+config SHARED_IRQ_0_IRQ
+	default 18
+config SHARED_IRQ_0_PRI
+	default 0
+endif
+
 if I2C
+config I2C_CLOCK_SPEED
+	default 25
 config I2C_DW
         def_bool y
 config I2C_DW_VENDOR_ID
@@ -63,10 +79,24 @@ config I2C_DW_0
         def_bool y
 config I2C_DW_0_NAME
         default "I2C0"
-config I2C_DW_IRQ_RISING_EDGE
-        def_bool y
-
-
+config I2C_DW_0_DEFAULT_CFG
+        default 0x12
+config I2C_DW_0_BASE
+	default 0x90007000
+config I2C_DW_0_IRQ
+	default 18
+config I2C_DW_0_INT_PRIORITY
+	default 0
+config I2C_DW_0_BUS
+	default 0
+config I2C_DW_0_DEV
+	default 21
+config I2C_DW_0_FUNCTION
+	default 2
+config I2C_DW_0_BAR
+	default 0
+config I2C_DW_0_IRQ_SHARED_NAME
+	default "SHARED_IRQ0" if SHARED_IRQ
 endif
 
 if GPIO && I2C

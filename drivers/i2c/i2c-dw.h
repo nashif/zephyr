@@ -111,6 +111,10 @@ struct i2c_dw_rom_config {
 	struct pci_dev_info pci_dev;
 #endif /* CONFIG_PCI */
 	i2c_isr_cb_t	config_func;
+
+#ifdef CONFIG_I2C_DW_SHARED_IRQ
+	char *shared_irq_dev_name;
+#endif /* CONFIG_I2C_DW_SHARED_IRQ */
 };
 
 
@@ -128,6 +132,8 @@ struct i2c_dw_dev_config {
 	bool			support_hs_mode;
 	uint16_t		hcnt;
 	uint16_t		lcnt;
+
+	i2c_callback            cb;
 };
 
 void i2c_dw_isr(struct device *port);

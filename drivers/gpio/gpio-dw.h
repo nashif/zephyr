@@ -36,7 +36,6 @@
 #include <pci/pci_mgr.h>
 #endif /* CONFIG_PCI */
 
-#define CONFIG_GPIO_DW_BITS 32
 extern int gpio_initialize_dw(struct device *port);
 typedef void (*gpio_config_irq_t)(struct device *port);
 
@@ -48,6 +47,10 @@ struct gpio_config_dw {
 	struct pci_dev_info  pci_dev;
 #endif /* CONFIG_PCI */
 	gpio_config_irq_t config_func;
+
+#ifdef CONFIG_GPIO_DW_SHARED_IRQ
+	char *shared_irq_dev_name;
+#endif /* CONFIG_GPIO_DW_SHARED_IRQ */
 };
 
 struct gpio_runtime_dw {

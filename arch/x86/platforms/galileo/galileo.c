@@ -56,21 +56,24 @@ Handlers for the secondary serial port have not been added.
 
 
 #ifdef CONFIG_I2C_DW_0
+#ifdef CONFIG_I2C_DW_0_IRQ_DIRECT
 static int dw_i2c0_irq_set(struct device *unused)
 {
 	ARG_UNUSED(unused);
 	_ioapic_irq_set(CONFIG_I2C_DW_0_IRQ,
 			CONFIG_I2C_DW_0_IRQ + INT_VEC_IRQ0,
-			I2C_DW_0_IRQ_IOAPIC_FLAGS);
+			I2C_DW_IRQ_IOAPIC_FLAGS);
 	return 0;
 }
 
 DECLARE_DEVICE_INIT_CONFIG(i2cirq_0, "", dw_i2c0_irq_set, NULL);
 pre_kernel_late_init(i2cirq_0, NULL);
 
+#endif /* CONFIG_I2C_DW_0_IRQ_DIRECT */
 #endif /* CONFIG_I2C_DW_0 */
 
 #ifdef CONFIG_GPIO_DW_0
+#ifdef CONFIG_GPIO_DW_0_IRQ_DIRECT
 static int gpio_irq_set_0(struct device *unused) {
 	ARG_UNUSED(unused);
 	_ioapic_irq_set(CONFIG_GPIO_DW_0_IRQ,
@@ -82,7 +85,35 @@ static int gpio_irq_set_0(struct device *unused) {
 DECLARE_DEVICE_INIT_CONFIG(gpioirq_0, "", gpio_irq_set_0, NULL);
 pre_kernel_early_init(gpioirq_0, NULL);
 
+#endif /* CONFIG_GPIO_DW_0_IRQ_DIRECT */
 #endif /* CONFIG_GPIO_DW_0 */
+
+#ifdef CONFIG_SHARED_IRQ
+#ifdef CONFIG_IOAPIC
+#include <drivers/ioapic.h>
+
+#if defined(CONFIG_SHARED_IRQ_0_FALLING_EDGE)
+#define SHARED_IRQ_0_IOAPIC_FLAGS	(IOAPIC_EDGE | IOAPIC_LOW)
+#elif defined(CONFIG_SHARED_IRQ_0__RISING_EDGE)
+#define SHARED_IRQ_0_IOAPIC_FLAGS	(IOAPIC_EDGE | IOAPIC_HIGH)
+#elif defined(CONFIG_SHARED_IRQ_0__LEVEL_HIGH)
+#define SHARED_IRQ_0_IOAPIC_FLAGS	(IOAPIC_LEVEL | IOAPIC_HIGH)
+#elif defined(CONFIG_SHARED_IRQ_0__LEVEL_LOW)
+#define SHARED_IRQ_0_IOAPIC_FLAGS	(IOAPIC_LEVEL | IOAPIC_LOW)
+#endif
+
+#if defined(CONFIG_SHARED_IRQ_1_FALLING_EDGE)
+#define SHARED_IRQ_1_IOAPIC_FLAGS	(IOAPIC_EDGE | IOAPIC_LOW)
+#elif defined(CONFIG_SHARED_IRQ_1__RISING_EDGE)
+#define SHARED_IRQ_1_IOAPIC_FLAGS	(IOAPIC_EDGE | IOAPIC_HIGH)
+#elif defined(CONFIG_SHARED_IRQ_1__LEVEL_HIGH)
+#define SHARED_IRQ_1_IOAPIC_FLAGS	(IOAPIC_LEVEL | IOAPIC_HIGH)
+#elif defined(CONFIG_SHARED_IRQ_1__LEVEL_LOW)
+#define SHARED_IRQ_1_IOAPIC_FLAGS	(IOAPIC_LEVEL | IOAPIC_LOW)
+#endif
+
+#endif /* CONFIG_IOAPIC */
+#endif /* CONFIG_SHARED_IRQ */
 
 /**
  *
@@ -171,6 +202,32 @@ DECLARE_DEVICE_INIT_CONFIG(pic_0, "", _i8259_init, NULL);
 pre_kernel_core_init(pic_0, NULL);
 
 #endif /* CONFIG_PIC_DISABLE */
+
+#ifdef CONFIG_SHARED_IRQ
+
+static int shared_irq_config(struct device *unused)
+{
+	ARG_UNUSED(unused);
+
+#ifdef SHARED_IRQ_0_IOAPIC_FLAGS
+	_ioapic_irq_set(CONFIG_SHARED_IRQ_0_IRQ,
+			CONFIG_SHARED_IRQ_0_IRQ + INT_VEC_IRQ0,
+			SHARED_IRQ_0_IOAPIC_FLAGS);
+#endif
+
+#ifdef SHARED_IRQ_1_IOAPIC_FLAGS
+	_ioapic_irq_set(CONFIG_SHARED_IRQ_1_IRQ,
+			CONFIG_SHARED_IRQ_1_IRQ + INT_VEC_IRQ0,
+			SHARED_IRQ_1_IOAPIC_FLAGS);
+#endif
+
+	return 0;
+}
+
+DECLARE_DEVICE_INIT_CONFIG(sharedirqcfg, "", shared_irq_config, NULL);
+pre_kernel_late_init(sharedirqcfg, NULL);
+
+#endif /* CONFIG_SHARED_IRQ */
 
 DECLARE_DEVICE_INIT_CONFIG(galileo_0, "", galileo_init, NULL);
 pre_kernel_early_init(galileo_0, NULL);
