@@ -88,6 +88,37 @@ pre_kernel_early_init(gpioirq_0, NULL);
 #endif /* CONFIG_GPIO_DW_0_IRQ_DIRECT */
 #endif /* CONFIG_GPIO_DW_0 */
 
+#ifdef CONFIG_SPI_INTEL_PORT_0
+static int spi_irq_set_0(struct device *unused)
+{
+	ARG_UNUSED(unused);
+	_ioapic_irq_set(CONFIG_SPI_INTEL_PORT_0_IRQ,
+			CONFIG_SPI_INTEL_PORT_0_IRQ + INT_VEC_IRQ0,
+			SPI_INTEL_IRQ_IOAPIC_FLAGS);
+	return 0;
+}
+
+DECLARE_DEVICE_INIT_CONFIG(spiirq_0, "", spi_irq_set_0, NULL);
+pre_kernel_early_init(spiirq_0, NULL);
+
+#endif /* CONFIG_SPI_INTEL_PORT_0 */
+
+#ifdef CONFIG_SPI_INTEL_PORT_1
+static int spi_irq_set_1(struct device *unused)
+{
+	ARG_UNUSED(unused);
+	_ioapic_irq_set(CONFIG_SPI_INTEL_PORT_1_IRQ,
+			CONFIG_SPI_INTEL_PORT_1_IRQ + INT_VEC_IRQ0,
+			SPI_INTEL_IRQ_IOAPIC_FLAGS);
+	return 0;
+
+}
+
+DECLARE_DEVICE_INIT_CONFIG(spiirq_1, "", spi_irq_set_1, NULL);
+pre_kernel_early_init(spiirq_1, NULL);
+
+#endif /* CONFIG_SPI_INTEL_PORT_1 */
+
 #ifdef CONFIG_SHARED_IRQ
 #ifdef CONFIG_IOAPIC
 #include <drivers/ioapic.h>
@@ -114,42 +145,6 @@ pre_kernel_early_init(gpioirq_0, NULL);
 
 #endif /* CONFIG_IOAPIC */
 #endif /* CONFIG_SHARED_IRQ */
-
-/**
- *
- * @brief Perform basic hardware initialization
- *
- * Initialize the Intel LOAPIC and IOAPIC device driver and the
- * Intel 8250 UART device driver.
- * Also initialize the timer device driver, if required.
- *
- * @return 0
- */
-
-static int galileo_init(struct device *arg)
-{
-	ARG_UNUSED(arg);
-
-#if defined(CONFIG_PCI_DEBUG) && defined(CONFIG_PCI_ENUMERATION)
-	/* Rescan PCI and display the list of PCI attached devices */
-	struct pci_dev_info info = {
-		.function = PCI_FUNCTION_ANY,
-		.bar = PCI_BAR_ANY,
-	};
-
-	pci_bus_scan_init();
-
-	while (pci_bus_scan(&info)) {
-		pci_show(&info);
-		info.class = 0;
-		info.vendor_id = 0;
-		info.device_id = 0;
-		info.function = PCI_FUNCTION_ANY;
-		info.bar = PCI_BAR_ANY;
-	}
-#endif /* CONFIG_PCI_DEBUG && CONFIG_PCI_ENUMERATION */
-	return 0;
-}
 
 #ifdef CONFIG_CONSOLE_HANDLER
 
@@ -228,6 +223,3 @@ DECLARE_DEVICE_INIT_CONFIG(sharedirqcfg, "", shared_irq_config, NULL);
 pre_kernel_early_init(sharedirqcfg, NULL);
 
 #endif /* CONFIG_SHARED_IRQ */
-
-DECLARE_DEVICE_INIT_CONFIG(galileo_0, "", galileo_init, NULL);
-pre_kernel_early_init(galileo_0, NULL);

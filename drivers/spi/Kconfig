@@ -40,6 +40,7 @@ menuconfig SPI
 	help
 	  Enable support for the SPI hardware bus.
 
+if SPI
 config  SPI_DEBUG
 	bool
 	prompt "SPI drivers debug output"
@@ -58,6 +59,33 @@ config  SPI_INTEL
 	  was formelly found on XScale chips. It can be found nowadays
 	  on CEXXXX Intel media controller and Quark CPU (2 of them).
 
+choice
+depends on SPI_INTEL
+prompt "Intel SPI interrupt trigger condition"
+default SPI_INTEL_RISING_EDGE
+
+config SPI_INTEL_FALLING_EDGE
+	bool "Falling edge"
+	help
+	  "Intel SPI uses falling edge interrupt"
+
+config SPI_INTEL_RISING_EDGE
+	bool "Rising edge"
+	help
+	  "Intel SPI uses rising edge interrupt"
+
+config SPI_INTEL_LEVEL_HIGH
+	bool "Level high"
+	help
+	  "Intel SPI uses level high interrupt"
+
+config SPI_INTEL_LEVEL_LOW
+	bool "Level low"
+	help
+	  "Intel SPI uses level low interrupt"
+
+endchoice
+
 config	SPI_INTEL_VENDOR_ID
 	hex "PCI Vendor ID"
 	depends on SPI_INTEL && PCI
@@ -72,6 +100,11 @@ config	SPI_INTEL_CLASS
 	hex "PCI class"
 	depends on SPI_INTEL && PCI
 	default 0x0C
+
+config  SPI_INTEL_CS_GPIO
+	bool "SPI port CS pin is controlled via a GPIO port"
+	depends on SPI_INTEL && GPIO
+	default n
 
 config	SPI_INTEL_PORT_0
 	bool
@@ -118,6 +151,17 @@ config  SPI_INTEL_PORT_0_PRI
 	int
 	prompt "Port 0 interrupt priority"
 	depends on SPI_INTEL_PORT_0
+	default 0
+
+config  SPI_INTEL_PORT_0_CS_GPIO_PORT
+	string
+	prompt "The GPIO port which is used to control CS"
+	depends on SPI_INTEL_CS_GPIO
+	default GPIO_DW_0_NAME
+
+config  SPI_INTEL_PORT_0_CS_GPIO_PIN
+	int "The GPIO PIN which is used to act as a CS pin"
+	depends on SPI_INTEL_CS_GPIO
 	default 0
 
 config  SPI_INTEL_PORT_1
@@ -244,3 +288,4 @@ config  SPI_DW_PORT_1_PRI
 	prompt "Port 0 interrupt priority"
 	depends on SPI_DW_PORT_1
 	default 0
+endif # SPI
