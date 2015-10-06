@@ -30,6 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <init.h>
 #include <nanokernel.h>
 #include <stdlib.h>
 #include <board.h>
@@ -348,3 +349,32 @@ int dw_adc_init(struct device *dev)
 
 	return 0;
 }
+
+struct adc_info adc_info_dev = {
+		.rx_len = 0,
+		.seq_size = 1,
+		.state = ADC_STATE_IDLE
+	};
+
+struct adc_config adc_config_dev = {
+		.reg_base = PERIPH_ADDR_BASE_ADC,
+		.reg_irq_mask = SCSS_REGISTER_BASE + INT_SS_ADC_IRQ_MASK,
+		.reg_err_mask = SCSS_REGISTER_BASE + INT_SS_ADC_ERR_MASK,
+		.rx_vector = IO_ADC0_INT_IRQ,
+		.err_vector = IO_ADC0_INT_ERR,
+		.fifo_tld = IO_ADC0_FS/2,
+		.in_mode      = CONFIG_ADC_INPUT_MODE,
+		.out_mode     = CONFIG_ADC_OUTPUT_MODE,
+		.capture_mode = CONFIG_ADC_CAPTURE_MODE,
+		.seq_mode     = CONFIG_ADC_SEQ_MODE,
+		.sample_width = CONFIG_ADC_WIDTH,
+		.clock_ratio  = CONFIG_ADC_CLOCK_RATIO,
+		.serial_dly   = CONFIG_ADC_SERIAL_DELAY
+	};
+
+DECLARE_DEVICE_INIT_CONFIG(adc,		/* config name*/
+			ADC_DRV_NAME,	/* driver name*/
+			&dw_adc_init,	/* init function*/
+			&adc_config_dev); /* config options*/
+
+pre_kernel_late_init(adc, &adc_info_dev);
