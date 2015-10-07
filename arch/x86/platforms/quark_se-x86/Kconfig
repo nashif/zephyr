@@ -60,7 +60,7 @@ config	SYS_CLOCK_HW_CYCLES_PER_SEC
 
 config  PHYS_LOAD_ADDR
 	default 0x40030000 if XIP
-	default 0xA8000000 if !XIP
+	default 0xA8006400 if !XIP
 
 config IOAPIC_NUM_RTES
 	default 64
