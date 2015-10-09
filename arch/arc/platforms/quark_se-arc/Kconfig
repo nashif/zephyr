@@ -83,3 +83,17 @@ config NSIM
 	     reset vector when starting (??).
 
 endmenu
+
+if GPIO_DW
+
+config GPIO_DW_0_BASE_ADDR
+	default 0x80017800
+config GPIO_DW_0_IRQ
+	default 8
+
+config GPIO_DW_1_BASE_ADDR
+	default 0x80017900
+config GPIO_DW_1_IRQ
+	default 8
+
+endif
