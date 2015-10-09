@@ -86,6 +86,9 @@ endmenu
 
 if GPIO_DW
 
+config GPIO_DW_BOTHEDGES_SUPPORT
+	default n
+
 config GPIO_DW_0_BASE_ADDR
 	default 0x80017800
 config GPIO_DW_0_IRQ
