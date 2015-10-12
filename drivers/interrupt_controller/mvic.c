@@ -92,9 +92,9 @@
 
 /* forward declarations */
 
-static void MvicRteSet(unsigned int irq, uint32_t value);
-static uint32_t MvicRteGet(unsigned int irq);
-static void MvicRteUpdate(unsigned int irq, uint32_t value,
+static void _mvic_rte_set(unsigned int irq, uint32_t value);
+static uint32_t _mvic_rte_get(unsigned int irq);
+static void _mvic_rte_update(unsigned int irq, uint32_t value,
 					uint32_t mask);
 
 /*
@@ -130,7 +130,7 @@ int _mvic_init(struct device *unused)
 	rteValue = IOAPIC_EDGE | IOAPIC_INT_MASK;
 
 	for (ix = 0; ix < CONFIG_IOAPIC_NUM_RTES; ix++) {
-		MvicRteSet(ix, rteValue);
+		_mvic_rte_set(ix, rteValue);
 	}
 
 	/* enable the MVIC Local APIC */
@@ -224,7 +224,7 @@ void *_ioapic_eoi_get(unsigned int irq, char *argRequired, void **arg)
  */
 void _ioapic_irq_enable(unsigned int irq)
 {
-	MvicRteUpdate(irq, 0, IOAPIC_INT_MASK);
+	_mvic_rte_update(irq, 0, IOAPIC_INT_MASK);
 }
 
 /**
@@ -239,7 +239,7 @@ void _ioapic_irq_enable(unsigned int irq)
  */
 void _ioapic_irq_disable(unsigned int irq)
 {
-	MvicRteUpdate(irq, IOAPIC_INT_MASK, IOAPIC_INT_MASK);
+	_mvic_rte_update(irq, IOAPIC_INT_MASK, IOAPIC_INT_MASK);
 }
 
 /**
@@ -264,7 +264,7 @@ void _ioapic_irq_set(unsigned int irq, unsigned int vector, uint32_t flags)
 	ARG_UNUSED(vector);
 
 	rteValue = IOAPIC_INT_MASK | flags;
-	MvicRteSet(irq, rteValue);
+	_mvic_rte_set(irq, rteValue);
 }
 
 /**
@@ -452,9 +452,10 @@ void _loapic_irq_disable(unsigned int irq)
  * @brief read a 32 bit MVIC IO APIC register
  *
  * @param irq INTIN number
+ *
  * @returns register value
  */
-static uint32_t MvicRteGet(unsigned int irq)
+static uint32_t _mvic_rte_get(unsigned int irq)
 {
 	uint32_t value; /* value */
 	int key;	/* interrupt lock level */
@@ -489,11 +490,11 @@ static uint32_t MvicRteGet(unsigned int irq)
  * @brief write to 32 bit MVIC IO APIC register
  *
  * @param irq INTIN number
- * @param values Value to be written
+ * @param value value to be written
  *
  * @returns N/A
  */
-static void MvicRteSet(unsigned int irq, uint32_t value)
+static void _mvic_rte_set(unsigned int irq, uint32_t value)
 {
 	int key; /* interrupt lock level */
 	volatile unsigned int *rte;
@@ -526,12 +527,12 @@ static void MvicRteSet(unsigned int irq, uint32_t value)
  *
  * @param irq INTIN number
  * @param value value to be written
- * @param mask mask of bits to be modified
+ * @param mask of bits to be modified
  *
  * @returns N/A
  */
-static void MvicRteUpdate(unsigned int irq, uint32_t value, uint32_t mask)
+static void _mvic_rte_update(unsigned int irq, uint32_t value, uint32_t mask)
 {
-	MvicRteSet(irq, (MvicRteGet(irq) & ~mask) | (value & mask));
+	_mvic_rte_set(irq, (_mvic_rte_get(irq) & ~mask) | (value & mask));
 }
 
