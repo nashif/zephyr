@@ -43,7 +43,6 @@ hardware for the Quark D2000 BSP.
 #include <misc/printk.h>
 #include <misc/__assert.h>
 #include "board.h"
-#include <drivers/uart.h>
 #include <drivers/mvic.h>
 #include <init.h>
 
@@ -65,10 +64,12 @@ static int quark_d2000_init(struct device *arg)
 	*((unsigned char *)(COM2_BASE_ADRS + SYNOPSIS_UART_DLF_OFFSET)) =
 		COM2_DLF;
 
-	_mvic_init();
-
 	return 0;
 }
 DECLARE_DEVICE_INIT_CONFIG(quark_d2000_0, "", quark_d2000_init, NULL);
 pre_kernel_early_init(quark_d2000_0, NULL);
 
+#ifdef CONFIG_MVIC
+DECLARE_DEVICE_INIT_CONFIG(mvic_0, "", _mvic_init, NULL);
+pre_kernel_early_init(mvic_0, NULL);
+#endif /* CONFIG_IOAPIC */

@@ -112,8 +112,9 @@ static void MvicRteUpdate(unsigned int irq, uint32_t value,
  *
  * @returns: N/A
  */
-void _mvic_init(void)
+int _mvic_init(struct device *unused)
 {
+	ARG_UNUSED(unused);
 	int32_t ix;	/* Interrupt line register index */
 	uint32_t rteValue; /* value to copy into interrupt line register */
 
@@ -150,6 +151,8 @@ void _mvic_init(void)
 	/* discard a pending interrupt if any */
 
 	*(volatile int *)(CONFIG_LOAPIC_BASE_ADDRESS + LOAPIC_EOI) = 0;
+
+	return 0;
 
 }
 

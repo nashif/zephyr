@@ -36,6 +36,7 @@
 */
 #include <drivers/ioapic.h>
 #include <drivers/loapic.h>
+#include <init.h>
 
 #ifndef __INCmvich
 #define __INCmvich
@@ -46,7 +47,7 @@ extern "C" {
 
 
 #ifndef _ASMLANGUAGE
-extern void _mvic_init(void);
+extern int _mvic_init(struct device *unused);
 #endif /* _ASMLANGUAGE */
 
 #ifdef __cplusplus
