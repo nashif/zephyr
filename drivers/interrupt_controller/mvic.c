@@ -1,4 +1,4 @@
-/* mvic.c - Quark D2000 Interrupt Controller (MVIC) */
+/* mvic.c - Mint Valley Interrupt Controller (MVIC) */
 
 /*
  * Copyright (c) 1997-1998, 2000-2002, 2004, 2006-2008, 2011-2015 Wind River
@@ -31,30 +31,31 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
-DESCRIPTION
-
-This module is based on the standard Local APIC and IO APIC source modules.
-This modules combines these modules into one source module that exports the
-same APIs defined by the Local APIC and IO APIC header modules. These
-routine have been adapted for the Quark D2000 Interrupt Controller which has
-a cutdown implementation of the Local APIC & IO APIC register sets.
-
-The MVIC (Quark D2000 Interrupt Controller) is configured by default
-to support 32 external interrupt lines.
-Unlike the traditional IA LAPIC/IOAPIC, the interrupt vectors in MVIC are fixed
-and not programmable.
-The larger the vector number, the higher the priority of the interrupt.
-Higher priority interrupts preempt lower priority interrupts.
-Lower priority interrupts do not preempt higher priority interrupts.
-The MVIC holds the lower priority interrupts pending until the interrupt
-service routine for the higher priority interrupt writes to the End of
-Interrupt (EOI) register.
-After an EOI write, the MVIC asserts the next highest pending interrupt.
-
-INCLUDE FILES: ioapic.h loapic.h
-
-*/
+/**
+ * @file
+ * @brief Quark D2000 Interrupt Controller (MVIC)
+ *
+ * This module is based on the standard Local APIC and IO APIC source modules.
+ * This modules combines these modules into one source module that exports the
+ * same APIs defined by the Local APIC and IO APIC header modules. These
+ * routine have been adapted for the Quark D2000 Interrupt Controller which has
+ * a cutdown implementation of the Local APIC & IO APIC register sets.
+ *
+ * The MVIC (Quark D2000 Interrupt Controller) is configured by default
+ * to support 32 external interrupt lines.
+ * Unlike the traditional IA LAPIC/IOAPIC, the interrupt vectors in MVIC are fixed
+ * and not programmable.
+ * The larger the vector number, the higher the priority of the interrupt.
+ * Higher priority interrupts preempt lower priority interrupts.
+ * Lower priority interrupts do not preempt higher priority interrupts.
+ * The MVIC holds the lower priority interrupts pending until the interrupt
+ * service routine for the higher priority interrupt writes to the End of
+ * Interrupt (EOI) register.
+ * After an EOI write, the MVIC asserts the next highest pending interrupt.
+ *
+ * INCLUDE FILES: ioapic.h loapic.h
+ *
+ */
 
 /* includes */
 
@@ -102,16 +103,15 @@ static void MvicRteUpdate(unsigned int irq, uint32_t value,
  * IRQ virtualization imposed by the BSP.
  */
 
-/*******************************************************************************
-*
-* _mvic_init - initialize the MVIC IO APIC and local APIC register sets.
-*
-* This routine initializes the Quark D2000 Interrupt Controller (MVIC).
-* This routine replaces the standard Local APIC / IO APIC init routines.
-*
-* RETURNS: N/A
-*/
-
+/**
+ *
+ * @brief initialize the MVIC IO APIC and local APIC register sets.
+ *
+ * This routine initializes the Quark D2000 Interrupt Controller (MVIC).
+ * This routine replaces the standard Local APIC / IO APIC init routines.
+ *
+ * @returns: N/A
+ */
 void _mvic_init(void)
 {
 	int32_t ix;	/* Interrupt line register index */
@@ -153,39 +153,38 @@ void _mvic_init(void)
 
 }
 
-/*******************************************************************************
-*
-* _ioapic_eoi - send EOI (End Of Interrupt) signal to IO APIC
-*
-* This routine sends an EOI signal to the IO APIC's interrupting source.
-*
-* All line interrupts on Quark D2000 are EOI'ed with local APIC EOI register.
-*
-* RETURNS: N/A
-*/
-
-void _ioapic_eoi(unsigned int irq /* INT number to send EOI */
-			  )
+/**
+ *
+ * @brief Send EOI (End Of Interrupt) signal to IO APIC
+ *
+ * This routine sends an EOI signal to the IO APIC's interrupting source.
+ *
+ * All line interrupts on Quark D2000 are EOI'ed with local APIC EOI register.
+ *
+ * @param irq INT number to send EOI
+ *
+ * @returns: N/A
+ */
+void _ioapic_eoi(unsigned int irq)
 {
 	_loapic_eoi(irq);
 }
 
-/*******************************************************************************
-*
-* _ioapic_eoi_get - get EOI (End Of Interrupt) information
-*
-* This routine returns EOI signalling information for a specific IRQ.
-*
-* RETURNS: address of routine to be called to signal EOI;
-*          as a side effect, also passes back indication if routine requires
-*          an interrupt vector argument and what the argument value should be
-*/
-
-void *_ioapic_eoi_get(unsigned int irq,  /* INTIN number of interest */
-		      char *argRequired, /* ptr to "argument required" result
-					    area */
-		      void **arg /* ptr to "argument value" result area */
-		      )
+/**
+ *
+ * @brief Get EOI (End Of Interrupt) information
+ *
+ * This routine returns EOI signalling information for a specific IRQ.
+ *
+ * @param irq INTIN number of interest
+ * @param argRequired ptr to "argument required" result area
+ * @param arg ptr to "argument value" result area
+ *
+ * @returns: address of routine to be called to signal EOI;
+ *          as a side effect, also passes back indication if routine requires
+ *          an interrupt vector argument and what the argument value should be
+ */
+void *_ioapic_eoi_get(unsigned int irq, char *argRequired, void **arg)
 {
 
 	/* indicate that an argument to the EOI handler is required */
@@ -210,51 +209,52 @@ void *_ioapic_eoi_get(unsigned int irq,  /* INTIN number of interest */
 	return _loapic_eoi;
 }
 
-/*******************************************************************************
-*
-* _ioapic_irq_enable - enable a specified APIC interrupt input line
-*
-* This routine enables a specified APIC interrupt input line.
-*
-* RETURNS: N/A
-*/
-
-void _ioapic_irq_enable(unsigned int irq /* INTIN number to enable */
-				 )
+/**
+ *
+ * @brief Enable a specified APIC interrupt input line
+ *
+ * This routine enables a specified APIC interrupt input line.
+ *
+ * @param irq INTIN number to enable
+ *
+ * @returns: N/A
+ */
+void _ioapic_irq_enable(unsigned int irq)
 {
 	MvicRteUpdate(irq, 0, IOAPIC_INT_MASK);
 }
 
-/*******************************************************************************
-*
-* _ioapic_irq_disable - disable a specified APIC interrupt input line
-*
-* This routine disables a specified APIC interrupt input line.
-*
-* RETURNS: N/A
-*/
-
-void _ioapic_irq_disable(unsigned int irq /* INTIN number to disable */
-				  )
+/**
+ *
+ * @brief disable a specified APIC interrupt input line
+ *
+ * This routine disables a specified APIC interrupt input line.
+ *
+ * @param irq INTIN number to disable
+ *
+ * @returns: N/A
+ */
+void _ioapic_irq_disable(unsigned int irq)
 {
 	MvicRteUpdate(irq, IOAPIC_INT_MASK, IOAPIC_INT_MASK);
 }
 
-/*******************************************************************************
-*
-* _ioapic_irq_set - programs Rte interrupt line register.
-*
-* Always mask interrupt as part of programming like standard IOAPIC
-* version of this routine.
-* Vector is fixed by this HW and is unused.
-* Or in flags for trigger bit.
-*
-* RETURNS: N/A
-*/
-void _ioapic_irq_set(unsigned int irq, /* virtualized IRQ */
-		     unsigned int vector, /* vector number */
-		     uint32_t flags    /* interrupt flags */
-		     )
+/**
+ *
+ * @brief Programs Rte interrupt line register.
+ *
+ * Always mask interrupt as part of programming like standard IOAPIC
+ * version of this routine.
+ * Vector is fixed by this HW and is unused.
+ * Or in flags for trigger bit.
+ *
+ * @param irq Virtualized IRQ
+ * @param vector Vector Number
+ * @param flags Interrupt flags
+ *
+ * @returns: N/A
+ */
+void _ioapic_irq_set(unsigned int irq, unsigned int vector, uint32_t flags)
 {
 	uint32_t rteValue;   /* value to copy into Rte register */
 
@@ -264,29 +264,29 @@ void _ioapic_irq_set(unsigned int irq, /* virtualized IRQ */
 	MvicRteSet(irq, rteValue);
 }
 
-/*******************************************************************************
-*
-* _ioapic_int_vec_set - program interrupt vector for specified irq
-*
-* Fixed vector on this HW. Nothing to do.
-*
-* RETURNS: N/A
-*/
-void _ioapic_int_vec_set(unsigned int irq, /* INT number */
-				  unsigned int vector /* vector number */
-				  )
+/**
+ *
+ * @brief program interrupt vector for specified irq
+ *
+ * Fixed vector on this HW. Nothing to do.
+ *
+ * @param irq Interrupt number
+ * @param vector Vector number
+ *
+ * @returns: N/A
+ */
+void _ioapic_int_vec_set(unsigned int irq, unsigned int vector)
 {
 }
 
-/*******************************************************************************
-*
-* _loapic_enable - enable the MVIC Local APIC
-*
-* This routine enables the MVIC Local APIC.
-*
-* RETURNS: N/A
-*/
-
+/**
+ *
+ * @brief Enable the MVIC Local APIC
+ *
+ * This routine enables the MVIC Local APIC.
+ *
+ * @returns: N/A
+ */
 void _loapic_enable(void)
 {
 	int32_t oldLevel = irq_lock(); /* LOCK INTERRUPTS */
@@ -296,15 +296,14 @@ void _loapic_enable(void)
 	irq_unlock(oldLevel); /* UNLOCK INTERRUPTS */
 }
 
-/*******************************************************************************
-*
-* _loapic_disable - disable the MVIC Local APIC.
-*
-* This routine disables the MVIC Local APIC.
-*
-* RETURNS: N/A
-*/
-
+/**
+ *
+ * @brief Disable the MVIC Local APIC.
+ *
+ * This routine disables the MVIC Local APIC.
+ *
+ * @returns: N/A
+ */
 void _loapic_disable(void)
 {
 	int32_t oldLevel = irq_lock(); /* LOCK INTERRUPTS */
@@ -314,38 +313,37 @@ void _loapic_disable(void)
 	irq_unlock(oldLevel); /* UNLOCK INTERRUPTS */
 }
 
-/*******************************************************************************
-*
-* _loapic_eoi -  send EOI (End Of Interrupt) signal to MVIC Local APIC
-*
-* This routine sends an EOI signal to the MVIC Local APIC's interrupting source.
-*
-* RETURNS: N/A
-*/
-
+/**
+ *
+ * @brief Send EOI (End Of Interrupt) signal to MVIC Local APIC
+ *
+ * This routine sends an EOI signal to the MVIC Local APIC's interrupting source.
+ *
+ * @param irq IRQ number
+ *
+ * @returns: N/A
+ */
 void _loapic_eoi(unsigned int irq)
 {
 	ARG_UNUSED(irq);
 	*(volatile int *)(CONFIG_LOAPIC_BASE_ADDRESS + LOAPIC_EOI) = 0;
 }
 
-/*******************************************************************************
-*
-* _loapic_int_vec_set - set the vector field in the specified RTE
-*
-* This routine is utilized by the BSP provided routined _SysIntVecAllocate()
-* which in turn is provided to support the irq_connect() API.  Once
-* a vector has been allocated, this routine is invoked to update the LVT
-* entry associated with <irq> with the vector.
-*
-* RETURNS: N/A
-*/
-
-void _loapic_int_vec_set(unsigned int irq, /* IRQ number of the
-										   interrupt */
-										   unsigned int vector /* vector to copy
-															   into the LVT */
-															   )
+/**
+ *
+ * @brief Set the vector field in the specified RTE
+ *
+ * This routine is utilized by the BSP provided routined _SysIntVecAllocate()
+ * which in turn is provided to support the irq_connect() API.  Once
+ * a vector has been allocated, this routine is invoked to update the LVT
+ * entry associated with <irq> with the vector.
+ *
+ * @param irq IRQ number of the interrupt
+ * @param vector vector to copy into the LVT
+ *
+ * @returns N/A
+ */
+void _loapic_int_vec_set(unsigned int irq, unsigned int vector)
 {
 	volatile int *pLvt; /* pointer to local vector table */
 	int32_t oldLevel;   /* previous interrupt lock level */
@@ -374,18 +372,17 @@ void _loapic_int_vec_set(unsigned int irq, /* IRQ number of the
 
 }
 
-/*******************************************************************************
-*
-* _loapic_irq_enable - enable an individual LOAPIC interrupt (IRQ)
-*
-* This routine clears the interrupt mask bit in the LVT for the specified IRQ
-*
-* RETURNS: N/A
-*/
-
-void _loapic_irq_enable(unsigned int irq /* IRQ number of
-										 the interrupt */
-										 )
+/**
+ *
+ * @brief enable an individual LOAPIC interrupt (IRQ)
+ *
+ * This routine clears the interrupt mask bit in the LVT for the specified IRQ
+ *
+ * @param irq IRQ number of the interrupt
+ *
+ * @returns N/A
+ */
+void _loapic_irq_enable(unsigned int irq)
 {
 	volatile int *pLvt; /* pointer to local vector table */
 	int32_t oldLevel;   /* previous interrupt lock level */
@@ -411,18 +408,17 @@ void _loapic_irq_enable(unsigned int irq /* IRQ number of
 
 }
 
-/*******************************************************************************
-*
-* _loapic_irq_disable - disable an individual LOAPIC interrupt (IRQ)
-*
-* This routine clears the interrupt mask bit in the LVT for the specified IRQ
-*
-* RETURNS: N/A
-*/
-
-void _loapic_irq_disable(unsigned int irq /* IRQ number of the
-										  interrupt */
-										  )
+/**
+ *
+ * @brief disable an individual LOAPIC interrupt (IRQ)
+ *
+ * This routine clears the interrupt mask bit in the LVT for the specified IRQ
+ *
+ * @param irq IRQ number of the interrupt
+ *
+ * @returns N/A
+ */
+void _loapic_irq_disable(unsigned int irq)
 {
 	volatile int *pLvt; /* pointer to local vector table */
 	int32_t oldLevel;   /* previous interrupt lock level */
@@ -448,14 +444,14 @@ void _loapic_irq_disable(unsigned int irq /* IRQ number of the
 
 }
 
-/*******************************************************************************
-*
-* MvicRteGet - read a 32 bit MVIC IO APIC register
-*
-* RETURNS: register value
-*/
-static uint32_t MvicRteGet(unsigned int irq /* INTIN number */
-	)
+/**
+ *
+ * @brief read a 32 bit MVIC IO APIC register
+ *
+ * @param irq INTIN number
+ * @returns register value
+ */
+static uint32_t MvicRteGet(unsigned int irq)
 {
 	uint32_t value; /* value */
 	int key;	/* interrupt lock level */
@@ -485,17 +481,16 @@ static uint32_t MvicRteGet(unsigned int irq /* INTIN number */
 	return value;
 }
 
-/*******************************************************************************
-*
-* MvicRteSet -  write to 32 bit MVIC IO APIC register
-*
-*
-* RETURNS: N/A
-*/
-
-static void MvicRteSet(unsigned int irq, /* INTIN number */
-	uint32_t value  /* value to be written */
-	)
+/**
+ *
+ * @brief write to 32 bit MVIC IO APIC register
+ *
+ * @param irq INTIN number
+ * @param values Value to be written
+ *
+ * @returns N/A
+ */
+static void MvicRteSet(unsigned int irq, uint32_t value)
 {
 	int key; /* interrupt lock level */
 	volatile unsigned int *rte;
@@ -522,19 +517,17 @@ static void MvicRteSet(unsigned int irq, /* INTIN number */
 	irq_unlock(key);
 }
 
-/*******************************************************************************
-*
-* MvicRteUpdate - modify interrupt line register.
-*
-*
-* RETURNS: N/A
-*/
-
-static void MvicRteUpdate(
-	unsigned int irq, /* INTIN number */
-	uint32_t value,   /* value to be written */
-	uint32_t mask     /* mask of bits to be modified */
-	)
+/**
+ *
+ * @brief modify interrupt line register.
+ *
+ * @param irq INTIN number
+ * @param value value to be written
+ * @param mask mask of bits to be modified
+ *
+ * @returns N/A
+ */
+static void MvicRteUpdate(unsigned int irq, uint32_t value, uint32_t mask)
 {
 	MvicRteSet(irq, (MvicRteGet(irq) & ~mask) | (value & mask));
 }
