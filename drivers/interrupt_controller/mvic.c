@@ -1,8 +1,7 @@
 /* mvic.c - Mint Valley Interrupt Controller (MVIC) */
 
 /*
- * Copyright (c) 1997-1998, 2000-2002, 2004, 2006-2008, 2011-2015 Wind River
- * Systems, Inc.
+ * Copyright (c) 2015 Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -14,7 +13,7 @@
  * this list of conditions and the following disclaimer in the documentation
  * and/or other materials provided with the distribution.
  *
- * 3) Neither the name of Wind River Systems nor the names of its contributors
+ * 3) Neither the name of Intel Corporation Systems nor the names of its contributors
  * may be used to endorse or promote products derived from this software without
  * specific prior written permission.
  *
