@@ -50,11 +50,9 @@ by x86 platforms.
 #endif /* CONFIG_CONSOLE_HANDLER */
 
 #if defined(CONFIG_WDT_DW)
-#if defined(CONFIG_PIC)
-        pic_master_mkstub wdt_dw wdt_dw_isr
-#elif defined(CONFIG_IOAPIC)
+#if defined(CONFIG_IOAPIC)
         ioapic_mkstub wdt_dw wdt_dw_isr
-#endif /* CONFIG_PIC */
+#endif /* CONFIG_IOAPIC */
 #endif
 
 #if defined(CONFIG_QMI_WDT)
@@ -87,11 +85,9 @@ by x86 platforms.
 #endif /* CONFIG_SPI_INTEL */
 
 #if defined(CONFIG_DW_AIO_COMPARATOR)
-#if defined(CONFIG_PIC)
-	pic_master_mkstub dw_aio_cmp dw_aio_cmp_isr_dispatcher
-#elif defined(CONFIG_IOAPIC)
+#if defined(CONFIG_IOAPIC)
 	ioapic_mkstub dw_aio_cmp dw_aio_cmp_isr_dispatcher
-#endif /* CONFIG_PIC */
+#endif
 #endif /* CONFIG_DW_AIO_COMPARATOR */
 
 #if defined(CONFIG_QMI_GPIO)
@@ -101,19 +97,15 @@ by x86 platforms.
 #elif defined(CONFIG_GPIO_DW)
 
 #if CONFIG_GPIO_DW_0
-#if defined(CONFIG_PIC)
-       pic_master_mkstub gpio_dw_0 gpio_dw_isr_0
-#elif defined(CONFIG_IOAPIC)
+#if defined(CONFIG_IOAPIC)
        ioapic_mkstub gpio_dw_0 gpio_dw_isr_0
-#endif /* CONFIG_PIC */
+#endif /* CONFIG_IOAPIC */
 #endif /* CONFIG_GPIO_DW_0 */
 
 #if CONFIG_GPIO_DW_1
-#if defined(CONFIG_PIC)
-       pic_master_mkstub gpio_dw_1 gpio_dw_isr_1
-#elif defined(CONFIG_IOAPIC)
+#if defined(CONFIG_IOAPIC)
        ioapic_mkstub gpio_dw_1 gpio_dw_isr_1
-#endif /* CONFIG_PIC */
+#endif /* CONFIG_IOAPIC */
 #endif /* CONFIG_GPIO_DW_1 */
 
 #endif
