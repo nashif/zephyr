@@ -9,31 +9,17 @@
 /*
  * Copyright (c) 2015 Intel Corporation
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * 1) Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * 2) Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3) Neither the name of Intel Corporation nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 #define DEBUG DEBUG_PRINT
@@ -75,7 +61,7 @@ void net_context_set_receiver_registered(struct net_context *context);
 #define STACKSIZE_UNIT 1024
 static char __noinit rx_fiber_stack[STACKSIZE_UNIT * 1];
 static char __noinit tx_fiber_stack[STACKSIZE_UNIT * 1];
-static char __noinit timer_fiber_stack[600];
+static char __noinit timer_fiber_stack[STACKSIZE_UNIT * 1];
 
 static struct net_dev {
 	/* Queue for incoming packets from driver */
@@ -104,46 +90,79 @@ int net_send(struct net_buf *buf)
 #define STAT(s) uip_stat.s
 #define PRINT_STATISTICS_INTERVAL (10 * sys_clock_ticks_per_sec)
 #define net_print_statistics stats /* to make the debug print line shorter */
+
+#if NET_MAC_CONF_STATS
+#include "mac/mac.h"
+#endif
+
+#if RPL_CONF_STATS
+#include "rpl/rpl-private.h"
+#endif
+
 static void stats(void)
 {
 	static clock_time_t last_print;
 
 	/* See contiki/ip/uip.h for descriptions of the different values */
 	if (clock_time() > (last_print + PRINT_STATISTICS_INTERVAL)) {
-		NET_DBG("IP recv\t%d\tsent\t%d\tdrop\t%d\tforwarded\t%d\n",
+#if NET_MAC_CONF_STATS
+#define MAC_STAT(s) (net_mac_stats.s)
+		NET_DBG("L2 bytes recv  %d\tsent\t%d\n",
+			MAC_STAT(bytes_received),
+			MAC_STAT(bytes_sent));
+#endif
+		NET_DBG("IP recv        %d\tsent\t%d\tdrop\t%d\tforwarded\t%d\n",
 			STAT(ip.recv),
 			STAT(ip.sent),
 			STAT(ip.drop),
 			STAT(ip.forwarded));
-		NET_DBG("IP vhlerr\t%d\thblener\t%d\tlblener\t%d\n",
+		NET_DBG("IP vhlerr      %d\thblener\t%d\tlblener\t%d\n",
 			STAT(ip.vhlerr),
 			STAT(ip.hblenerr),
 			STAT(ip.lblenerr));
-		NET_DBG("IP fragerr\t%d\tchkerr\t%d\tprotoer\t%d\n",
+		NET_DBG("IP fragerr     %d\tchkerr\t%d\tprotoer\t%d\n",
 			STAT(ip.fragerr),
 			STAT(ip.chkerr),
 			STAT(ip.protoerr));
 
-		NET_DBG("ICMP recv\t%d\tsent\t%d\tdrop\t%d\n",
+		NET_DBG("ICMP recv      %d\tsent\t%d\tdrop\t%d\n",
 			STAT(icmp.recv),
 			STAT(icmp.sent),
 			STAT(icmp.drop));
-		NET_DBG("ICMP typeer\t%d\tchkerr\t%d\n",
+		NET_DBG("ICMP typeer    %d\tchkerr\t%d\n",
 			STAT(icmp.typeerr),
 			STAT(icmp.chkerr));
 
-		NET_DBG("UDP recv\t%d\tsent\t%d\tdrop\t%d\n",
+		NET_DBG("UDP recv       %d\tsent\t%d\tdrop\t%d\n",
 			STAT(udp.recv),
 			STAT(udp.sent),
 			STAT(udp.drop));
-		NET_DBG("UDP chkerr\t%d\n",
+		NET_DBG("UDP chkerr     %d\n",
 			STAT(icmp.chkerr));
 
 #if NETSTACK_CONF_WITH_IPV6
-		NET_DBG("ND recv\t%d\tsent\t%d\tdrop\t%d\n",
+		NET_DBG("ND recv        %d\tsent\t%d\tdrop\t%d\n",
 			STAT(nd6.recv),
 			STAT(nd6.sent),
 			STAT(nd6.drop));
+#endif
+
+#if RPL_CONF_STATS
+#define RSTAT(s) RPL_STAT(rpl_stats.s)
+		NET_DBG("RPL overflows  %d\tl-repairs\t%d\tg-repairs\t%d\n",
+			RSTAT(mem_overflows),
+			RSTAT(local_repairs),
+			RSTAT(global_repairs));
+		NET_DBG("RPL malformed  %d\tresets   \t%d\tp-switch\t%d\n",
+			RSTAT(malformed_msgs),
+			RSTAT(resets),
+			RSTAT(parent_switch));
+		NET_DBG("RPL f-errors   %d\tl-errors\t%d\tl-warnings\t%d\n",
+			RSTAT(forward_errors),
+			RSTAT(loop_errors),
+			RSTAT(loop_warnings));
+		NET_DBG("RPL r-repairs  %d\n",
+			RSTAT(root_repairs));
 #endif
 		last_print = clock_time();
 	}
@@ -464,7 +483,14 @@ static int check_and_send_packet(struct net_buf *buf)
 			}
 			net_context_set_receiver_registered(buf->context);
 		}
+
+		/* Remember the original length as the uIP stack might
+		 * reset the uip_len(buf) value.
+		 */
+		buf->datalen = uip_len(buf);
+
 		ret = simple_udp_send(buf, udp, buf->data, buf->len);
+
 		break;
 	case IPPROTO_TCP:
 		NET_DBG("TCP not yet supported\n");
@@ -501,9 +527,9 @@ static void net_tx_fiber(void)
 		ret = check_and_send_packet(buf);
 		if (ret < 0) {
 			net_buf_put(buf);
-			continue;
+			goto wait_next;
 		} else if (ret > 0) {
-			continue;
+			goto wait_next;
 		}
 
 		NET_BUF_CHECK_IF_NOT_IN_USE(buf);
@@ -513,11 +539,12 @@ static void net_tx_fiber(void)
 			ret = process_run(buf);
 		} while (ret > 0);
 
+		net_buf_put(buf);
+
+	wait_next:
 		/* Check stack usage (no-op if not enabled) */
 		net_analyze_stack("TX fiber", tx_fiber_stack,
 				  sizeof(tx_fiber_stack));
-
-		net_buf_put(buf);
 
 		net_print_statistics();
 	}
@@ -626,6 +653,7 @@ int net_set_mac(uint8_t *mac, uint8_t len)
 	}
 
 	linkaddr_set_node_addr((linkaddr_t *)mac);
+	NET_DBG("MAC "); PRINTLLADDR((uip_lladdr_t *)&linkaddr_node_addr); PRINTF("\n");
 
 #ifdef CONFIG_NETWORKING_WITH_IPV6
 	{
@@ -715,6 +743,10 @@ int net_init(void)
 		return -EALREADY;
 
 	initialized = 1;
+
+#if UIP_STATISTICS == 1
+	memset(&uip_stat, 0, sizeof(uip_stat));
+#endif /* UIP_STATISTICS == 1 */
 
 	net_context_init();
 	net_buf_init();

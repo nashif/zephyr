@@ -3,31 +3,17 @@
 /*
  * Copyright (c) 2013-2015, Wind River Systems, Inc.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * 1) Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * 2) Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3) Neither the name of Wind River Systems nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -145,6 +131,40 @@ pre_kernel_early_init(spiirq_1, NULL);
 
 #endif /* CONFIG_IOAPIC */
 #endif /* CONFIG_SHARED_IRQ */
+
+#ifdef CONFIG_PCI_LEGACY_BRIDGE
+/**
+ *
+ * @brief Configure PCI interrupt pin to IRQ mapping
+ *
+ * The routine detects PCI legacy bridge and if present,
+ * configures PCI interrupt pin to IRQ mapping for D:20
+ * and D:21 IO Fabric, that contains the following devices:
+ * - SPI0, SPI1;
+ * - I2C;
+ * - GPIO;
+ * - UART0, UART1;
+ * - SDIO/eMMC, USB, Ethernet.
+ */
+static int pci_legacy_bridge_irq_config(struct device *unused)
+{
+	ARG_UNUSED(unused);
+	struct pci_dev_info info = {
+		.function = PCI_FUNCTION_ANY,
+		.bar = PCI_BAR_ANY,
+	};
+	if (pci_legacy_bridge_detect(&info) == 0) {
+		pci_legacy_bridge_configure(&info, 1, PCI_INTA, 16);
+		pci_legacy_bridge_configure(&info, 1, PCI_INTB, 17);
+		pci_legacy_bridge_configure(&info, 1, PCI_INTC, 18);
+		pci_legacy_bridge_configure(&info, 1, PCI_INTD, 19);
+	}
+	return 0;
+}
+
+DECLARE_DEVICE_INIT_CONFIG(pci_legacy_bridge_0, "", pci_legacy_bridge_irq_config, NULL);
+pre_kernel_late_init(pci_legacy_bridge_0, NULL);
+#endif /* CONFIG_PCI_LEGACY_BRIDGE */
 
 #ifdef CONFIG_CONSOLE_HANDLER
 

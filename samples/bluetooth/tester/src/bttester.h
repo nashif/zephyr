@@ -3,31 +3,17 @@
 /*
  * Copyright (c) 2015 Intel Corporation
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * 1) Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * 2) Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3) Neither the name of Intel Corporation nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 #define BTP_MTU 512
@@ -36,6 +22,7 @@
 
 #define BTP_SERVICE_ID_CORE	0
 #define BTP_SERVICE_ID_GAP	1
+#define BTP_SERVICE_ID_GATT	2
 
 #define BTP_STATUS_SUCCESS	0x00
 #define BTP_STATUS_FAILED	0x01
@@ -186,6 +173,12 @@ struct gap_start_discovery_cmd {
 
 #define GAP_STOP_DISCOVERY		0x0d
 
+#define GAP_DISCONNECT			0x0f
+struct gap_disconnect_cmd {
+	uint8_t  address_type;
+	uint8_t  address[6];
+} __packed;
+
 /* events */
 #define GAP_EV_NEW_SETTINGS		0x80
 struct gap_new_settings_ev {
@@ -218,6 +211,47 @@ struct gap_device_disconnected_ev {
 	uint8_t address_type;
 };
 
+/* GATT Service */
+/* commands */
+#define GATT_READ_SUPPORTED_COMMANDS	0x01
+struct gatt_read_supported_commands_rp {
+	uint8_t data[0];
+};
+
+#define GATT_SERVICE_PRIMARY		0x00
+#define GATT_SERVICE_SECONDARY		0x01
+
+#define GATT_ADD_SERVICE		0x02
+struct gatt_add_service_cmd {
+	uint8_t type;
+	uint8_t uuid_length;
+	uint8_t uuid[0];
+} __packed;
+struct gatt_add_service_rp {
+	uint16_t svc_id;
+};
+
+#define GATT_ADD_CHARACTERISTIC		0x03
+struct gatt_add_characteristic_cmd {
+	uint16_t svc_id;
+	uint8_t properties;
+	uint8_t permissions;
+	uint8_t uuid_length;
+	uint8_t uuid[0];
+} __packed;
+struct gatt_add_characteristic_rp {
+	uint16_t char_id;
+};
+
+#define GATT_SET_VALUE			0x06
+	struct gatt_set_value_cmd {
+	uint16_t attr_id;
+	uint16_t len;
+	uint8_t value[0];
+} __packed;
+
+#define GATT_START_SERVER		0x07
+
 void tester_init(void);
 void tester_rsp(uint8_t service, uint8_t opcode, uint8_t index, uint8_t status);
 void tester_rsp_full(uint8_t service, uint8_t opcode, uint8_t index,
@@ -226,3 +260,6 @@ void tester_rsp_full(uint8_t service, uint8_t opcode, uint8_t index,
 uint8_t tester_init_gap(void);
 void tester_handle_gap(uint8_t opcode, uint8_t index, uint8_t *data,
 		       uint16_t len);
+uint8_t tester_init_gatt(void);
+void tester_handle_gatt(uint8_t opcode, uint8_t index, uint8_t *data,
+			uint16_t len);

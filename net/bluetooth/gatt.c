@@ -3,31 +3,17 @@
 /*
  * Copyright (c) 2015 Intel Corporation
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * 1) Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * 2) Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3) Neither the name of Intel Corporation nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 #include <nanokernel.h>
@@ -62,7 +48,9 @@
 static const struct bt_gatt_attr *db = NULL;
 static size_t attr_count = 0;
 
+#if defined(CONFIG_BLUETOOTH_GATT_CLIENT)
 static struct bt_gatt_subscribe_params *subscriptions;
+#endif /* CONFIG_BLUETOOTH_GATT_CLIENT */
 
 void bt_gatt_register(const struct bt_gatt_attr *attrs, size_t count)
 {
@@ -244,8 +232,12 @@ int bt_gatt_attr_write_ccc(struct bt_conn *conn,
 	bool bonded;
 	size_t i;
 
-	if (len != sizeof(*data) || offset) {
+	if (offset > sizeof(*data)) {
 		return -EINVAL;
+	}
+
+	if (offset + len > sizeof(*data)) {
+		return -EFBIG;
 	}
 
 	if (bt_keys_find_addr(&conn->dst))
@@ -418,20 +410,6 @@ void bt_gatt_connected(struct bt_conn *conn)
 	bt_gatt_foreach_attr(0x0001, 0xffff, connected_cb, conn);
 }
 
-void bt_gatt_notification(struct bt_conn *conn, uint16_t handle,
-			  const void *data, uint16_t length)
-{
-	struct bt_gatt_subscribe_params *params;
-
-	BT_DBG("handle 0x%04x length %u\n", handle, length);
-
-	for (params = subscriptions; params; params = params->_next) {
-		if (handle == params->value_handle) {
-			params->func(conn, 0, data, length);
-		}
-	}
-}
-
 static uint8_t disconnected_cb(const struct bt_gatt_attr *attr, void *user_data)
 {
 	struct bt_conn *conn = user_data;
@@ -477,6 +455,21 @@ static uint8_t disconnected_cb(const struct bt_gatt_attr *attr, void *user_data)
 	return BT_GATT_ITER_CONTINUE;
 }
 
+#if defined(CONFIG_BLUETOOTH_GATT_CLIENT)
+void bt_gatt_notification(struct bt_conn *conn, uint16_t handle,
+			  const void *data, uint16_t length)
+{
+	struct bt_gatt_subscribe_params *params;
+
+	BT_DBG("handle 0x%04x length %u\n", handle, length);
+
+	for (params = subscriptions; params; params = params->_next) {
+		if (handle == params->value_handle) {
+			params->func(conn, 0, data, length);
+		}
+	}
+}
+
 static void gatt_subscription_remove(struct bt_gatt_subscribe_params *prev,
 				     struct bt_gatt_subscribe_params *params)
 {
@@ -491,17 +484,9 @@ static void gatt_subscription_remove(struct bt_gatt_subscribe_params *prev,
 		params->destroy(params);
 }
 
-void bt_gatt_disconnected(struct bt_conn *conn)
+static void remove_subscribtions(struct bt_conn *conn)
 {
 	struct bt_gatt_subscribe_params *params, *prev;
-
-	BT_DBG("conn %p\n", conn);
-	bt_gatt_foreach_attr(0x0001, 0xffff, disconnected_cb, conn);
-
-	/* If paired don't remove subscriptions */
-	if (bt_keys_find_addr(&conn->dst)) {
-		return;
-	}
 
 	/* Lookup existing subscriptions */
 	for (params = subscriptions, prev = NULL; params;
@@ -596,8 +581,14 @@ static void att_find_type_rsp(struct bt_conn *conn, uint8_t err,
 		value.end_handle = end_handle;
 		value.uuid = params->uuid;
 
-		attr = (&(struct bt_gatt_attr)
-			BT_GATT_PRIMARY_SERVICE(start_handle, &value));
+		if (params->type == BT_GATT_DISCOVER_PRIMARY) {
+			attr = (&(struct bt_gatt_attr)
+				BT_GATT_PRIMARY_SERVICE(start_handle, &value));
+		} else {
+			attr = (&(struct bt_gatt_attr)
+				BT_GATT_SECONDARY_SERVICE(start_handle,
+							  &value));
+		}
 
 		if (params->func(attr, params) == BT_GATT_ITER_STOP) {
 			goto done;
@@ -626,17 +617,12 @@ done:
 	}
 }
 
-int bt_gatt_discover(struct bt_conn *conn,
-		     struct bt_gatt_discover_params *params)
+static int att_find_type(struct bt_conn *conn,
+			 struct bt_gatt_discover_params *params)
 {
 	struct bt_buf *buf;
 	struct bt_att_find_type_req *req;
 	uint16_t *value;
-
-	if (!conn || !params->uuid || !params->func || !params->start_handle ||
-	    !params->end_handle) {
-		return -EINVAL;
-	}
 
 	buf = bt_att_create_pdu(conn, BT_ATT_OP_FIND_TYPE_REQ, sizeof(*req));
 	if (!buf) {
@@ -646,7 +632,12 @@ int bt_gatt_discover(struct bt_conn *conn,
 	req = bt_buf_add(buf, sizeof(*req));
 	req->start_handle = sys_cpu_to_le16(params->start_handle);
 	req->end_handle = sys_cpu_to_le16(params->end_handle);
-	req->type = sys_cpu_to_le16(BT_UUID_GATT_PRIMARY);
+
+	if (params->type == BT_GATT_DISCOVER_PRIMARY) {
+		req->type = sys_cpu_to_le16(BT_UUID_GATT_PRIMARY);
+	} else {
+		req->type = sys_cpu_to_le16(BT_UUID_GATT_SECONDARY);
+	}
 
 	BT_DBG("uuid 0x%04x start_handle 0x%04x end_handle 0x%04x\n",
 	       params->uuid->u16, params->start_handle, params->end_handle);
@@ -670,21 +661,96 @@ int bt_gatt_discover(struct bt_conn *conn,
 	return gatt_send(conn, buf, att_find_type_rsp, params, NULL);
 }
 
-static void att_read_type_rsp(struct bt_conn *conn, uint8_t err,
-			      const void *pdu, uint16_t length,
-			      void *user_data)
+static uint16_t parse_include(const void *pdu,
+			      struct bt_gatt_discover_params *params,
+			      uint16_t length)
 {
 	const struct bt_att_read_type_rsp *rsp = pdu;
-	struct bt_gatt_discover_params *params = user_data;
+	struct bt_uuid uuid;
+	uint16_t handle = 0;
+	struct bt_gatt_include value;
+
+	/* Data can be either in UUID16 or UUID128 */
+	switch (rsp->len) {
+	case 8: /* UUID16 */
+		uuid.type = BT_UUID_16;
+		break;
+	case 6: /* UUID128 */
+		/* BLUETOOTH SPECIFICATION Version 4.2 [Vol 3, Part G] page 550
+		 * To get the included service UUID when the included service
+		 * uses a 128-bit UUID, the Read Request is used.
+		 */
+		uuid.type = BT_UUID_128;
+		break;
+	default:
+		BT_ERR("Invalid data len %u\n", rsp->len);
+		goto done;
+	}
+
+	/* Parse include found */
+	for (length--, pdu = rsp->data; length >= rsp->len;
+	     length -= rsp->len, pdu += rsp->len) {
+		const struct bt_gatt_attr *attr;
+		const struct bt_att_data *data = pdu;
+		struct gatt_incl *incl = (void *)data->value;
+
+		handle = sys_le16_to_cpu(data->handle);
+		/* Handle 0 is invalid */
+		if (!handle) {
+			goto done;
+		}
+
+		/* Convert include data, bt_gatt_incl and gatt_incl
+		 * have different formats so the conversion have to be done
+		 * field by field.
+		 */
+		value.start_handle = incl->start_handle;
+		value.end_handle = incl->end_handle;
+
+		switch(uuid.type) {
+		case BT_UUID_16:
+			value.uuid = &uuid;
+			uuid.u16 = sys_le16_to_cpu(incl->uuid16);
+			break;
+		case BT_UUID_128:
+			/* Data is not available at this point */
+			break;
+		}
+
+		BT_DBG("handle 0x%04x start_handle 0x%04x end_handle 0x%04x\n",
+		       handle, value.start_handle, value.end_handle);
+
+		/* Skip if UUID is set but doesn't match */
+		if (params->uuid && bt_uuid_cmp(&uuid, params->uuid)) {
+			continue;
+		}
+
+		attr = (&(struct bt_gatt_attr)
+			BT_GATT_INCLUDE_SERVICE(handle, &value));
+
+		if (params->func(attr, params) == BT_GATT_ITER_STOP) {
+			handle = 0;
+			goto done;
+		}
+	}
+
+	/* Stop if could not parse the whole PDU */
+	if (length > 0) {
+		return 0;
+	}
+
+done:
+	return handle;
+}
+
+static uint16_t parse_characteristic(const void *pdu,
+				     struct bt_gatt_discover_params *params,
+				     uint16_t length)
+{
+	const struct bt_att_read_type_rsp *rsp = pdu;
 	struct bt_uuid uuid;
 	uint16_t handle = 0;
 	struct bt_gatt_chrc value;
-
-	BT_DBG("err 0x%02x\n", err);
-
-	if (err) {
-		goto done;
-	}
 
 	/* Data can be either in UUID16 or UUID128 */
 	switch (rsp->len) {
@@ -741,12 +807,40 @@ static void att_read_type_rsp(struct bt_conn *conn, uint8_t err,
 			BT_GATT_CHARACTERISTIC(handle, &value));
 
 		if (params->func(attr, params) == BT_GATT_ITER_STOP) {
+			handle = 0;
 			goto done;
 		}
 	}
 
 	/* Stop if could not parse the whole PDU */
 	if (length > 0) {
+		return 0;
+	}
+
+done:
+	return handle;
+}
+
+static void att_read_type_rsp(struct bt_conn *conn, uint8_t err,
+			      const void *pdu, uint16_t length,
+			      void *user_data)
+{
+	struct bt_gatt_discover_params *params = user_data;
+	uint16_t handle;
+
+	BT_DBG("err 0x%02x\n", err);
+
+	if (err) {
+		goto done;
+	}
+
+	if (params->type == BT_GATT_DISCOVER_INCLUDE) {
+		handle = parse_include(pdu, params, length);
+	} else {
+		handle = parse_characteristic(pdu, params, length);
+	}
+
+	if (!handle) {
 		goto done;
 	}
 
@@ -762,7 +856,7 @@ static void att_read_type_rsp(struct bt_conn *conn, uint8_t err,
 	}
 
 	/* Continue to the next range */
-	if (!bt_gatt_discover_characteristic(conn, params)) {
+	if (!bt_gatt_discover(conn, params)) {
 		return;
 	}
 
@@ -772,17 +866,12 @@ done:
 	}
 }
 
-int bt_gatt_discover_characteristic(struct bt_conn *conn,
-				    struct bt_gatt_discover_params *params)
+static int att_read_type(struct bt_conn *conn,
+			 struct bt_gatt_discover_params *params)
 {
 	struct bt_buf *buf;
 	struct bt_att_read_type_req *req;
 	uint16_t *value;
-
-	if (!conn || !params->func || !params->start_handle ||
-	    !params->end_handle) {
-		return -EINVAL;
-	}
 
 	buf = bt_att_create_pdu(conn, BT_ATT_OP_READ_TYPE_REQ, sizeof(*req));
 	if (!buf) {
@@ -794,7 +883,10 @@ int bt_gatt_discover_characteristic(struct bt_conn *conn,
 	req->end_handle = sys_cpu_to_le16(params->end_handle);
 
 	value = bt_buf_add(buf, sizeof(*value));
-	*value = sys_cpu_to_le16(BT_UUID_GATT_CHRC);
+	if (params->type == BT_GATT_DISCOVER_INCLUDE)
+		*value = sys_cpu_to_le16(BT_UUID_GATT_INCLUDE);
+	else
+		*value = sys_cpu_to_le16(BT_UUID_GATT_CHRC);
 
 	BT_DBG("start_handle 0x%04x end_handle 0x%04x\n", params->start_handle,
 	       params->end_handle);
@@ -886,7 +978,7 @@ static void att_find_info_rsp(struct bt_conn *conn, uint8_t err,
 	}
 
 	/* Continue to the next range */
-	if (!bt_gatt_discover_descriptor(conn, params)) {
+	if (!bt_gatt_discover(conn, params)) {
 		return;
 	}
 
@@ -896,16 +988,11 @@ done:
 	}
 }
 
-int bt_gatt_discover_descriptor(struct bt_conn *conn,
-				struct bt_gatt_discover_params *params)
+static int att_find_info(struct bt_conn *conn,
+			 struct bt_gatt_discover_params *params)
 {
 	struct bt_buf *buf;
 	struct bt_att_find_info_req *req;
-
-	if (!conn || !params->func || !params->start_handle ||
-	    !params->end_handle) {
-		return -EINVAL;
-	}
 
 	buf = bt_att_create_pdu(conn, BT_ATT_OP_FIND_INFO_REQ, sizeof(*req));
 	if (!buf) {
@@ -920,6 +1007,32 @@ int bt_gatt_discover_descriptor(struct bt_conn *conn,
 	       params->end_handle);
 
 	return gatt_send(conn, buf, att_find_info_rsp, params, NULL);
+}
+
+int bt_gatt_discover(struct bt_conn *conn,
+		     struct bt_gatt_discover_params *params)
+{
+	if (!conn || !params->func || !params->start_handle ||
+	    !params->end_handle || params->start_handle > params->end_handle) {
+		return -EINVAL;
+	}
+
+	switch (params->type) {
+	case BT_GATT_DISCOVER_PRIMARY:
+		return att_find_type(conn, params);
+	case BT_GATT_DISCOVER_SECONDARY:
+		return att_find_type(conn, params);
+	case BT_GATT_DISCOVER_INCLUDE:
+		return att_read_type(conn, params);
+	case BT_GATT_DISCOVER_CHARACTERISTIC:
+		return att_read_type(conn, params);
+	case BT_GATT_DISCOVER_DESCRIPTOR:
+		return att_find_info(conn, params);
+	default:
+		BT_ERR("Invalid discovery type: %u\n", params->type);
+	}
+
+	return -EINVAL;
 }
 
 static void att_read_rsp(struct bt_conn *conn, uint8_t err, const void *pdu,
@@ -994,6 +1107,15 @@ static void att_write_rsp(struct bt_conn *conn, uint8_t err, const void *pdu,
 	func(conn, err);
 }
 
+static bool write_signed_allowed(struct bt_conn *conn)
+{
+#if defined(CONFIG_BLUETOOTH_SMP)
+	return conn->encrypt == 0;
+#else
+	return false;
+#endif /* CONFIG_BLUETOOTH_SMP */
+}
+
 int bt_gatt_write_without_response(struct bt_conn *conn, uint16_t handle,
 				   const void *data, uint16_t length, bool sign)
 {
@@ -1004,12 +1126,12 @@ int bt_gatt_write_without_response(struct bt_conn *conn, uint16_t handle,
 		return -EINVAL;
 	}
 
-	if (!sign || conn->encrypt) {
-		buf = bt_att_create_pdu(conn, BT_ATT_OP_WRITE_CMD,
-					sizeof(*cmd) + length);
-	} else {
+	if (sign && write_signed_allowed(conn)) {
 		buf = bt_att_create_pdu(conn, BT_ATT_OP_SIGNED_WRITE_CMD,
 					sizeof(*cmd) + length + 12);
+	} else {
+		buf = bt_att_create_pdu(conn, BT_ATT_OP_WRITE_CMD,
+					sizeof(*cmd) + length);
 	}
 	if (!buf) {
 		return -ENOMEM;
@@ -1319,4 +1441,20 @@ int bt_gatt_read_multiple(struct bt_conn *conn, const uint16_t *handles,
 	}
 
 	return gatt_send(conn, buf, att_read_rsp, func, NULL);
+}
+#endif /* CONFIG_BLUETOOTH_GATT_CLIENT */
+
+void bt_gatt_disconnected(struct bt_conn *conn)
+{
+	BT_DBG("conn %p\n", conn);
+	bt_gatt_foreach_attr(0x0001, 0xffff, disconnected_cb, conn);
+
+#if defined(CONFIG_BLUETOOTH_GATT_CLIENT)
+	/* If paired don't remove subscriptions */
+	if (bt_keys_find_addr(&conn->dst)) {
+		return;
+	}
+
+	remove_subscribtions(conn);
+#endif /* CONFIG_BLUETOOTH_GATT_CLIENT */
 }

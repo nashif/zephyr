@@ -1,31 +1,17 @@
 /*
  * Copyright (c) 2010-2014 Wind River Systems, Inc.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * 1) Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * 2) Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3) Neither the name of Wind River Systems nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /**
@@ -42,7 +28,7 @@
 #include <arch/x86/asm_inline.h>
 #endif
 
-/* APIs need to support non-byte addressible architectures */
+/* APIs need to support non-byte addressable architectures */
 
 #define OCTET_TO_SIZEOFUNIT(X) (X)
 #define SIZEOFUNIT_TO_OCTET(X) (X)
@@ -77,8 +63,8 @@
  * Floating point register set alignment.
  *
  * If support for SSEx extensions is enabled a 16 byte boundary is required,
- * since the 'fxsave' and 'fxrstor' instructions require this.  In all other
- * cases a 4 byte bounday is sufficient.
+ * since the 'fxsave' and 'fxrstor' instructions require this. In all other
+ * cases a 4 byte boundary is sufficient.
  */
 
 #ifdef CONFIG_SSE
@@ -101,6 +87,10 @@ typedef unsigned char __aligned(_INT_STUB_ALIGN) NANO_INT_STUB[_INT_STUB_SIZE];
 typedef struct s_isrList {
 	/** Address of ISR/stub */
 	void		*fnc;
+	/** IRQ associated with the ISR/stub */
+	unsigned int    irq;
+	/** Priority associated with the IRQ */
+	unsigned int    priority;
 	/** Vector number associated with ISR/stub */
 	unsigned int    vec;
 	/** Privilege level associated with ISR/stub */
@@ -123,6 +113,8 @@ typedef struct s_isrList {
  * descriptor; (hardware) interrupts and exceptions should specify a level of 0,
  * whereas handlers for user-mode software generated interrupts should specify 3.
  * @param r Routine to be connected
+ * @param n IRQ number
+ * @param p IRQ priority
  * @param v Interrupt Vector
  * @param d Descriptor Privilege Level
  *
@@ -130,8 +122,9 @@ typedef struct s_isrList {
  *
  */
 
-#define NANO_CPU_INT_REGISTER(r, v, d) \
-	 ISR_LIST __attribute__((section(".intList"))) MK_ISR_NAME(r) = {&r, v, d}
+#define NANO_CPU_INT_REGISTER(r, n, p, v, d) \
+	 ISR_LIST __attribute__((section(".intList"))) MK_ISR_NAME(r) = \
+			{&r, n, p, v, d}
 
 /*
  * @brief Declare a dynamic interrupt stub
@@ -150,28 +143,29 @@ typedef struct s_isrList {
  *
  * For the device @a device associates IRQ number @a irq with priority
  * @a priority with the interrupt routine @a isr, that receives parameter
- * @a parameter
+ * @a parameter.
  *
  * @param device Device
  * @param irq IRQ number
- * @param priority IRQ Priority
+ * @param priority IRQ Priority (currently ignored)
  * @param isr Interrupt Service Routine
  * @param parameter ISR parameter
  *
  * @return N/A
  *
  */
-#define IRQ_CONNECT_STATIC(device, irq, priority, isr, parameter)	\
-	const uint32_t _##device##_int_vector = INT_VEC_IRQ0 + (irq);	\
-	extern void *_##device##_##isr##_stub;				\
-	NANO_CPU_INT_REGISTER(_##device##_##isr##_stub, INT_VEC_IRQ0 + (irq), priority)
+#define IRQ_CONNECT_STATIC(device, irq, priority, isr, parameter)	   \
+	const uint32_t _##device##_int_vector = INT_VEC_IRQ0 + (irq);	   \
+	extern void *_##device##_##isr##_stub;				               \
+	NANO_CPU_INT_REGISTER(_##device##_##isr##_stub, (irq), (priority), \
+					INT_VEC_IRQ0 + (irq), 0)
 
 
 /**
  *
  * @brief Configure interrupt for the device
  *
- * For the given device do the neccessary configuration steps.
+ * For the given device do the necessary configuration steps.
  * For x86 platform configure APIC and mark interrupt vector allocated
  * @param device Device
  * @param irq IRQ
@@ -188,6 +182,7 @@ typedef struct s_isrList {
 
 /**
  * @brief Nanokernel Exception Stack Frame
+ *
  * A pointer to an "exception stack frame" (ESF) is passed as an argument
  * to exception handlers registered via nanoCpuExcConnect().  When an exception
  * occurs while PL=0, then only the EIP, CS, and EFLAGS are pushed onto the stack.
@@ -231,6 +226,7 @@ typedef struct nanoEsf {
 
 /**
  * @brief Nanokernel "interrupt stack frame" (ISF)
+ *
  * An "interrupt stack frame" (ISF) as constructed by the processor
  * and the interrupt wrapper function _IntExit().  When an interrupt
  * occurs while PL=0, only the EIP, CS, and EFLAGS are pushed onto the stack.
@@ -324,7 +320,6 @@ void _int_latency_stop(void);
  * @return An architecture-dependent lock-out key representing the
  * "interrupt disable state" prior to the call.
  *
- * \NOMANUAL
  */
 
 static inline __attribute__((always_inline)) unsigned int irq_lock(void)
@@ -351,7 +346,6 @@ static inline __attribute__((always_inline)) unsigned int irq_lock(void)
  *
  * @return N/A
  *
- * \NOMANUAL
  */
 
 static inline __attribute__((always_inline)) void irq_unlock(unsigned int key)
@@ -438,7 +432,7 @@ extern const NANO_ESF _default_esf;
  *
  * This routine is invoked by the kernel to configure an interrupt vector of
  * the specified priority.  To this end, it allocates an interrupt vector,
- * programs hardware to route interrupt requests on the specified irq to that
+ * programs hardware to route interrupt requests on the specified IRQ to that
  * vector, and returns the vector number along with its associated BOI/EOI
  * information.
  */
@@ -462,7 +456,7 @@ extern void	_IntVecMarkFree(unsigned int vector);
 
 #endif /* !_ASMLANGUAGE */
 
-/* Segment selector defintions are shared */
+/* Segment selector definitions are shared */
 #include "segselect.h"
 
 #endif /* _ARCH_IFACE_H */

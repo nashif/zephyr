@@ -168,11 +168,11 @@ dis_input(struct net_buf *buf)
 #else /* !RPL_LEAF_ONLY */
       if(uip_is_addr_mcast(&UIP_IP_BUF(buf)->destipaddr)) {
         PRINTF("RPL: Multicast DIS => reset DIO timer\n");
-        rpl_reset_dio_timer(buf, instance);
+        rpl_reset_dio_timer(instance);
       } else {
 #endif /* !RPL_LEAF_ONLY */
         PRINTF("RPL: Unicast DIS, reply to sender\n");
-        dio_output(buf, instance, &UIP_IP_BUF(buf)->srcipaddr);
+        dio_output(instance, &UIP_IP_BUF(buf)->srcipaddr);
       }
     }
   }
@@ -194,6 +194,13 @@ dis_output(struct net_buf *buf, uip_ipaddr_t *addr)
    *     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    */
 
+  if (!buf) {
+    buf = net_buf_get_reserve_tx(0);
+    if (!buf) {
+      PRINTF("%s(): Cannot get net_buf\n", __FUNCTION__);
+      return;
+    }
+  }
   buffer = UIP_ICMP_PAYLOAD(buf);
   buffer[0] = buffer[1] = 0;
 
@@ -248,15 +255,15 @@ dio_input(struct net_buf *buf)
       PRINTF("RPL: Neighbor added to neighbor cache ");
       PRINT6ADDR(&from);
       PRINTF(", ");
-      PRINTLLADDR((uip_lladdr_t *)buf->src);
+      PRINTLLADDR((uip_lladdr_t *)&buf->src);
       PRINTF("\n");
     } else {
       PRINTF("RPL: Out of memory, dropping DIO from ");
       PRINT6ADDR(&from);
       PRINTF(", ");
-      PRINTLLADDR((uip_lladdr_t *)buf->src);
+      PRINTLLADDR((uip_lladdr_t *)&buf->src);
       PRINTF("\n");
-      return;
+      goto out;
     }
   } else {
     PRINTF("RPL: Neighbor already in neighbor cache\n");
@@ -306,7 +313,7 @@ dio_input(struct net_buf *buf)
     if(len + i > buffer_length) {
       PRINTF("RPL: Invalid DIO packet\n");
       RPL_STAT(rpl_stats.malformed_msgs++);
-      return;
+      goto out;
     }
 
     PRINTF("RPL: DIO option %u, length: %u\n", subopt_type, len - 2);
@@ -316,7 +323,7 @@ dio_input(struct net_buf *buf)
       if(len < 6) {
         PRINTF("RPL: Invalid DAG MC, len = %d\n", len);
 	RPL_STAT(rpl_stats.malformed_msgs++);
-        return;
+        goto out;
       }
       dio.mc.type = buffer[i + 2];
       dio.mc.flags = buffer[i + 3] << 1;
@@ -342,14 +349,14 @@ dio_input(struct net_buf *buf)
         dio.mc.obj.energy.energy_est = buffer[i + 7];
       } else {
        PRINTF("RPL: Unhandled DAG MC type: %u\n", (unsigned)dio.mc.type);
-       return;
+       goto out;
       }
       break;
     case RPL_OPTION_ROUTE_INFO:
       if(len < 9) {
         PRINTF("RPL: Invalid destination prefix option, len = %d\n", len);
 	RPL_STAT(rpl_stats.malformed_msgs++);
-        return;
+	goto out;
       }
 
       /* The flags field includes the preference value. */
@@ -365,7 +372,7 @@ dio_input(struct net_buf *buf)
       } else {
         PRINTF("RPL: Invalid route info option, len = %d\n", len);
 	RPL_STAT(rpl_stats.malformed_msgs++);
-	return;
+	goto out;
       }
 
       break;
@@ -373,7 +380,7 @@ dio_input(struct net_buf *buf)
       if(len != 16) {
         PRINTF("RPL: Invalid DAG configuration option, len = %d\n", len);
 	RPL_STAT(rpl_stats.malformed_msgs++);
-        return;
+	goto out;
       }
 
       /* Path control field not yet implemented - at i + 2 */
@@ -393,9 +400,9 @@ dio_input(struct net_buf *buf)
       break;
     case RPL_OPTION_PREFIX_INFO:
       if(len != 32) {
-        PRINTF("RPL: Invalid DAG prefix info, len != 32\n");
+        PRINTF("RPL: Invalid DAG prefix info, len(%d) != 32\n", len);
 	RPL_STAT(rpl_stats.malformed_msgs++);
-        return;
+	goto out;
       }
       dio.prefix_info.length = buffer[i + 2];
       dio.prefix_info.flags = buffer[i + 3];
@@ -416,14 +423,16 @@ dio_input(struct net_buf *buf)
   RPL_DEBUG_DIO_INPUT(&from, &dio);
 #endif
 
-  rpl_process_dio(buf, &from, &dio);
+  rpl_process_dio(&from, &dio);
 
+out:
   uip_len(buf) = 0;
 }
 /*---------------------------------------------------------------------------*/
 void
-dio_output(struct net_buf *buf, rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
+dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
 {
+  struct net_buf *buf;
   unsigned char *buffer;
   int pos;
   rpl_dag_t *dag = instance->current_dag;
@@ -442,6 +451,12 @@ dio_output(struct net_buf *buf, rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
 
   /* DAG Information Object */
   pos = 0;
+
+  buf = net_buf_get_reserve_tx(0);
+  if (!buf) {
+    PRINTF("%s(): Cannot get net_buf\n", __FUNCTION__);
+    return;
+  }
 
   buffer = UIP_ICMP_PAYLOAD(buf);
   buffer[pos++] = instance->instance_id;
@@ -501,6 +516,7 @@ dio_output(struct net_buf *buf, rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
     } else {
       PRINTF("RPL: Unable to send DIO because of unhandled DAG MC type %u\n",
 	(unsigned)instance->mc.type);
+      net_buf_put(buf);
       return;
     }
   }
@@ -757,13 +773,13 @@ dao_input(struct net_buf *buf)
       PRINTF("RPL: Neighbor added to neighbor cache ");
       PRINT6ADDR(&dao_sender_addr);
       PRINTF(", ");
-      PRINTLLADDR((uip_lladdr_t *)buf->src);
+      PRINTLLADDR((uip_lladdr_t *)&buf->src);
       PRINTF("\n");
     } else {
       PRINTF("RPL: Out of Memory, dropping DAO from ");
       PRINT6ADDR(&dao_sender_addr);
       PRINTF(", ");
-      PRINTLLADDR((uip_lladdr_t *)buf->src);
+      PRINTLLADDR((uip_lladdr_t *)&buf->src);
       PRINTF("\n");
       return;
     }
@@ -804,8 +820,9 @@ fwd_dao:
   uip_len(buf) = 0;
 }
 /*---------------------------------------------------------------------------*/
+/* Return true if msg was sent, false otherwise */
 void
-dao_output(struct net_buf *buf, rpl_parent_t *parent, uint8_t lifetime)
+dao_output(rpl_parent_t *parent, uint8_t lifetime)
 {
   /* Destination Advertisement Object */
   uip_ipaddr_t prefix;
@@ -816,12 +833,15 @@ dao_output(struct net_buf *buf, rpl_parent_t *parent, uint8_t lifetime)
   }
 
   /* Sending a DAO with own prefix as target */
-  dao_output_target(buf, parent, &prefix, lifetime);
+  dao_output_target(parent, &prefix, lifetime);
 }
 /*---------------------------------------------------------------------------*/
+/* Return true if we sent a RPL message, false otherwise.
+ */
 void
-dao_output_target(struct net_buf *buf, rpl_parent_t *parent, uip_ipaddr_t *prefix, uint8_t lifetime)
+dao_output_target(rpl_parent_t *parent, uip_ipaddr_t *prefix, uint8_t lifetime)
 {
+  struct net_buf *buf;
   rpl_dag_t *dag;
   rpl_instance_t *instance;
   unsigned char *buffer;
@@ -859,6 +879,12 @@ dao_output_target(struct net_buf *buf, rpl_parent_t *parent, uip_ipaddr_t *prefi
 #ifdef RPL_DEBUG_DAO_OUTPUT
   RPL_DEBUG_DAO_OUTPUT(parent);
 #endif
+
+  buf = net_buf_get_reserve_tx(0);
+  if (!buf) {
+    PRINTF("%s(): Cannot get net_buf\n", __FUNCTION__);
+    return;
+  }
 
   buffer = UIP_ICMP_PAYLOAD(buf);
 
@@ -906,7 +932,11 @@ dao_output_target(struct net_buf *buf, rpl_parent_t *parent, uip_ipaddr_t *prefi
 
   if(rpl_get_parent_ipaddr(parent) != NULL) {
     uip_icmp6_send(buf, rpl_get_parent_ipaddr(parent), ICMP6_RPL, RPL_CODE_DAO, pos);
+    return;
   }
+
+  net_buf_put(buf);
+  return;
 }
 /*---------------------------------------------------------------------------*/
 static void

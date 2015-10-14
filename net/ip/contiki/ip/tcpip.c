@@ -623,7 +623,7 @@ tcpip_ipv6_output(struct net_buf *buf)
           if(dag != NULL) {
             instance = dag->instance;
 
-            rpl_repair_root(buf, instance->instance_id);
+            rpl_repair_root(instance->instance_id);
           }
 #endif /* UIP_CONF_IPV6_RPL */
           uip_ds6_route_rm(route);
@@ -736,6 +736,10 @@ tcpip_ipv6_output(struct net_buf *buf)
 #endif /*UIP_CONF_IPV6_QUEUE_PKT*/
 
       if (ret == 0) {
+        if (!net_buf_datalen(buf)) {
+          /* Set the original length if it is not set yet */
+          net_buf_datalen(buf) = uip_len(buf);
+	}
         uip_len(buf) = 0;
         uip_ext_len(buf) = 0;
       }
@@ -746,6 +750,9 @@ tcpip_ipv6_output(struct net_buf *buf)
   }
   /* Multicast IP destination address. */
   ret = tcpip_output(buf, NULL);
+  if (!net_buf_datalen(buf)) {
+    net_buf_datalen(buf) = uip_len(buf);
+  }
   uip_len(buf) = 0;
   uip_ext_len(buf) = 0;
   return ret;
@@ -832,7 +839,7 @@ PROCESS_THREAD(tcpip_process, ev, data, buf)
 #if UIP_CONF_ICMP6
   tcpip_icmp6_event = process_alloc_event();
 #endif /* UIP_CONF_ICMP6 */
-  etimer_set(&periodic, CLOCK_SECOND / 2);
+  etimer_set(&periodic, CLOCK_SECOND / 2, &tcpip_process);
 
   uip_init();
 #ifdef UIP_FALLBACK_INTERFACE

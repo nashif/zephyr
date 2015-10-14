@@ -8,36 +8,23 @@
 /*
  * Copyright (c) 2015 Intel Corporation
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * 1) Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * 2) Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3) Neither the name of Intel Corporation nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 #include <errno.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 #include <misc/printk.h>
 #include <misc/byteorder.h>
@@ -143,43 +130,6 @@ static int char2hex(const char *c, uint8_t *x)
 	}
 
 	return 0;
-}
-
-static int xtoi(const char *str)
-{
-	int val = 0;
-	uint8_t tmp;
-
-	for (; *str != '\0'; str++) {
-		val = val << 4;
-		if (char2hex(str, &tmp) < 0) {
-			return -EINVAL;
-		}
-
-		val |= tmp;
-	}
-
-	return val;
-}
-
-static int atoi(const char *str)
-{
-	int val = 0;
-
-	if (strlen(str) > 2 && str[0] == '0' && str[1] == 'x') {
-		return xtoi(str + 2);
-	}
-
-	for (; *str != '\0'; str++) {
-		val *= 10;
-		if (*str >= '0' && *str <= '9') {
-			val += *str - '0';
-		} else {
-			return -EINVAL;
-		}
-	}
-
-	return val;
 }
 
 static int str2bt_addr_le(const char *str, const char *type, bt_addr_le_t *addr)
@@ -512,7 +462,8 @@ static void cmd_gatt_discover(int argc, char *argv[])
 	discover_params.end_handle = 0xffff;
 
 	if (argc < 2) {
-		if (!strcmp(argv[0], "gatt-discover")) {
+		if (!strcmp(argv[0], "gatt-discover-primary") ||
+		    !strcmp(argv[0], "gatt-discover-secondary")) {
 			printk("UUID type required\n");
 			return;
 		}
@@ -520,30 +471,33 @@ static void cmd_gatt_discover(int argc, char *argv[])
 	}
 
 	/* Only set the UUID if the value is valid (non zero) */
-	uuid.u16 = xtoi(argv[1]);
+	uuid.u16 = strtoul(argv[1], NULL, 16);
 	if (uuid.u16) {
 		uuid.type = BT_UUID_16;
 		discover_params.uuid = &uuid;
 	}
 
 	if (argc > 2) {
-		discover_params.start_handle = xtoi(argv[2]);
+		discover_params.start_handle = strtoul(argv[2], NULL, 16);
 		if (argc > 3) {
-			discover_params.end_handle = xtoi(argv[3]);
+			discover_params.end_handle = strtoul(argv[3], NULL, 16);
 		}
 	}
 
 done:
-	if (!strcmp(argv[0], "gatt-discover-characteristic")) {
-		err = bt_gatt_discover_characteristic(default_conn,
-						      &discover_params);
+	if (!strcmp(argv[0], "gatt-discover-secondary")) {
+		discover_params.type = BT_GATT_DISCOVER_SECONDARY;
+	} else if (!strcmp(argv[0], "gatt-discover-include")) {
+		discover_params.type = BT_GATT_DISCOVER_INCLUDE;
+	} else if (!strcmp(argv[0], "gatt-discover-characteristic")) {
+		discover_params.type = BT_GATT_DISCOVER_CHARACTERISTIC;
 	} else if (!strcmp(argv[0], "gatt-discover-descriptor")) {
-		err = bt_gatt_discover_descriptor(default_conn,
-						  &discover_params);
+		discover_params.type = BT_GATT_DISCOVER_DESCRIPTOR;
 	} else {
-		err = bt_gatt_discover(default_conn, &discover_params);
+		discover_params.type = BT_GATT_DISCOVER_PRIMARY;
 	}
 
+	err = bt_gatt_discover(default_conn, &discover_params);
 	if (err) {
 		printk("Discover failed (err %d)\n", err);
 	} else {
@@ -572,10 +526,10 @@ static void cmd_gatt_read(int argc, char *argv[])
 		return;
 	}
 
-	handle = xtoi(argv[1]);
+	handle = strtoul(argv[1], NULL, 16);
 
 	if (argc > 2) {
-		offset = xtoi(argv[2]);
+		offset = strtoul(argv[2], NULL, 16);
 	}
 
 	err = bt_gatt_read(default_conn, handle, offset, read_func);
@@ -607,7 +561,7 @@ void cmd_gatt_mread(int argc, char *argv[])
 	}
 
 	for (i = 0; i < argc - 1; i++) {
-		h[i] = xtoi(argv[i + 1]);
+		h[i] = strtoul(argv[i + 1], NULL, 16);
 	}
 
 	err = bt_gatt_read_multiple(default_conn, h, i, read_func);
@@ -637,7 +591,7 @@ static void cmd_gatt_write(int argc, char *argv[])
 		return;
 	}
 
-	handle = xtoi(argv[1]);
+	handle = strtoul(argv[1], NULL, 16);
 
 	if (argc < 3) {
 		printk("offset required\n");
@@ -645,7 +599,7 @@ static void cmd_gatt_write(int argc, char *argv[])
 	}
 
 	/* TODO: Add support for longer data */
-	offset = xtoi(argv[2]);
+	offset = strtoul(argv[2], NULL, 16);
 
 	if (argc < 4) {
 		printk("data required\n");
@@ -653,7 +607,7 @@ static void cmd_gatt_write(int argc, char *argv[])
 	}
 
 	/* TODO: Add support for longer data */
-	data = xtoi(argv[3]);
+	data = strtoul(argv[3], NULL, 16);
 
 	err = bt_gatt_write(default_conn, handle, offset, &data, sizeof(data),
 			    write_func);
@@ -680,14 +634,14 @@ static void cmd_gatt_write_without_rsp(int argc, char *argv[])
 		return;
 	}
 
-	handle = xtoi(argv[1]);
+	handle = strtoul(argv[1], NULL, 16);
 
 	if (argc < 3) {
 		printk("data required\n");
 		return;
 	}
 
-	data = xtoi(argv[2]);
+	data = strtoul(argv[2], NULL, 16);
 
 	err = bt_gatt_write_without_response(default_conn, handle, &data,
 					     sizeof(data), false);
@@ -710,14 +664,14 @@ static void cmd_gatt_write_signed(int argc, char *argv[])
 		return;
 	}
 
-	handle = xtoi(argv[1]);
+	handle = strtoul(argv[1], NULL, 16);
 
 	if (argc < 3) {
 		printk("data required\n");
 		return;
 	}
 
-	data = xtoi(argv[2]);
+	data = strtoul(argv[2], NULL, 16);
 
 	err = bt_gatt_write_without_response(default_conn, handle, &data,
 					     sizeof(data), true);
@@ -765,20 +719,20 @@ static void cmd_gatt_subscribe(int argc, char *argv[])
 		return;
 	}
 
-	handle = xtoi(argv[1]);
+	handle = strtoul(argv[1], NULL, 16);
 
 	if (argc < 3) {
 		printk("value handle required\n");
 		return;
 	}
 
-	subscribe_params.value_handle = xtoi(argv[2]);
+	subscribe_params.value_handle = strtoul(argv[2], NULL, 16);
 	subscribe_params.value = BT_GATT_CCC_NOTIFY;
 	subscribe_params.func = subscribe_func;
 	subscribe_params.destroy = subscribe_destroy;
 
 	if (argc > 3) {
-		subscribe_params.value = xtoi(argv[3]);
+		subscribe_params.value = strtoul(argv[3], NULL, 16);
 	}
 
 	err = bt_gatt_subscribe(default_conn, handle, &subscribe_params);
@@ -804,7 +758,7 @@ static void cmd_gatt_unsubscribe(int argc, char *argv[])
 		return;
 	}
 
-	handle = xtoi(argv[1]);
+	handle = strtoul(argv[1], NULL, 16);
 
 	if (!subscribe_params.value_handle) {
 		printk("No subscription found\n");
@@ -987,7 +941,9 @@ struct shell_cmd commands[] = {
 	{ "auth-cancel", cmd_auth_cancel },
 	{ "auth-passkey", cmd_auth_passkey },
 	{ "gatt-exchange-mtu", cmd_gatt_exchange_mtu },
-	{ "gatt-discover", cmd_gatt_discover },
+	{ "gatt-discover-primary", cmd_gatt_discover },
+	{ "gatt-discover-secondary", cmd_gatt_discover },
+	{ "gatt-discover-include", cmd_gatt_discover },
 	{ "gatt-discover-characteristic", cmd_gatt_discover },
 	{ "gatt-discover-descriptor", cmd_gatt_discover },
 	{ "gatt-read", cmd_gatt_read },

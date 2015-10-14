@@ -5,35 +5,22 @@
 /*
  * Copyright (c) 2015 Intel Corporation
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * 1) Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * 2) Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3) Neither the name of Intel Corporation nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 #ifndef __BT_CONN_H
 #define __BT_CONN_H
 
+#if defined(CONFIG_BLUETOOTH_CENTRAL) || defined(CONFIG_BLUETOOTH_PERIPHERAL)
 #include <stdbool.h>
 
 #include <bluetooth/hci.h>
@@ -91,6 +78,7 @@ const bt_addr_le_t *bt_conn_get_dst(const struct bt_conn *conn);
  */
 int bt_conn_disconnect(struct bt_conn *conn, uint8_t reason);
 
+#if defined(CONFIG_BLUETOOTH_CENTRAL)
 /** @brief Initiate an LE connection to a remote device.
  *
  *  Allows initiate new LE link to remote peer using its address.
@@ -101,6 +89,7 @@ int bt_conn_disconnect(struct bt_conn *conn, uint8_t reason);
  *  @return Valid connection object on success or NULL otherwise.
  */
 struct bt_conn *bt_conn_create_le(const bt_addr_le_t *peer);
+#endif
 
 /** Security level. */
 typedef enum {
@@ -112,6 +101,7 @@ typedef enum {
 			     */
 } bt_security_t;
 
+#if defined(CONFIG_BLUETOOTH_SMP)
 /** @brief Set security level for a connection.
  *
  *  This function enable security (encryption) for a connection. If device is
@@ -133,16 +123,18 @@ typedef enum {
  *  @return 0 on success or negative error
  */
 int bt_conn_security(struct bt_conn *conn, bt_security_t sec);
+#endif
 
 /** Connection callback structure */
 struct bt_conn_cb {
 	void (*connected)(struct bt_conn *conn);
 	void (*disconnected)(struct bt_conn *conn);
+#if defined(CONFIG_BLUETOOTH_SMP)
 	void (*identity_resolved)(struct bt_conn *conn,
 				  const bt_addr_le_t *rpa,
 				  const bt_addr_le_t *identity);
 	void (*security_changed)(struct bt_conn *conn, bt_security_t level);
-
+#endif
 	struct bt_conn_cb *_next;
 };
 
@@ -154,6 +146,7 @@ struct bt_conn_cb {
  */
 void bt_conn_cb_register(struct bt_conn_cb *cb);
 
+#if defined(CONFIG_BLUETOOTH_CENTRAL)
 /** @brief Automatically connect to remote device if it's in range.
  *
  *  This function enables/disables automatic connection initiation.
@@ -168,4 +161,6 @@ void bt_conn_cb_register(struct bt_conn_cb *cb);
  */
 void bt_conn_set_auto_conn(struct bt_conn *conn, bool auto_conn);
 
+#endif /* CONFIG_BLUETOOTH_CENTRAL */
+#endif /* CONFIG_BLUETOOTH_CENTRAL || CONFIG_BLUETOOTH_PERIPHERAL */
 #endif /* __BT_CONN_H */

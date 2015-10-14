@@ -1,10 +1,10 @@
 .. _building_zephyr:
 
 Building the Zephyr Kernel
-############################
+##########################
 
 This section describes the procedure to build the kernel with a sample
-application. in a development system and describes how to get access to the
+application in a development system and describes how to get access to the
 kernel's source code.
 
 Building a Sample Application
@@ -57,7 +57,7 @@ The sample projects for the microkernel are found
 at :file:`$ZEPHYR_BASE/samples/microkernel/apps`. After building the
 application successfully, the results can be found in the :file:`outdir`
 directory in the application root directory.
-:file:`$SAMPLE_PROJECT/outdir/microkernel.elf`.
+:file:`$SAMPLE_PROJECT/outdir/zephyr.elf`.
 
 For sample projects in the :file:`$ZEPHYR_BASE/samples/nanokernel/apps`
-directory, the results can be found at :file:`$SAMPLE_PROJECT/outdir/nanokernel.elf`.
+directory, the results can be found at :file:`$SAMPLE_PROJECT/outdir/zephyr.elf`.

@@ -60,13 +60,24 @@ typedef unsigned int uip_stats_t;
 #endif /* SICSLOWPAN_CONF_ENABLE */
 
 #ifdef CONFIG_NETWORKING_WITH_15_4
+#ifdef CONFIG_NETWORKING_WITH_15_4_PAN_ID
+#define IEEE802154_CONF_PANID CONFIG_NETWORKING_WITH_15_4_PAN_ID
+#endif /* CONFIG_NETWORKING_WITH_15_4_PAN_ID */
 #define NETSTACK_CONF_FRAMER	framer_802154
+#ifdef CONFIG_NETWORKING_WITH_6LOWPAN
 #define NETSTACK_CONF_RDC	sicslowmac_driver
+#else
+#warning "You should activate 6LoWPAN with 802.15.4, you have non-working setup now."
+#endif
 #define NETSTACK_CONF_MAC	csma_driver
 #define LINKADDR_CONF_SIZE      8
 #define UIP_CONF_LL_802154	1
 #define SICSLOWPAN_CONF_MAX_ADDR_CONTEXTS 1
+#ifdef CONFIG_6LOWPAN_COMPRESSION_IPHC
+#define SICSLOWPAN_CONF_COMPRESSION SICSLOWPAN_COMPRESSION_IPHC
+#else /* 6lowpan compression method */
 #define SICSLOWPAN_CONF_COMPRESSION SICSLOWPAN_COMPRESSION_IPV6
+#endif
 //#define FRAMER_802154_HANDLER handler_802154_frame_received
 //#define HANDLER_802154_CONF_STATS 1
 #else
@@ -74,12 +85,35 @@ typedef unsigned int uip_stats_t;
 #define NETSTACK_CONF_RDC	nullrdc_driver
 #define NETSTACK_CONF_MAC	nullmac_driver
 #define LINKADDR_CONF_SIZE      6
-#endif
+#endif /* CONFIG_NETWORKING_WITH_15_4 */
 #define NETSTACK_CONF_LLSEC	nullsec_driver
 
 #ifdef CONFIG_NETWORKING_WITH_RPL
 #define UIP_MCAST6_CONF_ENGINE UIP_MCAST6_ENGINE_SMRF
 #define UIP_CONF_IPV6_MULTICAST 1
+#ifdef CONFIG_RPL_WITH_MRHOF
+#define RPL_CONF_OF rpl_mrhof
+#else
+#define RPL_CONF_OF rpl_of0
+#endif /* CONFIG_RPL_WITH_MRHOF */
+#ifdef CONFIG_RPL_PROBING
+#define RPL_CONF_WITH_PROBING 1
+#else
+#define RPL_CONF_WITH_PROBING 0
+#endif /* CONFIG_RPL_PROBING */
+#ifdef CONFIG_RPL_STATS
+#define RPL_CONF_STATS 1
+#else
+#define RPL_CONF_STATS 0
+#endif /* CONFIG_RPL_STATS */
+#else /* CONFIG_NETWORKING_WITH_RPL */
+#define RPL_CONF_STATS 0
+#endif
+
+#ifdef CONFIG_NETWORKING_STATISTICS
+#define NET_MAC_CONF_STATS 1
+#else
+#define NET_MAC_CONF_STATS 0
 #endif
 
 #ifdef CONFIG_NETWORKING_IPV6_NO_ND

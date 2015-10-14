@@ -1,32 +1,20 @@
 /*
  * Copyright (c) 2015 Intel Corporation.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * 1) Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * 2) Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3) Neither the name of Intel Corporation nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+#define EXTRA_DEBUG 0
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -110,10 +98,13 @@ void debug(const char *format, ...)
 	debug("%s:%s() " fmt, __FILE__, __FUNCTION__ , ## arg); \
 } while (0)
 
-int log_init(const char *debug, gboolean detach)
+int log_init(const char *debug, gboolean detach, gboolean perror)
 {
-	int option = LOG_NDELAY | LOG_PID | LOG_PERROR;
+	int option = LOG_NDELAY | LOG_PID;
 	const char *name = NULL, *file = NULL;
+
+	if (perror)
+		 option |= LOG_PERROR;
 
 	openlog("monitor", option, LOG_DAEMON);
 
@@ -276,26 +267,28 @@ bool pcap_write(struct pcap *pcap, const struct timeval *tv,
 		return false;
 	}
 
+	fsync(pcap->fd);
 	return true;
 }
 
 static gboolean fifo_handler1(GIOChannel *channel, GIOCondition cond,
 							gpointer user_data)
 {
-	guint buf[1];
+	static bool starting = true;
+	unsigned char buf[1];
 	ssize_t result;
 	int fd;
 	struct timeval tv;
 
 	if (cond & (G_IO_NVAL | G_IO_ERR | G_IO_HUP)) {
-		DBG("something wrong");
+		DBG("First pipe closed");
 		return FALSE;
 	}
 
 	memset(buf, 0, sizeof(buf));
 	fd = g_io_channel_unix_get_fd(channel);
 
-	result = read(fd, &buf, 1);
+	result = read(fd, buf, 1);
 	if (result != 1) {
 		DBG("Failed to read %lu", result);
 		return FALSE;
@@ -305,16 +298,38 @@ static gboolean fifo_handler1(GIOChannel *channel, GIOCondition cond,
 		DBG("Error, write failed to %s", pipe_2_in);
 		return FALSE;
 	}
+#if EXTRA_DEBUG
+	DBG("[%d/%d] starting %d fifo 1 read from %d and wrote %d bytes to %d",
+	    input1_offset, input1_len, starting, fd, 1, fd2_in);
+#endif
 
+	if (starting && input1_len == 0 && input1_offset == 0 &&
+	    buf[0] == 0 && input1_type == 0) {
+		/* sync byte */
+		goto done;
+	} else if (starting && input1_len == 0 && input1_offset == 0
+		   && buf[0] != 0) {
+		starting = false;
+	}
+
+#if EXTRA_DEBUG
+	DBG("Pipe 1 byte 0x%x", buf[0]);
+#endif
 	if (input1_len == 0 && input1_offset == 0 &&
 		buf[0] == DUMMY_RADIO_15_4_FRAME_TYPE) {
 		input1_type = buf[0];
+#if EXTRA_DEBUG
+		DBG("Frame starting in pipe 1");
+#endif
 		goto done;
 	}
 
 	if (input1_len == 0 && input1_offset == 0 &&
 		input1_type == DUMMY_RADIO_15_4_FRAME_TYPE) {
 		input1_len = buf[0];
+#if EXTRA_DEBUG
+		DBG("Expecting pipe 1 buf len %d\n", input1_len);
+#endif
 		goto done;
 	}
 
@@ -323,13 +338,15 @@ static gboolean fifo_handler1(GIOChannel *channel, GIOCondition cond,
 	}
 
 	if (input1_len && input1_len == input1_offset) {
-		DBG("Received %d, %d bytes", input1_len, input1_offset);
+		DBG("Received %d bytes in pipe 1", input1_len);
 
 		/* write it to pcap file */
 		gettimeofday(&tv, NULL);
 		pcap_write(pcap, &tv, input1, input1_len);
 		input1_len = input1_offset = 0;
 		memset(input1, 0, sizeof(input1));
+
+		fsync(fd2_in);
 	}
 
 done:
@@ -339,20 +356,21 @@ done:
 static gboolean fifo_handler2(GIOChannel *channel, GIOCondition cond,
 							gpointer user_data)
 {
-	guint buf[1];
+	static bool starting = true;
+	unsigned char buf[1];
 	ssize_t result;
 	int fd;
 	struct timeval tv;
 
 	if (cond & (G_IO_NVAL | G_IO_ERR | G_IO_HUP)) {
-		DBG("something wrong");
+		DBG("Second pipe closed");
 		return FALSE;
 	}
 
 	memset(buf, 0, sizeof(buf));
 	fd = g_io_channel_unix_get_fd(channel);
 
-	result = read(fd, &buf, 1);
+	result = read(fd, buf, 1);
 	if (result != 1) {
 		DBG("Failed to read %lu", result);
 		return FALSE;
@@ -362,9 +380,27 @@ static gboolean fifo_handler2(GIOChannel *channel, GIOCondition cond,
 		DBG("Error, write failed to %s", pipe_1_in);
 		return FALSE;
 	}
+#if EXTRA_DEBUG
+	DBG("[%d/%d] starting %d fifo 2 read from %d and wrote %d bytes to %d",
+	    input2_offset, input2_len, starting, fd, 1, fd1_in);
+#endif
+	if (starting && input2_len == 0 && input2_offset == 0 &&
+	    buf[0] == 0 && input2_type == 0) {
+		/* sync byte */
+		goto done;
+	} else if (starting && input2_len == 0 && input2_offset == 0
+		   && buf[0] != 0) {
+		starting = false;
+	}
 
+#if EXTRA_DEBUG
+	DBG("Pipe 2 byte 0x%x", buf[0]);
+#endif
 	if (input2_len == 0 && input2_offset == 0 &&
 		buf[0] == DUMMY_RADIO_15_4_FRAME_TYPE) {
+#if EXTRA_DEBUG
+		DBG("Frame starting in pipe 2");
+#endif
 		input2_type = buf[0];
 		goto done;
 	}
@@ -372,6 +408,9 @@ static gboolean fifo_handler2(GIOChannel *channel, GIOCondition cond,
 	if (input2_len == 0 && input2_offset == 0 &&
 		input2_type == DUMMY_RADIO_15_4_FRAME_TYPE) {
 		input2_len = buf[0];
+#if EXTRA_DEBUG
+		DBG("Expecting pipe 2 buf len %d\n", input2_len);
+#endif
 		goto done;
 	}
 
@@ -380,13 +419,15 @@ static gboolean fifo_handler2(GIOChannel *channel, GIOCondition cond,
 	}
 
 	if (input2_len && input2_len == input2_offset) {
-		DBG("Received %d, %d bytes", input2_len, input2_offset);
+		DBG("Received %d bytes in pipe 2", input2_len);
 
 		/* write it to pcap file */
 		gettimeofday(&tv, NULL);
 		pcap_write(pcap, &tv, input2, input2_len);
 		input2_len = input2_offset = 0;
 		memset(input2, 0, sizeof(input2));
+
+		fsync(fd1_in);
 	}
 
 done:
@@ -404,6 +445,8 @@ static int setup_fifofd1(void)
 		DBG("Failed to open fifo %s", pipe_1_out);
 		return fd;
 	}
+
+	DBG("Pipe 1 OUT fd %d", fd);
 
 	channel = g_io_channel_unix_new(fd);
 
@@ -429,6 +472,8 @@ static int setup_fifofd2(void)
 		DBG("Failed to open fifo %s", pipe_2_out);
 		return fd;
 	}
+
+	DBG("Pipe 2 OUT fd %d", fd);
 
 	channel = g_io_channel_unix_new(fd);
 
@@ -458,8 +503,10 @@ int main(int argc, char *argv[])
 	if (argc == 3)
 		pipe1 = argv[2];
 
-	if (argc == 4)
+	if (argc == 4) {
+		pipe1 = argv[2];
 		pipe2 = argv[3];
+	}
 
 	main_loop = g_main_loop_new(NULL, FALSE);
 
@@ -475,7 +522,10 @@ int main(int argc, char *argv[])
 		exit(-EINVAL);
 	}
 
-	log_init("log", FALSE);
+	log_init("log", FALSE, argc > 4 ? TRUE : FALSE);
+
+	DBG("Pipe 1 IN %s OUT %s", pipe_1_in, pipe_1_out);
+	DBG("Pipe 2 IN %s OUT %s", pipe_2_in, pipe_2_out);
 
 	fifo1 = setup_fifofd1();
 	if (fifo1 < 0) {
@@ -502,6 +552,8 @@ int main(int argc, char *argv[])
 		ret = -EINVAL;
 		goto exit;
 	}
+
+	DBG("Pipe 1 IN %d, pipe 2 IN %d", fd1_in, fd2_in);
 
 	g_main_loop_run(main_loop);
 	ret = 0;

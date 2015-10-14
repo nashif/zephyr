@@ -3,31 +3,17 @@
 /*
  * Copyright (c) 2015 Intel Corporation
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * 1) Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * 2) Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3) Neither the name of Intel Corporation nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 #include <nanokernel.h>
@@ -82,7 +68,7 @@ static const char *state2str(bt_conn_state_t state)
 }
 #endif
 
-void bt_conn_connected(struct bt_conn *conn)
+static void notify_connected(struct bt_conn *conn)
 {
 	struct bt_conn_cb *cb;
 
@@ -93,7 +79,7 @@ void bt_conn_connected(struct bt_conn *conn)
 	}
 }
 
-static void bt_conn_disconnected(struct bt_conn *conn)
+static void notify_disconnected(struct bt_conn *conn)
 {
 	struct bt_conn_cb *cb;
 
@@ -104,6 +90,7 @@ static void bt_conn_disconnected(struct bt_conn *conn)
 	}
 }
 
+#if defined(CONFIG_BLUETOOTH_SMP)
 void bt_conn_identity_resolved(struct bt_conn *conn)
 {
 	const bt_addr_le_t *rpa;
@@ -132,6 +119,83 @@ void bt_conn_security_changed(struct bt_conn *conn)
 		}
 	}
 }
+
+int bt_conn_le_start_encryption(struct bt_conn *conn, uint64_t rand,
+				uint16_t ediv, const uint8_t *ltk)
+{
+	struct bt_hci_cp_le_start_encryption *cp;
+	struct bt_buf *buf;
+
+	buf = bt_hci_cmd_create(BT_HCI_OP_LE_START_ENCRYPTION, sizeof(*cp));
+	if (!buf) {
+		return -ENOBUFS;
+	}
+
+	cp = bt_buf_add(buf, sizeof(*cp));
+	cp->handle = sys_cpu_to_le16(conn->handle);
+	cp->rand = rand;
+	cp->ediv = ediv;
+	memcpy(cp->ltk, ltk, sizeof(cp->ltk));
+
+	return bt_hci_cmd_send_sync(BT_HCI_OP_LE_START_ENCRYPTION, buf, NULL);
+}
+
+int bt_conn_security(struct bt_conn *conn, bt_security_t sec)
+{
+	int err = 0;
+
+	if (conn->state != BT_CONN_CONNECTED) {
+		return -ENOTCONN;
+	}
+
+	/* nothing to do */
+	if (conn->sec_level >= sec || conn->required_sec_level >= sec) {
+		return 0;
+	}
+
+	/* for now we only support legacy pairing */
+	if (sec > BT_SECURITY_HIGH) {
+		return -EINVAL;
+	}
+
+	conn->required_sec_level = sec;
+
+#if defined(CONFIG_BLUETOOTH_CENTRAL)
+	if (conn->role == BT_HCI_ROLE_MASTER) {
+		struct bt_keys *keys;
+
+		keys = bt_keys_find(BT_KEYS_LTK, &conn->dst);
+		if (keys) {
+			if (sec > BT_SECURITY_MEDIUM &&
+			    keys->type != BT_KEYS_AUTHENTICATED) {
+				err = bt_smp_send_pairing_req(conn);
+				goto done;
+			}
+
+			err = bt_conn_le_start_encryption(conn, keys->ltk.rand,
+							  keys->ltk.ediv,
+							  keys->ltk.val);
+			goto done;
+		}
+
+		err = bt_smp_send_pairing_req(conn);
+		goto done;
+	}
+#endif /* CONFIG_BLUETOOTH_CENTRAL */
+
+#if defined(CONFIG_BLUETOOTH_PERIPHERAL)
+	err = bt_smp_send_security_req(conn);
+#endif /* CONFIG_BLUETOOTH_PERIPHERAL */
+
+done:
+	/* reset required security level in case of error */
+	if (err) {
+		conn->required_sec_level = conn->sec_level;
+	}
+
+	return err;
+}
+#endif /* CONFIG_BLUETOOTH_SMP */
 
 void bt_conn_cb_register(struct bt_conn_cb *cb)
 {
@@ -367,8 +431,10 @@ struct bt_conn *bt_conn_add(const bt_addr_le_t *peer)
 
 	atomic_set(&conn->ref, 1);
 	bt_addr_le_copy(&conn->dst, peer);
+#if defined(CONFIG_BLUETOOTH_SMP)
 	conn->sec_level = BT_SECURITY_LOW;
 	conn->required_sec_level = BT_SECURITY_LOW;
+#endif /* CONFIG_BLUETOOTH_SMP */
 
 	return conn;
 }
@@ -428,6 +494,7 @@ void bt_conn_set_state(struct bt_conn *conn, bt_conn_state_t state)
 			    (int)bt_conn_get(conn), 0, 7, 0);
 
 		bt_l2cap_connected(conn);
+		notify_connected(conn);
 		break;
 	case BT_CONN_DISCONNECTED:
 		/* Send dummy buffer to wake up and stop the tx fiber
@@ -436,7 +503,7 @@ void bt_conn_set_state(struct bt_conn *conn, bt_conn_state_t state)
 		if (old_state == BT_CONN_CONNECTED ||
 		    old_state == BT_CONN_DISCONNECT) {
 			bt_l2cap_disconnected(conn);
-			bt_conn_disconnected(conn);
+			notify_disconnected(conn);
 
 			nano_fifo_put(&conn->tx_queue, bt_buf_get(BT_DUMMY, 0));
 		}
@@ -550,45 +617,6 @@ const bt_addr_le_t *bt_conn_get_dst(const struct bt_conn *conn)
 	return &conn->dst;
 }
 
-int bt_conn_security(struct bt_conn *conn, bt_security_t sec)
-{
-	if (conn->state != BT_CONN_CONNECTED) {
-		return -ENOTCONN;
-	}
-
-	/* nothing to do */
-	if (conn->sec_level >= sec || conn->required_sec_level >= sec) {
-		return 0;
-	}
-
-	/* for now we only support legacy pairing */
-	if (sec > BT_SECURITY_HIGH) {
-		return -EINVAL;
-	}
-
-	conn->required_sec_level = sec;
-
-	if (conn->role == BT_HCI_ROLE_MASTER) {
-		struct bt_keys *keys;
-
-		keys = bt_keys_find(BT_KEYS_LTK, &conn->dst);
-		if (keys) {
-			if (sec > BT_SECURITY_MEDIUM &&
-			    keys->type != BT_KEYS_AUTHENTICATED) {
-				return bt_smp_send_pairing_req(conn);
-			}
-
-			return bt_conn_le_start_encryption(conn, keys->ltk.rand,
-							   keys->ltk.ediv,
-							   keys->ltk.val);
-		}
-
-		return bt_smp_send_pairing_req(conn);
-	}
-
-	return bt_smp_send_security_req(conn);
-}
-
 void bt_conn_set_auto_conn(struct bt_conn *conn, bool auto_conn)
 {
 	if (auto_conn) {
@@ -696,26 +724,6 @@ struct bt_conn *bt_conn_create_le(const bt_addr_le_t *peer)
 	bt_le_scan_update();
 
 	return conn;
-}
-
-int bt_conn_le_start_encryption(struct bt_conn *conn, uint64_t rand,
-				uint16_t ediv, const uint8_t *ltk)
-{
-	struct bt_hci_cp_le_start_encryption *cp;
-	struct bt_buf *buf;
-
-	buf = bt_hci_cmd_create(BT_HCI_OP_LE_START_ENCRYPTION, sizeof(*cp));
-	if (!buf) {
-		return -ENOBUFS;
-	}
-
-	cp = bt_buf_add(buf, sizeof(*cp));
-	cp->handle = sys_cpu_to_le16(conn->handle);
-	cp->rand = rand;
-	cp->ediv = ediv;
-	memcpy(cp->ltk, ltk, sizeof(cp->ltk));
-
-	return bt_hci_cmd_send_sync(BT_HCI_OP_LE_START_ENCRYPTION, buf, NULL);
 }
 
 int bt_conn_le_conn_update(struct bt_conn *conn, uint16_t min, uint16_t max,

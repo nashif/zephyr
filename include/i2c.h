@@ -3,31 +3,17 @@
 /*
  * Copyright (c) 2015 Intel Corporation
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * 1) Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * 2) Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3) Neither the name of Intel Corporation nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 #ifndef __DRIVERS_I2C_H
 #define __DRIVERS_I2C_H
@@ -77,19 +63,21 @@ typedef int (*i2c_api_configure_t)(struct device *dev,
 				   uint32_t dev_config);
 typedef int (*i2c_api_set_callback_t)(struct device *dev,
 				      i2c_callback cb);
-typedef int (*i2c_api_io_t)(struct device *dev,
-			    uint8_t *buf,
-			    uint32_t len,
-			    uint16_t slave_addr);
+typedef int (*i2c_api_full_io_t)(struct device *dev,
+				 uint8_t *tx_buf,
+				 uint32_t tx_len,
+				 uint8_t *rx_buf,
+				 uint32_t rx_len,
+				 uint16_t addr,
+				 uint32_t ctrl_flags);
 typedef int (*i2c_api_suspend_t)(struct device *dev);
 typedef int (*i2c_api_resume_t)(struct device *dev);
 
 struct i2c_driver_api {
 	i2c_api_configure_t configure;
 	i2c_api_set_callback_t set_callback;
-	i2c_api_io_t read;
-	i2c_api_io_t write;
-	i2c_api_io_t polling_write;
+	i2c_api_full_io_t transfer;
+	i2c_api_full_io_t poll_transfer;
 	i2c_api_suspend_t suspend;
 	i2c_api_resume_t resume;
 };
@@ -140,7 +128,7 @@ static inline int i2c_write(struct device *dev, uint8_t *buf,
 	struct i2c_driver_api *api;
 
 	api = (struct i2c_driver_api *)dev->driver_api;
-	return api->write(dev, buf, len, addr);
+	return api->transfer(dev, buf, len, 0, 0, addr, 0);
 }
 
 /**
@@ -158,7 +146,7 @@ static inline int i2c_read(struct device *dev, uint8_t *buf,
 	struct i2c_driver_api *api;
 
 	api = (struct i2c_driver_api *)dev->driver_api;
-	return api->read(dev, buf, len, addr);
+	return api->transfer(dev, 0, 0, buf, len, addr, 0);
 }
 
 /**
@@ -183,11 +171,68 @@ static inline int i2c_polling_write(struct device *dev, uint8_t *buf,
 	struct i2c_driver_api *api;
 
 	api = (struct i2c_driver_api *)dev->driver_api;
-	if (api && api->polling_write) {
-		return api->polling_write(dev, buf, len, addr);
-	} else {
-		return DEV_INVALID_OP;
-	}
+	return api->poll_transfer(dev, buf, len, 0, 0, addr, 0);
+}
+
+/**
+ * @brief Performs data transfer to another I2C device
+ *
+ * This provides a generic interface to perform data transfer
+ * to another I2C device. If a simple read or write is needed,
+ * use i2c_read()/i2c_write() instead.
+ *
+ * @param dev Pointer to the device structure for the driver instance
+ * @param tx_buf Memory pool that data should be transferred from
+ * @param tx_len Size of the memory pool available for reading from
+ * @param rx_buf Memory pool that data should be transferred to
+ * @param rx_len Size of the memory pool available for writing to
+ * @param addr Address of the I2C target device
+ * @param ctrl_flags Control flags for this transfer
+ *
+ * @return DEV_OK if successful, another DEV_* code otherwise.
+ */
+static inline int i2c_transfer(struct device *dev,
+			       uint8_t *tx_buf, uint32_t tx_len,
+			       uint8_t *rx_buf, uint32_t rx_len,
+			       uint16_t addr, uint32_t ctrl_flags)
+{
+	struct i2c_driver_api *api;
+
+	api = (struct i2c_driver_api *)dev->driver_api;
+	return api->transfer(dev, tx_buf, tx_len,
+			     rx_buf, rx_len, addr, ctrl_flags);
+}
+
+/**
+ * @brief Performs interrupt free data transfer
+ *
+ * This provides a generic interface to perform data transfer
+ * to another I2C device. This is for situation where transactions
+ * are guaranteed to finish before returning.
+ *
+ * Note that this is only for I2C device acting as master.
+ * Slave mode is currently not supported.
+ *
+ * @param dev Pointer to the device structure for the driver instance
+ * @param tx_buf Memory pool that data should be transferred from
+ * @param tx_len Size of the memory pool available for reading from
+ * @param rx_buf Memory pool that data should be transferred to
+ * @param rx_len Size of the memory pool available for writing to
+ * @param addr Address of the I2C target device
+ * @param ctrl_flags Control flags for this transfer
+ *
+ * @return DEV_OK if successful, another DEV_* code otherwise.
+ */
+static inline int i2c_poll_transfer(struct device *dev,
+				    uint8_t *tx_buf, uint32_t tx_len,
+				    uint8_t *rx_buf, uint32_t rx_len,
+				    uint16_t addr, uint32_t ctrl_flags)
+{
+	struct i2c_driver_api *api;
+
+	api = (struct i2c_driver_api *)dev->driver_api;
+	return api->poll_transfer(dev, tx_buf, tx_len,
+				  rx_buf, rx_len, addr, ctrl_flags);
 }
 
 /**

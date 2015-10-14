@@ -3,39 +3,28 @@
 /*
  * Copyright (c) 2015 Intel Corporation
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * 1) Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * 2) Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3) Neither the name of Intel Corporation nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
+#include <atomic.h>
 #include <stdint.h>
 #include <string.h>
 
 #include <toolchain.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
+
+#include <misc/byteorder.h>
 
 #include "bttester.h"
 
@@ -44,6 +33,8 @@
 
 /* TODO add api for reading real address */
 #define CONTROLLER_ADDR (&(bt_addr_t) {{1, 2, 3, 4, 5, 6}})
+
+static atomic_t current_settings;
 
 static void le_connected(struct bt_conn *conn)
 {
@@ -104,10 +95,12 @@ static void supported_commands(uint8_t *data, uint16_t len)
 	cmds = 1 << GAP_READ_SUPPORTED_COMMANDS;
 	cmds |= 1 << GAP_READ_CONTROLLER_INDEX_LIST;
 	cmds |= 1 << GAP_READ_CONTROLLER_INFO;
+	cmds |= 1 << GAP_SET_CONNECTABLE;
 	cmds |= 1 << GAP_START_ADVERTISING;
 	cmds |= 1 << GAP_STOP_ADVERTISING;
 	cmds |= 1 << GAP_START_DISCOVERY;
 	cmds |= 1 << GAP_STOP_DISCOVERY;
+	cmds |= 1 << GAP_DISCONNECT;
 
 	tester_rsp_full(BTP_SERVICE_ID_GAP, GAP_READ_SUPPORTED_COMMANDS,
 			CONTROLLER_INDEX, (uint8_t *) rp, sizeof(cmds));
@@ -130,20 +123,19 @@ static void controller_index_list(uint8_t *data,  uint16_t len)
 static void controller_info(uint8_t *data, uint16_t len)
 {
 	struct gap_read_controller_info_rp rp;
+	uint32_t supported_settings;
 
 	memset(&rp, 0, sizeof(rp));
 	memcpy(rp.address, CONTROLLER_ADDR, sizeof(bt_addr_t));
 
-	rp.supported_settings = 1 << GAP_SETTINGS_POWERED;
-	rp.supported_settings |= 1 << GAP_SETTINGS_CONNECTABLE;
-	rp.supported_settings |= 1 << GAP_SETTINGS_BONDABLE;
-	rp.supported_settings |= 1 << GAP_SETTINGS_LE;
-	rp.supported_settings |= 1 << GAP_SETTINGS_ADVERTISING;
+	supported_settings = 1 << GAP_SETTINGS_POWERED;
+	supported_settings |= 1 << GAP_SETTINGS_CONNECTABLE;
+	supported_settings |= 1 << GAP_SETTINGS_BONDABLE;
+	supported_settings |= 1 << GAP_SETTINGS_LE;
+	supported_settings |= 1 << GAP_SETTINGS_ADVERTISING;
 
-	rp.current_settings = 1 << GAP_SETTINGS_POWERED;
-	rp.current_settings |= 1 << GAP_SETTINGS_CONNECTABLE;
-	rp.current_settings |= 1 << GAP_SETTINGS_BONDABLE;
-	rp.current_settings |= 1 << GAP_SETTINGS_LE;
+	rp.supported_settings = sys_cpu_to_le32(supported_settings);
+	rp.current_settings = sys_cpu_to_le32(current_settings);
 
 	memcpy(rp.name, CONTROLLER_NAME, sizeof(CONTROLLER_NAME));
 
@@ -151,10 +143,28 @@ static void controller_info(uint8_t *data, uint16_t len)
 			CONTROLLER_INDEX, (uint8_t *) &rp, sizeof(rp));
 }
 
+static void set_connectable(uint8_t *data, uint16_t len)
+{
+	const struct gap_set_connectable_cmd *cmd = (void *) data;
+	struct gap_set_connectable_rp rp;
+
+	if (cmd->connectable) {
+		atomic_set_bit(&current_settings, GAP_SETTINGS_CONNECTABLE);
+	} else {
+		atomic_clear_bit(&current_settings, GAP_SETTINGS_CONNECTABLE);
+	}
+
+	rp.current_settings = sys_cpu_to_le32(current_settings);
+
+	tester_rsp_full(BTP_SERVICE_ID_GAP, GAP_SET_CONNECTABLE,
+			CONTROLLER_INDEX, (uint8_t *) &rp, sizeof(rp));
+}
+
 static void start_advertising(const uint8_t *data, uint16_t len)
 {
 	const struct gap_start_advertising_cmd *cmd = (void *) data;
-	uint8_t status = BTP_STATUS_SUCCESS;
+	struct gap_start_advertising_rp rp;
+	uint8_t adv_type;
 
 	/* TODO
 	 * type should be based on current_settings
@@ -162,24 +172,40 @@ static void start_advertising(const uint8_t *data, uint16_t len)
 	 */
 	ARG_UNUSED(cmd);
 
-	if (bt_start_advertising(BT_LE_ADV_IND, NULL, NULL) < 0) {
-		status = BTP_STATUS_FAILED;
+	if (atomic_test_bit(&current_settings, GAP_SETTINGS_CONNECTABLE)) {
+		adv_type = BT_LE_ADV_IND;
+	} else {
+		adv_type = BT_LE_ADV_NONCONN_IND;
 	}
 
-	tester_rsp(BTP_SERVICE_ID_GAP, GAP_START_ADVERTISING, CONTROLLER_INDEX,
-		   status);
+	if (bt_start_advertising(adv_type, NULL, NULL) < 0) {
+		tester_rsp(BTP_SERVICE_ID_GAP, GAP_START_ADVERTISING,
+			   CONTROLLER_INDEX, BTP_STATUS_FAILED);
+		return;
+	}
+
+	atomic_set_bit(&current_settings, GAP_SETTINGS_ADVERTISING);
+	rp.current_settings = sys_cpu_to_le32(current_settings);
+
+	tester_rsp_full(BTP_SERVICE_ID_GAP, GAP_START_ADVERTISING,
+			CONTROLLER_INDEX, (uint8_t *) &rp, sizeof(rp));
 }
 
 static void stop_advertising(const uint8_t *data, uint16_t len)
 {
-	uint8_t status = BTP_STATUS_SUCCESS;
+	struct gap_stop_advertising_rp rp;
 
 	if (bt_stop_advertising() < 0) {
-		status = BTP_STATUS_FAILED;
+		tester_rsp(BTP_SERVICE_ID_GAP, GAP_STOP_ADVERTISING,
+			   CONTROLLER_INDEX, BTP_STATUS_FAILED);
+		return;
 	}
 
-	tester_rsp(BTP_SERVICE_ID_GAP, GAP_STOP_ADVERTISING, CONTROLLER_INDEX,
-		   status);
+	atomic_clear_bit(&current_settings, GAP_SETTINGS_ADVERTISING);
+	rp.current_settings = sys_cpu_to_le32(current_settings);
+
+	tester_rsp_full(BTP_SERVICE_ID_GAP, GAP_STOP_ADVERTISING,
+			CONTROLLER_INDEX, (uint8_t *) &rp, sizeof(rp));
 }
 
 static void device_found(const bt_addr_le_t *addr, int8_t rssi, uint8_t evtype,
@@ -255,6 +281,28 @@ static void stop_discovery(const uint8_t *data, uint16_t len)
 		   status);
 }
 
+static void disconnect(const uint8_t *data, uint16_t len)
+{
+	struct bt_conn *conn;
+	uint8_t status;
+
+	conn = bt_conn_lookup_addr_le((bt_addr_le_t *) data);
+	if (!conn) {
+		status = BTP_STATUS_FAILED;
+		goto rsp;
+	}
+
+	if (bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN)) {
+		status = BTP_STATUS_FAILED;
+		goto rsp;
+	}
+
+	status = BTP_STATUS_SUCCESS;
+rsp:
+	tester_rsp(BTP_SERVICE_ID_GAP, GAP_DISCONNECT, CONTROLLER_INDEX,
+		   status);
+}
+
 void tester_handle_gap(uint8_t opcode, uint8_t index, uint8_t *data,
 		       uint16_t len)
 {
@@ -286,6 +334,9 @@ void tester_handle_gap(uint8_t opcode, uint8_t index, uint8_t *data,
 	case GAP_READ_CONTROLLER_INFO:
 		controller_info(data, len);
 		return;
+	case GAP_SET_CONNECTABLE:
+		set_connectable(data, len);
+		return;
 	case GAP_START_ADVERTISING:
 		start_advertising(data, len);
 		return;
@@ -297,6 +348,9 @@ void tester_handle_gap(uint8_t opcode, uint8_t index, uint8_t *data,
 		return;
 	case GAP_STOP_DISCOVERY:
 		stop_discovery(data, len);
+		return;
+	case GAP_DISCONNECT:
+		disconnect(data, len);
 		return;
 	default:
 		tester_rsp(BTP_SERVICE_ID_GAP, opcode, index,
@@ -310,6 +364,12 @@ uint8_t tester_init_gap(void)
 	if (bt_enable(NULL) < 0) {
 		return BTP_STATUS_FAILED;
 	}
+
+	atomic_clear(&current_settings);
+	atomic_set_bit(&current_settings, GAP_SETTINGS_POWERED);
+	atomic_set_bit(&current_settings, GAP_SETTINGS_CONNECTABLE);
+	atomic_set_bit(&current_settings, GAP_SETTINGS_BONDABLE);
+	atomic_set_bit(&current_settings, GAP_SETTINGS_LE);
 
 	bt_conn_cb_register(&conn_callbacks);
 

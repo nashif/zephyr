@@ -73,7 +73,8 @@ Running an Application on Galileo Gen2
 **************************************
 
 
-#. Set the platform configuration to Galileo by changing the :command:`make` command to:
+#. Set the platform configuration to Galileo by changing the :command:`make`
+   command to:
 
    .. code-block:: bash
 
@@ -94,8 +95,7 @@ Running an Application on Galileo Gen2
 
    :file:`kernel`
 
-#. Assuming you have built a micro kernel, copy the kernel file :file:`microkernel.elf`
-   to the :file:`$SDCARD/kernel` folder.
+#. Copy the kernel file :file:`zephyr.elf` to the :file:`$SDCARD/kernel` folder.
 
 #. Copy your built version of GRUB to :file:`$SDCARD/efi/boot/bootia32.efi`
 
@@ -106,8 +106,8 @@ Running an Application on Galileo Gen2
       set default=0
       set timeout=10
 
-      menuentry "Zephyr microkernel" {
-         multiboot /kernel/microkernel.elf
+      menuentry "Zephyr Kernel" {
+         multiboot /kernel/zephyr.elf
       }
 
 #. Insert the SDcard in the Galileo board.
@@ -116,7 +116,7 @@ Running an Application on Galileo Gen2
 
 #. Configure your host system to watch for serial data.
 
-   * On Linux, minicom is a popular method for reading serial
+   * On Linux, screen is a popular method for reading serial
       data.
 
    * On Windows, PuTTY has an option to set up configuration for
@@ -146,7 +146,7 @@ GRUB.
 
    .. code-block:: bash
 
-      $ sudo yum install gnu-efi-i386 bison libopts25 \
+      $ sudo dnf install gnu-efi-i386 bison libopts25 \
       libselinux1-dev autogen m4 autoconf help2man libopts25-dev flex \
       libfont-freetype-perl automake autotools-dev libfreetype6-dev texinfo
 
@@ -200,5 +200,5 @@ Follow these steps:
 
       $ configfile (hd0,msdos1)/efi/boot/grub.cfg
 
-   The command uses the Galileo’s built-in GRUB to parse your config file
+   The command uses the Galileo’s built-in GRUB to parse your configuration file
    and list the options you’ve set.

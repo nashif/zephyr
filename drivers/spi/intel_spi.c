@@ -3,31 +3,17 @@
 /*
  * Copyright (c) 2015 Intel Corporation.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * 1) Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * 2) Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3) Neither the name of Intel Corporation nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 #include <nanokernel.h>
@@ -172,7 +158,7 @@ out:
 	_spi_control_cs(dev, 0);
 
 	if (spi->callback) {
-		spi->callback(dev, cb_type);
+		spi->callback(dev, cb_type, spi->user_data);
 	}
 }
 
@@ -236,7 +222,8 @@ static void pull_data(struct device *dev)
 	spi->t_len -= cnt;
 }
 
-static int spi_intel_configure(struct device *dev, struct spi_config *config)
+static int spi_intel_configure(struct device *dev,
+				struct spi_config *config, void *user_data)
 {
 	struct spi_intel_config *info = dev->config->config_info;
 	struct spi_intel_data *spi = dev->driver_data;
@@ -255,6 +242,10 @@ static int spi_intel_configure(struct device *dev, struct spi_config *config)
 	spi->sscr0 = spi->sscr1 = 0;
 	write_sscr0(spi->sscr0, info->regs);
 	write_sscr1(spi->sscr1, info->regs);
+
+	DBG("spi_intel_configure: DDS_RATE: 0x%x SCR: %d\n",
+				INTEL_SPI_DSS_RATE(config->max_sys_freq),
+				INTEL_SPI_SSCR0_SCR(config->max_sys_freq));
 
 	/* Word size and clock rate */
 	spi->sscr0 = INTEL_SPI_SSCR0_DSS(SPI_WORD_SIZE_GET(flags)) |
@@ -284,6 +275,7 @@ static int spi_intel_configure(struct device *dev, struct spi_config *config)
 	spi->tx_buf = spi->rx_buf = NULL;
 	spi->tx_buf_len = spi->rx_buf_len = spi->t_len = 0;
 	spi->callback = config->callback;
+	spi->user_data = user_data;
 
 	return DEV_OK;
 }
@@ -361,11 +353,11 @@ void spi_intel_isr(void *arg)
 		goto out;
 	}
 
-	if (status & (INTEL_SPI_SSSR_RFS | INTEL_SPI_SSSR_RNE)) {
+	if (status & INTEL_SPI_SSSR_RFS) {
 		pull_data(dev);
 	}
 
-	if (status & (INTEL_SPI_SSSR_TFS | INTEL_SPI_SSSR_TNF)) {
+	if (status & INTEL_SPI_SSSR_TFS) {
 		push_data(dev);
 	}
 
@@ -397,6 +389,7 @@ static inline int spi_intel_setup(struct device *dev)
 	info->regs = info->pci_dev.addr;
 	info->irq = info->pci_dev.irq;
 #endif
+
 	pci_enable_regs(&info->pci_dev);
 
 	pci_show(&info->pci_dev);
@@ -417,9 +410,9 @@ int spi_intel_init(struct device *dev)
 		return DEV_NOT_CONFIG;
 	}
 
-	_spi_config_cs(dev);
-
 	info->config_func(dev);
+
+	_spi_config_cs(dev);
 
 	irq_enable(info->irq);
 
@@ -456,11 +449,11 @@ struct spi_intel_config spi_intel_config_0 = {
 DECLARE_DEVICE_INIT_CONFIG(spi_intel_port_0, CONFIG_SPI_INTEL_PORT_0_DRV_NAME,
 			   spi_intel_init, &spi_intel_config_0);
 
-pre_kernel_late_init(spi_intel_port_0, &spi_intel_data_port_0);
+nano_early_init(spi_intel_port_0, &spi_intel_data_port_0);
 
 void spi_intel_isr_0(void *unused)
 {
-	spi_intel_isr(&__initconfig_spi_intel_port_02);
+	spi_intel_isr(&__initconfig_spi_intel_port_03);
 }
 
 IRQ_CONNECT_STATIC(spi_intel_irq_port_0, CONFIG_SPI_INTEL_PORT_0_IRQ,

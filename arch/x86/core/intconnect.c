@@ -3,31 +3,17 @@
 /*
  * Copyright (c) 2010-2014 Wind River Systems, Inc.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * 1) Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * 2) Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3) Neither the name of Wind River Systems nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -123,22 +109,6 @@ void *__attribute__((section(".spurNoErrIsr")))
 		&_SpuriousIntNoErrCodeHandler;
 
 /*
- * Bitfield used to track which interrupt vectors are available for allocation.
- * The array is initialized to indicate all vectors are currently available.
- *
- * NOTE: For portability reasons, the ROUND_UP() macro can NOT be used to
- * perform the rounding up calculation below.  Unlike GCC, the Diab compiler
- * generates an error when a macro that takes a parameter is used to define
- * the size of an array.
- */
-
-#define VEC_ALLOC_NUM_INTS ((CONFIG_IDT_NUM_VECTORS + 31) & ~31) / 32
-
-static unsigned int interrupt_vectors_allocated[VEC_ALLOC_NUM_INTS] = {
-	[0 ...(VEC_ALLOC_NUM_INTS - 1)] = 0xffffffff
-};
-
-/*
  * Array of interrupt stubs for dynamic interrupt connection.
  */
 #ifdef CONFIG_MICROKERNEL
@@ -168,14 +138,22 @@ static NANO_INT_STUB dynamic_stubs[ALL_DYNAMIC_STUBS] = {
 static int _int_stub_alloc(void)
 {
 	int i;
+	int rv = -1;
+	unsigned int key;
+
+	key = irq_lock();
 	for (i = 0; i < ALL_DYNAMIC_STUBS &&
 		     dynamic_stubs[i][0] != _STUB_AVAIL; i++) {
 	}
-	if (i == ALL_DYNAMIC_STUBS) {
-		return -1;
-	} else {
-		return i;
+
+	/* Mark the stub as allocated by using the CALL opcode */
+	if (i != ALL_DYNAMIC_STUBS) {
+		dynamic_stubs[i][0] = IA32_CALL_OPCODE;
+		rv = i;
 	}
+
+	irq_unlock(key);
+	return rv;
 }
 #endif /* ALL_DYNAMIC_STUBS > 0 */
 
@@ -209,21 +187,27 @@ void _IntVecSet(
 	)
 {
 	unsigned long long *pIdtEntry;
+	unsigned int key;
 
 	/*
 	 * The <vector> parameter must be less than the value of the
 	 * CONFIG_IDT_NUM_VECTORS configuration parameter, however,
-	 * explicit
-	 * validation will not be performed in this primitive.
+	 * explicit validation will not be performed in this primitive.
 	 */
 
 	pIdtEntry = (unsigned long long *)(_idt_base_address + (vector << 3));
 
+	/*
+	 * Lock interrupts to protect the IDT entry to which _IdtEntryCreate() will
+	 * write.  They must be locked here because the _IdtEntryCreate() code is
+	 * shared with the 'gen_idt' host tool.
+	 */
 
+	key = irq_lock();
 	_IdtEntCreate(pIdtEntry, routine, dpl);
+	irq_unlock(key);
 
-/* not required to synchronize the instruction and data caches */
-
+	/* not required to synchronize the instruction and data caches */
 }
 
 /*
@@ -314,8 +298,7 @@ int irq_connect(
 	 *
 	 * The _SysIntVecAlloc() routine will use the "utility" routine
 	 * _IntVecAlloc() provided in this module to scan the
-	 *interrupt_vectors_allocated[]
-	 * array for a suitable vector.
+	 * _interrupt_vectors_allocated[] array for a suitable vector.
 	 */
 
 	vector = _SysIntVecAlloc(irq,
@@ -349,9 +332,11 @@ int irq_connect(
 	 * values of <boiRtn>, <eoiRtn>, <boiRtnParm>, <eoiRtnParm>,
 	 * <boiParamRequired>, and <eoiParamRequired>.  The invocation of
 	 * _IntEnt() and _IntExit() will always be required.
+	 *
+	 * NOTE: The 'call' opcode for the call to _IntEnt() has already been
+	 * written by _int_stub_alloc() to mark the stub as allocated.
 	 */
 
-	STUB_PTR[0] = IA32_CALL_OPCODE;
 	UNALIGNED_WRITE((unsigned int *)&STUB_PTR[1],
 			(unsigned int)&_IntEnt - (unsigned int)&STUB_PTR[5]);
 
@@ -451,7 +436,7 @@ int irq_connect(
  *
  * @brief Allocate a free interrupt vector given <priority>
  *
- * This routine scans the interrupt_vectors_allocated[] array for a free vector
+ * This routine scans the _interrupt_vectors_allocated[] array for a free vector
  * that satisfies the specified <priority>.  It is a utility function for use
  * only by the interrupt controller's _SysIntVecAlloc() routine.
  *
@@ -480,10 +465,13 @@ int irq_connect(
 
 int _IntVecAlloc(unsigned int priority)
 {
-	unsigned int imask;
+	unsigned int key;
 	unsigned int entryToScan;
 	unsigned int fsb; /* first set bit in entry */
+	unsigned int search_set;
 	int vector;
+
+	static unsigned int mask[2] = {0x0000ffff, 0xffff0000};
 
 #if defined(DEBUG)
 	/*
@@ -496,72 +484,46 @@ int _IntVecAlloc(unsigned int priority)
 #endif /* DEBUG */
 
 	/*
-	 * Atomically allocate a vector from the interrupt_vectors_allocated[] array
-	 * to prevent race conditions with other tasks/fibers attempting to
-	 * allocate an interrupt vector.
+	 * Atomically allocate a vector from the _interrupt_vectors_allocated[]
+	 * array to prevent race conditions with other tasks/fibers attempting
+	 * to allocate an interrupt vector.
 	 */
 
-	entryToScan = priority >> 1; /* interrupt_vectors_allocated[] entry to scan */
+	entryToScan = priority >> 1;
 
 	/*
-	 * The interrupt_vectors_allocated[] entry specified by 'entryToScan' is a 32-bit
-	 * quantity and thus represents the vectors for a pair of priority
-	 *levels.
-	 * Use find_msb_set() to scan for the upper of the 2, and find_lsb_set() to
-	 *scan
-	 * for the lower of the 2 priorities.
+	 * The _interrupt_vectors_allocated[] entry indexed by 'entryToScan' is a
+	 * 32-bit quantity and thus represents the vectors for a pair of priority
+	 * levels. Mask out the unwanted priority level and then use find_lsb_set()
+	 * to scan for an available vector of the requested priority.
 	 *
-	 * Note that find_lsb_set/find_msb_set returns bit position from 1 to 32,
+	 * Note that find_lsb_set() returns bit position from 1 to 32,
 	 * or 0 if the argument is zero.
 	 */
 
-	imask = irq_lock();
+	key = irq_lock();
 
-	if ((priority % 2) == 0) {
-		/* scan from the LSB for even priorities */
-
-		fsb = find_lsb_set(interrupt_vectors_allocated[entryToScan]);
+	search_set = mask[priority & 1] & _interrupt_vectors_allocated[entryToScan];
+	fsb = find_lsb_set(search_set);
 
 #if defined(DEBUG)
-		if ((fsb == 0) || (fsb > 16)) {
-			/*
-			 * No bits are set in the lower 16 bits, thus all
-			 * vectors for this
-			 * priority have been allocated.
-			 */
+	if (fsb == 0) {
+		/* All vectors for this priority have been allocated. */
 
-			irq_unlock(imask);
-			return (-1);
-		}
-#endif /* DEBUG */
-	} else {
-		/* scan from the MSB for odd priorities */
-
-		fsb = find_msb_set(interrupt_vectors_allocated[entryToScan]);
-
-#if defined(DEBUG)
-		if ((fsb == 0) || (fsb < 17)) {
-			/*
-			 * No bits are set in the lower 16 bits, thus all
-			 * vectors for this
-			 * priority have been allocated.
-			 */
-
-			irq_unlock(imask);
-			return (-1);
-		}
-#endif /* DEBUG */
+		irq_unlock(key);
+		return (-1);
 	}
+#endif /* DEBUG */
 
-	/* ffsLsb/ffsMsb returns bit positions as 1 to 32 */
+	/*
+	 * An available vector of the requested priority was found.
+	 * Mark it as allocated.
+	 */
 
 	--fsb;
+	_interrupt_vectors_allocated[entryToScan] &= ~(1 << fsb);
 
-	/* mark the vector as allocated */
-
-	interrupt_vectors_allocated[entryToScan] &= ~(1 << fsb);
-
-	irq_unlock(imask);
+	irq_unlock(key);
 
 	/* compute vector given allocated bit within the priority level */
 
@@ -590,7 +552,7 @@ void _IntVecMarkAllocated(unsigned int vector)
 	unsigned int imask;
 
 	imask = irq_lock();
-	interrupt_vectors_allocated[entryToSet] &= ~(1 << bitToSet);
+	_interrupt_vectors_allocated[entryToSet] &= ~(1 << bitToSet);
 	irq_unlock(imask);
 }
 
@@ -611,7 +573,7 @@ void _IntVecMarkFree(unsigned int vector)
 	unsigned int imask;
 
 	imask = irq_lock();
-	interrupt_vectors_allocated[entryToSet] |= (1 << bitToSet);
+	_interrupt_vectors_allocated[entryToSet] |= (1 << bitToSet);
 	irq_unlock(imask);
 }
 

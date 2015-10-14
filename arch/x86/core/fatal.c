@@ -3,31 +3,17 @@
 /*
  * Copyright (c) 2013-2014 Wind River Systems, Inc.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * 1) Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * 2) Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3) Neither the name of Wind River Systems nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -41,7 +27,7 @@ This module provides the _NanoFatalErrorHandler() routine.
 #include <nanokernel.h>
 #include <nano_private.h>
 #include <misc/printk.h>
-
+#include <asmPrv.h>
 
 /*
  * Define a default ESF for use with _NanoFatalErrorHandler() in the event
@@ -133,3 +119,43 @@ FUNC_NORETURN void _NanoFatalErrorHandler(
 
 	_SysFatalErrorHandler(reason, pEsf);
 }
+
+#if CONFIG_EXCEPTION_DEBUG
+
+static FUNC_NORETURN void generic_exc_handle(char *description,
+					     unsigned int vector,
+					     const NANO_ESF *pEsf)
+{
+	printk("***** CPU exception %d: %s\n", vector, description);
+	if (pEsf->errorCode) {
+		printk("***** Exception code: 0x%x\n", pEsf->errorCode);
+	}
+	_NanoFatalErrorHandler(_NANO_ERR_SPURIOUS_INT, pEsf);
+}
+
+#define EXC_FUNC(vector, description) \
+FUNC_NORETURN void handle_exc_##vector(const NANO_ESF *pEsf) \
+{ \
+	generic_exc_handle(description, vector, pEsf); \
+}
+
+EXC_FUNC(IV_DIVIDE_ERROR, "Division by zero");
+EXC_FUNC(IV_NON_MASKABLE_INTERRUPT, "Non-maskable interrupt");
+EXC_FUNC(IV_OVERFLOW, "Overflow");
+EXC_FUNC(IV_BOUND_RANGE, "Bounds");
+EXC_FUNC(IV_INVALID_OPCODE, "Invalid opcode");
+#ifndef CONFIG_FP_SHARING
+EXC_FUNC(IV_DEVICE_NOT_AVAILABLE, "FPU device not available");
+#endif
+EXC_FUNC(IV_DOUBLE_FAULT, "Double fault");
+EXC_FUNC(IV_INVALID_TSS, "Invalid task state segment");
+EXC_FUNC(IV_SEGMENT_NOT_PRESENT, "Segment not present");
+EXC_FUNC(IV_STACK_FAULT, "Stack fault");
+EXC_FUNC(IV_GENERAL_PROTECTION, "General protection fault");
+EXC_FUNC(IV_PAGE_FAULT, "Page fault");
+EXC_FUNC(IV_X87_FPU_FP_ERROR, "Floating point error");
+EXC_FUNC(IV_ALIGNMENT_CHECK, "Alignment error");
+EXC_FUNC(IV_MACHINE_CHECK, "Machine check");
+
+#endif /* CONFIG_EXCEPTION_DEBUG */
+

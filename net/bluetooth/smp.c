@@ -6,31 +6,17 @@
 /*
  * Copyright (c) 2015 Intel Corporation
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * 1) Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * 2) Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3) Neither the name of Intel Corporation nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 #include <nanokernel.h>
@@ -46,14 +32,27 @@
 #include <bluetooth/hci.h>
 #include <bluetooth/bluetooth.h>
 
+#if defined(CONFIG_TINYCRYPT_AES)
+#include <tinycrypt/aes.h>
+#include <tinycrypt/utils.h>
+#endif
+
 #include "hci_core.h"
 #include "keys.h"
 #include "conn_internal.h"
 #include "l2cap.h"
 #include "smp.h"
+#include "stack.h"
 
+#define SMP_TIMEOUT (30 * sys_clock_ticks_per_sec)
+
+#if defined(CONFIG_BLUETOOTH_SIGNING)
 #define RECV_KEYS (BT_SMP_DIST_ID_KEY | BT_SMP_DIST_ENC_KEY | BT_SMP_DIST_SIGN)
 #define SEND_KEYS (BT_SMP_DIST_ENC_KEY | BT_SMP_DIST_SIGN)
+#else
+#define RECV_KEYS (BT_SMP_DIST_ID_KEY | BT_SMP_DIST_ENC_KEY)
+#define SEND_KEYS (BT_SMP_DIST_ENC_KEY)
+#endif /* CONFIG_BLUETOOTH_SIGNING */
 
 enum pairing_method {
 	JUST_WORKS,		/* JustWorks pairing */
@@ -66,12 +65,17 @@ enum {
 	SMP_FLAG_TK_VALID,	/* if TK values is valid */
 	SMP_FLAG_CFM_DELAYED,	/* if confirm should be send when TK is valid */
 	SMP_FLAG_ENC_PENDING,	/* if waiting for an encryption change event */
+	SMP_FLAG_PAIRING,	/* if pairing is in progress */
+	SMP_FLAG_TIMEOUT,	/* if SMP timeout occurred */
 };
 
 /* SMP channel specific context */
 struct bt_smp {
 	/* The connection this context is associated with */
 	struct bt_conn		*conn;
+
+	/* SMP Timeout fiber handle */
+	void			*timeout;
 
 	/* Commands that remote is allowed to send */
 	atomic_t		allowed_cmds;
@@ -105,6 +109,9 @@ struct bt_smp {
 
 	/* Remote key distribution */
 	uint8_t			remote_dist;
+
+	/* stack for timeout fiber */
+	BT_STACK(stack, 128);
 };
 
 /* based on table 2.8 Core Spec 2.3.5.1 Vol. 3 Part H */
@@ -112,7 +119,7 @@ static const uint8_t gen_method[5 /* remote */][5 /* local */] = {
 	{ JUST_WORKS, JUST_WORKS, PASSKEY_INPUT, JUST_WORKS, PASSKEY_INPUT },
 	{ JUST_WORKS, JUST_WORKS, PASSKEY_INPUT, JUST_WORKS, PASSKEY_INPUT },
 	{ PASSKEY_DISPLAY, PASSKEY_DISPLAY, PASSKEY_INPUT, JUST_WORKS,
-	  PASSKEY_INPUT },
+	  PASSKEY_DISPLAY },
 	{ JUST_WORKS, JUST_WORKS, JUST_WORKS, JUST_WORKS, JUST_WORKS },
 	{ PASSKEY_DISPLAY, PASSKEY_DISPLAY, PASSKEY_INPUT, JUST_WORKS,
 	  PASSKEY_ROLE },
@@ -189,6 +196,58 @@ static void xor_128(const uint128_t *p, const uint128_t *q, uint128_t *r)
 	r->b = p->b ^ q->b;
 }
 
+#if defined(CONFIG_TINYCRYPT_AES) || defined(CONFIG_BLUETOOTH_SIGNING)
+/* swap octets for LE encrypt */
+static void swap_buf(const uint8_t *src, uint8_t *dst, uint16_t len)
+{
+	int i;
+
+	for (i = 0; i < len; i++) {
+		dst[len - 1 - i] = src[i];
+	}
+}
+
+static void swap_in_place(uint8_t *buf, uint16_t len)
+{
+	int i, j;
+
+	for (i = 0, j = len - 1; i < j; i++, j--) {
+		uint8_t tmp = buf[i];
+
+		buf[i] = buf[j];
+		buf[j] = tmp;
+	}
+}
+#endif /* CONFIG_TINYCRYPT_AES || CONFIG_BLUETOOTH_SIGNING */
+
+#if defined(CONFIG_TINYCRYPT_AES)
+static int le_encrypt(const uint8_t key[16], const uint8_t plaintext[16],
+		      uint8_t enc_data[16])
+{
+	struct tc_aes_key_sched_struct s;
+	uint8_t tmp[16];
+
+	BT_DBG("key %s plaintext %s\n", h(key, 16), h(plaintext, 16));
+
+	swap_buf(key, tmp, 16);
+
+	if (tc_aes128_set_encrypt_key(&s, tmp) == TC_FAIL) {
+		return -EINVAL;
+	}
+
+	swap_buf(plaintext, tmp, 16);
+
+	if (tc_aes_encrypt(enc_data, tmp, &s) == TC_FAIL) {
+		return -EINVAL;
+	}
+
+	swap_in_place(enc_data, 16);
+
+	BT_DBG("enc_data %s\n", h(enc_data, 16));
+
+	return 0;
+}
+#else
 static int le_encrypt(const uint8_t key[16], const uint8_t plaintext[16],
 		      uint8_t enc_data[16])
 {
@@ -221,6 +280,7 @@ static int le_encrypt(const uint8_t key[16], const uint8_t plaintext[16],
 
 	return 0;
 }
+#endif
 
 static int le_rand(void *buf, size_t len)
 {
@@ -335,6 +395,68 @@ static int smp_s1(const uint8_t k[16], const uint8_t r1[16],
 
 	/* s1(k, r1 , r2) = e(k, r') */
 	return le_encrypt(k, out, out);
+}
+
+static void smp_reset(struct bt_conn *conn)
+{
+	struct bt_smp *smp = conn->smp;
+
+	smp->method = JUST_WORKS;
+	atomic_set(&smp->allowed_cmds, 0);
+	atomic_set(&smp->flags, 0);
+
+	switch(conn->role) {
+#if defined(CONFIG_BLUETOOTH_CENTRAL)
+	case BT_HCI_ROLE_MASTER:
+		atomic_set_bit(&smp->allowed_cmds, BT_SMP_CMD_SECURITY_REQUEST);
+		break;
+#endif /* CONFIG_BLUETOOTH_CENTRAL */
+
+#if defined(CONFIG_BLUETOOTH_PERIPHERAL)
+	case BT_HCI_ROLE_SLAVE:
+		atomic_set_bit(&smp->allowed_cmds, BT_SMP_CMD_PAIRING_REQ);
+		break;
+#endif /* CONFIG_BLUETOOTH_PERIPHERAL */
+	default:
+		break;
+	}
+}
+
+static void smp_timeout(int arg1, int arg2)
+{
+	struct bt_smp *smp = (struct bt_smp *)arg1;
+	ARG_UNUSED(arg2);
+
+	BT_ERR("SMP Timeout\n");
+
+	smp->timeout = NULL;
+
+	smp_reset(smp->conn);
+
+	atomic_set_bit(&smp->flags, SMP_FLAG_TIMEOUT);
+}
+
+static void smp_restart_timer(struct bt_smp *smp)
+{
+	if (smp->timeout) {
+		fiber_fiber_delayed_start_cancel(smp->timeout);
+	}
+
+	smp->timeout = fiber_delayed_start(smp->stack, sizeof(smp->stack),
+					   smp_timeout, (int) smp, 0, 7, 0,
+					   SMP_TIMEOUT);
+}
+
+static void smp_stop_timer(struct bt_smp *smp)
+{
+	if (!smp->timeout) {
+		return;
+	}
+
+	fiber_fiber_delayed_start_cancel(smp->timeout);
+	smp->timeout = NULL;
+
+	stack_analyze("smp timeout stack", smp->stack, sizeof(smp->stack));
 }
 
 struct bt_buf *bt_smp_create_pdu(struct bt_conn *conn, uint8_t op, size_t len)
@@ -452,6 +574,65 @@ static uint8_t smp_request_tk(struct bt_conn *conn, uint8_t remote_io)
 	return 0;
 }
 
+static bool sec_level_reachable(struct bt_conn *conn)
+{
+	switch (conn->required_sec_level) {
+	case BT_SECURITY_LOW:
+	case BT_SECURITY_MEDIUM:
+		return true;
+	case BT_SECURITY_HIGH:
+		return bt_smp_io_capa != BT_SMP_IO_NO_INPUT_OUTPUT;
+	case BT_SECURITY_FIPS:
+	default:
+		return false;
+	}
+}
+
+#if defined(CONFIG_BLUETOOTH_PERIPHERAL)
+int bt_smp_send_security_req(struct bt_conn *conn)
+{
+	struct bt_smp *smp = conn->smp;
+	struct bt_smp_security_request *req;
+	struct bt_buf *req_buf;
+
+	BT_DBG("\n");
+
+	/* SMP Timeout */
+	if (atomic_test_bit(&smp->flags, SMP_FLAG_TIMEOUT)) {
+		return -EIO;
+	}
+
+	/* pairing is in progress */
+	if (atomic_test_bit(&smp->flags, SMP_FLAG_PAIRING)) {
+		return -EBUSY;
+	}
+
+	/* early verify if required sec level if reachable */
+	if (!sec_level_reachable(conn)) {
+		return -EINVAL;
+	}
+
+	req_buf = bt_smp_create_pdu(conn, BT_SMP_CMD_SECURITY_REQUEST,
+				    sizeof(*req));
+	if (!req_buf) {
+		return -ENOBUFS;
+	}
+
+	req = bt_buf_add(req_buf, sizeof(*req));
+
+	req->auth_req = BT_SMP_AUTH_BONDING;
+
+	if (conn->required_sec_level >= BT_SECURITY_HIGH) {
+		req->auth_req |= BT_SMP_AUTH_MITM;
+	}
+
+	bt_l2cap_send(conn, BT_L2CAP_CID_SMP, req_buf);
+
+	atomic_set_bit(&smp->allowed_cmds, BT_SMP_CMD_PAIRING_FAIL);
+
+	return 0;
+}
+
 static uint8_t smp_pairing_req(struct bt_conn *conn, struct bt_buf *buf)
 {
 	struct bt_smp_pairing *req = (void *)buf->data;
@@ -498,58 +679,51 @@ static uint8_t smp_pairing_req(struct bt_conn *conn, struct bt_buf *buf)
 	bt_l2cap_send(conn, BT_L2CAP_CID_SMP, rsp_buf);
 
 	atomic_set_bit(&smp->allowed_cmds, BT_SMP_CMD_PAIRING_CONFIRM);
+	atomic_set_bit(&smp->flags, SMP_FLAG_PAIRING);
+
+	smp_restart_timer(smp);
 
 	return smp_request_tk(conn, req->io_capability);
 }
-
-static bool sec_level_reachable(struct bt_conn *conn)
+#else
+static uint8_t smp_pairing_req(struct bt_conn *conn, struct bt_buf *buf)
 {
-	switch (conn->required_sec_level) {
-	case BT_SECURITY_LOW:
-	case BT_SECURITY_MEDIUM:
-		return true;
-	case BT_SECURITY_HIGH:
-		return bt_smp_io_capa != BT_SMP_IO_NO_INPUT_OUTPUT;
-	case BT_SECURITY_FIPS:
-	default:
-		return false;
-	}
+	return BT_SMP_ERR_CMD_NOTSUPP;
 }
+#endif /* CONFIG_BLUETOOTH_PERIPHERAL */
 
-int bt_smp_send_security_req(struct bt_conn *conn)
+static uint8_t smp_send_pairing_confirm(struct bt_conn *conn)
 {
+	struct bt_smp_pairing_confirm *req;
 	struct bt_smp *smp = conn->smp;
-	struct bt_smp_security_request *req;
-	struct bt_buf *req_buf;
+	struct bt_buf *rsp_buf;
+	int err;
 
-	BT_DBG("\n");
-
-	/* early verify if required sec level if reachable */
-	if (!sec_level_reachable(conn)) {
-		return -EINVAL;
-	}
-
-	req_buf = bt_smp_create_pdu(conn, BT_SMP_CMD_SECURITY_REQUEST,
+	rsp_buf = bt_smp_create_pdu(conn, BT_SMP_CMD_PAIRING_CONFIRM,
 				    sizeof(*req));
-	if (!req_buf) {
-		return -ENOBUFS;
+	if (!rsp_buf) {
+		return BT_SMP_ERR_UNSPECIFIED;
 	}
 
-	req = bt_buf_add(req_buf, sizeof(*req));
+	req = bt_buf_add(rsp_buf, sizeof(*req));
 
-	req->auth_req = BT_SMP_AUTH_BONDING;
-
-	if (conn->required_sec_level >= BT_SECURITY_HIGH) {
-		req->auth_req |= BT_SMP_AUTH_MITM;
+	err = smp_c1(smp->tk, smp->prnd, smp->preq, smp->prsp, &conn->init_addr,
+		     &conn->resp_addr, req->val);
+	if (err) {
+		bt_buf_put(rsp_buf);
+		return BT_SMP_ERR_UNSPECIFIED;
 	}
 
-	bt_l2cap_send(conn, BT_L2CAP_CID_SMP, req_buf);
+	bt_l2cap_send(conn, BT_L2CAP_CID_SMP, rsp_buf);
 
-	atomic_set_bit(&smp->allowed_cmds, BT_SMP_CMD_PAIRING_FAIL);
+	atomic_clear_bit(&smp->flags, SMP_FLAG_CFM_DELAYED);
+
+	smp_restart_timer(smp);
 
 	return 0;
 }
 
+#if defined(CONFIG_BLUETOOTH_CENTRAL)
 int bt_smp_send_pairing_req(struct bt_conn *conn)
 {
 	struct bt_smp *smp = conn->smp;
@@ -557,6 +731,16 @@ int bt_smp_send_pairing_req(struct bt_conn *conn)
 	struct bt_buf *req_buf;
 
 	BT_DBG("\n");
+
+	/* SMP Timeout */
+	if (atomic_test_bit(&smp->flags, SMP_FLAG_TIMEOUT)) {
+		return -EIO;
+	}
+
+	/* pairing is in progress */
+	if (atomic_test_bit(&smp->flags, SMP_FLAG_PAIRING)) {
+		return -EBUSY;
+	}
 
 	/* early verify if required sec level if reachable */
 	if (!sec_level_reachable(conn)) {
@@ -591,35 +775,9 @@ int bt_smp_send_pairing_req(struct bt_conn *conn)
 	bt_l2cap_send(conn, BT_L2CAP_CID_SMP, req_buf);
 
 	atomic_set_bit(&smp->allowed_cmds, BT_SMP_CMD_PAIRING_RSP);
+	atomic_set_bit(&smp->flags, SMP_FLAG_PAIRING);
 
-	return 0;
-}
-
-static uint8_t smp_send_pairing_confirm(struct bt_conn *conn)
-{
-	struct bt_smp_pairing_confirm *req;
-	struct bt_smp *smp = conn->smp;
-	struct bt_buf *rsp_buf;
-	int err;
-
-	rsp_buf = bt_smp_create_pdu(conn, BT_SMP_CMD_PAIRING_CONFIRM,
-				    sizeof(*req));
-	if (!rsp_buf) {
-		return BT_SMP_ERR_UNSPECIFIED;
-	}
-
-	req = bt_buf_add(rsp_buf, sizeof(*req));
-
-	err = smp_c1(smp->tk, smp->prnd, smp->preq, smp->prsp, &conn->init_addr,
-		     &conn->resp_addr, req->val);
-	if (err) {
-		bt_buf_put(rsp_buf);
-		return BT_SMP_ERR_UNSPECIFIED;
-	}
-
-	bt_l2cap_send(conn, BT_L2CAP_CID_SMP, rsp_buf);
-
-	atomic_clear_bit(&smp->flags, SMP_FLAG_CFM_DELAYED);
+	smp_restart_timer(smp);
 
 	return 0;
 }
@@ -658,6 +816,12 @@ static uint8_t smp_pairing_rsp(struct bt_conn *conn, struct bt_buf *buf)
 
 	return 0;
 }
+#else
+static uint8_t smp_pairing_rsp(struct bt_conn *conn, struct bt_buf *buf)
+{
+	return BT_SMP_ERR_CMD_NOTSUPP;
+}
+#endif /* CONFIG_BLUETOOTH_CENTRAL */
 
 static uint8_t smp_send_pairing_random(struct bt_conn *conn)
 {
@@ -676,6 +840,8 @@ static uint8_t smp_send_pairing_random(struct bt_conn *conn)
 
 	bt_l2cap_send(conn, BT_L2CAP_CID_SMP, rsp_buf);
 
+	smp_restart_timer(smp);
+
 	return 0;
 }
 
@@ -688,18 +854,21 @@ static uint8_t smp_pairing_confirm(struct bt_conn *conn, struct bt_buf *buf)
 
 	memcpy(smp->pcnf, req->val, sizeof(smp->pcnf));
 
+#if defined(CONFIG_BLUETOOTH_CENTRAL)
 	if (conn->role == BT_HCI_ROLE_MASTER) {
 		atomic_set_bit(&smp->allowed_cmds, BT_SMP_CMD_PAIRING_RANDOM);
 		return smp_send_pairing_random(conn);
 	}
+#endif /* CONFIG_BLUETOOTH_CENTRAL */
 
+#if defined(CONFIG_BLUETOOTH_PERIPHERAL)
 	if (atomic_test_bit(&smp->flags, SMP_FLAG_TK_VALID)) {
 		atomic_set_bit(&smp->allowed_cmds, BT_SMP_CMD_PAIRING_RANDOM);
 		return smp_send_pairing_confirm(conn);
 	}
 
 	atomic_set_bit(&smp->flags, SMP_FLAG_CFM_DELAYED);
-
+#endif /* CONFIG_BLUETOOTH_PERIPHERAL */
 	return 0;
 }
 
@@ -739,6 +908,7 @@ static uint8_t smp_pairing_random(struct bt_conn *conn, struct bt_buf *buf)
 		return BT_SMP_ERR_CONFIRM_FAILED;
 	}
 
+#if defined(CONFIG_BLUETOOTH_CENTRAL)
 	if (conn->role == BT_HCI_ROLE_MASTER) {
 		uint8_t stk[16];
 
@@ -769,7 +939,9 @@ static uint8_t smp_pairing_random(struct bt_conn *conn, struct bt_buf *buf)
 
 		return 0;
 	}
+#endif /* CONFIG_BLUETOOTH_CENTRAL */
 
+#if defined(CONFIG_BLUETOOTH_PERIPHERAL)
 	keys = bt_keys_get_type(BT_KEYS_SLAVE_LTK, &conn->dst);
 	if (!keys) {
 		BT_ERR("Unable to create new keys\n");
@@ -797,25 +969,9 @@ static uint8_t smp_pairing_random(struct bt_conn *conn, struct bt_buf *buf)
 	atomic_set_bit(&smp->flags, SMP_FLAG_ENC_PENDING);
 
 	smp_send_pairing_random(conn);
+#endif /* CONFIG_BLUETOOTH_PERIPHERAL */
 
 	return 0;
-}
-
-static void smp_reset(struct bt_conn *conn)
-{
-	struct bt_smp *smp = conn->smp;
-
-	smp->method = JUST_WORKS;
-	atomic_set(&smp->allowed_cmds, 0);
-	atomic_set(&smp->flags, 0);
-
-	if (conn->role == BT_HCI_ROLE_MASTER) {
-		atomic_set_bit(&smp->allowed_cmds,
-			       BT_SMP_CMD_SECURITY_REQUEST);
-	} else {
-		atomic_set_bit(&smp->allowed_cmds,
-			       BT_SMP_CMD_PAIRING_REQ);
-	}
 }
 
 static uint8_t smp_pairing_failed(struct bt_conn *conn, struct bt_buf *buf)
@@ -872,6 +1028,8 @@ static void bt_smp_distribute_keys(struct bt_conn *conn)
 		struct bt_smp_encrypt_info *info;
 		struct bt_smp_master_ident *ident;
 
+		smp->local_dist &= ~BT_SMP_DIST_ENC_KEY;
+
 		bt_keys_add_type(keys, BT_KEYS_SLAVE_LTK);
 
 		le_rand(keys->slave_ltk.val, sizeof(keys->slave_ltk.val));
@@ -902,10 +1060,15 @@ static void bt_smp_distribute_keys(struct bt_conn *conn)
 		ident->ediv = keys->slave_ltk.ediv;
 
 		bt_l2cap_send(conn, BT_L2CAP_CID_SMP, buf);
+
+		smp_restart_timer(smp);
 	}
 
+#if defined(CONFIG_BLUETOOTH_SIGNING)
 	if (smp->local_dist & BT_SMP_DIST_SIGN) {
 		struct bt_smp_signing_info *info;
+
+		smp->local_dist &= ~BT_SMP_DIST_SIGN;
 
 		bt_keys_add_type(keys, BT_KEYS_LOCAL_CSRK);
 
@@ -923,7 +1086,10 @@ static void bt_smp_distribute_keys(struct bt_conn *conn)
 		memcpy(info->csrk, keys->local_csrk.val, sizeof(info->csrk));
 
 		bt_l2cap_send(conn, BT_L2CAP_CID_SMP, buf);
+
+		smp_restart_timer(smp);
 	}
+#endif /* CONFIG_BLUETOOTH_SIGNING */
 }
 
 static uint8_t smp_encrypt_info(struct bt_conn *conn, struct bt_buf *buf)
@@ -974,8 +1140,16 @@ static uint8_t smp_master_ident(struct bt_conn *conn, struct bt_buf *buf)
 		atomic_set_bit(&smp->allowed_cmds, BT_SMP_CMD_SIGNING_INFO);
 	}
 
+#if defined(CONFIG_BLUETOOTH_CENTRAL)
 	if (conn->role == BT_HCI_ROLE_MASTER && !smp->remote_dist) {
 		bt_smp_distribute_keys(conn);
+	}
+#endif /* CONFIG_BLUETOOTH_CENTRAL */
+
+	/* if all keys were distributed, pairing is done */
+	if (!smp->local_dist && !smp->remote_dist) {
+		atomic_clear_bit(&smp->flags, SMP_FLAG_PAIRING);
+		smp_stop_timer(smp);
 	}
 
 	return 0;
@@ -1058,13 +1232,22 @@ static uint8_t smp_ident_addr_info(struct bt_conn *conn, struct bt_buf *buf)
 		atomic_set_bit(&smp->allowed_cmds, BT_SMP_CMD_SIGNING_INFO);
 	}
 
+#if defined(CONFIG_BLUETOOTH_CENTRAL)
 	if (conn->role == BT_HCI_ROLE_MASTER && !smp->remote_dist) {
 		bt_smp_distribute_keys(conn);
+	}
+#endif /* CONFIG_BLUETOOTH_CENTRAL */
+
+	/* if all keys were distributed, pairing is done */
+	if (!smp->local_dist && !smp->remote_dist) {
+		atomic_clear_bit(&smp->flags, SMP_FLAG_PAIRING);
+		smp_stop_timer(smp);
 	}
 
 	return 0;
 }
 
+#if defined(CONFIG_BLUETOOTH_SIGNING)
 static uint8_t smp_signing_info(struct bt_conn *conn, struct bt_buf *buf)
 {
 	struct bt_smp_signing_info *req = (void *)buf->data;
@@ -1084,13 +1267,28 @@ static uint8_t smp_signing_info(struct bt_conn *conn, struct bt_buf *buf)
 
 	smp->remote_dist &= ~BT_SMP_DIST_SIGN;
 
+#if defined(CONFIG_BLUETOOTH_CENTRAL)
 	if (conn->role == BT_HCI_ROLE_MASTER && !smp->remote_dist) {
 		bt_smp_distribute_keys(conn);
+	}
+#endif /* CONFIG_BLUETOOTH_CENTRAL */
+
+	/* if all keys were distributed, pairing is done */
+	if (!smp->local_dist && !smp->remote_dist) {
+		atomic_clear_bit(&smp->flags, SMP_FLAG_PAIRING);
+		smp_stop_timer(smp);
 	}
 
 	return 0;
 }
+#else
+static uint8_t smp_signing_info(struct bt_conn *conn, struct bt_buf *buf)
+{
+	return BT_SMP_ERR_CMD_NOTSUPP;
+}
+#endif /* CONFIG_BLUETOOTH_SIGNING */
 
+#if defined(CONFIG_BLUETOOTH_CENTRAL)
 static uint8_t smp_security_request(struct bt_conn *conn, struct bt_buf *buf)
 {
 	struct bt_smp_security_request *req = (void *)buf->data;
@@ -1133,6 +1331,12 @@ pair:
 
 	return 0;
 }
+#else
+static uint8_t smp_security_request(struct bt_conn *conn, struct bt_buf *buf)
+{
+	return BT_SMP_ERR_CMD_NOTSUPP;
+}
+#endif /* CONFIG_BLUETOOTH_CENTRAL */
 
 static const struct {
 	uint8_t  (*func)(struct bt_conn *conn, struct bt_buf *buf);
@@ -1166,6 +1370,17 @@ static void bt_smp_recv(struct bt_conn *conn, struct bt_buf *buf)
 	BT_DBG("Received SMP code 0x%02x len %u\n", hdr->code, buf->len);
 
 	bt_buf_pull(buf, sizeof(*hdr));
+
+	/*
+	 * If SMP timeout occurred "no further SMP commands shall be sent over
+	 * the L2CAP Security Manager Channel. A new SM procedure shall only be
+	 * performed when a new physical link has been established."
+	 */
+	if (atomic_test_bit(&smp->flags, SMP_FLAG_TIMEOUT)) {
+		BT_WARN("SMP command (code 0x%02x) received after timeout\n",
+			hdr->code);
+		goto done;
+	}
 
 	if (hdr->code >= ARRAY_SIZE(handlers) || !handlers[hdr->code].func) {
 		BT_WARN("Unhandled SMP code 0x%02x\n", hdr->code);
@@ -1230,6 +1445,8 @@ static void bt_smp_disconnected(struct bt_conn *conn)
 	BT_DBG("conn %p handle %u\n", conn, conn->handle);
 
 	conn->smp = NULL;
+
+	smp_stop_timer(smp);
 	memset(smp, 0, sizeof(*smp));
 }
 
@@ -1266,12 +1483,20 @@ static void bt_smp_encrypt_change(struct bt_conn *conn)
 		bt_keys_clear(keys, BT_KEYS_ALL);
 	}
 
+#if defined(CONFIG_BLUETOOTH_CENTRAL)
 	/* Slave distributes it's keys first */
 	if (conn->role == BT_HCI_ROLE_MASTER && smp->remote_dist) {
 		return;
 	}
+#endif /* CONFIG_BLUETOOTH_CENTRAL */
 
 	bt_smp_distribute_keys(conn);
+
+	/* if all keys were distributed, pairing is done */
+	if (!smp->local_dist && !smp->remote_dist) {
+		atomic_clear_bit(&smp->flags, SMP_FLAG_PAIRING);
+		smp_stop_timer(smp);
+	}
 }
 
 bool bt_smp_irk_matches(const uint8_t irk[16], const bt_addr_t *addr)
@@ -1289,28 +1514,7 @@ bool bt_smp_irk_matches(const uint8_t irk[16], const bt_addr_t *addr)
 	return !memcmp(addr->val, hash, 3);
 }
 
-/* spaw octets for LE encrypt */
-static void swap_buf(const uint8_t *src, uint8_t *dst, uint16_t len)
-{
-	int i;
-
-	for (i = 0; i < len; i++) {
-		dst[len - 1 - i] = src[i];
-	}
-}
-
-static void swap_in_place(uint8_t *buf, uint16_t len)
-{
-	int i, j;
-
-	for (i = 0, j = len - 1; i < j; i++, j--) {
-		uint8_t tmp = buf[i];
-
-		buf[i] = buf[j];
-		buf[j] = tmp;
-	}
-}
-
+#if defined(CONFIG_BLUETOOTH_SIGNING)
 /* 1 bit left shift */
 static void array_shift(const uint8_t *in, uint8_t *out)
 {
@@ -1589,6 +1793,17 @@ int bt_smp_sign(struct bt_conn *conn, struct bt_buf *buf)
 
 	return 0;
 }
+#else
+int bt_smp_sign_verify(struct bt_conn *conn, struct bt_buf *buf)
+{
+	return -ENOTSUP;
+}
+
+int bt_smp_sign(struct bt_conn *conn, struct bt_buf *buf)
+{
+	return -ENOTSUP;
+}
+#endif /* CONFIG_BLUETOOTH_SIGNING */
 
 #if defined(CONFIG_BLUETOOTH_SMP_SELFTEST)
 /* Test vectors are taken from RFC 4493
@@ -1843,10 +2058,20 @@ void bt_auth_passkey_entry(struct bt_conn *conn, unsigned int passkey)
 		return;
 	}
 
-	if (conn->role == BT_HCI_ROLE_MASTER) {
+	switch(conn->role) {
+#if defined(CONFIG_BLUETOOTH_CENTRAL)
+	case BT_HCI_ROLE_MASTER:
 		atomic_set_bit(&smp->allowed_cmds, BT_SMP_CMD_PAIRING_CONFIRM);
-	} else {
+		break;
+#endif /* CONFIG_BLUETOOTH_CENTRAL */
+
+#if defined(CONFIG_BLUETOOTH_PERIPHERAL)
+	case BT_HCI_ROLE_SLAVE:
 		atomic_set_bit(&smp->allowed_cmds, BT_SMP_CMD_PAIRING_RANDOM);
+		break;
+#endif /* CONFIG_BLUETOOTH_PERIPHERAL */
+	default:
+		break;
 	}
 }
 

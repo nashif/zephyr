@@ -3,31 +3,17 @@
 /*
  * Copyright (c) 2015 Intel Corporation.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * 1) Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * 2) Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3) Neither the name of Intel Corporation nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 #if defined(CONFIG_STDOUT_CONSOLE)
@@ -162,10 +148,10 @@ static void receive_data(const char *taskname, struct net_context *ctx)
 
 	buf = net_receive(ctx, TICKS_NONE);
 	if (buf) {
-		PRINT("%s: %s(): received %d bytes\n%s\n", taskname,
-		      __FUNCTION__, net_buf_datalen(buf), net_buf_data(buf));
+		PRINT("%s: %s(): received %d bytes\n", taskname,
+		      __FUNCTION__, net_buf_datalen(buf));
 		if (memcmp(net_buf_data(buf), lorem_ipsum, sizeof(lorem_ipsum))) {
-			PRINT("Error: data does not match\n");
+			PRINT("ERROR: data does not match\n");
 		}
 		net_buf_put(buf);
 	}
@@ -288,17 +274,23 @@ void taskB(void)
 
 /* specify delay between greetings (in ms); compute equivalent in ticks */
 
+#ifdef CONFIG_NETWORKING_WITH_15_4_LOOPBACK_UART
 #define SLEEPTIME  2000
+#else
+/* No need to sleep so long if we are using the loopback without uart */
+#define SLEEPTIME  100
+#endif
 #define SLEEPTICKS (SLEEPTIME * sys_clock_ticks_per_sec / 1000)
 
 #define STACKSIZE 2000
 
-char fiberStack[STACKSIZE];
+char fiberStack_sending[STACKSIZE];
+char fiberStack_receiving[STACKSIZE];
 
-struct nano_sem nanoSemTask;
-struct nano_sem nanoSemFiber;
+struct nano_sem nanoSemFiberRecv;
+struct nano_sem nanoSemFiberSent;
 
-void fiberEntry(void)
+void fiber_receiving(void)
 {
 	struct nano_timer timer;
 	uint32_t data[2] = {0, 0};
@@ -310,32 +302,21 @@ void fiberEntry(void)
 		return;
 	}
 
-	nano_sem_init(&nanoSemFiber);
 	nano_timer_init(&timer, data);
 
 	while (1) {
-		/* wait for task to let us have a turn */
-		nano_fiber_sem_take_wait(&nanoSemFiber);
-
 		receive_data("listenFiber", ctx);
 
-		/* wait a while, then let task have a turn */
 		nano_fiber_timer_start(&timer, SLEEPTICKS);
 		nano_fiber_timer_wait(&timer);
-		nano_fiber_sem_give(&nanoSemTask);
 	}
 }
 
-void main(void)
+void fiber_sending(void)
 {
 	struct nano_timer timer;
 	uint32_t data[2] = {0, 0};
 	struct net_context *ctx;
-
-	PRINT("%s: run test_15_4\n", __FUNCTION__);
-
-	net_init();
-	init_test();
 
 	ctx = get_context(&loopback_addr, DEST_PORT, &any_addr, SRC_PORT);
 	if (!ctx) {
@@ -343,25 +324,33 @@ void main(void)
 		return;
 	}
 
-	task_fiber_start(&fiberStack[0], STACKSIZE,
-			(nano_fiber_entry_t) fiberEntry, 0, 0, 7, 0);
-
-	nano_sem_init(&nanoSemTask);
 	nano_timer_init(&timer, data);
+
+	while (1) {
+		send_data("sendFiber", ctx);
+
+		nano_fiber_timer_start(&timer, SLEEPTICKS);
+		nano_fiber_timer_wait(&timer);
+	}
+}
+
+void main(void)
+{
+	PRINT("%s: run test_15_4\n", __FUNCTION__);
+
+	net_init();
+	init_test();
 
 	set_routes();
 
-	while (1) {
-		/* wait a while, then let fiber have a turn */
-		nano_task_timer_start(&timer, SLEEPTICKS);
-		nano_task_timer_wait(&timer);
-		nano_task_sem_give(&nanoSemFiber);
+	nano_sem_init(&nanoSemFiberSent);
+	nano_sem_init(&nanoSemFiberRecv);
 
-		send_data("sendFiber", ctx);
+	task_fiber_start(&fiberStack_receiving[0], STACKSIZE,
+			 (nano_fiber_entry_t) fiber_receiving, 0, 0, 7, 0);
 
-		/* now wait for fiber to let us have a turn */
-		nano_task_sem_take_wait(&nanoSemTask);
-	}
+	task_fiber_start(&fiberStack_sending[0], STACKSIZE,
+			 (nano_fiber_entry_t) fiber_sending, 0, 0, 7, 0);
 }
 
 #endif /* CONFIG_MICROKERNE ||  CONFIG_NANOKERNEL */

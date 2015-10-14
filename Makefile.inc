@@ -13,18 +13,15 @@ override O := $(shell readlink -f $(O))
 
 export ARCH MDEF_FILE QEMU_EXTRA_FLAGS PROJECT_BASE
 
-# FIXME: Simplify this, very ugly
-ifdef PLATFORM_CONFIG
 ifndef KERNEL_TYPE
-$(error KERNEL_TYPE is not defined!  Set it to either micro or nano)
+KERNEL_TYPE = micro
 endif
-ifndef KBUILD_DEFCONFIG
-KBUILD_DEFCONFIG=$(KERNEL_TYPE)_$(PLATFORM_CONFIG)_defconfig
-KBUILD_DEFCONFIG_PATH=$(ZEPHYR_BASE)/arch/$(ARCH)/configs/$(KBUILD_DEFCONFIG)
+
+ifdef PLATFORM_CONFIG
+KBUILD_DEFCONFIG_PATH=$(ZEPHYR_BASE)/arch/$(ARCH)/configs/$(PLATFORM_CONFIG)_defconfig
+export KBUILD_DEFCONFIG_PATH
 else
-KBUILD_DEFCONFIG_PATH=$(KBUILD_DEFCONFIG)
-endif
-export KBUILD_DEFCONFIG
+$(error PLATFORM_CONFIG is not defined!)
 endif
 
 SOURCE_DIR ?= $(PROJECT_BASE)/src/
@@ -53,6 +50,8 @@ endif
 zephyrmake	= @$(MAKE) -C $(ZEPHYR_BASE)  O=$(1) CFLAGS="$(CFLAGS)" \
 			PROJECT=$(PROJECT_BASE) SOURCE_DIR=$(SOURCE_DIR) $(2)
 
+
+
 DOTCONFIG = $(O)/.config
 
 all: $(DOTCONFIG)
@@ -61,20 +60,24 @@ all: $(DOTCONFIG)
 qemu: $(DOTCONFIG)
 	$(Q)$(call zephyrmake,$(O),$@)
 
+initconfig: $(DOTCONFIG)
+
 # Catch all
 %:
 	$(Q)$(call zephyrmake,$(O),$@)
 
-$(DOTCONFIG): $(CONF_FILE)
+KERNEL_CONFIG = $(ZEPHYR_BASE)/kernel/configs/$(KERNEL_TYPE).config
+
+$(DOTCONFIG): $(KBUILD_DEFCONFIG_PATH) $(CONF_FILE)
 	$(Q)$(CONFIG_SHELL) $(ZEPHYR_BASE)/scripts/kconfig/merge_config.sh \
-		-q -m -O $(O) $(KBUILD_DEFCONFIG_PATH) $<
+		-q -m -O $(O) $(KBUILD_DEFCONFIG_PATH) $(KERNEL_CONFIG) $(CONF_FILE)
 	$(Q)yes "" | $(MAKE) $(S) -C $(ZEPHYR_BASE) O=$(O) \
 		PROJECT=$(PROJECT_BASE) oldconfig
 
 pristine:
 	$(Q)rm -rf $(O)
 
-PHONY += FORCE
+PHONY += FORCE initconfig
 FORCE:
 
 

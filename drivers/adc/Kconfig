@@ -3,31 +3,17 @@
 #
 # Copyright (c) 2015 Intel Corporation
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# 1) Redistributions of source code must retain the above copyright notice,
-# this list of conditions and the following disclaimer.
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
-# 2) Redistributions in binary form must reproduce the above copyright notice,
-# this list of conditions and the following disclaimer in the documentation
-# and/or other materials provided with the distribution.
-#
-# 3) Neither the name of Intel Corporation nor the names of its contributors
-# may be used to endorse or promote products derived from this software without
-# specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 
 #
@@ -35,10 +21,17 @@
 #
 menuconfig ADC
 	bool
-	prompt "ADC Driver"
+	prompt "ADC drivers"
 	default n
 	help
-	Enable the ADC driver for the platform
+	Enable ADC (Analog to Digital Converter) driver configuration
+
+config  ADC_DEBUG
+	bool "ADC drivers debug output"
+	depends on ADC
+	default n
+	help
+	Enable debug output for ADC drivers
 
 config DW_ADC
 	bool "ARC Designware Driver"
@@ -177,3 +170,51 @@ config ADC_CLOCK_RATIO
 	help
 	ADC Clock Ratio
 
+
+config  ADC_TI_ADC108S102
+	bool "TI adc108s102 chip driver"
+	depends on ADC
+	select SPI
+	default n
+	help
+	Enable support for TI's ADC chip adc108s102 driver.
+
+config  ADC_TI_ADC108S102_0
+	bool "First instance of TI's adc108s102 chip"
+	depends on ADC_TI_ADC108S102
+	default n
+	help
+	Enalbe first instance of adc108s102 driver.
+
+config  ADC_TI_ADC108S102_0_DRV_NAME
+	string "Driver's name"
+	depends on ADC_TI_ADC108S102_0
+	default "adc108s102_0"
+
+config  ADC_TI_ADC108S102_0_SPI_PORT_NAME
+	string "Master SPI port name"
+	depends on ADC_TI_ADC108S102_0
+	default ""
+	help
+	Master SPI port name through which adc108s102 chip is accessed.
+
+config  ADC_TI_ADC108S102_0_SPI_CONFIGURATION
+	hex "Master SPI port configuration"
+	depends on ADC_TI_ADC108S102_0
+	default 0x0
+	help
+	Master SPI port configuration flags used to access adc108s102 chip.
+
+config  ADC_TI_ADC108S102_0_SPI_MAX_FREQ
+	int "Master SPI port max frequency"
+	depends on ADC_TI_ADC108S102_0
+	default 0
+	help
+	Master SPI port maximum frequency used to access adc108s102 chip.
+
+config  ADC_TI_ADC108S102_0_SPI_SLAVE
+	int "SPI slave slot"
+	depends on ADC_TI_ADC108S102_0
+	default 0
+	help
+	adc108s102 chip's SPI slave number on master SPI port.

@@ -36,8 +36,14 @@ Each testcase.ini block can define the following key/value pairs:
   arch_whitelist = <list of arches, such as x86, arm, arc>
     Set of architectures that this test case should only be run for.
 
+  arch_exclude = <list of arches, such as x86, arm, arc>
+    Set of architectures that this test case should not run on.
+
   platform_whitelist = <list of platforms>
-    Set of platforms that this test case should only be run for for.
+    Set of platforms that this test case should only be run for.
+
+  platform_exclude = <list of platforms>
+    Set of platforms that this test case should not run on.
 
   config_whitelist = <list of config options>
     Config options can either be config names like CONFIG_FOO which
@@ -94,6 +100,7 @@ import time
 import csv
 import glob
 
+os.environ["DISABLE_TRYRUN"] = "1"
 if "ZEPHYR_BASE" not in os.environ:
     sys.stderr.write("$ZEPHYR_BASE environment variable undefined.\n")
     exit(1)
@@ -296,6 +303,13 @@ class QEMUHandler:
 
 
 class SizeCalculator:
+
+    alloc_sections = ["bss", "noinit"]
+    rw_sections = ["datas", "initlevel", "_k_mem_map_ptr", "_k_pipe_ptr",
+                   "_k_task_ptr", "_k_task_list", "initlevel"]
+    # These get copied into RAM only on non-XIP
+    ro_sections = ["text", "ctors", "rodata", "devconfig"]
+
     def __init__(self, filename):
         """Constructor
 
@@ -316,10 +330,10 @@ class SizeCalculator:
         self.is_xip = (len(is_xip_output) != 0)
 
         self.filename = filename
-        self.sections = {}
-        self.xip_rom_size = 0
-        self.xip_ram_size = 0
+        self.sections = []
+        self.rom_size = 0
         self.ram_size = 0
+        self.mismatches = []
 
         self._calculate_sizes()
 
@@ -328,17 +342,14 @@ class SizeCalculator:
 
         @return amount of RAM, in bytes
         """
-        if self.is_xip:
-            return self.xip_ram_size
-        else:
-            return self.ram_size
+        return self.ram_size
 
     def get_rom_size(self):
         """Get the size of the data that this application uses on device's flash
 
         @return amount of ROM, in bytes
         """
-        return self.xip_rom_size
+        return self.rom_size
 
     def unrecognized_sections(self):
         """Get a list of sections inside the binary that weren't recognized
@@ -346,9 +357,20 @@ class SizeCalculator:
         @return list of unrecogized section names
         """
         slist = []
-        for k, v in self.sections.iteritems():
+        for v in self.sections:
             if not v["recognized"]:
-                slist.append(k)
+                slist.append(v["name"])
+        return slist
+
+    def mismatched_sections(self):
+        """Get a list of sections in the binary whose LMA and VMA offsets
+        from the previous section aren't proportional. This leads to issues
+        on XIP systems as they aren't correctly copied in to RAM
+        """
+        slist = []
+        for v in self.sections:
+            if v["lma_off"] != v["vma_off"]:
+                slist.append((v["name"], v["lma_off"], v["vma_off"]))
         return slist
 
     def _calculate_sizes(self):
@@ -371,35 +393,52 @@ class SizeCalculator:
             if (name[0] == '.'):                # starting with '.'
                 continue
 
+            # TODO this doesn't actually reflect the size in flash or RAM as
+            # it doesn't include linker-imposed padding between sections.
+            # It is close though.
             size = int(words[2], 16)
-            phys_addr = int(words[4], 16)
+            if size == 0:
+                continue
+
+            load_addr = int(words[4], 16)
+            virt_addr = int(words[3], 16)
 
             # Add section to memory use totals (for both non-XIP and XIP scenarios)
-            #
-            # In an XIP image, the following sections are placed into ROM:
-            #     text, ctors, rodata and datas
-            # In an XIP image, the following sections are placed into RAM:
-            #     datas, bss and noinit
-            # In a non-XIP image, the following sections are placed into RAM
-            #     text, ctors, rodata, datas, bss and noinit
             # Unrecognized section names are not included in the calculations.
-
-            self.ram_size += size
             recognized = True
-
-            if ((name == "text") or (name == "ctors") or (name == "rodata")):
-                self.xip_rom_size += size
-            elif (name == "datas"):
-                self.xip_rom_size += size
-                self.xip_ram_size += size
-            elif ((name == "bss") or (name == "noinit")):
-                self.xip_ram_size += size
+            if name in SizeCalculator.alloc_sections:
+                self.ram_size += size
+                stype = "alloc"
+            elif name in SizeCalculator.rw_sections:
+                self.ram_size += size
+                self.rom_size += size
+                stype = "rw"
+            elif name in SizeCalculator.ro_sections:
+                self.rom_size += size
+                if not self.is_xip:
+                    self.ram_size += size
+                stype = "ro"
             else:
+                stype = "unknown"
                 recognized = False
-                self.ram_size -= size   # Undo the calculation
 
-            self.sections[name] = {"phys_addr" : phys_addr, "size" : size,
-                                   "recognized" : recognized}
+            lma_off = 0
+            vma_off = 0
+
+            # Look for different section padding for LMA and VMA, if present
+            # this really messes up XIP systems as __csSet() copies all of
+            # them off flash into RAM as a single large block of memory
+            if self.is_xip and len(self.sections) > 0:
+                p = self.sections[-1]
+
+                if stype == "rw" and p["type"] == "rw":
+                    lma_off = load_addr - p["load_addr"]
+                    vma_off = virt_addr - p["virt_addr"]
+
+            self.sections.append({"name" : name, "load_addr" : load_addr,
+                                  "size" : size, "virt_addr" : virt_addr,
+                                  "type" : stype, "recognized" : recognized,
+                                  "lma_off" : lma_off, "vma_off" : vma_off})
 
 
 class MakeGoal:
@@ -675,6 +714,8 @@ testcase_valid_keys = {"tags" : {"type" : "set", "required" : True},
                        "build_only" : {"type" : "bool", "default" : False},
                        "timeout" : {"type" : "int", "default" : 60},
                        "arch_whitelist" : {"type" : "set"},
+                       "arch_exclude" : {"type" : "set"},
+                       "platform_exclude" : {"type" : "set"},
                        "platform_whitelist" : {"type" : "set"},
                        "config_whitelist" : {"type" : "set"}}
 
@@ -913,6 +954,8 @@ class TestCase:
         self.tags = tc_dict["tags"]
         self.extra_args = tc_dict["extra_args"]
         self.arch_whitelist = tc_dict["arch_whitelist"]
+        self.arch_exclude = tc_dict["arch_exclude"]
+        self.platform_exclude = tc_dict["platform_exclude"]
         self.platform_whitelist = tc_dict["platform_whitelist"]
         self.config_whitelist = tc_dict["config_whitelist"]
         self.timeout = tc_dict["timeout"]
@@ -920,6 +963,7 @@ class TestCase:
         self.path = os.path.join(workdir, name)
         self.name = self.path # for now
         self.ktype = None
+        self.defconfig = {}
 
         with open(os.path.join(testcase_root, workdir, "Makefile")) as makefile:
             for line in makefile.readlines():
@@ -1024,52 +1068,6 @@ class TestSuite:
                     self.platforms.extend(arch.platforms)
 
 
-        # Now that we know the full set of arches/platforms, get the defconfig
-        # information from them by calling Make
-        info("Building platform defconfigs...")
-        dlist = {}
-        config_outdir = os.path.join(self.outdir, "configs")
-        mg = MakeGenerator(config_outdir)
-
-        for plat in self.platforms:
-            ktypes = ["nano"]
-            if plat.microkernel_support:
-                ktypes.append("micro")
-
-            for ktype in ktypes:
-                stem = ktype + "_" + plat.name
-
-                in_defconfig = stem + "_defconfig"
-                out_config = os.path.join(config_outdir, stem + "_config")
-                dlist[plat, ktype] = out_config
-
-                args = ["ARCH=" + plat.arch.name,
-                        "KBUILD_DEFCONFIG=" + in_defconfig,
-                        "KCONFIG_CONFIG=" + out_config, "defconfig"]
-                # FIXME would be nice to use a common outdir for this so that
-                # conf, gen_idt, etc aren't rebuilt for every plat/ktype combo,
-                # need a way to avoid different Make processe from clobbering
-                # each other since they all try to build them simultaneously
-                mg.add_build_goal(stem, ZEPHYR_BASE, os.path.join(config_outdir,
-                                                                  plat.name,
-                                                                  ktype), args)
-
-        results = mg.execute(defconfig_cb)
-        for name, goal in results.iteritems():
-            if goal.failed:
-                raise SanityRuntimeError("Couldn't build some defconfigs")
-
-        for k, out_config in dlist.iteritems():
-            plat, ktype = k
-            defconfig = {}
-            with open(out_config, "r") as fp:
-                for line in fp.readlines():
-                    m = TestSuite.config_re.match(line)
-                    if not m:
-                        continue
-                    defconfig[m.group(1)] = m.group(2).strip()
-            plat.set_defconfig(ktype, defconfig)
-
         self.instances = {}
 
     def get_last_failed(self):
@@ -1109,6 +1107,75 @@ class TestSuite:
             info("Selecting all possible platforms per test case")
             platform_filter = []
 
+        mg = MakeGenerator(self.outdir)
+        dlist = {}
+        for tc_name, tc in self.testcases.iteritems():
+            for arch_name, arch in self.arches.iteritems():
+                instance_list = []
+                for plat in arch.platforms:
+                    instance = TestInstance(tc, plat, self.outdir)
+
+                    if tag_filter and not tc.tags.intersection(tag_filter):
+                        continue
+
+                    if testcase_filter and tc_name not in testcase_filter:
+                        continue
+
+                    if last_failed and (tc.name, plat.name) not in failed_tests:
+                        continue
+
+                    if arch_filter and arch_name not in arch_filter:
+                        continue
+
+                    if tc.arch_whitelist and arch.name not in tc.arch_whitelist:
+                        continue
+
+                    if tc.arch_exclude and arch.name in tc.arch_exclude:
+                        continue
+
+                    if tc.platform_exclude and plat.name in tc.platform_exclude:
+                        continue
+
+                    if platform_filter and plat.name not in platform_filter:
+                        continue
+
+                    if tc.platform_whitelist and plat.name not in tc.platform_whitelist:
+                        continue
+
+                    if not plat.microkernel_support and tc.ktype == "micro":
+                        continue
+
+                    for cw in tc.config_whitelist:
+                        args = ["ARCH=" + plat.arch.name,
+                                "PLATFORM_CONFIG=" + plat.name, "initconfig"]
+                        # FIXME would be nice to use a common outdir for this so that
+                        # conf, gen_idt, etc aren't rebuilt for every plat/ktype combo,
+                        # need a way to avoid different Make processe from clobbering
+                        # each other since they all try to build them simultaneously
+
+                        o = os.path.join(self.outdir, plat.name, tc.path)
+                        dlist[tc, plat, tc.ktype, tc.name.split("/")[-1]] = os.path.join(o,".config")
+                        goal = "_".join([plat.name, tc.ktype, "_".join(tc.name.split("/")), "initconfig"])
+                        mg.add_build_goal(goal, os.path.join(ZEPHYR_BASE, tc.code_location), o, args)
+
+        info("Building testcase defconfigs...")
+        results = mg.execute(defconfig_cb)
+
+        for name, goal in results.iteritems():
+            if goal.failed:
+                raise SanityRuntimeError("Couldn't build some defconfigs")
+
+        for k, out_config in dlist.iteritems():
+            test, plat, ktype, name = k
+            defconfig = {}
+            with open(out_config, "r") as fp:
+                for line in fp.readlines():
+                    m = TestSuite.config_re.match(line)
+                    if not m:
+                        continue
+                    defconfig[m.group(1)] = m.group(2).strip()
+            test.defconfig[plat,ktype] = defconfig
+
         for tc_name, tc in self.testcases.iteritems():
             for arch_name, arch in self.arches.iteritems():
                 instance_list = []
@@ -1135,6 +1202,14 @@ class TestSuite:
                         discards[instance] = "Not in test case arch whitelist"
                         continue
 
+                    if tc.arch_exclude and arch.name in tc.arch_exclude:
+                        discards[instance] = "In test case arch exclude"
+                        continue
+
+                    if tc.platform_exclude and plat.name in tc.platform_exclude:
+                        discards[instance] = "In test case platform exclude"
+                        continue
+
                     if platform_filter and plat.name not in platform_filter:
                         discards[instance] = "Command line platform filter"
                         continue
@@ -1147,8 +1222,15 @@ class TestSuite:
                         discards[instance] = "No microkernel support for platform"
                         continue
 
-                    defconfig = plat.get_defconfig(tc.ktype)
+                    defconfig = {}
+                    for tcase, tdefconfig in tc.defconfig.iteritems():
+                        p, k = tcase
+                        if k == tc.ktype and p == plat:
+                            defconfig = tdefconfig
+                            break
+
                     config_pass = True
+
                     # FIXME this is kind of gross clean it up
                     for cw in tc.config_whitelist:
                         invert = (cw[0] == "!")
@@ -1177,6 +1259,7 @@ class TestSuite:
 
                     if not config_pass:
                         continue
+
 
                     instance_list.append(instance)
 
@@ -1209,6 +1292,8 @@ class TestSuite:
             sc = i.calculate_sizes()
             goal.metrics["ram_size"] = sc.get_ram_size()
             goal.metrics["rom_size"] = sc.get_rom_size()
+            goal.metrics["unrecognized"] = sc.unrecognized_sections()
+            goal.metrics["mismatched"] = sc.mismatched_sections()
         return self.goals
 
     def discard_report(self, filename):
@@ -1450,18 +1535,20 @@ def chatty_test_cb(instances, goals, goal):
 
 def size_report(sc):
     info(sc.filename)
-    info("SECTION NAME         ADDRESS     SIZE   HEX")
-    for k, v in sc.sections.iteritems():
-        if not v["recognized"]:
-            k += "*"
+    info("SECTION NAME             VMA        LMA     SIZE  HEX SZ TYPE")
+    for i in range(len(sc.sections)):
+        v = sc.sections[i]
 
-        info("%-17s 0x%08x %8d %5x" %
-             (k, v["phys_addr"], v["size"], v["size"]))
-    if sc.is_xip:
-        info("Total: %d bytes (ROM) + %d bytes (RAM)" %
-             (sc.xip_rom_size, sc.xip_ram_size))
-    else:
-        info("Total: %d bytes (RAM)" % sc.ram_size)
+        info("%-17s 0x%08x 0x%08x %8d 0x%05x %-7s" %
+             (v["name"], v["virt_addr"], v["load_addr"], v["size"], v["size"],
+              v["type"]))
+        if v["lma_off"] != v["vma_off"]:
+            info("    WARNING: LMA and VMA offsets between %s and %s differ: %d vs %d" %
+                 (sc.sections[i-1]["name"], v["name"], v["lma_off"],
+                  v["vma_off"]))
+
+    info("Totals: %d bytes (ROM), %d bytes (RAM)" %
+             (sc.rom_size, sc.ram_size))
     info("")
 
 
@@ -1537,6 +1624,16 @@ def main():
     failed = 0
     for name, goal in goals.iteritems():
         if goal.failed:
+            failed += 1
+        elif goal.metrics["unrecognized"]:
+            info("%sFAILED%s: %s has unrecognized binary sections: %s" %
+                 (COLOR_RED, COLOR_NORMAL, goal.name,
+                  str(goal.metrics["unrecognized"])))
+            failed += 1
+        elif goal.metrics["mismatched"]:
+            info("%sFAILED%s: %s has mismatched section offsets for: %s" %
+                 (COLOR_RED, COLOR_NORMAL, goal.name,
+                  str(goal.metrics["mismatched"])))
             failed += 1
 
     info("%s%d of %d%s tests passed with %s%d%s warnings in %d seconds" %

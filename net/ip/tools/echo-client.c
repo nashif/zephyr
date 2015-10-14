@@ -1,31 +1,17 @@
 /*
  * Copyright (c) 2015 Intel Corporation
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * 1) Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * 2) Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3) Neither the name of Intel Corporation nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 #include <stdio.h>
@@ -44,7 +30,7 @@
 #define SERVER_PORT  4242
 #define CLIENT_PORT  8484
 #define MAX_BUF_SIZE 1280	/* min IPv6 MTU, the actual data is smaller */
-#define MAX_TIMEOUT  3		/* in seconds */
+#define MAX_TIMEOUT  1		/* in seconds */
 
 #define ENTRY(e, expect_result) { sizeof(e), e, expect_result }
 #define ENTRY_OK(e) ENTRY(e, true)
@@ -397,10 +383,11 @@ int main(int argc, char**argv)
 	struct timeval tv = {};
 	int ifindex = -1;
 	void *address = NULL;
+	bool forever = false, help = false;
 
 	opterr = 0;
 
-	while ((c = getopt(argc, argv, "Fi:")) != -1) {
+	while ((c = getopt(argc, argv, "Fi:eh")) != -1) {
 		switch (c) {
 		case 'F':
 			flood = true;
@@ -408,17 +395,24 @@ int main(int argc, char**argv)
 		case 'i':
 			interface = optarg;
 			break;
+		case 'e':
+			forever = true;
+			break;
+		case 'h':
+			help = true;
+			break;
 		}
 	}
 
 	if (optind < argc)
 		target = argv[optind];
 
-	if (!target) {
+	if (!target || help) {
 		printf("usage: %s [-i iface] [-F] <IPv{6|4} address of the echo-server>\n",
 		       argv[0]);
 		printf("\n-i Use this network interface, needed if using "
 		       "multicast server address.\n");
+		printf("-e Do not quit, send packets forever\n");
 		printf("-F (flood) option will prevent the client from "
 		       "waiting the data.\n"
 		       "   The -F option will stress test the server.\n");
@@ -506,6 +500,7 @@ int main(int argc, char**argv)
 		exit(-errno);
 	}
 
+again:
 	do {
 		while (data[i].buf) {
 			ret = sendto(fd, data[i].buf, data[i].len, 0,
@@ -573,6 +568,11 @@ int main(int argc, char**argv)
 			i = 0;
 
 	} while (flood);
+
+	if (forever) {
+		i = 0;
+		goto again;
+	}
 
 	ret = timeout + 1;
 

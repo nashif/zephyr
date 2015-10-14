@@ -3,31 +3,17 @@
 /*
  * Copyright (c) 2012-2015 Wind River Systems, Inc.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * 1) Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * 2) Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3) Neither the name of Wind River Systems nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -631,6 +617,36 @@ struct timeout_order_data timeout_order_data[] = {
 #define NUM_TIMEOUT_FIBERS ARRAY_SIZE(timeout_order_data)
 static char __stack timeout_stacks[NUM_TIMEOUT_FIBERS][FIBER_STACKSIZE];
 
+#ifndef CONFIG_ARM
+/* a fiber busy waits, then reports through a fifo */
+static void test_fiber_busy_wait(int ticks, int unused)
+{
+	ARG_UNUSED(unused);
+
+	uint32_t usecs = ticks * sys_clock_us_per_tick;
+
+	TC_PRINT(" fiber busy waiting for %d usecs (%d ticks)\n",
+			 usecs, ticks);
+	sys_thread_busy_wait(usecs);
+	TC_PRINT(" fiber busy waiting completed\n");
+
+	/*
+	 * Ideally the test should verify that the correct number of ticks
+	 * have elapsed. However, when run under QEMU the tick interrupt
+	 * may be processed on a very irregular basis, meaning that far
+	 * fewer than the expected number of ticks may occur for a given
+	 * number of clock cycles vs. what would ordinarily be expected.
+	 *
+	 * Consequently, the best we can do for now to test busy waiting is
+	 * to invoke the API and verify that it returns. (If it takes way
+	 * too long, or never returns, the main test task may be able to
+	 * time out and report an error.)
+	 */
+
+	nano_fiber_sem_give(&reply_timeout);
+}
+#endif
+
 /* a fiber sleeps and times out, then reports through a fifo */
 static void test_fiber_sleep(int timeout, int arg2)
 {
@@ -665,6 +681,29 @@ static int test_timeout(void)
 	int rv;
 	int ii;
 	struct timeout_order_data *data;
+
+/*
+ * sys_thread_busy_wait() is currently unsupported for ARM
+ */
+
+#ifndef CONFIG_ARM
+
+	/* test sys_thread_busy_wait() */
+
+	TC_PRINT("Testing sys_thread_busy_wait()\n");
+	timeout = 2;
+	task_fiber_start(timeout_stacks[0], FIBER_STACKSIZE,
+						test_fiber_busy_wait, (int)timeout, 0,
+						FIBER_PRIORITY, 0);
+
+	rv = nano_task_sem_take_wait_timeout(&reply_timeout, timeout + 2);
+	if (!rv) {
+		rv = TC_FAIL;
+		TC_ERROR(" *** task timed out waiting for sys_thread_busy_wait()\n");
+		return TC_FAIL;
+	}
+
+#endif /* CONFIG_ARM */
 
 	/* test fiber_sleep() */
 

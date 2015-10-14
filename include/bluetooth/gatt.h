@@ -5,35 +5,22 @@
 /*
  * Copyright (c) 2015 Intel Corporation
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * 1) Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * 2) Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3) Neither the name of Intel Corporation nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 #ifndef __BT_GATT_H
 #define __BT_GATT_H
 
+#if defined(CONFIG_BLUETOOTH_CENTRAL) || defined(CONFIG_BLUETOOTH_PERIPHERAL)
 #include <misc/util.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/uuid.h>
@@ -615,6 +602,7 @@ int bt_gatt_attr_read_cep(struct bt_conn *conn,
  */
 void bt_gatt_notify(uint16_t handle, const void *data, uint16_t len);
 
+#if defined(CONFIG_BLUETOOTH_GATT_CLIENT)
 /* Client API */
 
 /** @brief Response callback function
@@ -634,6 +622,14 @@ typedef void (*bt_gatt_rsp_func_t)(struct bt_conn *conn, uint8_t err);
  */
 int bt_gatt_exchange_mtu(struct bt_conn *conn, bt_gatt_rsp_func_t func);
 
+enum {
+	BT_GATT_DISCOVER_PRIMARY,
+	BT_GATT_DISCOVER_SECONDARY,
+	BT_GATT_DISCOVER_INCLUDE,
+	BT_GATT_DISCOVER_CHARACTERISTIC,
+	BT_GATT_DISCOVER_DESCRIPTOR,
+};
+
 /** @brief GATT Discover Primary parameters */
 struct bt_gatt_discover_params {
 	/** Discover UUID type */
@@ -646,6 +642,8 @@ struct bt_gatt_discover_params {
 	uint16_t start_handle;
 	/** Discover end handle */
 	uint16_t end_handle;
+	/** Discover type */
+	uint8_t type;
 };
 
 /** @brief Discover Primary Service by Service UUID
@@ -663,41 +661,6 @@ struct bt_gatt_discover_params {
  */
 int bt_gatt_discover(struct bt_conn *conn,
 		     struct bt_gatt_discover_params *params);
-
-/** @brief Discover Characteristic
- *
- *  This procedure is used by a client to discover all characteristics on a
- *  server.
- *  Note: In case the UUID is set in the parameter it will be matched against
- *  the attributes found before calling the function callback.
- *
- *  For each attribute found the callback is called which can then decide
- *  whether to continue discovering or stop.
- *
- *  @param conn Connection object.
- *  @param params Discover parameters.
- *
- *  @return 0 in case of success or negative value in case of error.
- */
-int bt_gatt_discover_characteristic(struct bt_conn *conn,
-				    struct bt_gatt_discover_params *params);
-
-/** @brief Discover Descriptor
- *
- *  This procedure is used by a client to discover descriptors on a server.
- *  Note: In case the UUID is set in the parameter it will be matched against
- *  the attributes found before calling the function callback.
- *
- *  For each attribute found the callback is called which can then decide
- *  whether to continue discovering or stop.
- *
- *  @param conn Connection object.
- *  @param params Discover parameters.
- *
- *  @return 0 in case of success or negative value in case of error.
- */
-int bt_gatt_discover_descriptor(struct bt_conn *conn,
-				struct bt_gatt_discover_params *params);
 
 /** @brief Read callback function
  *
@@ -820,4 +783,6 @@ void bt_gatt_cancel(struct bt_conn *conn);
 int bt_gatt_read_multiple(struct bt_conn *conn, const uint16_t *handles,
 			  size_t count, bt_gatt_read_func_t func);
 
+#endif /* CONFIG_BLUETOOTH_GATT_CLIENT */
+#endif /* CONFIG_BLUETOOTH_CENTRAL || CONFIG_BLUETOOTH_PERIPHERAL */
 #endif /* __BT_GATT_H */

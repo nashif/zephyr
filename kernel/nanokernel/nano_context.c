@@ -3,31 +3,17 @@
 /*
  * Copyright (c) 2010-2014 Wind River Systems, Inc.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * 1) Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * 2) Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3) Neither the name of Wind River Systems nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -41,6 +27,8 @@ tasks or fibers.
 
 #include <nano_private.h>
 #include <misc/printk.h>
+#include <sys_clock.h>
+#include <drivers/system_timer.h>
 
 
 nano_thread_id_t sys_thread_self_get(void)
@@ -104,6 +92,37 @@ int _is_thread_essential(struct tcs *pCtx /* pointer to thread */
 {
 	return ((pCtx == NULL) ? _nanokernel.current : pCtx)->flags & ESSENTIAL;
 }
+
+/*
+ * Don't build sys_thread_busy_wait() for ARM, since intrinsics libraries in
+ * current Zephyr SDK use non-Thumb code that isn't supported on Cortex-M CPUs.
+ * For the time being any ARM-based application that attempts to use this API
+ * will get a link error (which is preferable to a mysterious exception).
+ */
+
+#ifndef CONFIG_ARM
+
+void sys_thread_busy_wait(uint32_t usec_to_wait)
+{
+	/* use 64-bit math to prevent overflow when multiplying */
+	uint32_t cycles_to_wait = (uint32_t)(
+		(uint64_t)usec_to_wait *
+		(uint64_t)sys_clock_hw_cycles_per_sec /
+		(uint64_t)USEC_PER_SEC
+	);
+	uint32_t start_cycles = _sys_clock_cycle_get();
+
+	for (;;) {
+		uint32_t current_cycles = _sys_clock_cycle_get();
+
+		/* this handles the rollover on an unsigned 32-bit value */
+		if ((current_cycles - start_cycles) >= cycles_to_wait) {
+			break;
+		}
+	}
+}
+
+#endif /* CONFIG_ARM */
 
 #ifdef CONFIG_THREAD_CUSTOM_DATA
 
