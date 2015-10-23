@@ -133,7 +133,7 @@ static int rtc_dw_set_alarm(rtc_alarm_t *alarm)
 		RTC_DW->rtc_eoi;
 		RTC_DW->rtc_cmr = alarm->alarm_val;
 
-		IRQ_CONFIG(rtc, INT_RTC_IRQ);
+		IRQ_CONFIG(rtc, INT_RTC_IRQ, 0);
 		irq_enable(INT_RTC_IRQ);
 
 		/* unmask RTC interrupts to lmt  */
