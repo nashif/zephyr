@@ -22,13 +22,13 @@
 
 #if defined(CONFIG_RTC_DW)
 #if defined(CONFIG_IOAPIC)
-	ioapic_mkstub rtc rtc_dw_isr
+	ioapic_mkstub rtc rtc_dw_isr 0
 #endif /* CONFIG_PIC */
 #endif
 
 #if defined(CONFIG_QMI_RTC)
 #if defined(CONFIG_IOAPIC)
-	ioapic_mkstub rtc qm_rtc_isr
+	ioapic_mkstub rtc qm_rtc_isr 0
 #endif
 #endif /* CONFIG_QMI_RTC */
 
