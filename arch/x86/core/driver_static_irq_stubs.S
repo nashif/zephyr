@@ -77,16 +77,6 @@ by x86 platforms.
 #endif /* CONFIG_IOAPIC */
 #endif
 
-
-#if defined(CONFIG_SPI_DW)
-#if defined(CONFIG_SPI_DW_PORT_0)
-	ioapic_mkstub spi_dw_irq_port_0 spi_dw_isr_0 0
-#endif /* CONFIG_SPI_DW_PORT_0 */
-#if defined(CONFIG_SPI_DW_PORT_1)
-	ioapic_mkstub spi_dw_irq_port_1 spi_dw_isr_1 0
-#endif /* CONFIG_SPI_DW_PORT_1 */
-#endif /* CONFIG_SPI_DW */
-
 #if defined(CONFIG_IPI_QUARK_SE)
 #if defined(CONFIG_IOAPIC)
 	ioapic_mkstub quark_se_ipi quark_se_ipi_isr 0
