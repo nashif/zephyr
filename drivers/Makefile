@@ -8,7 +8,7 @@ obj-y += serial/
 obj-y += timer/
 obj-y += interrupt_controller/
 obj-y += rtc/
-obj-y += wdt/
+obj-y += watchdog/
 obj-y += aio/
 
 obj-$(CONFIG_GROVE) += grove/

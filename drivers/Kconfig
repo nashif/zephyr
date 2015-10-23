@@ -53,7 +53,7 @@ source "drivers/pinmux/Kconfig"
 
 source "drivers/rtc/Kconfig"
 
-source "drivers/wdt/Kconfig"
+source "drivers/watchdog/Kconfig"
 
 source "drivers/aio/Kconfig"
 
