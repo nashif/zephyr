@@ -70,7 +70,7 @@ extern void dw_aio_cmp_isr(struct device *dev);
 
 void dw_aio_cmp_isr_dispatcher(void *unused)
 {
-	dw_aio_cmp_isr(&__initconfig_dw_aio_cmp4);
+	dw_aio_cmp_isr(&__initconfig_dw_aio_cmp);
 }
 
 IRQ_CONNECT_STATIC(dw_aio_cmp, INT_AIO_CMP_IRQ, 0, dw_aio_cmp_isr_dispatcher, 0);
@@ -79,7 +79,7 @@ int dw_aio_cmp_config(struct device *dev)
 {
 	ARG_UNUSED(dev);
 
-	IRQ_CONFIG(dw_aio_cmp, INT_AIO_CMP_IRQ);
+	IRQ_CONFIG(dw_aio_cmp, INT_AIO_CMP_IRQ, 0);
 
 	return DEV_OK;
 }
@@ -157,7 +157,7 @@ pre_kernel_early_init(ns16550_uart1, &ns16550_uart1_dev_data);
  *
  */
 struct device * const uart_devs[] = {
-	&__initconfig_ns16550_uart11,
+	&__initconfig_ns16550_uart1,
 };
 
 
@@ -238,7 +238,7 @@ pre_kernel_late_init(spi_dw_port_0, &spi_dw_data_port_0);
 
 void spi_dw_isr_0(void *unused)
 {
-	spi_dw_isr(&__initconfig_spi_dw_port_01);
+	spi_dw_isr(&__initconfig_spi_dw_port_0);
 }
 
 IRQ_CONNECT_STATIC(spi_dw_irq_port_0, CONFIG_SPI_DW_PORT_0_IRQ,
@@ -247,7 +247,7 @@ IRQ_CONNECT_STATIC(spi_dw_irq_port_0, CONFIG_SPI_DW_PORT_0_IRQ,
 void spi_config_0_irq(struct device *dev)
 {
 	struct spi_dw_config *config = dev->config->config_info;
-	IRQ_CONFIG(spi_dw_irq_port_0, config->irq);
+	IRQ_CONFIG(spi_dw_irq_port_0, config->irq, 0);
 }
 
 #endif /* CONFIG_SPI_DW_PORT_0 */
@@ -273,7 +273,7 @@ pre_kernel_late_init(spi_dw_port_1, &spi_dw_data_port_1);
 
 void spi_dw_isr_1(void *unused)
 {
-	spi_dw_isr(&__initconfig_spi_dw_port_11);
+	spi_dw_isr(&__initconfig_spi_dw_port_1);
 }
 
 IRQ_CONNECT_STATIC(spi_dw_irq_port_1, CONFIG_SPI_DW_PORT_1_IRQ,
@@ -282,7 +282,7 @@ IRQ_CONNECT_STATIC(spi_dw_irq_port_1, CONFIG_SPI_DW_PORT_1_IRQ,
 void spi_config_1_irq(struct device *dev)
 {
 	struct spi_dw_config *config = dev->config->config_info;
-	IRQ_CONFIG(spi_dw_irq_port_1, config->irq);
+	IRQ_CONFIG(spi_dw_irq_port_1, config->irq, 0);
 }
 
 #endif /* CONFIG_SPI_DW_PORT_1 */
@@ -297,7 +297,7 @@ IRQ_CONNECT_STATIC(quark_se_ipi, QUARK_SE_IPI_INTERRUPT, QUARK_SE_IPI_INTERRUPT_
 
 static int x86_quark_se_ipi_init(void)
 {
-	IRQ_CONFIG(quark_se_ipi, QUARK_SE_IPI_INTERRUPT);
+	IRQ_CONFIG(quark_se_ipi, QUARK_SE_IPI_INTERRUPT, 0);
 	irq_enable(QUARK_SE_IPI_INTERRUPT);
 	return DEV_OK;
 }
