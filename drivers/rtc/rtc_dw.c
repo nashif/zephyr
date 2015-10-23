@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 #include <nanokernel.h>
 #include "board.h"
 #include <stdbool.h>
@@ -35,7 +34,6 @@ static void rtc_dw_clock_frequency(uint32_t frequency)
 	SCSS_CCU->ccu_sys_clk_ctl &= ~RTC_CLK_DIV_MASK;
 	SCSS_CCU->ccu_sys_clk_ctl |= frequency;
 	SCSS_CCU->ccu_sys_clk_ctl |= RTC_CLK_DIV_EN;
-
 }
 
 /**
@@ -70,12 +68,10 @@ void rtc_dw_isr(void)
 	/* clear interrupt */
 	RTC_DW->rtc_eoi;
 
-	if (rtc_dw_cb_fn)
-	{
+	if (rtc_dw_cb_fn) {
 		(*rtc_dw_cb_fn)();
 	}
 }
-
 
 /**
  *  @brief   Function to configure the RTC
@@ -110,23 +106,19 @@ IRQ_CONNECT_STATIC(rtc, INT_RTC_IRQ, 0, rtc_dw_isr, 0);
  * @brief Read current RTC value
  * @return current rtc value
  */
-static uint32_t rtc_dw_read(void)
-{
-	return RTC_DW->rtc_ccvr;
-}
+	static uint32_t rtc_dw_read(void) { return RTC_DW->rtc_ccvr; }
 
-/**
- * @brief Sets an RTC alarm
- * @param alarm Alarm configuration
- * @return 0 on success
- */
+	/**
+	 * @brief Sets an RTC alarm
+	 * @param alarm Alarm configuration
+	 * @return 0 on success
+	 */
 static int rtc_dw_set_alarm(rtc_alarm_t *alarm)
 {
 	RTC_DW->rtc_ccr &= ~RTC_INTERRUPT_ENABLE;
 
 	if (alarm->alarm_enable == 1) {
-		if (alarm->cb_fn)
-		{
+		if (alarm->cb_fn) {
 			rtc_dw_cb_fn = alarm->cb_fn;
 		}
 		RTC_DW->rtc_eoi;
@@ -144,8 +136,9 @@ static int rtc_dw_set_alarm(rtc_alarm_t *alarm)
 		SCSS_INTERRUPT->int_rtc_mask = ~(0);
 	}
 
-	uint32_t t =  rtc_dw_read();
-	while ((t + UPDATE_DELAY) !=  RTC_DW->rtc_ccvr) {
+	uint32_t t = rtc_dw_read();
+
+	while ((t + UPDATE_DELAY) != RTC_DW->rtc_ccvr) {
 	}
 	return 0;
 }
@@ -157,7 +150,6 @@ static void rtc_dw_clk_disable(void)
 }
 #endif
 
-
 static struct rtc_driver_api funcs = {
 	.set_config = rtc_dw_set_config,
 	.read = rtc_dw_read,
@@ -167,12 +159,14 @@ static struct rtc_driver_api funcs = {
 	.set_alarm = rtc_dw_set_alarm,
 };
 
-int rtc_dw_init(struct device* dev) {
+int rtc_dw_init(struct device *dev)
+{
 
 	dev->driver_api = &funcs;
 
 	const uint32_t expected_freq = RTC_CLK_DIV_1_HZ | RTC_CLK_DIV_EN;
-	uint32_t curr_freq = SCSS_CCU->ccu_sys_clk_ctl & (RTC_CLK_DIV_EN | RTC_CLK_DIV_MASK);
+	uint32_t curr_freq =
+		SCSS_CCU->ccu_sys_clk_ctl & (RTC_CLK_DIV_EN | RTC_CLK_DIV_MASK);
 
 	// disable interrupt
 	RTC_DW->rtc_ccr &= ~RTC_INTERRUPT_ENABLE;
@@ -197,15 +191,12 @@ int rtc_dw_init(struct device* dev) {
 }
 
 struct rtc_dw_dev_config rtc_dev = {
-        .base_address = RTC_BASE_ADDR,
+	.base_address = RTC_BASE_ADDR,
 };
 
 #ifdef CONFIG_RTC_DW
 #include <init.h>
-DECLARE_DEVICE_INIT_CONFIG(rtc,
-                           RTC_DRV_NAME,
-                           &rtc_dw_init,
-                           &rtc_dev);
+DECLARE_DEVICE_INIT_CONFIG(rtc, RTC_DRV_NAME, &rtc_dw_init, &rtc_dev);
 
 micro_early_init(rtc, NULL);
 #endif

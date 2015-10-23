@@ -27,14 +27,14 @@
  * RTC Register block type.
  */
 typedef struct {
-        volatile uint32_t rtc_ccvr;         /**< Current Counter Value Register */
-        volatile uint32_t rtc_cmr;          /**< Current Match Register */
-        volatile uint32_t rtc_clr;          /**< Counter Load Register */
-        volatile uint32_t rtc_ccr;          /**< Counter Control Register */
-        volatile uint32_t rtc_stat;         /**< Interrupt Status Register */
-        volatile uint32_t rtc_rstat;        /**< Interrupt Raw Status Register */
-        volatile uint32_t rtc_eoi;          /**< End of Interrupt Register */
-        volatile uint32_t rtc_comp_version; /**< End of Interrupt Register */
+	volatile uint32_t rtc_ccvr;         /**< Current Counter Value Register */
+	volatile uint32_t rtc_cmr;          /**< Current Match Register */
+	volatile uint32_t rtc_clr;          /**< Counter Load Register */
+	volatile uint32_t rtc_ccr;          /**< Counter Control Register */
+	volatile uint32_t rtc_stat;         /**< Interrupt Status Register */
+	volatile uint32_t rtc_rstat;        /**< Interrupt Raw Status Register */
+	volatile uint32_t rtc_eoi;          /**< End of Interrupt Register */
+	volatile uint32_t rtc_comp_version; /**< End of Interrupt Register */
 } rtc_dw_t;
 
 
@@ -55,7 +55,7 @@ typedef struct {
 #define RTC_CLK_DIV_4096_HZ         (0x3 << 3)
 
 struct rtc_dw_dev_config {
-        uint32_t        base_address;
+	uint32_t        base_address;
 };
 
 int rtc_dw_init(struct device* dev);
