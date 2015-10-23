@@ -17,24 +17,24 @@
  */
 
 /*
-DESCRIPTION
-This module implements the kernel's CORTEX-M ARM's systick device driver.
-It provides the standard kernel "system clock driver" interfaces.
-
-The driver utilizes systick to provide kernel ticks.
-
-\INTERNAL IMPLEMENTATION DETAILS
-The systick device provides a 24-bit clear-on-write, decrementing,
-wrap-on-zero counter. Only edge sensitive triggered interrupt is supported.
-
-\INTERNAL PACKAGING DETAILS
-The systick device driver is part of the microkernel in both a monolithic kernel
-system and a split kernel system; it is not included in the nanokernel portion
-of a split kernel.
-
-The device driver is also part of a nanokernel-only system, but omits more
-complex capabilities (such as tickless idle support) that are only used in
-conjunction with a microkernel.
+ * DESCRIPTION
+ * This module implements the kernel's CORTEX-M ARM's systick device driver.
+ * It provides the standard kernel "system clock driver" interfaces.
+ *
+ * The driver utilizes systick to provide kernel ticks.
+ *
+ * \INTERNAL IMPLEMENTATION DETAILS
+ * The systick device provides a 24-bit clear-on-write, decrementing,
+ * wrap-on-zero counter. Only edge sensitive triggered interrupt is supported.
+ *
+ * \INTERNAL PACKAGING DETAILS
+ * The systick device driver is part of the microkernel in both a monolithic
+ * kernel system and a split kernel system; it is not included in the
+ * nanokernel portion of a split kernel.
+ *
+ * The device driver is also part of a nanokernel-only system, but omits more
+ * complex capabilities (such as tickless idle support) that are only used in
+ * conjunction with a microkernel.
  */
 
 #include <nanokernel.h>
@@ -53,7 +53,7 @@ extern struct nano_stack _k_command_stack;
 #endif /* CONFIG_MICROKERNEL */
 
 /* running total of timer count */
-static uint32_t clock_accumulated_count = 0;
+static uint32_t clock_accumulated_count;
 
 /*
  * A board support package's board.h header must provide definitions for the
@@ -101,9 +101,9 @@ extern int32_t _sys_idle_elapsed_ticks;
 
 #ifdef CONFIG_TICKLESS_IDLE
 static uint32_t __noinit default_load_value; /* default count */
-static uint32_t idle_original_count = 0;
+static uint32_t idle_original_count;
 static uint32_t __noinit max_system_ticks;
-static uint32_t idle_original_ticks = 0;
+static uint32_t idle_original_ticks;
 static uint32_t __noinit max_load_value;
 static uint32_t __noinit timer_idle_skew;
 static unsigned char timer_mode = TIMER_MODE_PERIODIC;
@@ -391,6 +391,7 @@ static void sysTickTicklessIdleInit(void)
 	/* enable counter, disable interrupt and set clock src to system clock
 	 */
 	union __stcsr stcsr = {.bit = {1, 0, 1, 0, 0, 0} };
+
 	volatile uint32_t dummy; /* used to help determine the 'skew time' */
 
 	/* store the default reload value (which has already been set) */
@@ -477,20 +478,19 @@ void _timer_idle_enter(int32_t ticks /* system ticks */
 	if ((ticks == -1) || (ticks > max_system_ticks)) {
 		/*
 		 * We've been asked to fire the timer so far in the future that
-		 * the
-		 * required count value would not fit in the 24-bit reload
+		 * the required count value would not fit in the 24-bit reload
 		 * register.
 		 * Instead, we program for the maximum programmable interval
-		 * minus one
-		 * system tick to prevent overflow when the left over count read
-		 * earlier
-		 * is added.
+		 * minus one system tick to prevent overflow when the left over
+		 * count read earlier is added.
 		 */
 		idle_original_count += max_load_value - default_load_value;
 		idle_original_ticks = max_system_ticks - 1;
 	} else {
-		/* leave one tick of buffer to have to time react when coming
-		 * back */
+		/*
+		 * leave one tick of buffer to have to time react when coming
+		 * back
+		 */
 		idle_original_ticks = ticks - 1;
 		idle_original_count += idle_original_ticks * default_load_value;
 	}

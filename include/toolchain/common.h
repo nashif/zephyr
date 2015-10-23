@@ -17,10 +17,10 @@
  */
 
 /*
-DESCRIPTION
-Macros to abstract compiler capabilities (common to all toolchains).
-
-\NOMANUAL
+ * DESCRIPTION
+ * Macros to abstract compiler capabilities (common to all toolchains).
+ *
+ * \NOMANUAL
  */
 
 /*
@@ -95,7 +95,7 @@ Macros to abstract compiler capabilities (common to all toolchains).
 
   #define GC_SECTION(sym) SECTION .text.FUNC(sym), "ax"
 
-  #define BRANCH_LABEL(sym) FUNC(sym):
+  #define BRANCH_LABEL(sym) FUNC(sym) :
   #define VAR(sym)          FUNC(sym)
 
 #endif /* _ASMLANGUAGE */

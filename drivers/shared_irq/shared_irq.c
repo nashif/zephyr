@@ -151,12 +151,12 @@ void shared_irq_config_0_irq(struct device *port)
 {
 	struct shared_irq_config *config = port->config->config_info;
 
-	IRQ_CONFIG(shared_irq_0, config->irq_num);
+	IRQ_CONFIG(shared_irq_0, config->irq_num, 0);
 }
 
 void shared_irq_isr_0(void *unused)
 {
-	shared_irq_isr(&__initconfig_shared_irq_01);
+	shared_irq_isr(&__initconfig_shared_irq_0);
 }
 
 #endif /* CONFIG_SHARED_IRQ_0 */
@@ -183,12 +183,12 @@ void shared_irq_config_1_irq(struct device *port)
 {
 	struct shared_irq_config *config = port->config->config_info;
 
-	IRQ_CONFIG(shared_irq_1, config->irq_num);
+	IRQ_CONFIG(shared_irq_1, config->irq_num, 0);
 }
 
 void shared_irq_isr_1(void *unused)
 {
-	shared_irq_isr(&__initconfig_shared_irq_11);
+	shared_irq_isr(&__initconfig_shared_irq_1);
 }
 
 #endif /* CONFIG_SHARED_IRQ_1 */

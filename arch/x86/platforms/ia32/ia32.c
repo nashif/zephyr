@@ -17,14 +17,14 @@
  */
 
 /*
-DESCRIPTION
-This module provides routines to initialize and support board-level hardware
-for the ia32 platform.
+ * DESCRIPTION
+ * This module provides routines to initialize and support board-level hardware
+ * for the ia32 platform.
  */
 
 #include <nanokernel.h>
 #include "board.h"
-#include <drivers/uart.h>
+#include <uart.h>
 #include <drivers/pic.h>
 #include <device.h>
 #include <init.h>
@@ -52,13 +52,14 @@ static int ia32_init(struct device *arg)
 
 #ifdef CONFIG_CONSOLE_HANDLER
 
-static int console_irq_set(struct device *unsued)
+static int console_irq_set(struct device *unused)
 {
-#if defined(CONFIG_UART_CONSOLE)
+	ARG_UNUSED(unused);
+
 	_ioapic_irq_set(CONFIG_UART_CONSOLE_IRQ,
 			CONFIG_UART_CONSOLE_IRQ + INT_VEC_IRQ0,
 			UART_IOAPIC_FLAGS);
-#endif
+
 	return 0;
 }
 
@@ -66,6 +67,24 @@ DECLARE_DEVICE_INIT_CONFIG(consoleirq, "", console_irq_set, NULL);
 pre_kernel_late_init(consoleirq, NULL);
 
 #endif /* CONFIG_CONSOLE_HANDLER */
+
+#ifdef CONFIG_BLUETOOTH_UART
+
+static int bluetooth_irq_set(struct device *unused)
+{
+	ARG_UNUSED(unused);
+
+	_ioapic_irq_set(CONFIG_BLUETOOTH_UART_IRQ,
+			CONFIG_BLUETOOTH_UART_IRQ + INT_VEC_IRQ0,
+			UART_IOAPIC_FLAGS);
+
+	return 0;
+}
+
+DECLARE_DEVICE_INIT_CONFIG(btirq, "", bluetooth_irq_set, NULL);
+pre_kernel_late_init(btirq, NULL);
+
+#endif /* CONFIG_BLUETOOTH_UART */
 
 #ifdef CONFIG_HPET_TIMER
 

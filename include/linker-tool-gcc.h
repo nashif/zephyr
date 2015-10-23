@@ -17,9 +17,9 @@
  */
 
 /*
-DESCRIPTION
-This header file defines the necessary macros used by the linker script for
-use with the GCC linker.
+ * DESCRIPTION
+ * This header file defines the necessary macros used by the linker script for
+ * use with the GCC linker.
  */
 
 #ifndef __LINKER_TOOL_GCC_H
@@ -81,12 +81,8 @@ OUTPUT_ARCH(i386)
 #define SECTION_AT_PROLOGUE(name, options, align, addr) \
 	name options : align AT(addr)
 
-/* Diab-isms */
 #define SORT_BY_NAME(x) SORT(x)
 #define OPTIONAL
-
-/* see linker-tool-diab.h for description */
-#define PGALIGN_ALIGN(x) ALIGN(x)
 
 #define COMMON_SYMBOLS *(COMMON)
 

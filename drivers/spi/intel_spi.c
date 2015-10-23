@@ -30,7 +30,7 @@
 #include "intel_spi_priv.h"
 
 #ifndef CONFIG_SPI_DEBUG
-#define DBG(...) {;}
+#define DBG(...) { ; }
 #else
 #if defined(CONFIG_STDOUT_CONSOLE)
 #include <stdio.h>
@@ -53,7 +53,7 @@
 	}
 
 DEFINE_MM_REG_WRITE(sscr0, INTEL_SPI_REG_SSCR0, 32)
-DEFINE_MM_REG_WRITE(sscr1, INTEL_SPI_REG_SSRC1, 32)
+DEFINE_MM_REG_WRITE(sscr1, INTEL_SPI_REG_SSCR1, 32)
 DEFINE_MM_REG_READ(sssr, INTEL_SPI_REG_SSSR, 32)
 DEFINE_MM_REG_READ(ssdr, INTEL_SPI_REG_SSDR, 32)
 DEFINE_MM_REG_WRITE(ssdr, INTEL_SPI_REG_SSDR, 32)
@@ -81,7 +81,7 @@ DEFINE_SET_BIT_OP(sscr0_sse, INTEL_SPI_REG_SSCR0, INTEL_SPI_SSCR0_SSE_BIT)
 DEFINE_CLEAR_BIT_OP(sscr0_sse, INTEL_SPI_REG_SSCR0, INTEL_SPI_SSCR0_SSE_BIT)
 DEFINE_TEST_BIT_OP(sscr0_sse, INTEL_SPI_REG_SSCR0, INTEL_SPI_SSCR0_SSE_BIT)
 DEFINE_TEST_BIT_OP(sssr_bsy, INTEL_SPI_REG_SSSR, INTEL_SPI_SSSR_BSY_BIT)
-DEFINE_CLEAR_BIT_OP(sscr1_tie, INTEL_SPI_REG_SSRC1, INTEL_SPI_SSCR1_TIE_BIT)
+DEFINE_CLEAR_BIT_OP(sscr1_tie, INTEL_SPI_REG_SSCR1, INTEL_SPI_SSCR1_TIE_BIT)
 
 #ifdef CONFIG_SPI_INTEL_CS_GPIO
 
@@ -118,8 +118,8 @@ static inline void _spi_control_cs(struct device *dev, int on)
 	gpio_pin_write(spi->cs_gpio_port, info->cs_gpio_pin, !on);
 }
 #else
-#define _spi_control_cs(...) {;}
-#define _spi_config_cs(...) {;}
+#define _spi_control_cs(...) { ; }
+#define _spi_config_cs(...) { ; }
 #endif /* CONFIG_SPI_INTEL_CS_GPIO */
 
 static void completed(struct device *dev, uint32_t error)
@@ -171,7 +171,7 @@ static void push_data(struct device *dev)
 
 	DBG("spi: push_data\n");
 
-	while(read_sssr(info->regs) & INTEL_SPI_SSSR_TNF) {
+	while (read_sssr(info->regs) & INTEL_SPI_SSSR_TNF) {
 		if (spi->tx_buf && spi->tx_buf_len > 0) {
 			data = *(uint8_t *)(spi->tx_buf);
 			spi->tx_buf++;
@@ -207,7 +207,7 @@ static void pull_data(struct device *dev)
 	uint32_t cnt = 0;
 	uint8_t data;
 
-	while(read_sssr(info->regs) & INTEL_SPI_SSSR_RNE) {
+	while (read_sssr(info->regs) & INTEL_SPI_SSSR_RNE) {
 		data = (uint8_t) read_ssdr(info->regs);
 		cnt++;
 
@@ -453,7 +453,7 @@ nano_early_init(spi_intel_port_0, &spi_intel_data_port_0);
 
 void spi_intel_isr_0(void *unused)
 {
-	spi_intel_isr(&__initconfig_spi_intel_port_03);
+	spi_intel_isr(&__initconfig_spi_intel_port_0);
 }
 
 IRQ_CONNECT_STATIC(spi_intel_irq_port_0, CONFIG_SPI_INTEL_PORT_0_IRQ,
@@ -462,7 +462,8 @@ IRQ_CONNECT_STATIC(spi_intel_irq_port_0, CONFIG_SPI_INTEL_PORT_0_IRQ,
 void spi_config_0_irq(struct device *dev)
 {
 	struct spi_intel_config *config = dev->config->config_info;
-	IRQ_CONFIG(spi_intel_irq_port_0, config->irq);
+
+	IRQ_CONFIG(spi_intel_irq_port_0, config->irq, 0);
 }
 
 #endif /* CONFIG_SPI_INTEL_PORT_0 */
@@ -496,7 +497,7 @@ pre_kernel_late_init(spi_intel_port_1, &spi_intel_data_port_1);
 
 void spi_intel_isr_1(void *unused)
 {
-	spi_intel_isr(&__initconfig_spi_intel_port_12);
+	spi_intel_isr(&__initconfig_spi_intel_port_1);
 }
 
 IRQ_CONNECT_STATIC(spi_intel_irq_port_1, CONFIG_SPI_INTEL_PORT_1_IRQ,
@@ -505,7 +506,8 @@ IRQ_CONNECT_STATIC(spi_intel_irq_port_1, CONFIG_SPI_INTEL_PORT_1_IRQ,
 void spi_config_1_irq(struct device *dev)
 {
 	struct spi_intel_config *config = dev->config->config_info;
-	IRQ_CONFIG(spi_intel_irq_port_1, config->irq);
+
+	IRQ_CONFIG(spi_intel_irq_port_1, config->irq, 0);
 }
 
 #endif /* CONFIG_SPI_INTEL_PORT_1 */

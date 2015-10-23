@@ -28,7 +28,6 @@
  *
  * @return N/A
  */
-
 void _k_pipe_get_request(struct k_args *RequestOrig)
 {
 	struct k_args *Request;
@@ -45,8 +44,8 @@ void _k_pipe_get_request(struct k_args *RequestOrig)
 	mycopypacket(&Request, RequestOrig);
 
 	/* Now, we need a new packet for processing of the request;
-	   the Request package is too small b/c of space lost due to possible
-	   embedded local data
+	 * the Request package is too small b/c of space lost due to possible
+	 * embedded local data
 	 */
 
 	mycopypacket(&RequestProc, Request);
@@ -97,7 +96,8 @@ void _k_pipe_get_request(struct k_args *RequestOrig)
 
 		iData2ReadFromWriters = CalcAvailWriterData(pipe_ptr->writers);
 		iAvailBufferData =
-			pipe_ptr->desc.available_data_count + pipe_ptr->desc.available_data_post_wrap_around;
+			pipe_ptr->desc.available_data_count +
+			pipe_ptr->desc.available_data_post_wrap_around;
 		iTotalData2Read =
 			iAvailBufferData + iData2ReadFromWriters;
 
@@ -152,8 +152,8 @@ void _k_pipe_get_request(struct k_args *RequestOrig)
 		}
 	} else {
 		/* call is non-blocking;
-		   Check if we don't have to queue it b/c it could not
-		   be processed at once
+		 * Check if we don't have to queue it b/c it could not
+		 * be processed at once
 		 */
 		RequestProc->Time.timer = NULL;
 
@@ -176,7 +176,6 @@ void _k_pipe_get_request(struct k_args *RequestOrig)
  *
  * @return N/A
  */
-
 void _k_pipe_get_timeout(struct k_args *ReqProc)
 {
 	__ASSERT_NO_MSG(NULL != ReqProc->Time.timer);
@@ -196,7 +195,6 @@ void _k_pipe_get_timeout(struct k_args *ReqProc)
  *
  * @return N/A
  */
-
 void _k_pipe_get_reply(struct k_args *ReqProc)
 {
 	__ASSERT_NO_MSG(
@@ -208,6 +206,7 @@ void _k_pipe_get_reply(struct k_args *ReqProc)
 
 	struct k_args *ReqOrig = ReqProc->Ctxt.args;
 	PIPE_REQUEST_STATUS status;
+
 	ReqOrig->Comm = _K_SVC_PIPE_GET_ACK;
 
 	/* determine return value */
@@ -248,7 +247,6 @@ void _k_pipe_get_reply(struct k_args *ReqProc)
  *
  * @return N/A
  */
-
 void _k_pipe_get_ack(struct k_args *Request)
 {
 	struct k_args *LocalReq;

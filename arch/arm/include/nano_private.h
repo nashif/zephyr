@@ -17,14 +17,14 @@
  */
 
 /*
-DESCRIPTION
-This file contains private nanokernel structures definitions and various other
-definitions for the ARM Cortex-M3 processor architecture.
-
-This file is also included by assembly language files which must #define
-_ASMLANGUAGE before including this header file.  Note that nanokernel assembly
-source files obtains structure offset values via "absolute symbols" in the
-offsets.o module.
+ * DESCRIPTION
+ * This file contains private nanokernel structures definitions and various
+ * other definitions for the ARM Cortex-M3 processor architecture.
+ *
+ * This file is also included by assembly language files which must #define
+ * _ASMLANGUAGE before including this header file.  Note that nanokernel
+ * assembly source files obtains structure offset values via "absolute symbols"
+ * in the offsets.o module.
  */
 
 #ifndef _NANO_PRIVATE_H
@@ -175,15 +175,16 @@ static ALWAYS_INLINE void nanoArchInit(void)
  * to <value>.  It is assumed that the specified <fiber> is pending, and thus
  * the fiber's thread is stored in its struct tcs structure.
  *
+ * @param fiber pointer to the fiber
+ * @param value is the value to set as a return value
+ *
  * @return N/A
  *
  * \NOMANUAL
  */
 
-static ALWAYS_INLINE void fiberRtnValueSet(
-	struct tcs *fiber,       /* pointer to fiber */
-	unsigned int value /* value to set as return value */
-	)
+static ALWAYS_INLINE void fiberRtnValueSet(struct tcs *fiber,
+					   unsigned int value)
 {
 	tESF *pEsf = (void *)fiber->preempReg.psp;
 

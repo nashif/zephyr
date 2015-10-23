@@ -177,14 +177,14 @@ extern int task_offload_to_fiber(int (*)(), void *);
  *
  * @return identifier for current task
  */
-extern ktask_t task_id_get();
+extern ktask_t task_id_get(void);
 
 /**
  * @brief Get task priority
  *
  * @return priority of current task
  */
-extern kpriority_t task_priority_get();
+extern kpriority_t task_priority_get(void);
 
 /**
  * @brief Start a task
@@ -225,7 +225,7 @@ extern kpriority_t task_priority_get();
  *
  * @return task groups associated with current task
  */
-extern uint32_t task_group_mask_get();
+extern uint32_t task_group_mask_get(void);
 
 /**
  * @brief Add task to task group(s)
@@ -319,13 +319,13 @@ extern void task_group_leave(uint32_t groups);
 	extern void entry(void); \
 	char __noinit __stack __stack_##name[stack_size]; \
 	struct k_task _k_task_obj_##name \
-		__section(_k_task_list, private, task) = \
+		__in_section(_k_task_list, private, task) = \
 		__K_TASK_INITIALIZER( \
 			(ktask_t)&_k_task_obj_##name, \
 			priority, 0x00000001, groups, \
 			entry, &__stack_##name[0], stack_size, NULL); \
 	const ktask_t name \
-		__section(_k_task_ptr, private, task) = \
+		__in_section(_k_task_ptr, private, task) = \
 		(ktask_t)&_k_task_obj_##name;
 
 #ifdef __cplusplus

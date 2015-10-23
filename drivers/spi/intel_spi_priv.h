@@ -56,7 +56,7 @@ struct spi_intel_data {
 
 /* Registers */
 #define INTEL_SPI_REG_SSCR0		(0x00)
-#define INTEL_SPI_REG_SSRC1		(0x04)
+#define INTEL_SPI_REG_SSCR1		(0x04)
 #define INTEL_SPI_REG_SSSR		(0x08)
 #define INTEL_SPI_REG_SSDR		(0x10)
 #define INTEL_SPI_REG_DDS_RATE		(0x28)
@@ -84,7 +84,7 @@ struct spi_intel_data {
 #define INTEL_SPI_SSCR1_RFT(__rft) \
 	(((__rft) - 1) << 11)
 #define INTEL_SPI_SSCR1_EFWR		(0x1 << 16)
-#define INTEL_SPI_SSCR1_STRF		(0x1 << 17)
+#define INTEL_SPI_SSCR1_STRF		(0x1 << 17)
 
 #define INTEL_SPI_SSCR1_TFT_DFLT	(8)
 #define INTEL_SPI_SSCR1_RFT_DFLT	(8)

@@ -18,13 +18,14 @@
 
 #include <nano_private.h>
 
-struct nano_timer *_nano_timer_list = NULL;
+struct nano_timer *_nano_timer_list;
 
 
 void nano_timer_init(struct nano_timer *timer, void *data)
 {
 	nano_lifo_init(&timer->lifo);
 	timer->userData = data;
+	DEBUG_TRACING_OBJ_INIT(struct nano_timer *, timer, _track_list_nano_timer);
 }
 
 
@@ -51,7 +52,8 @@ FUNC_ALIAS(_timer_start, nano_task_timer_start, void);
  */
 void _timer_start(struct nano_timer *timer, /* timer to start */
 				       int ticks /* number of system ticks
-						    before expiry */
+						  * before expiry
+						  */
 				       )
 {
 	unsigned int imask;

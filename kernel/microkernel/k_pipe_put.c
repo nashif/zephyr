@@ -29,7 +29,6 @@
  *
  * @return N/A
  */
-
 void _k_pipe_put_request(struct k_args *RequestOrig)
 {
 	struct k_args *Request;
@@ -57,8 +56,8 @@ void _k_pipe_put_request(struct k_args *RequestOrig)
 	mycopypacket(&Request, RequestOrig);
 
 	/* Now, we need a new packet for processing of the request; the
-	   Request package is too small b/c of space lost due to possible
-	   embedded local data
+	 * Request package is too small b/c of space lost due to possible
+	 * embedded local data
 	 */
 
 	mycopypacket(&RequestProc, Request);
@@ -114,7 +113,8 @@ void _k_pipe_put_request(struct k_args *RequestOrig)
 
 		iSpace2WriteinReaders = CalcFreeReaderSpace(pipe_ptr->readers);
 		iFreeBufferSpace =
-			pipe_ptr->desc.free_space_count + pipe_ptr->desc.free_space_post_wrap_around;
+			pipe_ptr->desc.free_space_count +
+			pipe_ptr->desc.free_space_post_wrap_around;
 		iTotalSpace2Write =
 			iFreeBufferSpace + iSpace2WriteinReaders;
 
@@ -131,8 +131,10 @@ void _k_pipe_put_request(struct k_args *RequestOrig)
 		/* check if request was processed */
 
 		if (TERM_XXX & RequestProc->args.pipe_xfer_req.status) {
-			RequestProc->Time.timer = NULL; /* not really required */
-			return; /* not listed anymore --> completely processed */
+			/* not really required */
+			RequestProc->Time.timer = NULL;
+			/* not listed anymore --> completely processed */
+			return;
 		}
 
 	} while (0);
@@ -147,8 +149,8 @@ void _k_pipe_put_request(struct k_args *RequestOrig)
 		INSERT_ELM(pipe_ptr->writers, RequestProc);
 		/*
 		 * NOTE: It is both faster and simpler to blindly assign the
-		 * PIPE_PUT_TIMEOUT microkernel command to the packet even though it
-		 * is only useful to the finite timeout case.
+		 * PIPE_PUT_TIMEOUT microkernel command to the packet even
+		 * though it is only useful to the finite timeout case.
 		 */
 		RequestProc->Comm = _K_SVC_PIPE_PUT_TIMEOUT;
 		if (_TIME_B == _k_pipe_time_type_get(&RequestProc->args)) {
@@ -171,8 +173,8 @@ void _k_pipe_put_request(struct k_args *RequestOrig)
 		}
 	} else {
 		/* call is non-blocking;
-		   Check if we don't have to queue it b/c it could not
-		   be processed at once
+		 * Check if we don't have to queue it b/c it could not
+		 * be processed at once
 		 */
 		RequestProc->Time.timer = NULL;
 
@@ -195,7 +197,6 @@ void _k_pipe_put_request(struct k_args *RequestOrig)
  *
  * @return N/A
  */
-
 void _k_pipe_put_timeout(struct k_args *ReqProc)
 {
 	__ASSERT_NO_MSG(NULL != ReqProc->Time.timer);
@@ -215,7 +216,6 @@ void _k_pipe_put_timeout(struct k_args *ReqProc)
  *
  * @return N/A
  */
-
 void _k_pipe_put_reply(struct k_args *ReqProc)
 {
 	__ASSERT_NO_MSG(
@@ -269,7 +269,6 @@ void _k_pipe_put_reply(struct k_args *ReqProc)
  *
  * @return N/A
  */
-
 void _k_pipe_put_ack(struct k_args *Request)
 {
 	if (_ASYNCREQ == _k_pipe_request_type_get(&Request->args)) {

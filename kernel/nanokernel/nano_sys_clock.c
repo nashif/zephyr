@@ -40,7 +40,7 @@ int sys_clock_hw_cycles_per_tick;
 uint32_t _sys_idle_elapsed_ticks = 1;
 #endif /*  CONFIG_NANOKERNEL */
 
-int64_t _nano_ticks = 0;
+int64_t _nano_ticks;
 
 /**
  *
@@ -71,6 +71,7 @@ int64_t nano_tick_get(void)
 	 * _nano_ticks
 	 */
 	unsigned int imask = irq_lock();
+
 	tmp_nano_ticks = _nano_ticks;
 	irq_unlock(imask);
 	return tmp_nano_ticks;
@@ -104,7 +105,6 @@ int64_t nano_tick_get(void)
  * NOTE: We use inline function for both 64-bit and 32-bit functions.
  * Compiler optimizes out 64-bit result handling in 32-bit version.
  */
-
 static ALWAYS_INLINE int64_t _nano_tick_delta(int64_t *reftime)
 {
 	int64_t  delta;
@@ -117,6 +117,7 @@ static ALWAYS_INLINE int64_t _nano_tick_delta(int64_t *reftime)
 	 * _nano_ticks
 	 */
 	unsigned int imask = irq_lock();
+
 	saved = _nano_ticks;
 	irq_unlock(imask);
 	delta = saved - (*reftime);
@@ -158,7 +159,7 @@ static inline void handle_expired_nano_timeouts(int ticks)
 	}
 }
 #else
-	#define handle_expired_nano_timeouts(ticks) do { } while((0))
+	#define handle_expired_nano_timeouts(ticks) do { } while ((0))
 #endif
 
 /* handle the expired nano timers in the nano timers queue */
@@ -172,13 +173,14 @@ static inline void handle_expired_nano_timers(int ticks)
 		while (_nano_timer_list && (!_nano_timer_list->ticks)) {
 			struct nano_timer *expired = _nano_timer_list;
 			struct nano_lifo *lifo = &expired->lifo;
+
 			_nano_timer_list = expired->link;
 			nano_isr_lifo_put(lifo, expired->userData);
 		}
 	}
 }
 #else
-	#define handle_expired_nano_timers(ticks) do { } while((0))
+	#define handle_expired_nano_timers(ticks) do { } while ((0))
 #endif
 
 #if defined(CONFIG_NANO_TIMEOUTS) || defined(CONFIG_NANO_TIMERS)
@@ -192,7 +194,6 @@ static inline void handle_expired_nano_timers(int ticks)
  *
  * @return N/A
  */
-
 void _nano_sys_clock_tick_announce(uint32_t ticks)
 {
 	_nano_ticks += ticks;

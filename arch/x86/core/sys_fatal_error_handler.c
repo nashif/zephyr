@@ -17,9 +17,9 @@
  */
 
 /*
-DESCRIPTION
-This module provides the _SysFatalErrorHandler() routine which is common to
-supported platforms.
+ * DESCRIPTION
+ * This module provides the _SysFatalErrorHandler() routine which is common to
+ * supported platforms.
  */
 
 #include <nanokernel.h>
@@ -48,15 +48,16 @@ supported platforms.
  * implementation to take other actions, such as logging error (or debug)
  * information to a persistent repository and/or rebooting the system.
  *
+ * @param reason the fatal error reason
+ * @param pEsf the pointer to the exception stack frame
+ *
  * @return This function does not return.
  *
  * \NOMANUAL
  */
 
-FUNC_NORETURN void _SysFatalErrorHandler(
-	unsigned int reason, /* fatal error reason */
-	const NANO_ESF * pEsf /* pointer to exception stack frame */
-	)
+FUNC_NORETURN void _SysFatalErrorHandler(unsigned int reason,
+					 const NANO_ESF * pEsf)
 {
 	nano_context_type_t curCtx = sys_execution_context_type_get();
 
@@ -82,7 +83,7 @@ FUNC_NORETURN void _SysFatalErrorHandler(
 		 * variable" warning when the PRINTK kconfig option is disabled.
 		 */
 
-		static char *ctxText[] = {"ISR", "essential fiber",
+		static const char * const ctxText[] = {"ISR", "essential fiber",
 					  "essential task"};
 
 		PRINTK("Fatal %s error! Spinning...\n", ctxText[curCtx]);

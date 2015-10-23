@@ -23,7 +23,7 @@
 #include <arch/cpu.h>
 
 #include <board.h>
-#include <drivers/uart.h>
+#include <uart.h>
 #include <misc/byteorder.h>
 #include <string.h>
 
@@ -158,15 +158,15 @@ void bt_uart_isr(void *unused)
 			}
 
 			switch (type) {
-				case H4_EVT:
-					buf = bt_uart_evt_recv(&remaining);
-					break;
-				case H4_ACL:
-					buf = bt_uart_acl_recv(&remaining);
-					break;
-				default:
-					BT_ERR("Unknown H4 type %u\n", type);
-					return;
+			case H4_EVT:
+				buf = bt_uart_evt_recv(&remaining);
+				break;
+			case H4_ACL:
+				buf = bt_uart_acl_recv(&remaining);
+				break;
+			default:
+				BT_ERR("Unknown H4 type %u\n", type);
+				return;
 			}
 
 			if (buf && remaining > bt_buf_tailroom(buf)) {
@@ -257,12 +257,13 @@ static void bt_uart_setup(struct device *uart, struct uart_init_info *info)
 
 	uart_irq_rx_disable(uart);
 	uart_irq_tx_disable(uart);
-	IRQ_CONFIG(bluetooth, uart_irq_get(uart));
+	IRQ_CONFIG(bluetooth, uart_irq_get(uart), 0);
 	irq_enable(uart_irq_get(uart));
 
 	/* Drain the fifo */
 	while (uart_irq_rx_ready(uart)) {
 		unsigned char c;
+
 		uart_fifo_read(uart, &c, 1);
 	}
 

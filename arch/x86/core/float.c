@@ -17,61 +17,63 @@
  */
 
 /*
-DESCRIPTION
-This module allows multiple tasks and fibers to safely share the system's
-floating point resources, by allowing the system to save FPU state information
-in a task or fiber's stack region when a pre-emptive context switch occurs.
-
-The floating point resource sharing mechanism is designed for minimal
-intrusiveness.  Floating point thread saving is only performed for tasks and
-fibers that explicitly enable FP resource sharing, to avoid impacting the stack
-size requirements of all other tasks and fibers.  For those tasks and fibers
-that do require FP resource sharing, a "lazy save/restore" mechanism is employed
-so that the FPU's register sets are only switched in and out when absolutely
-necessary; this avoids wasting effort preserving them when there is no risk
-that they will be altered, or when there is no need to preserve their contents.
-
-The following APIs are provided to allow floating point resource sharing to be
-enabled or disabled at run-time:
-
-	void fiber_float_enable  (nano_thread_id_t thread_id, unsigned int options)
-	void task_float_enable   (nano_thread_id_t thread_id, unsigned int options)
-	void fiber_float_disable (nano_thread_id_t thread_id)
-	void task_float_disable  (nano_thread_id_t thread_id)
-
-The 'options' parameter is used to specify what non-integer capabilities are
-being used.  The same options accepted by fiber_fiber_start() are used in the
-aforementioned APIs, namely USE_FP and USE_SSE.
-
-If the nanokernel has been built without SSE instruction support
-(CONFIG_SSE), the system treats USE_SSE as if it was USE_FP.
-
-If the nanokernel has been built without floating point resource
-sharing support (CONFIG_FP_SHARING), the aforementioned APIs and
-capabilities do not exist.
-
-NOTE
-It is possible for a single task or fiber to utilize floating instructions
-_without_ enabling the FP resource sharing feature.  Since no other task or
-fiber uses the FPU the FP registers won't change when the FP-capable task or
-fiber isn't executing, meaning there is no need to save the registers.
-
-WARNING
-The use of floating point instructions by ISRs is not supported by the kernel.
-
-INTERNAL
-If automatic enabling of floating point resource sharing _is not_ configured
-the system leaves CR0[TS] = 0 for all tasks and fibers.  This means that any
-task or fiber can perform floating point operations at any time without causing
-an exception, and the system won't stop a task or fiber that shouldn't be
-doing FP stuff from doing it.
-
-If automatic enabling of floating point resource sharing _is_ configured the
-system leaves CR0[TS] = 0 only for tasks and fibers that are allowed to perform
-FP operations.  All other tasks and fibers have CR0[TS] = 1 so that an attempt
-to perform an FP operation will cause an exception, allowing the system to
-enable FP resource sharing on its behalf.
-
+ * DESCRIPTION
+ * This module allows multiple tasks and fibers to safely share the system's
+ * floating point resources, by allowing the system to save FPU state
+ * information in a task or fiber's stack region when a pre-emptive context
+ * switch occurs.
+ *
+ * The floating point resource sharing mechanism is designed for minimal
+ * intrusiveness.  Floating point thread saving is only performed for tasks and
+ * fibers that explicitly enable FP resource sharing, to avoid impacting the
+ * stack size requirements of all other tasks and fibers.  For those tasks and
+ * fibers that do require FP resource sharing, a "lazy save/restore" mechanism
+ * is employed so that the FPU's register sets are only switched in and out
+ * when absolutely necessary; this avoids wasting effort preserving them when
+ * there is no risk that they will be altered, or when there is no need to
+ * preserve their contents.
+ *
+ * The following APIs are provided to allow floating point resource sharing to
+ * be enabled or disabled at run-time:
+ *
+ * 	void fiber_float_enable  (nano_thread_id_t thread_id, unsigned int options)
+ * 	void task_float_enable   (nano_thread_id_t thread_id, unsigned int options)
+ * 	void fiber_float_disable (nano_thread_id_t thread_id)
+ * 	void task_float_disable  (nano_thread_id_t thread_id)
+ *
+ * The 'options' parameter is used to specify what non-integer capabilities are
+ * being used.  The same options accepted by fiber_fiber_start() are used in the
+ * aforementioned APIs, namely USE_FP and USE_SSE.
+ *
+ * If the nanokernel has been built without SSE instruction support
+ * (CONFIG_SSE), the system treats USE_SSE as if it was USE_FP.
+ *
+ * If the nanokernel has been built without floating point resource sharing
+ * support (CONFIG_FP_SHARING), the aforementioned APIs and capabilities do not
+ * exist.
+ *
+ * NOTE
+ * It is possible for a single task or fiber to utilize floating instructions
+ * _without_ enabling the FP resource sharing feature.  Since no other task or
+ * fiber uses the FPU the FP registers won't change when the FP-capable task or
+ * fiber isn't executing, meaning there is no need to save the registers.
+ *
+ * WARNING
+ * The use of floating point instructions by ISRs is not supported by the
+ * kernel.
+ *
+ * INTERNAL
+ * If automatic enabling of floating point resource sharing _is not_ configured
+ * the system leaves CR0[TS] = 0 for all tasks and fibers.  This means that any
+ * task or fiber can perform floating point operations at any time without
+ * causing an exception, and the system won't stop a task or fiber that
+ * shouldn't be doing FP stuff from doing it.
+ *
+ * If automatic enabling of floating point resource sharing _is_ configured
+ * the system leaves CR0[TS] = 0 only for tasks and fibers that are allowed to
+ * perform FP operations.  All other tasks and fibers have CR0[TS] = 1 so that
+ * an attempt to perform an FP operation will cause an exception, allowing the
+ * system to enable FP resource sharing on its behalf.
  */
 
 #ifdef CONFIG_MICROKERNEL
@@ -99,9 +101,10 @@ extern uint32_t _sse_mxcsr_default_value; /* SSE control/status register default
  * specified TCS.  If the specified task or fiber supports SSE then
  * x87/MMX/SSEx thread info is saved, otherwise only x87/MMX thread is saved.
  *
+ * @param tcs TBD
+ *
  * @return N/A
  */
-
 static void _FpCtxSave(struct tcs *tcs)
 {
 	_do_fp_ctx_save(tcs->flags & USE_SSE, &tcs->preempFloatReg);
@@ -113,9 +116,10 @@ static void _FpCtxSave(struct tcs *tcs)
  *
  * This routine initializes the system's "live" non-integer context.
  *
+ * @param tcs TBD
+ *
  * @return N/A
  */
-
 static inline void _FpCtxInit(struct tcs *tcs)
 {
 	_do_fp_ctx_init(tcs->flags & USE_SSE);
@@ -142,6 +146,9 @@ static inline void _FpCtxInit(struct tcs *tcs)
  * This routine should only be used to enable floating point support for a
  * task/fiber that does not currently have such support enabled already.
  *
+ * @param tcs  TDB
+ * @param options set to either USE_FP or USE_SSE
+ *
  * @return N/A
  *
  * INTERNAL
@@ -159,10 +166,7 @@ static inline void _FpCtxInit(struct tcs *tcs)
  * are only used from a fiber, rather than from "generic" code used by both
  * tasks and fibers.
  */
-
-void _FpEnable(struct tcs *tcs,
-			     unsigned int options /* USE_FP or USE_SSE */
-			     )
+void _FpEnable(struct tcs *tcs, unsigned int options)
 {
 	unsigned int imask;
 	struct tcs *fp_owner;
@@ -272,7 +276,6 @@ void _FpEnable(struct tcs *tcs,
  *
  * @return N/A
  */
-
 FUNC_ALIAS(_FpEnable, fiber_float_enable, void);
 
 /**
@@ -286,7 +289,6 @@ FUNC_ALIAS(_FpEnable, fiber_float_enable, void);
  *
  * @return N/A
  */
-
 FUNC_ALIAS(_FpEnable, task_float_enable, void);
 
 /**
@@ -300,6 +302,8 @@ FUNC_ALIAS(_FpEnable, task_float_enable, void);
  * WARNING
  * This routine should only be used to disable floating point support for
  * a task/fiber that currently has such support enabled.
+ *
+ * @param tcs TBD
  *
  * @return N/A
  *
@@ -318,7 +322,6 @@ FUNC_ALIAS(_FpEnable, task_float_enable, void);
  * are only used from a fiber, rather than from "generic" code used by both
  * tasks and fibers.
  */
-
 void _FpDisable(struct tcs *tcs)
 {
 	unsigned int imask;
@@ -362,7 +365,6 @@ void _FpDisable(struct tcs *tcs)
  *
  * @return N/A
  */
-
 FUNC_ALIAS(_FpDisable, fiber_float_disable, void);
 
 /**
@@ -379,7 +381,6 @@ FUNC_ALIAS(_FpDisable, fiber_float_disable, void);
  *
  * @return N/A
  */
-
 FUNC_ALIAS(_FpDisable, task_float_disable, void);
 
 
@@ -395,11 +396,11 @@ FUNC_ALIAS(_FpDisable, task_float_disable, void);
  * current task or fiber with the USE_FP option (or the USE_SSE option if the
  * SSE configuration option has been enabled).
  *
+ * @param pEsf this value is not used for this architecture
+ *
  * @return N/A
  */
-
-void _FpNotAvailableExcHandler(NANO_ESF * pEsf /* not used */
-			       )
+void _FpNotAvailableExcHandler(NANO_ESF * pEsf)
 {
 	unsigned int enableOption;
 

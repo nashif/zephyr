@@ -64,6 +64,8 @@ void nano_fifo_init(struct nano_fifo *fifo)
 	 */
 
 	fifo->stat = 0;
+
+	DEBUG_TRACING_OBJ_INIT(struct nano_fifo *, fifo, _track_list_nano_fifo);
 }
 
 FUNC_ALIAS(_fifo_put_non_preemptible, nano_isr_fifo_put, void);
@@ -113,6 +115,7 @@ void _fifo_put_non_preemptible(struct nano_fifo *fifo, void *data)
 	fifo->stat++;
 	if (fifo->stat <= 0) {
 		struct tcs *tcs = _nano_wait_q_remove_no_check(&fifo->wait_q);
+
 		_nano_timeout_abort(tcs);
 		fiberRtnValueSet(tcs, (unsigned int)data);
 	} else {
@@ -122,7 +125,7 @@ void _fifo_put_non_preemptible(struct nano_fifo *fifo, void *data)
 	irq_unlock(imask);
 }
 
-void nano_task_fifo_put( struct nano_fifo *fifo, void *data)
+void nano_task_fifo_put(struct nano_fifo *fifo, void *data)
 {
 	unsigned int imask;
 
@@ -131,6 +134,7 @@ void nano_task_fifo_put( struct nano_fifo *fifo, void *data)
 	fifo->stat++;
 	if (fifo->stat <= 0) {
 		struct tcs *tcs = _nano_wait_q_remove_no_check(&fifo->wait_q);
+
 		_nano_timeout_abort(tcs);
 		fiberRtnValueSet(tcs, (unsigned int)data);
 		_Swap(imask);
@@ -203,7 +207,7 @@ void *_fifo_get(struct nano_fifo *fifo)
 	return data;
 }
 
-void *nano_fiber_fifo_get_wait( struct nano_fifo *fifo)
+void *nano_fiber_fifo_get_wait(struct nano_fifo *fifo)
 {
 	void *data;
 	unsigned int imask;
@@ -222,7 +226,7 @@ void *nano_fiber_fifo_get_wait( struct nano_fifo *fifo)
 	return data;
 }
 
-void *nano_task_fifo_get_wait( struct nano_fifo *fifo)
+void *nano_task_fifo_get_wait(struct nano_fifo *fifo)
 {
 	void *data;
 	unsigned int imask;

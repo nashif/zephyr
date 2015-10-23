@@ -17,10 +17,10 @@
  */
 
 /*
-  DESCRIPTION
-
-  Serial console driver.
-  Hooks into the printk and fputc (for printf) modules. Poll driven.
+ * DESCRIPTION
+ *
+ * Serial console driver.
+ * Hooks into the printk and fputc (for printf) modules. Poll driven.
  */
 
 #include <nanokernel.h>
@@ -34,7 +34,7 @@
 #include <init.h>
 
 #include <board.h>
-#include <drivers/uart.h>
+#include <uart.h>
 #include <console/uart_console.h>
 #include <toolchain.h>
 #include <sections.h>
@@ -51,6 +51,7 @@ static int consoleIn(void)
 {
 #ifdef UART_CONSOLE_DEV
 	unsigned char c;
+
 	if (uart_poll_in(UART_CONSOLE_DEV, &c) < 0)
 		return EOF;
 	else
@@ -103,7 +104,7 @@ extern void __printk_hook_install(int (*fn)(int));
 #endif
 
 #if defined(CONFIG_CONSOLE_HANDLER)
-static size_t pos = 0;
+static size_t pos;
 
 static struct nano_fifo *avail_queue;
 static struct nano_fifo *lines_queue;
@@ -176,7 +177,7 @@ static void console_input_init(void)
 
 	uart_irq_rx_disable(UART_CONSOLE_DEV);
 	uart_irq_tx_disable(UART_CONSOLE_DEV);
-	IRQ_CONFIG(console, uart_irq_get(UART_CONSOLE_DEV));
+	IRQ_CONFIG(console, uart_irq_get(UART_CONSOLE_DEV), 0);
 	irq_enable(uart_irq_get(UART_CONSOLE_DEV));
 
 	/* Drain the fifo */

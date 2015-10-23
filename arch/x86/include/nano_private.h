@@ -17,17 +17,18 @@
  */
 
 /*
-DESCRIPTION
-This file contains private nanokernel structures definitions and various other
-definitions for the Intel Architecture 32 bit (IA-32) processor architecture.
-The header include/nanokernel.h contains the public nanokernel interface
-definitions, with include/arch/nanokernel/x86/arch.h supplying the
-IA-32 specific portions of the public nanokernel interface.
-
-This file is also included by assembly language files which must #define
-_ASMLANGUAGE before including this header file.  Note that nanokernel assembly
-source files obtains structure offset values via "absolute symbols" in the
-offsets.o module.
+ * DESCRIPTION
+ * This file contains private nanokernel structures definitions and various
+ * other definitions for the Intel Architecture 32 bit (IA-32) processor
+ * architecture.
+ * The header include/nanokernel.h contains the public nanokernel interface
+ * definitions, with include/arch/nanokernel/x86/arch.h supplying the
+ * IA-32 specific portions of the public nanokernel interface.
+ *
+ * This file is also included by assembly language files which must #define
+ * _ASMLANGUAGE before including this header file.  Note that nanokernel
+ * assembly source files obtains structure offset values via "absolute symbols"
+ * in the offsets.o module.
  */
 
 #ifndef _NANO_PRIVATE_H
@@ -602,9 +603,10 @@ typedef struct s_coopFloatReg {
 
 typedef struct s_preempFloatReg {
 	union {
-		tFpRegSet fpRegs; /* threads with USE_FP utilize this format */
-		tFpRegSetEx fpRegsEx; /* threads with USE_SSE utilize this
-					 format */
+		/* threads with USE_FP utilize this format */
+		tFpRegSet fpRegs;
+		/* threads with USE_SSE utilize this format */
+		tFpRegSetEx fpRegsEx;
 	} floatRegsUnion;
 } tPreempFloatReg;
 
@@ -618,9 +620,8 @@ typedef struct s_preempFloatReg {
 struct tcs {
 	/*
 	 * Link to next thread in singly-linked thread list (such as
-	 * prioritized
-	 * list of runnable fibers, or list of fibers waiting on a nanokernel
-	 * FIFO).
+	 * prioritized list of runnable fibers, or list of fibers waiting on a
+	 * nanokernel FIFO).
 	 */
 
 	struct tcs *link;
@@ -656,8 +657,7 @@ struct tcs {
 	/*
 	 * Nested exception count to maintain setting of EXC_ACTIVE flag across
 	 * outermost exception.  EXC_ACTIVE is used by _Swap() lazy FP
-	 * save/restore
-	 * and by debug tools.
+	 * save/restore and by debug tools.
 	 */
 	unsigned excNestCount; /* nested exception count */
 #endif /* CONFIG_FP_SHARING || CONFIG_GDB_INFO */
@@ -673,19 +673,15 @@ struct tcs {
 	/*
 	 * The location of all floating point related structures/fields MUST be
 	 * located at the end of struct tcs.  This way only the
-	 *fibers/tasks
-	 * that actually utilize non-integer capabilities need to account for
-	 * the increased memory required for storing FP state when sizing
-	 *stacks.
+	 * fibers/tasks that actually utilize non-integer capabilities need to
+	 * account for the increased memory required for storing FP state when
+	 * sizing stacks.
 	 *
-	 * Given that stacks "grow down" on IA-32, and the TCS is
-	 *located
+	 * Given that stacks "grow down" on IA-32, and the TCS is located
 	 * at the start of a thread's "workspace" memory, the stacks of
-	 *fibers/tasks
-	 * that do not utilize floating point instruction can effectively
-	 *consume
-	 * the memory occupied by the 'tCoopFloatReg' and 'tPreempFloatReg'
-	 * structures without ill effect.
+	 * fibers/tasks that do not utilize floating point instruction can
+	 * effectively consume the memory occupied by the 'tCoopFloatReg' and
+	 * 'tPreempFloatReg' structures without ill effect.
 	 */
 
 	tCoopFloatReg coopFloatReg; /* non-volatile float register storage */
@@ -716,11 +712,10 @@ typedef struct s_NANO {
 	/*
 	 * A 'current_sse' field does not exist in addition to the 'current_fp'
 	 * field since it's not possible to divide the IA-32 non-integer
-	 * registers
-	 * into 2 distinct blocks owned by differing threads.  In other words,
-	 * given that the 'fxnsave/fxrstor' instructions save/restore both the
-	 * X87 FPU and XMM registers, it's not possible for a thread to only
-	 * "own" the XMM registers.
+	 * registers into 2 distinct blocks owned by differing threads.  In
+	 * other words, given that the 'fxnsave/fxrstor' instructions
+	 * save/restore both the X87 FPU and XMM registers, it's not possible
+	 * for a thread to only "own" the XMM registers.
 	 */
 
 	struct tcs *current_fp; /* thread (fiber or task) that owns the FP regs */
@@ -772,9 +767,9 @@ static inline void nanoArchInit(void)
 {
 	extern void *__isr___SpuriousIntHandler;
 	extern void *_dummy_spurious_interrupt;
-	extern void _ExcEnt(void);
 	extern void *_dummy_exception_vector_stub;
 	extern char _interrupt_stack[CONFIG_ISR_STACK_SIZE];
+	extern void _ExcEnt(void);
 
 	_nanokernel.nested = 0;
 
@@ -787,16 +782,16 @@ static inline void nanoArchInit(void)
 
 	/*
 	 * Forces the inclusion of the spurious interrupt handlers. If a
-	 * reference
-	 * isn't made then intconnect.o is never pulled in by the linker.
+	 * reference isn't made then intconnect.o is never pulled in by the
+	 * linker.
 	 */
 
 	_dummy_spurious_interrupt = &__isr___SpuriousIntHandler;
 
 	/*
 	 * Forces the inclusion of the exception vector stub code. If a
-	 * reference
-	 * isn't made then excstubs.o is never pulled in by the linker.
+	 * reference isn't made then excstubs.o is never pulled in by the
+	 * linker.
 	 */
 
 	_dummy_exception_vector_stub = &_ExcEnt;
@@ -808,8 +803,11 @@ static inline void nanoArchInit(void)
  *
  * @brief Set the return value for the specified fiber (inline)
  *
- * The register used to store the return value from a function call invocation is
- * set to <value>.  It is assumed that the specified <fiber> is pending, and
+ * @param fiber pointer to fiber
+ * @param value value to set as return value
+ *
+ * The register used to store the return value from a function call invocation
+ * is set to <value>.  It is assumed that the specified <fiber> is pending, and
  * thus the fibers context is stored in its TCS.
  *
  * @return N/A
@@ -817,10 +815,7 @@ static inline void nanoArchInit(void)
  * \NOMANUAL
  */
 
-static inline void fiberRtnValueSet(
-	struct tcs *fiber,       /* pointer to fiber */
-	unsigned int value /* value to set as return value */
-	)
+static inline void fiberRtnValueSet(struct tcs *fiber, unsigned int value)
 {
 	/* write into 'eax' slot created in _Swap() entry */
 
@@ -835,10 +830,9 @@ static inline void fiberRtnValueSet(
  * Performance optimization
  *
  * Macro PERF_OPT is defined if project is compiled with option other than
- * size optimization ("-Os" for GCC, "-XO -Xsize-opt" for Diab). If the
- * last of the compiler options is the size optimization, PERF_OPT is not
- * defined and the project is optimized for size, hence the stub should be
- * aligned to 1 and not 16.
+ * size optimization ("-Os" for GCC). If the last of the compiler options
+ * is the size optimization, PERF_OPT is not defined and the project is
+ * optimized for size, hence the stub should be aligned to 1 and not 16.
  */
 #ifdef PERF_OPT
 #define _EXC_STUB_ALIGN 16

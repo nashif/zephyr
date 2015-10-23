@@ -17,13 +17,13 @@
  */
 
 /*
-DESCRIPTION
-This module provides a "do nothing" kernel service.
-
-This service is primarily used by other kernel services that need a way to
-resume the execution of a kernel request that could not be completed in a
-single invocation of the _k_server fiber. However, it can also be used by
-a task to measure the overhead involved in issuing a kernel service request.
+ * DESCRIPTION
+ * This module provides a "do nothing" kernel service.
+ *
+ * This service is primarily used by other kernel services that need a way to
+ * resume the execution of a kernel request that could not be completed in a
+ * single invocation of the _k_server fiber. However, it can also be used by
+ * a task to measure the overhead involved in issuing a kernel service request.
  */
 
 #include <micro_private.h>
@@ -36,7 +36,6 @@ a task to measure the overhead involved in issuing a kernel service request.
  *
  * @return N/A
  */
-
 void _k_nop(struct k_args *A)
 {
 	ARG_UNUSED(A);
@@ -50,7 +49,6 @@ void _k_nop(struct k_args *A)
  *
  * @return N/A
  */
-
 void _task_nop(void)
 {
 	struct k_args A;

@@ -332,7 +332,8 @@ static char *get_block_recusive(struct pool_struct *P, int index, int startindex
 		defrag(P,
 		       P->nr_of_frags - 1, /* start from the smallest blocks */
 		       startindex); /* but only until the requested blocksize
-				       (fragmentation level) !! */
+				     * (fragmentation level) !!
+				     */
 
 		found = search_block_on_frag_level(&(fr_table[index]), &i);
 		if (found != NULL) {
@@ -344,8 +345,9 @@ static char *get_block_recusive(struct pool_struct *P, int index, int startindex
 
 	/* end of list and i is index of first empty entry in blocktable */
 	{
+		/* get a block of one size larger */
 		larger_block = get_block_recusive(
-			P, index - 1, startindex); /* get a block of one size larger */
+			P, index - 1, startindex);
 	}
 
 	if (larger_block != NULL) {
@@ -366,7 +368,8 @@ static char *get_block_recusive(struct pool_struct *P, int index, int startindex
 		defrag(P,
 		       P->nr_of_frags - 1, /* start from the smallest blocks */
 		       startindex); /* but only until the requested blocksize
-				       (fragmentation level) !! */
+				     * (fragmentation level) !!
+				     */
 
 		found = search_block_on_frag_level(&(fr_table[index]), &i);
 		if (found != NULL) {
@@ -398,7 +401,8 @@ void _k_block_waiters_get(struct k_args *A)
 	int start_size, offset;
 
 	curr_task = P->waiters;
-	prev_task = (struct k_args *)&(P->waiters); /* forw is first field in struct */
+	/* forw is first field in struct */
+	prev_task = (struct k_args *)&(P->waiters);
 
 	/* loop all waiters */
 	while (curr_task != NULL) {
@@ -530,16 +534,17 @@ void _k_mem_pool_block_get(struct k_args *A)
  * This routine allocates a free block from the specified memory pool, ensuring
  * that its size is at least as big as the size requested (in bytes).
  *
+ * @param blockptr poitner to requested block
+ * @param pool_id pool from which to get block
+ * @param reqsize requested block size
+ * @param time maximum number of ticks to wait
+ *
  * @return RC_OK, RC_FAIL, RC_TIME on success, failure, timeout respectively
  */
-int _task_mem_pool_alloc(struct k_block *blockptr, /* ptr to requested block */
-		     kmemory_pool_t pool_id,     /* pool from which to get block */
-		     int reqsize,       /* requested block size */
-		     int32_t time       /* maximum number of ticks to wait */
-		     )
+int _task_mem_pool_alloc(struct k_block *blockptr, kmemory_pool_t pool_id,
+			 int reqsize, int32_t time)
 {
 	struct k_args A;
-
 
 	A.Comm = _K_SVC_MEM_POOL_BLOCK_GET;
 	A.Time.ticks = time;
@@ -607,13 +612,15 @@ void _k_mem_pool_block_release(struct k_args *A)
 				if (P->waiters != NULL) {
 					struct k_args *NewGet;
 					/*
-					 * get new command packet that calls the function
-					 * that reallocate blocks for the waiting tasks
+					 * get new command packet that calls
+					 * the function that reallocate blocks
+					 * for the waiting tasks
 					 */
 					GETARGS(NewGet);
 					*NewGet = *A;
 					NewGet->Comm = _K_SVC_BLOCK_WAITERS_GET;
-					TO_ALIST(&_k_command_stack, NewGet); /* push on command stack */
+					/* push on command stack */
+					TO_ALIST(&_k_command_stack, NewGet);
 				}
 				if (A->alloc) {
 					FREEARGS(A);

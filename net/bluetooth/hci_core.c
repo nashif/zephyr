@@ -621,7 +621,7 @@ static void le_conn_update_complete(struct bt_buf *buf)
 	handle = sys_le16_to_cpu(evt->handle);
 	interval = sys_le16_to_cpu(evt->interval);
 
-	BT_DBG("status %u, handle %u", evt->status, handle);
+	BT_DBG("status %u, handle %u\n", evt->status, handle);
 
 	conn = bt_conn_lookup_handle(handle);
 	if (!conn) {
@@ -735,13 +735,17 @@ static void hci_encrypt_change(struct bt_buf *buf)
 	BT_DBG("status %u handle %u encrypt 0x%02x\n", evt->status, handle,
 	       evt->encrypt);
 
-	if (evt->status) {
-		return;
-	}
-
 	conn = bt_conn_lookup_handle(handle);
 	if (!conn) {
 		BT_ERR("Unable to look up conn with handle %u\n", handle);
+		return;
+	}
+
+	if (evt->status) {
+		/* TODO report error */
+		/* reset required security level in case of error */
+		conn->required_sec_level = conn->sec_level;
+		bt_conn_put(conn);
 		return;
 	}
 
@@ -774,7 +778,9 @@ static void hci_encrypt_key_refresh_complete(struct bt_buf *buf)
 		return;
 	}
 
+	update_sec_level(conn);
 	bt_l2cap_encrypt_change(conn);
+	bt_conn_security_changed(conn);
 	bt_conn_put(conn);
 }
 
@@ -812,7 +818,14 @@ static void le_ltk_request(struct bt_buf *buf)
 
 		cp = bt_buf_add(buf, sizeof(*cp));
 		cp->handle = evt->handle;
-		memcpy(cp->ltk, conn->keys->slave_ltk.val, 16);
+
+		/* use only enc_size bytes of key for encryption */
+		memcpy(cp->ltk, conn->keys->slave_ltk.val,
+		       conn->keys->enc_size);
+		if (conn->keys->enc_size < sizeof(cp->ltk)) {
+			memset(cp->ltk + conn->keys->enc_size, 0,
+			       sizeof(cp->ltk) - conn->keys->enc_size);
+		}
 
 		bt_hci_cmd_send(BT_HCI_OP_LE_LTK_REQ_REPLY, buf);
 	} else {

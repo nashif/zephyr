@@ -17,8 +17,8 @@
  */
 
 /*
-DESCRIPTION
-ARM-specific nanokernel interrupt handling interface. Included by ARM/arch.h.
+ * DESCRIPTION
+ * ARM-specific nanokernel interrupt handling interface. Included by ARM/arch.h.
  */
 
 #ifndef _ARCH_ARM_CORTEXM_IRQ_H_
@@ -83,7 +83,8 @@ extern void _irq_priority_set(unsigned int irq, unsigned int prio);
  * @return N/A
  *
  */
-#define IRQ_CONFIG(device, irq) _irq_priority_set(irq, _##device##_int_priority)
+#define IRQ_CONFIG(device, irq, priority) \
+	_irq_priority_set(irq, _##device##_int_priority)
 
 #endif /* _ASMLANGUAGE */
 

@@ -26,8 +26,8 @@
 
 extern struct k_timer _k_timer_blocks[];
 
-struct k_timer  *_k_timer_list_head = NULL;
-struct k_timer  *_k_timer_list_tail = NULL;
+struct k_timer  *_k_timer_list_head;
+struct k_timer  *_k_timer_list_tail;
 
 /**
  * @brief Insert a timer into the timer queue
@@ -108,7 +108,7 @@ void _k_timeout_alloc(struct k_args *P)
  *
  * The command that is processed following cancellation is typically NOT the
  * command that would have occurred had the timeout expired on its own.
- * 
+ *
  * @return N/A
  */
 void _k_timeout_cancel(struct k_args *A)
@@ -152,7 +152,6 @@ void _k_timeout_free(struct k_timer *T)
  * @param ticks Number of ticks
  * @return N/A
  */
-
 void _k_timer_list_update(int ticks)
 {
 	struct k_timer *T;

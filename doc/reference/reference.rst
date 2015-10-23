@@ -9,5 +9,4 @@ The following reference guides might be needed during development.
    :maxdepth: 1
 
    api.rst
-   configuration.rst
-   kbuild/kbuild.rst
+   kconfig/index.rst

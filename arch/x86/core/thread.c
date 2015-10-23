@@ -17,9 +17,9 @@
  */
 
 /*
-DESCRIPTION
-This module provides core nanokernel fiber related primitives for the IA-32
-processor architecture.
+ * DESCRIPTION
+ * This module provides core nanokernel fiber related primitives for the IA-32
+ * processor architecture.
  */
 
 #ifdef CONFIG_MICROKERNEL
@@ -43,7 +43,7 @@ tNANO _nanokernel = {0};
 
 #ifdef CONFIG_GDB_INFO
 void _thread_entry_wrapper(_thread_entry_t, _thread_arg_t,
-							_thread_arg_t, _thread_arg_t);
+			   _thread_arg_t, _thread_arg_t);
 #endif /* CONFIG_GDB_INFO */
 
 /**
@@ -56,20 +56,22 @@ void _thread_entry_wrapper(_thread_entry_t, _thread_arg_t,
  *
  * This function is called by _new_thread() to initialize tasks.
  *
+ * @param pStackMem pointer to thread stack memory
+ * @param stackSize size of a stack in bytes
+ * @param thread priority
+ * @param options thread options: USE_FP, USE_SSE
+ *
  * @return N/A
  *
  * \NOMANUAL
  */
 
-static void _new_thread_internal(
-	char *pStackMem,    /* pointer to thread stack memory */
-	unsigned stackSize, /* size of stack in bytes */
-	int priority,       /* thread priority */
-	unsigned options    /* thread options: USE_FP, USE_SSE */
-	)
+static void _new_thread_internal(char *pStackMem, unsigned stackSize,
+				 int priority, unsigned options)
 {
 	unsigned long *pInitialCtx;
-	struct tcs *tcs = (struct tcs *)pStackMem; /* ptr to the new task's tcs */
+	/* ptr to the new task's tcs */
+	struct tcs *tcs = (struct tcs *)pStackMem;
 
 #ifndef CONFIG_FP_SHARING
 	ARG_UNUSED(options);
@@ -255,7 +257,8 @@ static void _new_thread_internal(
 __asm__("\t.globl _thread_entry\n"
 	"\t.section .text\n"
 	"_thread_entry_wrapper:\n" /* should place this func .S file and use
-				     SECTION_FUNC */
+				    * SECTION_FUNC
+				    */
 	"\tmovl $0, (%esp)\n" /* zero initialEFLAGS location */
 	"\tjmp _thread_entry\n");
 #endif /* CONFIG_GDB_INFO */
@@ -270,21 +273,24 @@ __asm__("\t.globl _thread_entry\n"
  * The "thread control block" (TCS) is carved from the "end" of the specified
  * thread stack memory.
  *
+ * @param pStackmem the pointer to aligned stack memory
+ * @param stackSize the stack size in bytes
+ * @param pEntry thread entry point routine
+ * @param parameter1 first param to entry point
+ * @param parameter2 second param to entry point
+ * @param parameter3 third param to entry point
+ * @param priority  thread priority
+ * @param options thread options: USE_FP, USE_SSE
+ *
+ *
  * @return opaque pointer to initialized TCS structure
  *
  * \NOMANUAL
  */
 
-void _new_thread(
-	char *pStackMem,      /* pointer to aligned stack memory */
-	unsigned stackSize,   /* size of stack in bytes */
-	_thread_entry_t pEntry, /* thread entry point function */
-	void *parameter1, /* first parameter to thread entry point function */
-	void *parameter2, /* second parameter to thread entry point function */
-	void *parameter3, /* third parameter to thread entry point function */
-	int priority,     /* thread priority */
-	unsigned options  /* thread options: USE_FP, USE_SSE */
-	)
+void _new_thread(char *pStackMem, unsigned stackSize, _thread_entry_t pEntry,
+		 void *parameter1, void *parameter2, void *parameter3,
+		 int priority, unsigned options)
 {
 	unsigned long *pInitialThread;
 

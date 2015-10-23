@@ -34,21 +34,21 @@ extern void _k_init_dynamic(void);     /* defined by sysgen */
 char __noinit __stack _k_server_stack[CONFIG_MICROKERNEL_SERVER_STACK_SIZE];
 
 #ifdef CONFIG_TASK_DEBUG
-int _k_debug_halt = 0;
+int _k_debug_halt;
 #endif
 
 #ifdef CONFIG_INIT_STACKS
 static uint32_t _k_server_command_stack_storage
-						[CONFIG_COMMAND_STACK_SIZE] =
-	{ [0 ... CONFIG_COMMAND_STACK_SIZE - 1] = 0xAAAAAAAA };
+						[CONFIG_COMMAND_STACK_SIZE] = {
+	[0 ... CONFIG_COMMAND_STACK_SIZE - 1] = 0xAAAAAAAA };
 #else
 static uint32_t __noinit _k_server_command_stack_storage
 						[CONFIG_COMMAND_STACK_SIZE];
 #endif
 
 struct nano_stack _k_command_stack = {NULL,
-									  _k_server_command_stack_storage,
-									  _k_server_command_stack_storage};
+				  _k_server_command_stack_storage,
+				  _k_server_command_stack_storage};
 
 
 extern void _k_server(int unused1, int unused2);
@@ -64,11 +64,9 @@ extern int _k_kernel_idle(void);
  *
  * @return N/A
  */
-
 void _main(void)
 {
-	_sys_device_do_config_level(NANO_EARLY);
-	_sys_device_do_config_level(NANO_LATE);
+	_sys_device_do_config_level(_SYS_INIT_LEVEL_NANOKERNEL);
 
 #ifdef CONFIG_BOOT_TIME_MEASUREMENT
 	/*
@@ -94,10 +92,8 @@ void _main(void)
 			   CONFIG_MICROKERNEL_SERVER_PRIORITY,
 			   0);
 
-	_sys_device_do_config_level(MICRO_EARLY);
-	_sys_device_do_config_level(MICRO_LATE);
-	_sys_device_do_config_level(APP_EARLY);
-	_sys_device_do_config_level(APP_LATE);
+	_sys_device_do_config_level(_SYS_INIT_LEVEL_MICROKERNEL);
+	_sys_device_do_config_level(_SYS_INIT_LEVEL_APPLICATION);
 
 
 #ifdef CONFIG_WORKLOAD_MONITOR

@@ -16,7 +16,7 @@
 
 #include <nanokernel.h>
 #include <gpio.h>
-#include <gpio/gpio-dw.h>
+#include "gpio_dw.h"
 #include <board.h>
 #include <sys_io.h>
 #include <init.h>
@@ -98,11 +98,11 @@ static inline void dw_interrupt_config(struct device *port, int access_op,
 	}
 
 	/* use built-in debounce  */
-	flag_is_set = (flags & GPIO_INT_DEBOUNCE );
+	flag_is_set = (flags & GPIO_INT_DEBOUNCE);
 	dw_set_bit(base_addr, PORTA_DEBOUNCE, pin, flag_is_set);
 
 	/* level triggered int synchronous with clock */
-	flag_is_set = (flags & GPIO_INT_CLOCK_SYNC );
+	flag_is_set = (flags & GPIO_INT_CLOCK_SYNC);
 	dw_set_bit(base_addr, INT_CLOCK_SYNC, pin, flag_is_set);
 	dw_set_bit(base_addr, INTEN, pin, 1);
 }
@@ -128,7 +128,7 @@ static inline void dw_port_config(struct device *port, int flags)
 	struct gpio_config_dw *config = port->config->config_info;
 	int i;
 
-	for (i=0; i < config->bits; i++) {
+	for (i = 0; i < config->bits; i++) {
 		dw_pin_config(port, i, flags);
 	}
 }
@@ -412,7 +412,7 @@ void gpio_config_0_irq(struct device *port)
 
 #ifdef CONFIG_GPIO_DW_0_IRQ_DIRECT
 	ARG_UNUSED(shared_irq_dev);
-	IRQ_CONFIG(gpio_dw_0, config->irq_num);
+	IRQ_CONFIG(gpio_dw_0, config->irq_num, 0);
 	irq_enable(config->irq_num);
 #elif defined(CONFIG_GPIO_DW_0_IRQ_SHARED)
 	ARG_UNUSED(config);
@@ -425,7 +425,7 @@ void gpio_config_0_irq(struct device *port)
 #ifdef CONFIG_GPIO_DW_0_IRQ_DIRECT
 void gpio_dw_isr_0(void *unused)
 {
-	gpio_dw_isr(&__initconfig_gpio_02);
+	gpio_dw_isr(&__initconfig_gpio_0);
 }
 #endif /* CONFIG_GPIO_DW_0_IRQ_DIRECT */
 
@@ -475,7 +475,7 @@ void gpio_config_1_irq(struct device *port)
 
 #ifdef CONFIG_GPIO_DW_1_IRQ_DIRECT
 	ARG_UNUSED(shared_irq_dev);
-	IRQ_CONFIG(gpio_dw_1, config->irq_num);
+	IRQ_CONFIG(gpio_dw_1, config->irq_num, 0);
 	irq_enable(config->irq_num);
 #elif defined(CONFIG_GPIO_DW_1_IRQ_SHARED)
 	ARG_UNUSED(config);
@@ -488,7 +488,7 @@ void gpio_config_1_irq(struct device *port)
 #ifdef CONFIG_GPIO_DW_1_IRQ_DIRECT
 void gpio_dw_isr_1(void *unused)
 {
-	gpio_dw_isr(&__initconfig_gpio_12);
+	gpio_dw_isr(&__initconfig_gpio_1);
 }
 #endif
 

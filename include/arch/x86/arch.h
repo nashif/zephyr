@@ -48,10 +48,9 @@
  * Performance optimization
  *
  * Macro PERF_OPT is defined if project is compiled with option other than
- * size optimization ("-Os" for GCC, "-XO -Xsize-opt" for Diab). If the
- * last of the compiler options is the size optimization, PERF_OPT is not
- * defined and the project is optimized for size, hence the stub should be
- * aligned to 1 and not 16.
+ * size optimization ("-Os" for GCC). If the last of the compiler options
+ * is the size optimization, PERF_OPT is not defined and the project is
+ * optimized for size, hence the stub should be aligned to 1 and not 16.
  */
 #ifdef PERF_OPT
 #define _INT_STUB_ALIGN	16
@@ -173,11 +172,11 @@ typedef struct s_isrList {
  * @return N/A
  *
  */
-#define IRQ_CONFIG(device, irq)					\
+#define IRQ_CONFIG(device, irq, priority)			\
 	do {							\
 		_SysIntVecProgram(_##device##_int_vector, irq); \
 		_IntVecMarkAllocated(_##device##_int_vector);	\
-	} while(0)
+	} while (0)
 
 
 /**
@@ -280,7 +279,7 @@ typedef struct nanoIsf {
 
 #ifdef CONFIG_NO_ISRS
 
-static inline unsigned int irq_lock(void) {return 1;}
+static inline unsigned int irq_lock(void) { return 1; }
 static inline void irq_unlock(unsigned int key) {}
 
 #else /* CONFIG_NO_ISRS */
@@ -420,10 +419,10 @@ extern void	nano_cpu_idle(void);
 
 /** Nanokernel provided routine to report any detected fatal error. */
 extern FUNC_NORETURN void _NanoFatalErrorHandler(unsigned int reason,
-						 const NANO_ESF *pEsf);
+						 const NANO_ESF * pEsf);
 /** User provided routine to handle any detected fatal error post reporting. */
 extern FUNC_NORETURN void _SysFatalErrorHandler(unsigned int reason,
-						const NANO_ESF *pEsf);
+						const NANO_ESF * pEsf);
 /** Dummy ESF for fatal errors that would otherwise not have an ESF */
 extern const NANO_ESF _default_esf;
 

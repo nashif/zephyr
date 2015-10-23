@@ -25,7 +25,7 @@
 #include <arch/cpu.h>
 
 #include <board.h>
-#include <drivers/uart.h>
+#include <uart.h>
 
 #include <simple/uart.h>
 #include <misc/printk.h>
@@ -68,7 +68,7 @@ int uart_simple_send(const uint8_t *data, int len)
 }
 
 IRQ_CONNECT_STATIC(uart_simple, CONFIG_UART_SIMPLE_IRQ,
-                   CONFIG_UART_SIMPLE_INT_PRI, uart_simple_isr, 0);
+			CONFIG_UART_SIMPLE_INT_PRI, uart_simple_isr, 0);
 
 static void uart_simple_setup(struct device *uart, struct uart_init_info *info)
 {
@@ -76,12 +76,13 @@ static void uart_simple_setup(struct device *uart, struct uart_init_info *info)
 
 	uart_irq_rx_disable(uart);
 	uart_irq_tx_disable(uart);
-	IRQ_CONFIG(uart_simple, uart_irq_get(uart));
+	IRQ_CONFIG(uart_simple, uart_irq_get(uart), 0);
 	irq_enable(uart_irq_get(uart));
 
 	/* Drain the fifo */
 	while (uart_irq_rx_ready(uart)) {
 		unsigned char c;
+
 		uart_fifo_read(uart, &c, 1);
 	}
 

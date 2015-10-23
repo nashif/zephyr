@@ -26,7 +26,7 @@
 #include "board.h"
 
 #ifdef CONFIG_NS16550
-#include <drivers/uart.h>
+#include <uart.h>
 #include <bluetooth/uart.h>
 #include <console/uart_console.h>
 #include <serial/ns16550.h>
@@ -144,20 +144,8 @@ pre_kernel_late_init(ns16550_uart1, &ns16550_uart_dev_data[1]);
 
 /**< UART Devices */
 struct device * const uart_devs[] = {
-#if (defined(CONFIG_EARLY_CONSOLE) && \
-		defined(CONFIG_UART_CONSOLE) && \
-		(CONFIG_UART_CONSOLE_INDEX == 0))
-	&__initconfig_ns16550_uart01,
-#else
-	&__initconfig_ns16550_uart02,
-#endif /* CONFIG_EARLY_CONSOLE */
-#if (defined(CONFIG_EARLY_CONSOLE) && \
-		defined(CONFIG_UART_CONSOLE) && \
-		(CONFIG_UART_CONSOLE_INDEX == 1))
-	&__initconfig_ns16550_uart11,
-#else
-	&__initconfig_ns16550_uart12,
-#endif /* CONFIG_EARLY_CONSOLE */
+	&__initconfig_ns16550_uart0,
+	&__initconfig_ns16550_uart1,
 };
 
 #endif

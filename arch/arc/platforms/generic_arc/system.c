@@ -17,15 +17,15 @@
  */
 
 /*
-DESCRIPTION
-This module provides routines to initialize and support board-level hardware
-for the generic arc platform.
-*/
+ * DESCRIPTION
+ * This module provides routines to initialize and support board-level hardware
+ * for the generic arc platform.
+ */
 
 #include <nanokernel.h>
 #include <board.h>
 #include <init.h>
-#include <drivers/uart.h>
+#include <uart.h>
 
 /* Cannot use microkernel, since only nanokernel is supported */
 #if defined(CONFIG_MICROKERNEL)

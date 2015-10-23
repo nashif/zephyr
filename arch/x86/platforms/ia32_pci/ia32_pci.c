@@ -17,12 +17,12 @@
  */
 
 /*
-DESCRIPTION
-This module provides routines to initialize and support board-level hardware
-for the ia32_pci platform.
-
-Implementation Remarks:
-Handlers for the secondary serial port have not been added.
+ * DESCRIPTION
+ * This module provides routines to initialize and support board-level hardware
+ * for the ia32_pci platform.
+ *
+ * Implementation Remarks:
+ * Handlers for the secondary serial port have not been added.
  */
 
 #include <nanokernel.h>
@@ -31,7 +31,7 @@ Handlers for the secondary serial port have not been added.
 #include <misc/printk.h>
 #include <misc/__assert.h>
 #include "board.h"
-#include <drivers/uart.h>
+#include <uart.h>
 #include <drivers/ioapic.h>
 #include <drivers/pic.h>
 #include <drivers/pci/pci.h>
@@ -60,7 +60,8 @@ pre_kernel_late_init(i2cirq_0, NULL);
 
 #ifdef CONFIG_GPIO_DW_0
 #ifdef CONFIG_GPIO_DW_0_IRQ_DIRECT
-static int gpio_irq_set_0(struct device *unused) {
+static int gpio_irq_set_0(struct device *unused)
+{
 	ARG_UNUSED(unused);
 	_ioapic_irq_set(CONFIG_GPIO_DW_0_IRQ,
 			CONFIG_GPIO_DW_0_IRQ + INT_VEC_IRQ0,
@@ -121,6 +122,22 @@ DECLARE_DEVICE_INIT_CONFIG(consoleirq, "", console_irq_set, NULL);
 pre_kernel_late_init(consoleirq, NULL);
 
 #endif /* CONFIG_CONSOLE_HANDLER */
+
+#ifdef CONFIG_BLUETOOTH_UART
+static int bluetooth_irq_set(struct device *unused)
+{
+	ARG_UNUSED(unused);
+
+	_ioapic_irq_set(CONFIG_BLUETOOTH_UART_IRQ,
+			CONFIG_BLUETOOTH_UART_IRQ + INT_VEC_IRQ0,
+			UART_IOAPIC_FLAGS);
+
+	return 0;
+}
+
+DECLARE_DEVICE_INIT_CONFIG(btirq, "", bluetooth_irq_set, NULL);
+pre_kernel_late_init(btirq, NULL);
+#endif /* CONFIG_BLUETOOTH_UART */
 
 #ifdef CONFIG_HPET_TIMER
 

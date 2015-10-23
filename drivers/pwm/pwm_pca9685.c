@@ -23,7 +23,7 @@
 #include <i2c.h>
 #include <pwm.h>
 
-#include "pwm-pca9685.h"
+#include "pwm_pca9685.h"
 
 #define REG_MODE1		0x00
 #define REG_MODE2		0x01
@@ -63,15 +63,6 @@ static inline int _has_i2c_master(struct device *dev)
 		return 0;
 }
 
-//#define WAIT_10MS	(sys_clock_ticks_per_sec / 100)
-//static void _wait_10ms()
-//{
-//	int64_t start = nano_tick_get();
-//
-//	(void)nano_tick_delta(&start);
-//	while (nano_tick_delta(&start) < WAIT_10MS);
-//}
-
 static int pwm_pca9685_configure(struct device *dev, int access_op,
 				 uint32_t pwm, int flags)
 {
@@ -99,17 +90,17 @@ static int pwm_pca9685_set_values(struct device *dev, int access_op,
 	}
 
 	switch (access_op) {
-		case PWM_ACCESS_BY_PIN:
-			if (pwm > MAX_PWM_OUT) {
-				return DEV_INVALID_CONF;
-			}
-			buf[0] = REG_LED_ON_L(pwm);
-			break;
-		case PWM_ACCESS_ALL:
-			buf[0] = REG_ALL_LED_ON_L;
-			break;
-		default:
-			return DEV_INVALID_OP;
+	case PWM_ACCESS_BY_PIN:
+		if (pwm > MAX_PWM_OUT) {
+			return DEV_INVALID_CONF;
+		}
+		buf[0] = REG_LED_ON_L(pwm);
+		break;
+	case PWM_ACCESS_ALL:
+		buf[0] = REG_ALL_LED_ON_L;
+		break;
+	default:
+		return DEV_INVALID_OP;
 	}
 
 	/* If both ON and OFF > max ticks, treat PWM as 100%.

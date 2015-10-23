@@ -112,14 +112,14 @@ Action Verbs vs. Nominalizations
 Avoid nominalizations, which are nouns formed from verbs. For example:
 
 ===================== =====================
-Verbs 						Nominalizations
+Verbs             Nominalizations
 ===================== =====================
-complete  						completion
-introduce  						introduction
-provide  						provision
-fail  							failure
-arrange  						arrangement
-install  						installation
+complete              completion
+introduce             introduction
+provide             provision
+fail                failure
+arrange             arrangement
+install             installation
 ===================== =====================
 
 The problem with nominalizations is that they are often used instead of
@@ -225,7 +225,7 @@ Pronouns
 First Person
 ============
 
-We recommend using we or the |project|, if you want to sound more
+We recommend using we or the Zephyr Project, if you want to sound more
 formal, to provide an agent, someone who does the action in a sentence,
 and avoid passive constructions such as "It is recommended...." For
 example:

@@ -17,8 +17,8 @@
  */
 
 /*
-DESCRIPTION
-This module contains routines that are used to initialize the nanokernel.
+ * DESCRIPTION
+ * This module contains routines that are used to initialize the nanokernel.
  */
 
 #include <offsets.h>
@@ -105,13 +105,10 @@ extern void _Ctors(void);
  *
  * @return N/A
  */
-
 static void _main(void)
 {
-	_sys_device_do_config_level(NANO_EARLY);
-	_sys_device_do_config_level(NANO_LATE);
-	_sys_device_do_config_level(APP_EARLY);
-	_sys_device_do_config_level(APP_EARLY);
+	_sys_device_do_config_level(_SYS_INIT_LEVEL_NANOKERNEL);
+	_sys_device_do_config_level(_SYS_INIT_LEVEL_APPLICATION);
 
 	extern void main(void);
 	main();
@@ -134,7 +131,6 @@ extern void _main(void);
  *
  * @return N/A
  */
-
 static void nano_init(struct tcs *dummyOutContext)
 {
 	/*
@@ -242,7 +238,6 @@ extern void *__stack_chk_guard;
  *
  * @return Does not return
  */
-
 FUNC_NORETURN void _Cstart(void)
 {
 	/* floating point operations are NOT performed during nanokernel init */
@@ -259,9 +254,8 @@ FUNC_NORETURN void _Cstart(void)
 
 	/* perform basic hardware initialization */
 
-	_sys_device_do_config_level(PRE_KERNEL_CORE);
-	_sys_device_do_config_level(PRE_KERNEL_EARLY);
-	_sys_device_do_config_level(PRE_KERNEL_LATE);
+	_sys_device_do_config_level(_SYS_INIT_LEVEL_PRIMARY);
+	_sys_device_do_config_level(_SYS_INIT_LEVEL_SECONDARY);
 
 	/*
 	 * Initialize random number generator

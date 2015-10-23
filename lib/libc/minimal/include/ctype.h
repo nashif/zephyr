@@ -26,15 +26,17 @@ static inline int isupper(int a)
 
 static inline int isalpha(int c)
 {
-        return (((unsigned)c|32)-'a') < 26;
+	return (((unsigned)c|32)-'a') < 26;
 }
 
-static inline int isspace(int c) {
-        return c == ' ' || ((unsigned)c-'\t') < 5;
+static inline int isspace(int c)
+{
+	return c == ' ' || ((unsigned)c-'\t') < 5;
 }
 
-static inline int isdigit(int a) {
-        return (((unsigned)(a)-'0') < 10);
+static inline int isdigit(int a)
+{
+	return (((unsigned)(a)-'0') < 10);
 }
 
 static inline int tolower(int chr)

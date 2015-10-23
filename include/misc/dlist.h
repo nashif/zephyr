@@ -17,12 +17,12 @@
  */
 
 /*
-DESCRIPTION
-Doubly-linked list implementation.
-
-The lists are expected to be initialized such that both the head and tail
-pointers point to the list itself.  Initializing the lists in such a fashion
-simplifies the adding and removing of nodes to/from the list.
+ * DESCRIPTION
+ * Doubly-linked list implementation.
+ *
+ * The lists are expected to be initialized such that both the head and tail
+ * pointers point to the list itself.  Initializing the lists in such a fashion
+ * simplifies the adding and removing of nodes to/from the list.
  */
 
 #ifndef _misc_dlist__h_
@@ -122,7 +122,7 @@ static inline sys_dnode_t *sys_dlist_peek_head(sys_dlist_t *list)
  */
 
 static inline sys_dnode_t *sys_dlist_peek_next(sys_dlist_t *list,
-												sys_dnode_t *node)
+					       sys_dnode_t *node)
 {
 	return node == list->tail ? NULL : node->next;
 }

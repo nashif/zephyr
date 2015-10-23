@@ -17,10 +17,10 @@
  */
 
 /*
-  DESCRIPTION
-  Macros to abstract compiler capabilities for GCC toolchain.
-
-  \NOMANUAL
+ * DESCRIPTION
+ * Macros to abstract compiler capabilities for GCC toolchain.
+ *
+ * \NOMANUAL
  */
 
 #include <toolchain/common.h>
@@ -83,11 +83,10 @@ __extension__ ({							\
 #define _GENERIC_SECTION(segment) __attribute__((section(#segment)))
 
 #define __packed        __attribute__((__packed__))
-#define __aligned(x)    __attribute__((aligned(x)))
+#define __aligned(x)	__attribute__((__aligned__(x)))
 #define __may_alias     __attribute__((__may_alias__))
 #define __printf_like(f, a)   __attribute__((format (printf, f, a)))
-#define __used          __attribute__((used))
-
+#define __used		__attribute__((__used__))
 #define ARG_UNUSED(x) (void)(x)
 
 #define likely(x)   __builtin_expect((long)!!(x), 1L)
@@ -146,10 +145,10 @@ A##a:
 #if defined(_ASMLANGUAGE) && !defined(_LINKER)
 
 #ifdef CONFIG_ARM
-#define GTEXT(sym) .global FUNC(sym); .type FUNC(sym),%function
-#define GDATA(sym) .global FUNC(sym); .type FUNC(sym),%object
-#define WTEXT(sym) .weak FUNC(sym); .type FUNC(sym),%function
-#define WDATA(sym) .weak FUNC(sym); .type FUNC(sym),%object
+#define GTEXT(sym) .global FUNC(sym); .type FUNC(sym), %function
+#define GDATA(sym) .global FUNC(sym); .type FUNC(sym), %object
+#define WTEXT(sym) .weak FUNC(sym); .type FUNC(sym), %function
+#define WDATA(sym) .weak FUNC(sym); .type FUNC(sym), %object
 #elif defined(CONFIG_ARC)
 /*
  * Need to use assembly macros because ';' is interpreted as the start of
@@ -169,8 +168,8 @@ A##a:
 #define GTEXT(sym) glbl_text sym
 #define GDATA(sym) glbl_data sym
 #else  /* !CONFIG_ARM && !CONFIG_ARC */
-#define GTEXT(sym) .globl FUNC(sym); .type FUNC(sym),@function
-#define GDATA(sym) .globl FUNC(sym); .type FUNC(sym),@object
+#define GTEXT(sym) .globl FUNC(sym); .type FUNC(sym), @function
+#define GDATA(sym) .globl FUNC(sym); .type FUNC(sym), @object
 #endif
 
 /*
@@ -194,21 +193,21 @@ A##a:
 
 .macro section_var section, symbol
 	.section .\section\().FUNC(\symbol)
-	FUNC(\symbol):
+	FUNC(\symbol) :
 .endm
 
 .macro section_func section, symbol
 	.section .\section\().FUNC(\symbol), "ax"
 	FUNC_CODE()
 	PERFOPT_ALIGN
-	FUNC(\symbol):
+	FUNC(\symbol) :
 	FUNC_INSTR(\symbol)
 .endm
 
 .macro section_subsec_func section, subsection, symbol
 	.section .\section\().\subsection, "ax"
 	PERFOPT_ALIGN
-	FUNC(\symbol):
+	FUNC(\symbol) :
 .endm
 
 #define SECTION_VAR(sect, sym) section_var sect, sym
@@ -217,14 +216,14 @@ A##a:
 	section_subsec_func sect, subsec, sym
 #else /* !CONFIG_ARC */
 
-#define SECTION_VAR(sect, sym)  .section .sect.FUNC(sym); FUNC(sym):
+#define SECTION_VAR(sect, sym)  .section .sect.FUNC(sym); FUNC(sym) :
 #define SECTION_FUNC(sect, sym)						\
 	.section .sect.FUNC(sym), "ax";					\
 				FUNC_CODE()				\
-				PERFOPT_ALIGN; FUNC(sym):		\
+				PERFOPT_ALIGN; FUNC(sym) :		\
 							FUNC_INSTR(sym)
 #define SECTION_SUBSEC_FUNC(sect, subsec, sym)				\
-		.section .sect.subsec, "ax"; PERFOPT_ALIGN; FUNC(sym):
+		.section .sect.subsec, "ax"; PERFOPT_ALIGN; FUNC(sym) :
 
 #endif /* CONFIG_ARC */
 

@@ -1,8 +1,7 @@
 /** @file
- @brief Network buffer API
-
- Network data is passed between application and IP stack via
- a net_buf struct.
+ * @brief Network buffer API
+ *
+ * Network data is passed between application and IP stack via a net_buf struct.
  */
 
 /*
@@ -45,17 +44,17 @@
 	do {								\
 		if (buf->in_use) {					\
 			NET_ERR("**ERROR** buf %p in use (%s:%s():%d)\n", \
-				buf, __FILE__, __FUNCTION__, __LINE__);	\
+				buf, __FILE__, __func__, __LINE__);	\
 		}							\
-	} while(0)
+	} while (0)
 
 #define NET_BUF_CHECK_IF_NOT_IN_USE(buf)				\
 	do {								\
 		if (!buf->in_use) {					\
 			NET_ERR("**ERROR** buf %p not in use (%s:%s():%d)\n",\
-				buf, __FILE__, __FUNCTION__, __LINE__);	\
+				buf, __FILE__, __func__, __LINE__);	\
 		}							\
-	} while(0)
+	} while (0)
 #else
 #define NET_BUF_CHECK_IF_IN_USE(buf)
 #define NET_BUF_CHECK_IF_NOT_IN_USE(buf)
@@ -200,8 +199,8 @@ struct net_buf {
  */
 /* Get buffer from the available buffers pool */
 #ifdef DEBUG_NET_BUFS
-#define net_buf_get_rx(context) net_buf_get_rx_debug(context, __FUNCTION__, __LINE__)
-#define net_buf_get_tx(context) net_buf_get_tx_debug(context, __FUNCTION__, __LINE__)
+#define net_buf_get_rx(context) net_buf_get_rx_debug(context, __func__, __LINE__)
+#define net_buf_get_tx(context) net_buf_get_tx_debug(context, __func__, __LINE__)
 struct net_buf *net_buf_get_rx_debug(struct net_context *context, const char *caller, int line);
 struct net_buf *net_buf_get_tx_debug(struct net_context *context, const char *caller, int line);
 #else
@@ -222,8 +221,8 @@ struct net_buf *net_buf_get_tx(struct net_context *context);
  */
 /* Same as net_buf_get, but also reserve headroom for potential headers */
 #ifdef DEBUG_NET_BUFS
-#define net_buf_get_reserve_rx(res) net_buf_get_reserve_rx_debug(res,__FUNCTION__,__LINE__)
-#define net_buf_get_reserve_tx(res) net_buf_get_reserve_tx_debug(res,__FUNCTION__,__LINE__)
+#define net_buf_get_reserve_rx(res) net_buf_get_reserve_rx_debug(res, __func__, __LINE__)
+#define net_buf_get_reserve_tx(res) net_buf_get_reserve_tx_debug(res, __func__, __LINE__)
 struct net_buf *net_buf_get_reserve_rx_debug(uint16_t reserve_head, const char *caller, int line);
 struct net_buf *net_buf_get_reserve_tx_debug(uint16_t reserve_head, const char *caller, int line);
 #else
@@ -243,7 +242,7 @@ struct net_buf *net_buf_get_reserve_tx(uint16_t reserve_head);
  */
 /* Place buffer back into the available buffers pool */
 #ifdef DEBUG_NET_BUFS
-#define net_buf_put(buf) net_buf_put_debug(buf, __FUNCTION__, __LINE__)
+#define net_buf_put(buf) net_buf_put_debug(buf, __func__, __LINE__)
 void net_buf_put_debug(struct net_buf *buf, const char *caller, int line);
 #else
 void net_buf_put(struct net_buf *buf);
@@ -345,7 +344,7 @@ struct net_mbuf {
  * @return Network buffer if successful, NULL otherwise.
  */
 #ifdef DEBUG_NET_BUFS
-#define net_mbuf_get_reserve(res) net_mbuf_get_reserve_debug(res,__FUNCTION__,__LINE__)
+#define net_mbuf_get_reserve(res) net_mbuf_get_reserve_debug(res, __func__, __LINE__)
 struct net_mbuf *net_mbuf_get_reserve_debug(uint16_t reserve_head, const char *caller, int line);
 #else
 struct net_mbuf *net_mbuf_get_reserve(uint16_t reserve_head);
@@ -361,7 +360,7 @@ struct net_mbuf *net_mbuf_get_reserve(uint16_t reserve_head);
  * @param buf Network buffer to release.
  */
 #ifdef DEBUG_NET_BUFS
-#define net_mbuf_put(buf) net_mbuf_put_debug(buf, __FUNCTION__, __LINE__)
+#define net_mbuf_put(buf) net_mbuf_put_debug(buf, __func__, __LINE__)
 void net_mbuf_put_debug(struct net_mbuf *buf, const char *caller, int line);
 #else
 void net_mbuf_put(struct net_mbuf *buf);

@@ -1,7 +1,7 @@
 /** @file
- @brief IPv6 and IPv4 definitions
-
- Generic IPv6 and IPv4 address definitions.
+ * @brief IPv6 and IPv4 definitions
+ *
+ * Generic IPv6 and IPv4 address definitions.
  */
 
 /*
@@ -78,8 +78,10 @@ struct net_addr {
 	};
 };
 
-#define IN6ADDR_ANY_INIT { { { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 } } }
-#define IN6ADDR_LOOPBACK_INIT { { { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 } } }
+#define IN6ADDR_ANY_INIT { { { 0, 0, 0, 0, 0, 0, 0, 0, 0, \
+				0, 0, 0, 0, 0, 0, 0 } } }
+#define IN6ADDR_LOOPBACK_INIT { { { 0, 0, 0, 0, 0, 0, 0, \
+				0, 0, 0, 0, 0, 0, 0, 0, 1 } } }
 
 #define INET6_ADDRSTRLEN 46
 

@@ -26,7 +26,7 @@
 #include "board.h"
 
 #ifdef CONFIG_NS16550
-#include <drivers/uart.h>
+#include <uart.h>
 #include <bluetooth/uart.h>
 #include <console/uart_console.h>
 #include <serial/ns16550.h>
@@ -46,6 +46,7 @@ static int ns16550_uart_init(struct device *dev)
 	struct uart_init_info info = {
 		.baud_rate = CONFIG_UART_CONSOLE_BAUDRATE,
 		.sys_clk_freq = UART_XTAL_FREQ,
+		.irq_pri = CONFIG_UART_CONSOLE_INT_PRI
 	};
 
 	if (dev == UART_CONSOLE_DEV) {
@@ -93,6 +94,8 @@ struct uart_device_config_t ns16550_uart_dev_cfg[] = {
 	},
 	{
 		.port = CONFIG_NS16550_PORT_1_BASE_ADDR,
+		.irq = CONFIG_UART_PORT_1_IRQ,
+		.irq_pri = CONFIG_UART_PORT_1_IRQ_PRIORITY,
 
 		.port_init = ns16550_uart_port_init,
 #if defined(CONFIG_UART_CONSOLE) || defined(CONFIG_BLUETOOTH_UART)
@@ -121,9 +124,9 @@ DECLARE_DEVICE_INIT_CONFIG(ns16550_uart0,
 #if (defined(CONFIG_EARLY_CONSOLE) && \
 		defined(CONFIG_UART_CONSOLE) && \
 		(CONFIG_UART_CONSOLE_INDEX == 0))
-pre_kernel_early_init(ns16550_uart0, &ns16550_uart_dev_data[0]);
+pre_kernel_core_init(ns16550_uart0, &ns16550_uart_dev_data[0]);
 #else
-pre_kernel_late_init(ns16550_uart0, &ns16550_uart_dev_data[0]);
+pre_kernel_early_init(ns16550_uart0, &ns16550_uart_dev_data[0]);
 #endif /* CONFIG_EARLY_CONSOLE */
 
 
@@ -136,28 +139,16 @@ DECLARE_DEVICE_INIT_CONFIG(ns16550_uart1,
 #if (defined(CONFIG_EARLY_CONSOLE) && \
 		defined(CONFIG_UART_CONSOLE) && \
 		(CONFIG_UART_CONSOLE_INDEX == 1))
-pre_kernel_early_init(ns16550_uart1, &ns16550_uart_dev_data[1]);
+pre_kernel_core_init(ns16550_uart1, &ns16550_uart_dev_data[1]);
 #else
-pre_kernel_late_init(ns16550_uart1, &ns16550_uart_dev_data[1]);
+pre_kernel_early_init(ns16550_uart1, &ns16550_uart_dev_data[1]);
 #endif /* CONFIG_EARLY_CONSOLE */
 
 
 /**< UART Devices */
 struct device * const uart_devs[] = {
-#if (defined(CONFIG_EARLY_CONSOLE) && \
-		defined(CONFIG_UART_CONSOLE) && \
-		(CONFIG_UART_CONSOLE_INDEX == 0))
-	&__initconfig_ns16550_uart01,
-#else
-	&__initconfig_ns16550_uart02,
-#endif /* CONFIG_EARLY_CONSOLE */
-#if (defined(CONFIG_EARLY_CONSOLE) && \
-		defined(CONFIG_UART_CONSOLE) && \
-		(CONFIG_UART_CONSOLE_INDEX == 1))
-	&__initconfig_ns16550_uart11,
-#else
-	&__initconfig_ns16550_uart12,
-#endif /* CONFIG_EARLY_CONSOLE */
+	&__initconfig_ns16550_uart0,
+	&__initconfig_ns16550_uart1,
 };
 
 #endif

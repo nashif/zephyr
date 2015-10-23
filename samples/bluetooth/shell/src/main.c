@@ -37,6 +37,8 @@
 #include "btshell.h"
 
 #define DEVICE_NAME "test shell"
+#define AD_SHORT_NAME		0x08
+#define AD_COMPLETE_NAME	0x09
 
 static struct bt_conn *default_conn = NULL;
 
@@ -44,10 +46,46 @@ static void device_found(const bt_addr_le_t *addr, int8_t rssi, uint8_t evtype,
 			 const uint8_t *ad, uint8_t len)
 {
 	char le_addr[BT_ADDR_LE_STR_LEN];
+	char name[30];
+
+	memset(name, 0, sizeof(name));
+
+	while (len) {
+		if (len < 2) {
+			break;
+		};
+
+		/* Look for early termination */
+		if (!ad[0]) {
+			break;
+		}
+
+		/* Check if field length is correct */
+		if (ad[0] > len - 1) {
+			break;
+		}
+
+		switch (ad[1]) {
+		case AD_SHORT_NAME:
+		case AD_COMPLETE_NAME:
+			if (ad[0] > sizeof(name) - 1) {
+				memcpy(name, &ad[2], sizeof(name) - 1);
+			} else {
+				memcpy(name, &ad[2], ad[0] - 1);
+			}
+			break;
+		default:
+			break;
+		}
+
+		/* Parse next AD Structure */
+		len -= ad[0] + 1;
+		ad += ad[0] + 1;
+	}
 
 	bt_addr_le_to_str(addr, le_addr, sizeof(le_addr));
-	printk("[DEVICE]: %s, AD evt type %u, AD data len %u, RSSI %i\n",
-		le_addr, evtype, len, rssi);
+	printk("[DEVICE]: %s, AD evt type %u, RSSI %i %s\n", le_addr, evtype,
+	       rssi, name);
 }
 
 static void connected(struct bt_conn *conn)
@@ -431,9 +469,80 @@ fail:
 static struct bt_gatt_discover_params discover_params;
 static struct bt_uuid uuid;
 
+static void print_chrc_props(uint8_t properties)
+{
+	printk("Properties: ");
+
+	if (properties & BT_GATT_CHRC_BROADCAST) {
+		printk("[bcast]");
+	}
+
+	if (properties & BT_GATT_CHRC_READ) {
+		printk("[read]");
+	}
+
+	if (properties & BT_GATT_CHRC_WRITE) {
+		printk("[write]");
+	}
+
+	if (properties & BT_GATT_CHRC_WRITE_WITHOUT_RESP) {
+		printk("[write w/w rsp]");
+	}
+
+	if (properties & BT_GATT_CHRC_NOTIFY) {
+		printk("[notify]");
+	}
+
+	if (properties & BT_GATT_CHRC_INDICATE) {
+		printk("[indicate]");
+	}
+
+	if (properties & BT_GATT_CHRC_AUTH) {
+		printk("[auth]");
+	}
+
+	if (properties & BT_GATT_CHRC_EXT_PROP) {
+		printk("[ext prop]");
+	}
+
+	printk("\n");
+}
+
 static uint8_t discover_func(const struct bt_gatt_attr *attr, void *user_data)
 {
-	printk("Discover found handle %u\n", attr->handle);
+	struct bt_gatt_discover_params *params = user_data;
+	struct bt_gatt_service *gatt_service;
+	struct bt_gatt_chrc *gatt_chrc;
+	struct bt_gatt_include *gatt_include;
+	char uuid[37];
+
+	switch (params->type) {
+	case BT_GATT_DISCOVER_SECONDARY:
+	case BT_GATT_DISCOVER_PRIMARY:
+		gatt_service = attr->user_data;
+		bt_uuid_to_str(gatt_service->uuid, uuid, sizeof(uuid));
+		printk("Service %s found: start handle %x, end_handle %x\n",
+		       uuid, attr->handle, gatt_service->end_handle);
+		break;
+	case BT_GATT_DISCOVER_CHARACTERISTIC:
+		gatt_chrc = attr->user_data;
+		bt_uuid_to_str(gatt_chrc->uuid, uuid, sizeof(uuid));
+		printk("Characteristic %s found: handle %x, value_handle %x\n",
+		       uuid, attr->handle, gatt_chrc->value_handle);
+		print_chrc_props(gatt_chrc->properties);
+		break;
+	case BT_GATT_DISCOVER_INCLUDE:
+		gatt_include = attr->user_data;
+		bt_uuid_to_str(gatt_include->uuid, uuid, sizeof(uuid));
+		printk("Include %s found: handle, start %x, end %x\n",
+		       uuid, attr->handle, gatt_include->start_handle,
+		       gatt_include->end_handle);
+		break;
+	default:
+		bt_uuid_to_str(attr->uuid, uuid, sizeof(uuid));
+		printk("Descriptor %s found: handle %x\n", uuid, attr->handle);
+		break;
+	}
 
 	return BT_GATT_ITER_CONTINUE;
 }

@@ -29,7 +29,7 @@
 uint32_t _sys_profiler_buffer[CONFIG_PROFILER_BUFFER_SIZE];
 
 #ifdef CONFIG_PROFILER_CONTEXT_SWITCH
-void *_collector_fiber=NULL;
+void *_collector_fiber;
 #endif
 
 #ifdef CONFIG_PROFILER_SLEEP
@@ -72,8 +72,11 @@ void _sys_profiler_context_switch(void)
 {
 	extern tNANO _nanokernel;
 	uint32_t data[2];
+
 	extern void _sys_event_logger_put_non_preemptible(
-		struct event_logger *logger, uint16_t event_id, uint32_t *event_data,
+		struct event_logger *logger,
+		uint16_t event_id,
+		uint32_t *event_data,
 		uint8_t data_size);
 
 	/* if the profiler has not been initialized, we do nothing */
@@ -86,24 +89,30 @@ void _sys_profiler_context_switch(void)
 		data[1] = (uint32_t)_nanokernel.current;
 
 		/*
-		 * The mechanism we use to log the profile events uses a sync semaphore
-		 * to inform that there are available events to be collected. The
-		 * context switch event can be triggered from a task. When we
-		 * signal a semaphore from a task and a fiber is waiting for
-		 * that semaphore, a context switch is generated immediately. Due to
-		 * the fact that we register the context switch event while the context
-		 * switch is being processed, a new context switch can be generated
-		 * before the kernel finishes processing the current context switch. We
-		 * need to prevent this because the kernel is not able to handle it.
-		 * The _sem_give_non_preemptible function does not trigger a context
-		 * switch when we signal the semaphore from any type of thread. Using
-		 * _sys_event_logger_put_non_preemptible function, that internally uses
-		 * _sem_give_non_preemptible function for signaling the sync semaphore,
-		 * allow us registering the context switch event without triggering any
-		 * new context switch during the process.
+		 * The mechanism we use to log the profile events uses a sync
+		 * semaphore to inform that there are available events to be
+		 * collected. The context switch event can be triggered from a
+		 * task. When we signal a semaphore from a task and a fiber is
+		 * waiting for that semaphore, a context switch is generated
+		 * immediately. Due to the fact that we register the context
+		 * switch event while the context switch is being processed, a
+		 * new context switch can be generated before the kernel
+		 * finishes processing the current context switch. We
+		 * need to prevent this because the kernel is not able to
+		 * handle it.
+		 *
+		 * The _sem_give_non_preemptible function does not trigger a
+		 * context switch when we signal the semaphore from any type of
+		 * thread. Using _sys_event_logger_put_non_preemptible function,
+		 * that internally uses _sem_give_non_preemptible function for
+		 * signaling the sync semaphore, allow us registering the
+		 * context switch event without triggering any new context
+		 * switch during the process.
 		 */
 		_sys_event_logger_put_non_preemptible(&sys_profiler_logger,
-			PROFILER_CONTEXT_SWITCH_EVENT_ID, data, ARRAY_SIZE(data));
+					PROFILER_CONTEXT_SWITCH_EVENT_ID,
+					data,
+					ARRAY_SIZE(data));
 	}
 }
 
@@ -115,7 +124,7 @@ void sys_profiler_register_as_collector(void)
 
 
 #ifdef CONFIG_PROFILER_INTERRUPT
-void _sys_profiler_interrupt()
+void _sys_profiler_interrupt(void)
 {
 	uint32_t data[2];
 
@@ -138,7 +147,8 @@ void _sys_profiler_exit_sleep(void)
 	uint32_t data[3];
 
 	data[0] = nano_tick_get_32();
-	data[1] = (nano_cycle_get_32() - _sys_profiler_sleep_start_time) / sys_clock_hw_cycles_per_tick;
+	data[1] = (nano_cycle_get_32() - _sys_profiler_sleep_start_time) /
+					sys_clock_hw_cycles_per_tick;
 	/* register the cause of exiting sleep mode */
 	data[2] = _sys_current_irq_key_get();
 

@@ -22,10 +22,10 @@
 
 #include <gpio.h>
 
-#include "gpio-mmio.h"
+#include "gpio_mmio.h"
 
 #if defined(CONFIG_GPIO_MMIO_0_ACCESS_MM) \
-    || defined(CONFIG_GPIO_MMIO_1_ACCESS_MM)
+	|| defined(CONFIG_GPIO_MMIO_1_ACCESS_MM)
 
 static uint32_t _mm_set_bit(uint32_t addr, uint32_t bit, uint32_t value)
 {
@@ -58,7 +58,7 @@ static uint32_t _mm_write(uint32_t addr, uint32_t bit, uint32_t value)
 #endif /* if direct memory access is needed */
 
 #if defined(CONFIG_GPIO_MMIO_0_ACCESS_IO) \
-    || defined(CONFIG_GPIO_MMIO_1_ACCESS_IO)
+	|| defined(CONFIG_GPIO_MMIO_1_ACCESS_IO)
 
 static uint32_t _io_set_bit(uint32_t addr, uint32_t bit, uint32_t value)
 {
@@ -136,14 +136,14 @@ static int gpio_mmio_config(struct device *dev, int access_op,
 	}
 
 	switch (access_op) {
-		case GPIO_ACCESS_BY_PIN:
-			cfg->access.set_bit(cfg->reg.dir, pin, value);
-			break;
-		case GPIO_ACCESS_BY_PORT:
-			cfg->access.write(cfg->reg.dir, 0, value);
-			break;
-		default:
-			return DEV_INVALID_OP;
+	case GPIO_ACCESS_BY_PIN:
+		cfg->access.set_bit(cfg->reg.dir, pin, value);
+		break;
+	case GPIO_ACCESS_BY_PORT:
+		cfg->access.write(cfg->reg.dir, 0, value);
+		break;
+	default:
+		return DEV_INVALID_OP;
 	}
 
 	/*
@@ -167,14 +167,14 @@ static int gpio_mmio_config(struct device *dev, int access_op,
 	}
 
 	switch (access_op) {
-		case GPIO_ACCESS_BY_PIN:
-			cfg->access.set_bit(cfg->reg.en, pin, value);
-			break;
-		case GPIO_ACCESS_BY_PORT:
-			cfg->access.write(cfg->reg.en, 0, value);
-			break;
-		default:
-			return DEV_INVALID_OP;
+	case GPIO_ACCESS_BY_PIN:
+		cfg->access.set_bit(cfg->reg.en, pin, value);
+		break;
+	case GPIO_ACCESS_BY_PORT:
+		cfg->access.write(cfg->reg.en, 0, value);
+		break;
+	default:
+		return DEV_INVALID_OP;
 	}
 
 	return DEV_OK;
@@ -201,14 +201,14 @@ static int gpio_mmio_write(struct device *dev, int access_op,
 	}
 
 	switch (access_op) {
-		case GPIO_ACCESS_BY_PIN:
-			cfg->access.set_bit(cfg->reg.output, pin, value);
-			break;
-		case GPIO_ACCESS_BY_PORT:
-			cfg->access.write(cfg->reg.output, 0, value);
-			break;
-		default:
-			return DEV_INVALID_OP;
+	case GPIO_ACCESS_BY_PIN:
+		cfg->access.set_bit(cfg->reg.output, pin, value);
+		break;
+	case GPIO_ACCESS_BY_PORT:
+		cfg->access.write(cfg->reg.output, 0, value);
+		break;
+	default:
+		return DEV_INVALID_OP;
 	}
 
 	return DEV_OK;
@@ -235,15 +235,15 @@ static int gpio_mmio_read(struct device *dev, int access_op,
 	}
 
 	switch (access_op) {
-		case GPIO_ACCESS_BY_PIN:
-			*value = cfg->access.read(cfg->reg.input, 0, 0);
-			*value &= (1 << pin) >> pin;
-			break;
-		case GPIO_ACCESS_BY_PORT:
-			*value = cfg->access.read(cfg->reg.input, 0, 0);
-			break;
-		default:
-			return DEV_INVALID_OP;
+	case GPIO_ACCESS_BY_PIN:
+		*value = cfg->access.read(cfg->reg.input, 0, 0);
+		*value &= (1 << pin) >> pin;
+		break;
+	case GPIO_ACCESS_BY_PORT:
+		*value = cfg->access.read(cfg->reg.input, 0, 0);
+		break;
+	default:
+		return DEV_INVALID_OP;
 	}
 
 	return DEV_OK;

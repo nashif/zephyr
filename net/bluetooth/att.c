@@ -57,8 +57,7 @@
 						BT_GATT_PERM_WRITE_ENCRYPT)
 #define BT_GATT_PERM_AUTHEN_MASK		(BT_GATT_PERM_READ_AUTHEN | \
 						BT_GATT_PERM_WRITE_AUTHEN)
-#define BT_ATT_OP_CMD_MASK			(BT_ATT_OP_WRITE_CMD & \
-						BT_ATT_OP_SIGNED_WRITE_CMD)
+#define BT_ATT_OP_CMD_FLAG			0x40
 
 /* ATT request context */
 struct bt_att_req {
@@ -135,15 +134,16 @@ static uint8_t att_mtu_req(struct bt_conn *conn, struct bt_buf *buf)
 	struct bt_att_exchange_mtu_req *req;
 	struct bt_att_exchange_mtu_rsp *rsp;
 	struct bt_buf *pdu;
-	uint16_t mtu;
+	uint16_t mtu_client, mtu_server;
 
 	req = (void *)buf->data;
 
-	mtu = sys_le16_to_cpu(req->mtu);
+	mtu_client = sys_le16_to_cpu(req->mtu);
 
-	BT_DBG("Client MTU %u\n", mtu);
+	BT_DBG("Client MTU %u\n", mtu_client);
 
-	if (mtu > BT_ATT_MAX_LE_MTU || mtu < BT_ATT_DEFAULT_LE_MTU) {
+	/* Check if MTU is valid */
+	if (mtu_client < BT_ATT_DEFAULT_LE_MTU) {
 		return BT_ATT_ERR_INVALID_PDU;
 	}
 
@@ -155,17 +155,18 @@ static uint8_t att_mtu_req(struct bt_conn *conn, struct bt_buf *buf)
 	/* Select MTU based on the amount of room we have in bt_buf including
 	 * one extra byte for ATT header.
 	 */
-	mtu = min(mtu, bt_buf_tailroom(pdu) + 1);
+	mtu_server = bt_buf_tailroom(pdu) + 1;
 
-	BT_DBG("Server MTU %u\n", mtu);
-
-	att->mtu = mtu;
+	BT_DBG("Server MTU %u\n", mtu_server);
 
 	rsp = bt_buf_add(pdu, sizeof(*rsp));
-	rsp->mtu = sys_cpu_to_le16(mtu);
+	rsp->mtu = sys_cpu_to_le16(mtu_server);
 
 	bt_l2cap_send(conn, BT_L2CAP_CID_ATT, pdu);
 
+	att->mtu = min(mtu_client, mtu_server);
+
+	BT_DBG("Negotiated MTU %u\n", att->mtu);
 	return 0;
 }
 
@@ -206,8 +207,8 @@ static uint8_t att_mtu_rsp(struct bt_conn *conn, struct bt_buf *buf)
 
 	BT_DBG("Server MTU %u\n", mtu);
 
-	/* Check if MTU is within allowed range */
-	if (mtu > BT_ATT_MAX_LE_MTU || mtu < BT_ATT_DEFAULT_LE_MTU) {
+	/* Check if MTU is valid */
+	if (mtu < BT_ATT_DEFAULT_LE_MTU) {
 		return att_handle_rsp(conn, NULL, 0, BT_ATT_ERR_INVALID_PDU);
 	}
 
@@ -217,6 +218,8 @@ static uint8_t att_mtu_rsp(struct bt_conn *conn, struct bt_buf *buf)
 	att->mtu = min(mtu, BT_BUF_MAX_DATA - (sizeof(struct bt_l2cap_hdr) +
 		       sizeof(struct bt_hci_acl_hdr) +
 		       bt_dev.drv->head_reserve));
+
+	BT_DBG("Negotiated MTU %u\n", att->mtu);
 
 	return att_handle_rsp(conn, rsp, buf->len, 0);
 }
@@ -784,6 +787,15 @@ static uint8_t att_read_mult_req(struct bt_conn *conn, struct bt_buf *buf)
 		handle = bt_buf_pull_le16(buf);
 
 		BT_DBG("handle 0x%04x \n", handle);
+
+		/* An Error Response shall be sent by the server in response to
+		 * the Read Multiple Request [....] if a read operation is not
+		 * permitted on any of the Characteristic Values.
+		 *
+		 * If handle is not valid then return invalid handle error.
+		 * If handle is found error will be cleared by read_cb.
+		 */
+		data.err = BT_ATT_ERR_INVALID_HANDLE;
 
 		bt_gatt_foreach_attr(handle, handle, read_cb, &data);
 
@@ -1457,7 +1469,7 @@ static void bt_att_recv(struct bt_conn *conn, struct bt_buf *buf)
 	}
 
 	/* Commands don't have response */
-	if ((hdr->code & BT_ATT_OP_CMD_MASK)) {
+	if ((hdr->code & BT_ATT_OP_CMD_FLAG)) {
 		goto done;
 	}
 

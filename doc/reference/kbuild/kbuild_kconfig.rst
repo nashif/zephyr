@@ -20,11 +20,9 @@ they add to the configuration menus. For example:
   defined for and apply to the entire build system.
 
 * The Kconfig file at the :file:`kernel` directory contains the general
-  configuration related to the micro- and the nanokernel. Some configuration
-  options contained here are: :option:`Kernel Type`
-  and :option:`Enhanced Security`.
+  configuration related to the micro- and the nanokernel.
 
-* The Kconfig file at the :file:`driver` directory organizes the inclusion of
+* The Kconfig file at the :file:`drivers` directory organizes the inclusion of
   the various Kconfig files needed for each supported driver in the system.
 
 * The Kconfig file at the :file:`misc` directory contains the configuration
@@ -67,20 +65,15 @@ Default Configurations
 ======================
 
 The default configuration files define the default configuration for a specific
-kernel on a specific platform. For example: :file:`arch/arm/configs`,
-:file:`arch/x86/configs` and :file:`arch/arc/configs`.
+kernel on a specific platform. For example:
 
-The file name convention for a :abbr:`defconfig (default configuration)` file
-mandates that the type of kernel and the platform are included within the file
-name. Further, all the defconfig files must end with the suffix defconfig. For
-example, the :file:`micro_galileo_defconfig` file contains the configuration
-information for the microkernel architecture for the galileo platform
-configuration and the :file:`nano_basic_atom_defconfig` file contains the
-configuration information for the nanokernel architecture for the basic atom
-platform.
+* :file:`arch/arm/configs`,
+* :file:`arch/x86/configs` and
+* :file:`arch/arc/configs`.
 
-The defconfig files are used to dynamically determine the configuration that
-corresponds to the platform tested by the sanity checks.
+All the default configuration files must end with the suffix _defconfig. For
+example, the :file:`galileo_defconfig` file contains the configuration
+information for the galileo platform.
 
 The :file:`Makefile.inc` file uses defconfig files to provide a clean interface
 to developers using environment variables to define the kernel type and the
@@ -89,11 +82,11 @@ target's defconfig. The build system takes the specified defconfig file and
 sets it as the current :file:`.config` file for the current project. For
 example:
 
-.. code-block:: bash
+.. code-block:: console
 
-   $ make defconfig micro_galileo_defconfig
+   $ make galileo_defconfig
 
-The command takes the default configuration for the microkernel architecture
+The command takes the default configuration for the architecture
 and the galileo platform configuration to compile the kernel.
 
 .. _configuration_snippets:
@@ -101,7 +94,7 @@ and the galileo platform configuration to compile the kernel.
 Merging Configuration Fragments
 ===============================
 
-Configuration file snippets can be merged with the current project
+Configuration file fragment can be merged with the current project
 configuration during the build.
 
 Developers can provide a configuration file that defines a small subset of
@@ -109,13 +102,13 @@ configuration options.  The subset must contain the specific configuration
 options that differ from the default configuration.
 
 The **initconfig** target pulls the default configuration file and merges it
-with the configuration snippet. For example, the sample application **hello
-world** overrides the base configuration with the configuration snippet
+with the local configuration fragments. For example, the sample application **hello
+world** overrides the base configuration with the configuration fragment in
 :file:`prj.conf`.
 
 .. caution::
    Invalid configurations, or configurations that do not comply with
    the dependencies stated in the Kconfig files, are ignored by the merge process.
-   When adding configuration options through a configuration snippet, ensure that
-   the the complete sequence complies with the dependency rules defined in the
+   When adding configuration options through a configuration fragment, ensure that
+   the complete sequence complies with the dependency rules defined in the
    Kconfig files.

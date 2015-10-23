@@ -3,8 +3,6 @@
 
 
 
-.. include:: disclaimers.rst
-
 Getting Started
 ###############
 
@@ -21,6 +19,7 @@ Developer Guides
 .. toctree::
    :maxdepth: 1
 
+   reference/kbuild/kbuild.rst
    application/application.rst
    platform/platform.rst
    collaboration/collaboration
@@ -32,8 +31,7 @@ Reference Guides
    :maxdepth: 1
 
    reference/api.rst
-   reference/configuration.rst
-   reference/kbuild.rst
+   reference/kconfig/index.rst
 
 Indices and tables
 ##################

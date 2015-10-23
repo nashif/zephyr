@@ -32,22 +32,22 @@
  * Timestamp corresponding to when interrupt were turned off.
  * A value of zero indicated interrupt are not currently locked.
  */
-static uint32_t int_locked_timestamp = 0;
+static uint32_t int_locked_timestamp;
 
 /* stats tracking the minimum and maximum time when interrupts were locked */
 static uint32_t int_locked_latency_min = ULONG_MAX;
-static uint32_t int_locked_latency_max = 0;
+static uint32_t int_locked_latency_max;
 
 /* overhead added to intLock/intUnlock by this latency benchmark */
-static uint32_t initial_start_delay = 0;
-static uint32_t nesting_delay = 0;
-static uint32_t stop_delay = 0;
+static uint32_t initial_start_delay;
+static uint32_t nesting_delay;
+static uint32_t stop_delay;
 
 /* counter tracking intLock/intUnlock calls once interrupt are locked */
-static uint32_t int_lock_unlock_nest = 0;
+static uint32_t int_lock_unlock_nest;
 
 /* indicate if the interrupt latency benchamrk is ready to be used */
-static uint32_t int_latency_bench_ready = 0;
+static uint32_t int_latency_bench_ready;
 
 /* min amount of time it takes from HW interrupt generation to 'C' handler */
 uint32_t _hw_irq_to_c_handler_latency = ULONG_MAX;
@@ -62,7 +62,6 @@ uint32_t _hw_irq_to_c_handler_latency = ULONG_MAX;
  * @return N/A
  *
  */
-
 void _int_latency_start(void)
 {
 	/* when interrupts are not already locked, take time stamp */
@@ -82,7 +81,6 @@ void _int_latency_start(void)
  * @return N/A
  *
  */
-
 void _int_latency_stop(void)
 {
 	uint32_t delta;
@@ -133,7 +131,6 @@ void _int_latency_stop(void)
  * @return N/A
  *
  */
-
 void int_latency_init(void)
 {
 	uint32_t timeToReadTime;
@@ -155,7 +152,8 @@ void int_latency_init(void)
 		timeToReadTime = _sys_clock_cycle_get() - timeToReadTime;
 
 		/* measure time to call intLatencyStart() and intLatencyStop
-		 * takes */
+		 * takes
+		 */
 		initial_start_delay = _sys_clock_cycle_get();
 		_int_latency_start();
 		initial_start_delay =
@@ -186,7 +184,6 @@ void int_latency_init(void)
  * @return N/A
  *
  */
-
 void int_latency_show(void)
 {
 	uint32_t intHandlerLatency = 0;

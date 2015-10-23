@@ -17,10 +17,10 @@
  */
 
 /*
-DESCRIPTION
-This header contains the ARC specific nanokernel interface.  It is
-included by the nanokernel interface architecture-abstraction header
-(nanokernel/cpu.h)
+ * DESCRIPTION
+ * This header contains the ARC specific nanokernel interface.  It is
+ * included by the nanokernel interface architecture-abstraction header
+ * (nanokernel/cpu.h)
  */
 
 #ifndef _ARC_ARCH__H_
@@ -89,7 +89,6 @@ extern "C" {
  *
  */
 #define IRQ_CONFIG(isr, irq, priority) \
-		irq_connect(irq, priority, isr, NULL); \
-		irq_enable(irq);
+		irq_connect(irq, priority, isr, NULL);
 
 #endif /* _ARC_ARCH__H_ */

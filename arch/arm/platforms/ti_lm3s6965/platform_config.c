@@ -26,7 +26,7 @@
 #include "board.h"
 
 #ifdef CONFIG_STELLARIS_UART
-#include <drivers/uart.h>
+#include <uart.h>
 #include <console/uart_console.h>
 #include <serial/stellarisUartDrv.h>
 
@@ -81,7 +81,7 @@ int stellaris_uart_console_init(struct device *dev)
 
 
 #if (defined(CONFIG_UART_CONSOLE) && (CONFIG_UART_CONSOLE_INDEX == 0)) \
-    || (CONFIG_BLUETOOTH_UART_INDEX == 0)
+	|| (CONFIG_BLUETOOTH_UART_INDEX == 0)
 
 static int stellaris_uart0_init(struct device *dev)
 {
@@ -99,7 +99,7 @@ static int stellaris_uart0_init(struct device *dev)
 
 
 #if (defined(CONFIG_UART_CONSOLE) && (CONFIG_UART_CONSOLE_INDEX == 1)) \
-    || (CONFIG_BLUETOOTH_UART_INDEX == 1)
+	|| (CONFIG_BLUETOOTH_UART_INDEX == 1)
 
 static int stellaris_uart1_init(struct device *dev)
 {
@@ -117,7 +117,7 @@ static int stellaris_uart1_init(struct device *dev)
 
 
 #if (defined(CONFIG_UART_CONSOLE) && (CONFIG_UART_CONSOLE_INDEX == 2)) \
-    || (CONFIG_BLUETOOTH_UART_INDEX == 2)
+	|| (CONFIG_BLUETOOTH_UART_INDEX == 2)
 
 static int stellaris_uart2_init(struct device *dev)
 {
@@ -203,9 +203,9 @@ pre_kernel_late_init(stellaris_uart2, NULL);
 
 /**< UART Devices */
 struct device * const uart_devs[] = {
-	&__initconfig_stellaris_uart02,
-	&__initconfig_stellaris_uart12,
-	&__initconfig_stellaris_uart22,
+	&__initconfig_stellaris_uart0,
+	&__initconfig_stellaris_uart1,
+	&__initconfig_stellaris_uart2,
 };
 
 #endif /* CONFIG_STELLARIS_UART */

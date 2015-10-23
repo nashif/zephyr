@@ -132,16 +132,16 @@ IRQ_CONNECT_STATIC(loapic, CONFIG_LOAPIC_TIMER_IRQ,
 			CONFIG_LOAPIC_TIMER_IRQ_PRIORITY,
 			_timer_int_handler, 0);
 
-static uint32_t __noinit cycles_per_tick; /* computed counter 0
-							  initial count value */
-static uint32_t accumulated_cycle_count = 0;
+/* computed counter 0 initial count value */
+static uint32_t __noinit cycles_per_tick;
+static uint32_t accumulated_cycle_count;
 
 #if defined(TIMER_SUPPORTS_TICKLESS)
-static uint32_t programmed_cycles = 0;
-static uint32_t programmed_full_ticks = 0;
+static uint32_t programmed_cycles;
+static uint32_t programmed_full_ticks;
 static uint32_t __noinit max_system_ticks;
 static uint32_t __noinit cycles_per_max_ticks;
-static bool timer_known_to_have_expired = false;
+static bool timer_known_to_have_expired;
 static unsigned char timer_mode = TIMER_MODE_PERIODIC;
 #endif /* TIMER_SUPPORTS_TICKLESS */
 
@@ -603,13 +603,13 @@ int _sys_clock_driver_init(struct device *device)
 
 	/*
 	 * Although the stub has already been "connected", the vector number
-	 * still
-	 * has to be programmed into the interrupt controller.
+	 * still has to be programmed into the interrupt controller.
 	 */
-	IRQ_CONFIG(loapic, CONFIG_LOAPIC_TIMER_IRQ);
+	IRQ_CONFIG(loapic, CONFIG_LOAPIC_TIMER_IRQ, 0);
 
 	/* Everything has been configured. It is now safe to enable the
-	 * interrupt */
+	 * interrupt
+	 */
 	irq_enable(CONFIG_LOAPIC_TIMER_IRQ);
 
 	return 0;

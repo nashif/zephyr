@@ -1,8 +1,8 @@
 VERSION_MAJOR 	   = 0
-VERSION_MINOR 	   = 5
+VERSION_MINOR 	   = 6
 PATCHLEVEL 	   = 0
 VERSION_RESERVED   = 0
-EXTRAVERSION       = -intel_internal
+EXTRAVERSION       = -rc1-intel_internal
 NAME 		   = Zephyr Kernel
 
 export SOURCE_DIR PROJECT MDEF_FILE KLIBC_DIR
@@ -674,6 +674,10 @@ KBUILD_CFLAGS += $(call cc-disable-warning, pointer-sign)
 
 # disable invalid "can't wrap" optimizations for signed / pointers
 KBUILD_CFLAGS	+= $(call cc-option,-fno-strict-overflow)
+
+# generate an extra file that specifies the maximum amount of stack used,
+# on a per-function basis.
+KBUILD_CFLAGS	+= $(call cc-option,-fstack-usage)
 
 # conserve stack if available
 KBUILD_CFLAGS   += $(call cc-option,-fconserve-stack)

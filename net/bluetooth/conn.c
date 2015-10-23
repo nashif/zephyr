@@ -121,7 +121,7 @@ void bt_conn_security_changed(struct bt_conn *conn)
 }
 
 int bt_conn_le_start_encryption(struct bt_conn *conn, uint64_t rand,
-				uint16_t ediv, const uint8_t *ltk)
+				uint16_t ediv, const uint8_t *ltk, size_t len)
 {
 	struct bt_hci_cp_le_start_encryption *cp;
 	struct bt_buf *buf;
@@ -135,14 +135,51 @@ int bt_conn_le_start_encryption(struct bt_conn *conn, uint64_t rand,
 	cp->handle = sys_cpu_to_le16(conn->handle);
 	cp->rand = rand;
 	cp->ediv = ediv;
-	memcpy(cp->ltk, ltk, sizeof(cp->ltk));
+
+	memcpy(cp->ltk, ltk, len);
+	if (len < sizeof(cp->ltk)) {
+		memset(cp->ltk + len, 0, sizeof(cp->ltk) - len);
+	}
 
 	return bt_hci_cmd_send_sync(BT_HCI_OP_LE_START_ENCRYPTION, buf, NULL);
 }
 
+static int start_security(struct bt_conn *conn)
+{
+	switch (conn->role) {
+#if defined(CONFIG_BLUETOOTH_CENTRAL)
+	case BT_HCI_ROLE_MASTER:
+	{
+		struct bt_keys *keys;
+
+		keys = bt_keys_find(BT_KEYS_LTK, &conn->dst);
+		if (!keys) {
+			return bt_smp_send_pairing_req(conn);
+		}
+
+		if (conn->required_sec_level > BT_SECURITY_MEDIUM &&
+		    keys->type != BT_KEYS_AUTHENTICATED) {
+			return bt_smp_send_pairing_req(conn);
+		}
+
+		return bt_conn_le_start_encryption(conn, keys->ltk.rand,
+						   keys->ltk.ediv,
+						   keys->ltk.val,
+						   keys->enc_size);
+	}
+#endif /* CONFIG_BLUETOOTH_CENTRAL */
+#if defined(CONFIG_BLUETOOTH_PERIPHERAL)
+	case BT_HCI_ROLE_SLAVE:
+		return bt_smp_send_security_req(conn);
+#endif /* CONFIG_BLUETOOTH_PERIPHERAL */
+	default:
+		return -EINVAL;
+	}
+}
+
 int bt_conn_security(struct bt_conn *conn, bt_security_t sec)
 {
-	int err = 0;
+	int err;
 
 	if (conn->state != BT_CONN_CONNECTED) {
 		return -ENOTCONN;
@@ -160,34 +197,8 @@ int bt_conn_security(struct bt_conn *conn, bt_security_t sec)
 
 	conn->required_sec_level = sec;
 
-#if defined(CONFIG_BLUETOOTH_CENTRAL)
-	if (conn->role == BT_HCI_ROLE_MASTER) {
-		struct bt_keys *keys;
+	err = start_security(conn);
 
-		keys = bt_keys_find(BT_KEYS_LTK, &conn->dst);
-		if (keys) {
-			if (sec > BT_SECURITY_MEDIUM &&
-			    keys->type != BT_KEYS_AUTHENTICATED) {
-				err = bt_smp_send_pairing_req(conn);
-				goto done;
-			}
-
-			err = bt_conn_le_start_encryption(conn, keys->ltk.rand,
-							  keys->ltk.ediv,
-							  keys->ltk.val);
-			goto done;
-		}
-
-		err = bt_smp_send_pairing_req(conn);
-		goto done;
-	}
-#endif /* CONFIG_BLUETOOTH_CENTRAL */
-
-#if defined(CONFIG_BLUETOOTH_PERIPHERAL)
-	err = bt_smp_send_security_req(conn);
-#endif /* CONFIG_BLUETOOTH_PERIPHERAL */
-
-done:
 	/* reset required security level in case of error */
 	if (err) {
 		conn->required_sec_level = conn->sec_level;
