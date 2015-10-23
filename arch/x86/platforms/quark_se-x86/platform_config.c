@@ -86,7 +86,7 @@ int dw_aio_cmp_config(struct device *dev)
 #endif
 
 #ifdef CONFIG_NS16550
-#include <drivers/uart.h>
+#include <uart.h>
 #include <console/uart_console.h>
 #include <serial/ns16550.h>
 

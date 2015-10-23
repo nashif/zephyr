@@ -26,7 +26,7 @@ hardware for the Quark SE BSP.
 #include <misc/printk.h>
 #include <misc/__assert.h>
 #include "board.h"
-#include <drivers/uart.h>
+#include <uart.h>
 #include <drivers/ioapic.h>
 #include <drivers/loapic.h>
 #include <init.h>
