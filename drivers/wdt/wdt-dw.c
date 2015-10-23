@@ -92,7 +92,7 @@ static int wdt_dw_set_config(struct wdt_config *config)
 
 		WDT_DW->wdt_cr |= WDT_CR_INT_ENABLE;
 
-		IRQ_CONFIG(wdt_dw, INT_WDT_IRQ);
+		IRQ_CONFIG(wdt_dw, INT_WDT_IRQ, 0);
 		irq_enable(INT_WDT_IRQ);
 
 		/* unmask WDT interrupts to lmt  */
