@@ -27,7 +27,7 @@ the Quark D2000 BSP.
 
 #include <stdint.h>
 #include <misc/util.h>
-#include <drivers/uart.h>
+#include <uart.h>
 #include <drivers/ioapic.h>
 
 #define INT_VEC_IRQ0  0x20 /* Vector number for IRQ0 */
