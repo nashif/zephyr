@@ -15,9 +15,8 @@
  */
 
 #include <nanokernel.h>
-#include <arch/cpu.h>
 #include <init.h>
-#include "wdt-dw.h"
+#include "wdt_dw.h"
 
 void (*cb_fn)(void);
 
