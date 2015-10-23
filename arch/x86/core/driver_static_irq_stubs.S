@@ -51,12 +51,12 @@ by x86 platforms.
 
 #if defined(CONFIG_WDT_DW)
 #if defined(CONFIG_IOAPIC)
-        ioapic_mkstub wdt_dw wdt_dw_isr
+        ioapic_mkstub wdt_dw wdt_dw_isr 0
 #endif /* CONFIG_IOAPIC */
 #endif
 
 #if defined(CONFIG_QMI_WDT)
-        ioapic_mkstub wdt qm_wdt_isr
+        ioapic_mkstub wdt qm_wdt_isr 0
 #endif /* CONFIG_QMI_WDT */
 
 #if defined(CONFIG_UART_SIMPLE)
@@ -67,29 +67,29 @@ by x86 platforms.
 
 #if defined(CONFIG_DW_AIO_COMPARATOR)
 #if defined(CONFIG_IOAPIC)
-	ioapic_mkstub dw_aio_cmp dw_aio_cmp_isr_dispatcher
+	ioapic_mkstub dw_aio_cmp dw_aio_cmp_isr_dispatcher 0
 #endif
 #endif /* CONFIG_DW_AIO_COMPARATOR */
 
 #if defined(CONFIG_QMI_GPIO)
 #if defined(CONFIG_IOAPIC)
-       ioapic_mkstub gpio_0 qm_gpio_isr
+       ioapic_mkstub gpio_0 qm_gpio_isr 0
 #endif /* CONFIG_IOAPIC */
-#elif defined(CONFIG_GPIO_DW)
+#endif
 
 
 #if defined(CONFIG_SPI_DW)
 #if defined(CONFIG_SPI_DW_PORT_0)
-	ioapic_mkstub spi_dw_irq_port_0 spi_dw_isr_0
+	ioapic_mkstub spi_dw_irq_port_0 spi_dw_isr_0 0
 #endif /* CONFIG_SPI_DW_PORT_0 */
 #if defined(CONFIG_SPI_DW_PORT_1)
-	ioapic_mkstub spi_dw_irq_port_1 spi_dw_isr_1
+	ioapic_mkstub spi_dw_irq_port_1 spi_dw_isr_1 0
 #endif /* CONFIG_SPI_DW_PORT_1 */
 #endif /* CONFIG_SPI_DW */
 
 #if defined(CONFIG_IPI_QUARK_SE)
 #if defined(CONFIG_IOAPIC)
-	ioapic_mkstub quark_se_ipi quark_se_ipi_isr
+	ioapic_mkstub quark_se_ipi quark_se_ipi_isr 0
 #endif
 #endif
 	/* externs (internal APIs) */
