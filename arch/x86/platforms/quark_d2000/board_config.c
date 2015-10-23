@@ -118,8 +118,8 @@ pre_kernel_early_init(ns16550_uart1, &ns16550_uart_dev_data[1]);
 
 
 struct device * const uart_devs[] = {
-	&__initconfig_ns16550_uart01,
-	&__initconfig_ns16550_uart11,
+	&__initconfig_ns16550_uart0,
+	&__initconfig_ns16550_uart1,
 };
 
 #endif
