@@ -121,11 +121,11 @@ static uint32_t wdt_dw_timeout(void)
 #endif
 
 static struct wdt_driver_api wdt_dw_funcs = {
-        .set_config = wdt_dw_set_config,
-        .get_config = wdt_dw_get_config,
-        .enable = wdt_dw_enable,
-        .disable = wdt_dw_disable,
-        .reload = wdt_dw_reload,
+	.set_config = wdt_dw_set_config,
+	.get_config = wdt_dw_get_config,
+	.enable = wdt_dw_enable,
+	.disable = wdt_dw_disable,
+	.reload = wdt_dw_reload,
 };
 
 int wdt_dw_init(struct device *dev)
@@ -136,12 +136,12 @@ int wdt_dw_init(struct device *dev)
 
 
 struct wdt_dw_dev_config wdt_dev = {
-        .base_address = WDT_BASE_ADDR,
+	.base_address = WDT_BASE_ADDR,
 };
 
 DECLARE_DEVICE_INIT_CONFIG(wdt,
-                           WDT_DRV_NAME,
-                           &wdt_dw_init,
-                           &wdt_dev);
+		WDT_DRV_NAME,
+		&wdt_dw_init,
+		&wdt_dev);
 
 micro_early_init(wdt, NULL);

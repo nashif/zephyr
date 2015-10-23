@@ -26,19 +26,19 @@
  * Watchdog timer register block type.
  */
 struct wdt_dw {
-        volatile uint32_t wdt_cr;           /**< Control Register */
-        volatile uint32_t wdt_torr;         /**< Timeout Range Register */
-        volatile uint32_t wdt_ccvr;         /**< Current Counter Value Register */
-        volatile uint32_t wdt_crr;          /**< Current Restart Register */
-        volatile uint32_t wdt_stat;         /**< Interrupt Status Register */
-        volatile uint32_t wdt_eoi;          /**< Interrupt Clear Register */
-        volatile uint32_t wdt_comp_param_5; /**<  Component Parameters */
-        volatile uint32_t wdt_comp_param_4; /**<  Component Parameters */
-        volatile uint32_t wdt_comp_param_3; /**<  Component Parameters */
-        volatile uint32_t wdt_comp_param_2; /**<  Component Parameters */
-        volatile uint32_t wdt_comp_param_1; /**<  Component Parameters Register 1 */
-        volatile uint32_t wdt_comp_version; /**<  Component Version Register */
-        volatile uint32_t wdt_comp_type;    /**< Component Type Register */
+	volatile uint32_t wdt_cr;           /**< Control Register */
+	volatile uint32_t wdt_torr;         /**< Timeout Range Register */
+	volatile uint32_t wdt_ccvr;         /**< Current Counter Value Register */
+	volatile uint32_t wdt_crr;          /**< Current Restart Register */
+	volatile uint32_t wdt_stat;         /**< Interrupt Status Register */
+	volatile uint32_t wdt_eoi;          /**< Interrupt Clear Register */
+	volatile uint32_t wdt_comp_param_5; /**<  Component Parameters */
+	volatile uint32_t wdt_comp_param_4; /**<  Component Parameters */
+	volatile uint32_t wdt_comp_param_3; /**<  Component Parameters */
+	volatile uint32_t wdt_comp_param_2; /**<  Component Parameters */
+	volatile uint32_t wdt_comp_param_1; /**<  Component Parameters Register 1 */
+	volatile uint32_t wdt_comp_version; /**<  Component Version Register */
+	volatile uint32_t wdt_comp_type;    /**< Component Type Register */
 };
 
 /** WDT register block */
@@ -53,7 +53,7 @@ struct wdt_dw {
 #define WDT_DRV_NAME "wdt_dw"
 
 struct wdt_dw_dev_config {
-        uint32_t        base_address;
+	uint32_t        base_address;
 };
 
 int wdt_dw_init(struct device *dev);
