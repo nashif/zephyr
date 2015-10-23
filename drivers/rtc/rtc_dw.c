@@ -16,7 +16,6 @@
 
 
 #include <nanokernel.h>
-#include <arch/cpu.h>
 #include "board.h"
 #include <stdbool.h>
 #include <device.h>
@@ -24,7 +23,7 @@
 #include <stdio.h>
 #include <init.h>
 
-#include "rtc-dw.h"
+#include "rtc_dw.h"
 
 #define UPDATE_DELAY 4
 
