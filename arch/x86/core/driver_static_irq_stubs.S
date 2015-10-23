@@ -49,16 +49,6 @@ by x86 platforms.
 #endif /* CONFIG_IOAPIC */
 #endif /* CONFIG_CONSOLE_HANDLER */
 
-#if defined(CONFIG_WDT_DW)
-#if defined(CONFIG_IOAPIC)
-        ioapic_mkstub wdt_dw wdt_dw_isr 0
-#endif /* CONFIG_IOAPIC */
-#endif
-
-#if defined(CONFIG_QMI_WDT)
-        ioapic_mkstub wdt qm_wdt_isr 0
-#endif /* CONFIG_QMI_WDT */
-
 #if defined(CONFIG_UART_SIMPLE)
 #if defined(CONFIG_IOAPIC)
 	ioapic_mkstub uart_simple uart_simple_isr 0
