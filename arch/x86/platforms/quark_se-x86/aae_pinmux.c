@@ -49,7 +49,11 @@ struct pin_config mux_config[CONFIG_PINMUX_NUM_PINS] = {
 	{ 21, PINMUX_FUNC_A }, /* C02, i2c0_sda, NA, NA */
 	{ 22, PINMUX_FUNC_A }, /* D01, i2c1_scl, NA, NA */
 	{ 23, PINMUX_FUNC_A }, /* D02, i2c1_sda, NA, NA */
-	/* Digital sensors on sensor subsystem i2c0 */
+	/* Digital sensors on sensor subsystem i2c0.
+	 * Also need to set pin 9 (ain_9) and (ain_14)
+	 * to PINMUX_FUNC_B as these lines are tied to
+	 * the same output pins.
+	 */
 	{ 24, PINMUX_FUNC_A }, /* E01, i2c0_ss_sda, NA, NA */
 	{ 25, PINMUX_FUNC_A }, /* E02, i2c0_ss_scl, NA, NA */
 	/* Digital sensors on sensor subsystem i2c1 */
