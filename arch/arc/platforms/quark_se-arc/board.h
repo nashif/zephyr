@@ -44,9 +44,6 @@ This header file is used to specify and describe board-level aspects for the
 #define PERIPH_ADDR_BASE_GPIO0 0x80017800 /* GPIO 0 */
 #define PERIPH_ADDR_BASE_GPIO1 0x80017900 /* GPIO 1 */
 
-#define PERIPH_ADDR_BASE_I2C_MST0 0x80012000 /* I2C Master 0 */
-#define PERIPH_ADDR_BASE_I2C_MST1 0x80012100 /* I2C Master 1 */
-
 #define PERIPH_ADDR_BASE_SPI_MST0 0x80010000 /* SPI Master 0 */
 #define PERIPH_ADDR_BASE_SPI_MST1 0x80010100 /* SPI Master 1 */
 
@@ -148,6 +145,34 @@ This header file is used to specify and describe board-level aspects for the
 #define CONFIG_UART_CONSOLE_INT_PRI 0
 
 #define UART_REG_ADDR_INTERVAL 4 /* for ns16550 driver */
+
+#define INT_ENABLE_ARC					~(0x00000001 << 8)
+
+#if defined(CONFIG_I2C)
+
+#if defined(CONFIG_I2C_QUARK_SE_SS_0)
+#define I2C_SS_0_ERR_VECTOR				(22)
+#define I2C_SS_0_ERR_MASK				0x410
+#define I2C_SS_0_RX_VECTOR				(23)
+#define I2C_SS_0_RX_MASK				0x414
+#define I2C_SS_0_TX_VECTOR				(24)
+#define I2C_SS_0_TX_MASK				0x418
+#define I2C_SS_0_STOP_VECTOR				(25)
+#define I2C_SS_0_STOP_MASK				0x41C
+#endif
+
+#if defined(CONFIG_I2C_QUARK_SE_SS_1)
+#define I2C_SS_1_ERR_VECTOR				(26)
+#define I2C_SS_1_ERR_MASK				0x420
+#define I2C_SS_1_RX_VECTOR				(27)
+#define I2C_SS_1_RX_MASK				0x424
+#define I2C_SS_1_TX_VECTOR				(28)
+#define I2C_SS_1_TX_MASK				0x428
+#define I2C_SS_1_STOP_VECTOR				(29)
+#define I2C_SS_1_STOP_MASK				0x42C
+#endif
+
+#endif /* CONFIG_I2C */
 
 /*
  * Device drivers utilize the macros PLB_BYTE_REG_WRITE() and
