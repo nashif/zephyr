@@ -24,6 +24,15 @@
 
 #define INT_COMPARATORS_MASK	0x7FFFF
 
+static int dw_aio_cmp_config(struct device *dev)
+{
+	ARG_UNUSED(dev);
+
+	IRQ_CONFIG(dw_aio_cmp, INT_AIO_CMP_IRQ, 0);
+
+	return DEV_OK;
+}
+
 static int dw_aio_cmp_disable(struct device *dev, uint8_t index)
 {
 	struct dw_aio_cmp_dev_cfg_t *config =
@@ -190,3 +199,29 @@ int dw_aio_cmp_init(struct device *dev)
 
 	return DEV_OK;
 }
+
+struct dw_aio_cmp_dev_cfg_t dw_aio_cmp_dev_config = {
+	.base_address = CONFIG_DW_AIO_COMPARATOR_BASE_ADDR,
+	.interrupt_num = INT_AIO_CMP_IRQ,
+	.config_func = dw_aio_cmp_config,
+};
+
+DECLARE_DEVICE_INIT_CONFIG(dw_aio_cmp,
+			   DW_AIO_CMP_DRV_NAME,
+			   &dw_aio_cmp_init,
+			   &dw_aio_cmp_dev_config);
+
+struct dw_aio_cmp_dev_data_t dw_aio_cmp_dev_data = {
+	.num_cmp = DW_AIO_CMP_COUNT,
+};
+
+micro_early_init(dw_aio_cmp, &dw_aio_cmp_dev_data);
+
+struct device *dw_aio_cmp_device = SYS_GET_DEVICE(dw_aio_cmp);
+
+IRQ_CONNECT_STATIC(dw_aio_cmp,
+		   INT_AIO_CMP_IRQ,
+		   0,
+		   dw_aio_cmp_isr,
+		   0);
+

@@ -64,6 +64,4 @@ struct dw_aio_cmp_dev_data_t {
 	struct dw_aio_cmp_cb cb[DW_AIO_CMP_COUNT];
 };
 
-extern int dw_aio_cmp_init(struct device* dev);
-
 #endif /* _DW_AIO_COMPARATOR_H_ */

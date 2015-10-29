@@ -55,12 +55,6 @@ by x86 platforms.
 #endif /* CONFIG_IOAPIC */
 #endif /* CONFIG_UART_SIMPLE */
 
-#if defined(CONFIG_DW_AIO_COMPARATOR)
-#if defined(CONFIG_IOAPIC)
-	ioapic_mkstub dw_aio_cmp dw_aio_cmp_isr_dispatcher 0
-#endif
-#endif /* CONFIG_DW_AIO_COMPARATOR */
-
 #if defined(CONFIG_QMI_GPIO)
 #if defined(CONFIG_IOAPIC)
        ioapic_mkstub gpio_0 qm_gpio_isr 0
