@@ -40,8 +40,7 @@ struct dw_aio_cmp_t {
 	volatile uint32_t stat_clr;	/**< Status Clear Register (0x28) */
 };
 
-struct dw_aio_cmp_cb
-{
+struct dw_aio_cmp_cb {
 	aio_cmp_cb cb;
 	void *param;
 };

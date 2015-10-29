@@ -129,9 +129,11 @@ void dw_aio_cmp_isr(struct device *dev)
 	reg_stat_clr = regs->stat_clr;
 	for (i = 0; i < dev_data->num_cmp; i++) {
 		if (reg_stat_clr & (1 << i)) {
+
 			dw_aio_cmp_disable(dev, i);
+
 			if (dev_data->cb[i].cb != NULL) {
-			    dev_data->cb[i].cb(dev_data->cb[i].param);
+				dev_data->cb[i].cb(dev_data->cb[i].param);
 			}
 		}
 	}
@@ -145,7 +147,7 @@ static struct aio_cmp_driver_api dw_aio_cmp_funcs = {
 	.configure = dw_aio_cmp_configure,
 };
 
-int dw_aio_cmp_init(struct device* dev)
+int dw_aio_cmp_init(struct device *dev)
 {
 	struct dw_aio_cmp_dev_cfg_t *config =
 	    (struct dw_aio_cmp_dev_cfg_t *)dev->config->config_info;
