@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _DW_AIO_COMPARATOR_H_
-#define _DW_AIO_COMPARATOR_H_
+#ifndef _AIO_DW_COMPARATOR_H_
+#define _AIO_DW_COMPARATOR_H_
 
 #include <board.h>
 #include <device.h>

@@ -20,7 +20,7 @@
 #include <device.h>
 #include <aio_comparator.h>
 
-#include "dw_aio_comparator.h"
+#include "aio_dw_comparator.h"
 
 #define INT_COMPARATORS_MASK	0x7FFFF
 
