@@ -91,10 +91,10 @@ void nano_task_lifo_put(struct nano_lifo *lifo, void *data)
 		fiberRtnValueSet(tcs, (unsigned int) data);
 		_Swap(imask);
 		return;
-	} else {
-		*(void **) data = lifo->list;
-		lifo->list = data;
 	}
+
+	*(void **) data = lifo->list;
+	lifo->list = data;
 
 	irq_unlock(imask);
 }
@@ -193,8 +193,6 @@ void *nano_task_lifo_get_wait(struct nano_lifo *lifo)
  * @param lifo LIFO from which to receive.
  *
  * @return Pointer to first element in the list
- *
- * \NOMANUAL
  */
 void *_nano_fiber_lifo_get_panic(struct nano_lifo *lifo)
 {

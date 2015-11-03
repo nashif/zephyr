@@ -29,6 +29,12 @@
 #include <device.h>
 
 /**
+ * @brief ADC Interface
+ * @defgroup adc_interface ADC Interface
+ * @ingroup io_interfaces
+ * @{
+ */
+/**
  * Callback type.
  * ADC_CB_DONE means sampling went fine and is over
  * ADC_CB_ERROR means an error occurred
@@ -152,7 +158,7 @@ static inline void adc_set_callback(struct device *dev, adc_callback_t cb)
  * available for consumption until it is indicated by a callback.
  *
  * @param dev Pointer to the device structure for the driver instance
- * @param seq_tbl Pointer to the structure that represents the sequence table
+ * @param seq_table Pointer to the structure that represents the sequence table
  *
  * @return Returns DEV_OK on success, or else otherwise.
  */
@@ -163,5 +169,9 @@ static inline int adc_read(struct device *dev, struct adc_seq_table *seq_table)
 	api = (struct adc_driver_api *)dev->driver_api;
 	return api->read(dev, seq_table);
 }
+
+/**
+ * @}
+ */
 
 #endif  /* __INCLUDE_ADC_H__ */

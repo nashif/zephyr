@@ -94,7 +94,7 @@ SECTIONS
 	KEXEC_PGALIGN_PAD(MMU_PAGE_SIZE)
 	} GROUP_LINK_IN(ROMABLE_REGION)
 
-	SECTION_PROLOGUE (devconfig, (OPTIONAL),)
+	SECTION_PROLOGUE(devconfig, (OPTIONAL),)
 	{
 		__devconfig_start = .;
 		*(".devconfig.*")
@@ -106,6 +106,7 @@ SECTIONS
 	{
 	*(.rodata)
 	*(".rodata.*")
+	IRQ_TO_INTERRUPT_VECTOR_MEMORY
 	KEXEC_PGALIGN_PAD(MMU_PAGE_SIZE)
 	} GROUP_LINK_IN(ROMABLE_REGION)
 
@@ -131,13 +132,13 @@ SECTIONS
 	. = ALIGN(4);
 	} GROUP_LINK_IN(RAM)
 
-	SECTION_PROLOGUE (initlevel, (OPTIONAL),)
+	SECTION_PROLOGUE(initlevel, (OPTIONAL),)
 	{
 		DEVICE_INIT_SECTIONS()
 		KEXEC_PGALIGN_PAD(MMU_PAGE_SIZE)
 	} GROUP_LINK_IN(RAM)
 
-	SECTION_PROLOGUE (_k_task_list, ALIGN(4), ALIGN(4))
+	SECTION_PROLOGUE(_k_task_list, ALIGN(4), ALIGN(4))
 	{
 		_k_task_list_start = .;
 			*(._k_task_list.public.*)
@@ -148,7 +149,7 @@ SECTIONS
 		_k_task_list_end = .;
 	} GROUP_LINK_IN(RAM)
 
-	SECTION_PROLOGUE (_k_task_ptr, (OPTIONAL),)
+	SECTION_PROLOGUE(_k_task_ptr, (OPTIONAL),)
 	{
 		_k_task_ptr_start = .;
 			*(._k_task_ptr.public.*)
@@ -158,7 +159,7 @@ SECTIONS
 		_k_task_ptr_end = .;
 	} GROUP_LINK_IN(RAM)
 
-	SECTION_PROLOGUE (_k_pipe_ptr, (OPTIONAL),)
+	SECTION_PROLOGUE(_k_pipe_ptr, (OPTIONAL),)
 	{
 		_k_pipe_ptr_start = .;
 			*(._k_pipe_ptr.public.*)
@@ -167,13 +168,21 @@ SECTIONS
 		_k_pipe_ptr_end = .;
 	} GROUP_LINK_IN(RAM)
 
-	SECTION_PROLOGUE (_k_mem_map_ptr, (OPTIONAL),)
+	SECTION_PROLOGUE(_k_mem_map_ptr, (OPTIONAL),)
 	{
 		_k_mem_map_ptr_start = .;
 			*(._k_mem_map_ptr.public.*)
 			*(._k_mem_map_ptr.private.*)
 		KEEP(*(SORT_BY_NAME("._k_mem_map_ptr*")))
 		_k_mem_map_ptr_end = .;
+	} GROUP_LINK_IN(RAM)
+
+	SECTION_PROLOGUE(_k_event_list, (OPTIONAL),)
+	{
+		_k_event_list_start = .;
+			*(._k_event_list.event.*)
+		KEEP(*(SORT_BY_NAME("._k_event_list*")))
+		_k_event_list_end = .;
 	} GROUP_LINK_IN(RAM)
 
 	__data_ram_end = .;

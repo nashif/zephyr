@@ -21,18 +21,11 @@
  * this file contains commonly used functions
  */
 
+#include <zephyr.h>
+
 #include "timestamp.h"
 #include "utils.h"
 
-#ifdef CONFIG_NANOKERNEL
-
-#elif defined(CONFIG_MICROKERNEL)
-
-#include <microkernel.h>
-
-#endif /*  CONFIG_NANOKERNEL */
-
-#include <arch/cpu.h>
 
 static uint8_t vector; /* the interrupt vector we allocate */
 
@@ -51,10 +44,7 @@ char tmpString[TMP_STRING_SIZE];
  * the current interrupt service routine and stub code memory block.
  *
  * @return the allocated interrupt vector
- *
- * \NOMANUAL
  */
-
 int initSwInterrupt(ptestIsr pIsrHdlr)
 {
 	vector = irq_connect(NANO_SOFT_IRQ, IRQ_PRIORITY, pIsrHdlr,
@@ -73,10 +63,7 @@ int initSwInterrupt(ptestIsr pIsrHdlr)
  * initialized and connected by initSwInterrupt.
  *
  * @return N/A
- *
- * \NOMANUAL
  */
-
 void setSwInterrupt(ptestIsr pIsrHdlr)
 {
 	extern void _irq_handler_set(unsigned int irq, void (*old)(void *arg),
@@ -95,8 +82,6 @@ void setSwInterrupt(ptestIsr pIsrHdlr)
  * initialized and connected by initSwInterrupt.
  *
  * @return N/A
- *
- * \NOMANUAL
  */
 void raiseIntFunc(void)
 {

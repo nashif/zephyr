@@ -19,6 +19,13 @@
 #ifndef __INCuarth
 #define __INCuarth
 
+/**
+ * @brief UART Interface
+ * @defgroup uart_interface UART Interface
+ * @ingroup io_interfaces
+ * @{
+ */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -131,7 +138,7 @@ static inline void uart_init(struct device *dev,
  * @param p_char Pointer to character
  *
  * @return 0 if a character arrived, -1 if the input buffer if empty,
- * 		-DEV_INVALID_OP if operation not supported.
+ *         -DEV_INVALID_OP if operation not supported.
  */
 static inline int uart_poll_in(struct device *dev, unsigned char *p_char)
 {
@@ -414,5 +421,9 @@ static inline unsigned int uart_irq_get(struct device *dev)
 #ifdef __cplusplus
 }
 #endif
+
+/**
+ * @}
+ */
 
 #endif /* __INCuarth */

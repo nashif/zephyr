@@ -26,13 +26,12 @@ config NO_ISRS
 	This option disables asynchronous interrupts support.
 
 
-config NO_NESTED_INTERRUPTS
+config NESTED_INTERRUPTS
 	bool
 	prompt "Enable nested interrupts"
-	default n
-	depends on X86_32
+	default y
 	help
-	disable nest interrupts.
+	This option enables support for nested interrupts.
 
 config EXCEPTION_DEBUG
 	bool
@@ -57,14 +56,6 @@ config IDT_NUM_VECTORS
 	This option specifies the number of interrupt vector entries in the
 	Interrupt Descriptor Table (IDT). By default all 256 vectors are
 	supported in an IDT requiring 2048 bytes of memory.
-
-config NUM_GDT_SPARE_ENTRIES
-	int
-	prompt "Number of spare GDT entries"
-	default 0
-	help
-	This option specifies the number of spare entries in the Global
-	Descriptor Table (GDT).
 
 config PHYS_LOAD_ADDR
 	hex "Physical load address"

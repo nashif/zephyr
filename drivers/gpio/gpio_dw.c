@@ -344,12 +344,14 @@ static inline int gpio_dw_setup(struct device *dev)
 int gpio_initialize_dw(struct device *port)
 {
 	struct gpio_config_dw *config = port->config->config_info;
-	uint32_t base_addr = config->base_addr;
+	uint32_t base_addr;
 
 	if (!gpio_dw_setup(port)) {
 		return DEV_NOT_CONFIG;
 	}
 	gpio_enable_clock_dw(base_addr);
+
+	base_addr = config->base_addr;
 
 	/* interrupts in sync with system clock */
 	dw_set_bit(base_addr, INT_CLOCK_SYNC, 0, 1);

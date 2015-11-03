@@ -30,6 +30,6 @@ struct pinmux_config {
 	uint32_t	base_address;
 };
 
-extern int pinmux_galileo_initialize(struct device *port);
+extern int pinmux_initialize(struct device *port);
 
 #endif /* __DRIVERS_PINMUX_H */

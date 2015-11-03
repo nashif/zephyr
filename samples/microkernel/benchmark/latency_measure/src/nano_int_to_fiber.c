@@ -44,10 +44,7 @@ static uint32_t timestamp;
  * The interrupt handler gets the second timestamp.
  *
  * @return N/A
- *
- * \NOMANUAL
  */
-
 static void latencyTestIsr(void *unused)
 {
 	ARG_UNUSED(unused);
@@ -64,10 +61,7 @@ static void latencyTestIsr(void *unused)
  * gets the first timestamp and invokes the software interrupt.
  *
  * @return N/A
- *
- * \NOMANUAL
  */
-
 static void fiberInt(void)
 {
 	setSwInterrupt(latencyTestIsr);
@@ -85,10 +79,7 @@ static void fiberInt(void)
  * @brief The test main function
  *
  * @return 0 on success
- *
- * \NOMANUAL
  */
-
 int nanoIntToFiber(void)
 {
 	PRINT_FORMAT(" 2- Measure time to switch from ISR back to interrupted"

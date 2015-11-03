@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-#include <microkernel.h>
+#include <zephyr.h>
 #include <toolchain.h>
 
 #ifdef TEST_min
@@ -25,7 +25,6 @@
 
 #else
 
-#include <arch/cpu.h>
 #include <misc/printk.h>
 #include <stdio.h>
 
@@ -120,7 +119,6 @@ static pfunc func_array[] = {
  *
  * @return N/A
  */
-
 void dummyIsr(void *unused)
 {
 	ARG_UNUSED(unused);
@@ -137,7 +135,6 @@ void dummyIsr(void *unused)
  *
  * @return N/A
  */
-
 static void isrDummyIntStub(void *unused)
 {
 	ARG_UNUSED(unused);
@@ -156,10 +153,7 @@ static void isrDummyIntStub(void *unused)
  * (Gdb can be used to observe the counter as it increases.)
  *
  * @return N/A
- *
- * \NOMANUAL
  */
-
 void fgTaskEntry(void)
 {
 #ifdef TEST_max
