@@ -155,7 +155,7 @@ int _mvic_init(struct device *unused)
  */
 void _ioapic_eoi(unsigned int irq)
 {
-	_loapic_eoi(irq);
+	_loapic_eoi();
 }
 
 /**
@@ -311,9 +311,8 @@ void _loapic_disable(void)
  *
  * @returns: N/A
  */
-void _loapic_eoi(unsigned int irq)
+void _loapic_eoi(void)
 {
-	ARG_UNUSED(irq);
 	*(volatile int *)(CONFIG_LOAPIC_BASE_ADDRESS + LOAPIC_EOI) = 0;
 }
 
