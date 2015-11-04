@@ -100,7 +100,7 @@ static int rtc_dw_set_config(rtc_config_t *config)
 	return 0;
 }
 
-IRQ_CONNECT_STATIC(rtc, INT_RTC_IRQ, 0, rtc_dw_isr, 0);
+IRQ_CONNECT_STATIC(rtc, INT_RTC_IRQ, INT_RTC_IRQ_PRI, rtc_dw_isr, 0);
 
 /**
  * @brief Read current RTC value
