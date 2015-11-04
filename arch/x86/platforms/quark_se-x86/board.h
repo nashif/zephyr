@@ -226,6 +226,7 @@ struct scss_interrupt {
 /* Watchdog */
 #define WDT_BASE_ADDR               	0xB0000000
 #define INT_WDT_IRQ               	0xc
+#define INT_WDT_IRQ_PRI              	2
 #define INT_WATCHDOG_MASK		0x47C
 #define SCSS_PERIPH_CFG0     		0x804
 #define SCSS_PERIPH_CFG0_WDT_ENABLE	(1 << 1)

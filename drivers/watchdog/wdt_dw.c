@@ -49,7 +49,7 @@ static void wdt_dw_get_config(struct wdt_config *config)
 {
 }
 
-IRQ_CONNECT_STATIC(wdt_dw, INT_WDT_IRQ, 0, wdt_dw_isr, 0);
+IRQ_CONNECT_STATIC(wdt_dw, INT_WDT_IRQ, INT_WDT_IRQ_PRI, wdt_dw_isr, 0);
 
 static void wdt_dw_reload(void) {
 	WDT_DW->wdt_crr = WDT_CRR_VAL;
