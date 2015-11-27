@@ -25,6 +25,12 @@ menuconfig GPIO
 
 if GPIO
 
+config QMSI_GPIO
+       prompt "Use QMSI GPIO implementation"
+       default n
+       depends on QMSI_DRIVERS && GPIO && !GPIO_DW
+       bool
+
 config GPIO_DEBUG
 	bool
 	prompt "Debug output for GPIO drivers"
