@@ -78,4 +78,12 @@ config WDT_DW_IRQ_PRI
 	depends on WDT_DW
 	help
 	DesignWare WDT interrupt priority
+
+config QMSI_WDT
+        depends on QMSI_DRIVERS && !WDT_DW
+        bool "QMSI Watchdog driver [EXPERIMENTAL]"
+        default n
+        help
+        Build QMSI Watchdog driver.
+
 endif
