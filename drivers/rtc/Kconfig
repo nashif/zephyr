@@ -78,4 +78,12 @@ config RTC_DW_IRQ_PRI
 	depends on RTC_DW
 	help
 	DesignWare RTC interrupt priority.
+
+config QMSI_RTC
+        depends on QMSI_DRIVERS && !RTC_DW
+        bool "QMSI RTC Driver [EXPERIMENTAL]"
+        default n
+        help
+        Build QMSI RTC driver.
+
 endif # RTC
