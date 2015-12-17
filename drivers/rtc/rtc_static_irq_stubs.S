@@ -26,6 +26,12 @@
 #endif
 #endif
 
+#if defined(CONFIG_QMSI_RTC)
+#if defined(CONFIG_IOAPIC) || defined(CONFIG_MVIC)
+        ioapic_mkstub rtc qm_rtc_isr 0
+#endif
+#endif /* CONFIG_QMSI_RTC */
+
 /* externs (internal APIs) */
 
 GTEXT(_IntEnt)
