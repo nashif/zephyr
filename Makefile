@@ -2,7 +2,7 @@ VERSION_MAJOR 	   = 0
 VERSION_MINOR 	   = 8
 PATCHLEVEL 	   = 0
 VERSION_RESERVED   = 0
-EXTRAVERSION       =
+EXTRAVERSION       = -intel_internal
 NAME 		   = Zephyr Kernel
 
 export SOURCE_DIR PROJECT MDEF_FILE KLIBC_DIR
