@@ -1,0 +1,5 @@
+
+config  BOARD_QUARK_ATP2_DVP
+        bool "Quark ATP2 Silicon Validation Board"
+        select SOC_QUARK_ATP2
+	depends on X86

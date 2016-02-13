@@ -1,0 +1,12 @@
+
+
+config  SOC_QUARK_ATP2
+        bool "Intel Quark ATP2"
+        select CPU_MINUTEIA
+        select IOAPIC
+        select LOAPIC
+        select LOAPIC_TIMER
+        select EOI_HANDLER_SUPPORTED
+        select BOOTLOADER_UNKNOWN
+        select XIP
+	select X86_IAMCU

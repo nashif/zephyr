@@ -1,0 +1,7 @@
+
+if BOARD_QUARK_ATP2_SSS_DVP
+
+config BOARD
+        default "quark_atp2_sss_dvp"
+
+endif # BOARD_QUARK_ATP2_SSS_DVP

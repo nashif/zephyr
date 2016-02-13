@@ -1,0 +1,8 @@
+
+
+if BOARD_QUARK_ATP2_PREV_GEN
+
+config BOARD
+        default "quark_atp2_prev_gen"
+
+endif # BOARD_QUARK_ATP2_PREV_GEN

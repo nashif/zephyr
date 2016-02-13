@@ -1,0 +1,7 @@
+
+if BOARD_QUARK_ATP2_SSS_PREV_GEN
+
+config BOARD
+        default "quark_atp2_sss_prev_gen"
+
+endif # BOARD_QUARK_ATP2_SSS_PREV_GEN
