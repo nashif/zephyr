@@ -91,9 +91,14 @@ SYS_INIT(arc_init, SECONDARY, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT);
 #endif /*CONFIG_ARC_INIT*/
 
 /**
-* TODO:REMOVE: Temp event router init during ATP2 bringup to for
-* pre silicon & power on test shell.
-*/
+ * TODO - TH - RTOS-1084: Update Quark SE 2 soc header files for Quark SE 2 SCU.
+ *
+ * SCU replaces SCSS.
+ *
+ * To Replace Silicon bringup function ATP2 bringup functions soc_evt_router_unmask
+ * & soc_init with standard zephyr Quark SE config functions
+ * platform_uart_init / uart_ns16550_init.
+ */
 #define SOC_EVENT_ROUTER_BASE            (0xB0805000)
 #define SOC_UART0_INT_MASK_OFF           (0x00e4)
 #define SOC_UART1_INT_MASK_OFF           (0x0158)
@@ -108,7 +113,7 @@ static int soc_init(struct device *arg)
 {
     ARG_UNUSED(arg);
 
-    /* Unmask Uart and crypto engine irqs for ATP2 bring-up. */
+    /* Unmask Uart irqs for ATP2 bring-up. */
 #ifdef CONFIG_UART_NS16550_PORT_0
     soc_evt_router_unmask(SOC_UART0_INT_MASK_OFF);
 #endif /* CONFIG_UART_NS16550_PORT_0 */
