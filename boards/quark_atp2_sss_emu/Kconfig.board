@@ -1,5 +1,4 @@
 
 config  BOARD_QUARK_ATP2_SSS_EMU
         bool "Quark ATP2 Emulation Board - Sensor Sub System"
-        select SOC_QUARK_ATP2_SS
-	depends on ARC
+        depends on SOC_QUARK_ATP2_SS

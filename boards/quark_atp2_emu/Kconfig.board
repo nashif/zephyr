@@ -1,5 +1,4 @@
 
 config  BOARD_QUARK_ATP2_EMU
         bool "Quark ATP2 Emulation Board"
-        select SOC_QUARK_ATP2
-	depends on X86
+        depends on SOC_QUARK_ATP2
