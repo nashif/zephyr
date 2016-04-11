@@ -21,9 +21,17 @@ menuconfig SPI_QMSI
 	depends on SPI && QMSI
 	default n
 	help
-	  SPI driver implementation using QMSI library. QMSI is the
-	  Quark Microcontroller Software Interface, providing a common
-	  interface to the Quark family of microcontrollers.
+	  SPI driver implementation using QMSI library.
+
+config LMT_SPI_QMSI
+	bool
+	depends on SPI_QMSI && X86
+	default y
+
+config SS_SPI_QMSI
+	bool
+	depends on SPI_QMSI && ARC
+	default y
 
 if SPI_QMSI
 
