@@ -43,11 +43,13 @@ struct adc_info  {
 };
 
 static void adc_config_irq(void);
+static qm_adc_config_t cfg;
 
 #if (CONFIG_ADC_QMSI_INTERRUPT)
 static struct adc_info *adc_context;
 
-static void complete_callback(void *data, int error)
+static void complete_callback(void *data, int error, qm_adc_status_t status,
+			      qm_adc_cb_source_t source)
 {
 	if (adc_context) {
 		if (error) {
@@ -108,13 +110,9 @@ static int adc_qmsi_read(struct device *dev, struct adc_seq_table *seq_tbl)
 {
 	int i, ret = 0;
 	qm_adc_xfer_t xfer;
-	qm_adc_config_t cfg;
 
 	struct adc_info *info = dev->driver_data;
 
-	if (qm_adc_get_config(QM_ADC_0, &cfg) != QM_RC_OK) {
-		return -ENOTSUP;
-	}
 
 	for (i = 0; i < seq_tbl->num_entries; i++) {
 
@@ -122,7 +120,7 @@ static int adc_qmsi_read(struct device *dev, struct adc_seq_table *seq_tbl)
 		/* Just one channel at the time using the Zephyr sequence table
 		 */
 		xfer.ch_len = 1;
-		xfer.samples = (qm_adc_sample_size_t *)seq_tbl->entries[i].buffer;
+		xfer.samples = (qm_adc_sample_t *)seq_tbl->entries[i].buffer;
 
 		/* buffer length (bytes) the number of samples, the QMSI Driver
 		 * does not allow more than QM_ADC_FIFO_LEN samples at the time
@@ -130,7 +128,7 @@ static int adc_qmsi_read(struct device *dev, struct adc_seq_table *seq_tbl)
 		 * return with an error
 		 */
 		xfer.samples_len =
-		  (seq_tbl->entries[i].buffer_length)/sizeof(qm_adc_sample_size_t);
+		  (seq_tbl->entries[i].buffer_length)/sizeof(qm_adc_sample_t);
 
 		xfer.callback = NULL;
 		xfer.callback_data = NULL;
@@ -167,13 +165,8 @@ static int adc_qmsi_read(struct device *dev, struct adc_seq_table *seq_tbl)
 {
 	int i, ret = 0;
 	qm_adc_xfer_t xfer;
-	qm_adc_config_t cfg;
 
 	struct adc_info *info = dev->driver_data;
-
-	if (qm_adc_get_config(QM_ADC_0, &cfg) != QM_RC_OK) {
-		return -ENOTSUP;
-	}
 
 	for (i = 0; i < seq_tbl->num_entries; i++) {
 
@@ -181,10 +174,10 @@ static int adc_qmsi_read(struct device *dev, struct adc_seq_table *seq_tbl)
 		/* Just one channel at the time using the Zephyr sequence table */
 		xfer.ch_len = 1;
 		xfer.samples =
-			(qm_adc_sample_size_t *)seq_tbl->entries[i].buffer;
+			(qm_adc_sample_t *)seq_tbl->entries[i].buffer;
 
 		xfer.samples_len =
-		  (seq_tbl->entries[i].buffer_length)/sizeof(qm_adc_sample_size_t);
+		  (seq_tbl->entries[i].buffer_length)/sizeof(qm_adc_sample_t);
 
 		xfer.callback = complete_callback;
 		xfer.callback_data = NULL;
@@ -193,7 +186,7 @@ static int adc_qmsi_read(struct device *dev, struct adc_seq_table *seq_tbl)
 
 		adc_lock(info);
 
-		if (qm_adc_set_config(QM_ADC_0, &cfg) != QM_RC_OK) {
+		if (qm_adc_set_config(QM_ADC_0, &cfg) != 0) {
 			ret =  -EINVAL;
 			adc_unlock(info);
 			break;
@@ -206,7 +199,7 @@ static int adc_qmsi_read(struct device *dev, struct adc_seq_table *seq_tbl)
 		 * call the complete_callback function once the samples have been
 		 * obtained
 		 */
-		if (qm_adc_irq_convert(QM_ADC_0, &xfer) != QM_RC_OK) {
+		if (qm_adc_irq_convert(QM_ADC_0, &xfer) != 0) {
 			adc_context = NULL;
 			ret =  -EIO;
 			adc_unlock(info);
@@ -239,8 +232,6 @@ static struct adc_driver_api api_funcs = {
 
 int adc_qmsi_init(struct device *dev)
 {
-	qm_adc_config_t cfg;
-
 	struct adc_info *info = dev->driver_data;
 
 	/* Enable the ADC and set the clock divisor */
