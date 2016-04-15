@@ -26,10 +26,22 @@ menuconfig I2C_QMSI
 	This driver is simply a shim driver based on the I2C driver
 	provided by the QMSI BSP.
 
+menuconfig I2C_QMSI_SS
+        bool "QMSI I2C driver for the Sensor Subsystem"
+        depends on QMSI_DRIVERS && I2C
+        default n
+        help
+        This option enable the Sensor QMSI I2C driver.
+
+        This driver is simply a shim driver based on the I2C driver
+        provided by the QMSI BSP. For more information about QMSI BSP
+        see CONFIG_QMSI_DRIVERS.
+
+if I2C_QMSI || I2C_QMSI_SS
+
 config I2C_QMSI_0
 	bool "Enable I2C_0 controller"
 	default n
-	depends on I2C_QMSI
 
 config I2C_QMSI_0_NAME
 	string "I2C_0 device name"
@@ -38,7 +50,7 @@ config I2C_QMSI_0_NAME
 
 config I2C_QMSI_0_IRQ_PRI
 	int "Interrupt priority from I2C_0 controller"
-	depends on I2C_QMSI_0
+	depends on I2C_QMSI_0 && I2C_QMSI
 
 config I2C_QMSI_0_DEFAULT_CFG
 	hex "I2C_0 default configuration"
@@ -52,7 +64,6 @@ config I2C_QMSI_0_DEFAULT_CFG
 config I2C_QMSI_1
 	bool "Enable I2C_1 controller"
 	default n
-	depends on I2C_QMSI
 
 config I2C_QMSI_1_NAME
 	string "I2C_1 device name"
@@ -61,7 +72,7 @@ config I2C_QMSI_1_NAME
 
 config I2C_QMSI_1_IRQ_PRI
 	int "Interrupt priority from I2C_1 controller"
-	depends on I2C_QMSI_1
+	depends on I2C_QMSI_1 && I2C_QMSI
 
 config I2C_QMSI_1_DEFAULT_CFG
 	hex "I2C_1 default configuration"
@@ -71,3 +82,5 @@ config I2C_QMSI_1_DEFAULT_CFG
 	This option specifies a default configuration for I2C_1 device
 	(e.g. addressing mode and bus speed) which is set during driver
 	initialization. Refer to I2C API for proper values.
+
+endif # I2C_QMSI || I2C_QMSI_SS
