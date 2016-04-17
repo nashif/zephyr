@@ -64,8 +64,8 @@
 #define IRQ_SPI1_ERR_INT 33
 #define IRQ_SPI1_RX_AVAIL 34
 #define IRQ_SPI1_TX_REQ 35
-#define IRQ_ADC_IRQ 32
-#define IRQ_ADC_ERR 33
+#define IRQ_ADC_IRQ 18
+#define IRQ_ADC_ERR 19
 #define IRQ_GPIO0_INTR 20
 #define IRQ_GPIO1_INTR 21
 #define IRQ_I2C_MST0_INTR 36
