@@ -198,6 +198,22 @@ struct scss_interrupt {
 #define ARC_RUN				(ARC_HALT_INT_REDIR | ARC_RUN_REQ_A)
 #define ARC_HALT			(ARC_HALT_INT_REDIR | ARC_HALT_REQ_A)
 
+/*
+ * UART
+ */
+#define UART_NS16550_PORT_0_BASE_ADDR   0xB0000800
+#define UART_NS16550_PORT_0_IRQ         15
+#define UART_NS16550_PORT_0_CLK_FREQ    MHZ(120)
+
+#define UART_NS16550_PORT_1_BASE_ADDR   0xB0020800
+#define UART_NS16550_PORT_1_IRQ         43
+#define UART_NS16550_PORT_1_CLK_FREQ    MHZ(120)
+
+#ifdef CONFIG_IOAPIC
+#include <drivers/ioapic.h>
+#define UART_IRQ_FLAGS                  (IOAPIC_EDGE | IOAPIC_HIGH)
+#endif /* CONFIG_IOAPIC */
+
 
 #endif /*  _ASMLANGUAGE */
 
