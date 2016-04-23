@@ -127,6 +127,20 @@
 #define INT_ENABLE_ARC					~(0x00000001 << 8)
 #define INT_ENABLE_ARC_BIT_POS				(8)
 
+
+/*
+ * UART
+ */
+#define UART_NS16550_PORT_0_BASE_ADDR                   0xB0000800
+#define UART_NS16550_PORT_0_IRQ                         69
+#define UART_NS16550_PORT_0_CLK_FREQ                    SYSCLK_DEFAULT_IOSC_HZ
+#define UART_NS16550_PORT_0_INT_MASK                    0x460
+
+#define UART_NS16550_PORT_1_BASE_ADDR                   0xB0020800
+#define UART_NS16550_PORT_1_IRQ                         97
+#define UART_NS16550_PORT_1_CLK_FREQ                    SYSCLK_DEFAULT_IOSC_HZ
+#define UART_NS16550_PORT_1_INT_MASK                    0x464
+
 #endif /* !_ASMLANGUAGE */
 
 #endif /* _BOARD__H_ */
