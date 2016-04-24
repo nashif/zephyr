@@ -63,7 +63,7 @@ source "drivers/ipm/Kconfig"
 
 source "drivers/aio/Kconfig"
 
-source "drivers/qmsi/Kconfig"
+source "drivers/qmsi-dev/Kconfig"
 
 source "drivers/flash/Kconfig"
 
