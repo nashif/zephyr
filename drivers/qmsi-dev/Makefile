@@ -1,5 +1,8 @@
 #obj-$(CONFIG_QMSI_BUILTIN) += drivers/qm_scss.o
 obj-$(CONFIG_QMSI_BUILTIN) += drivers/clk.o
+ifeq ($(CONFIG_ARC),y)
+obj-$(CONFIG_QMSI_BUILTIN) += drivers/sensor/ss_clk.o
+endif
 obj-$(CONFIG_RTC_QMSI) += drivers/qm_rtc.o
 obj-$(CONFIG_WDT_QMSI) += drivers/qm_wdt.o
 obj-$(CONFIG_I2C_QMSI) += drivers/qm_i2c.o
@@ -12,3 +15,4 @@ obj-$(CONFIG_UART_QMSI) += drivers/qm_uart.o
 obj-$(CONFIG_SPI_QMSI) += drivers/qm_spi.o
 obj-$(CONFIG_SOC_FLASH_QMSI) += drivers/qm_flash.o
 obj-$(CONFIG_PINMUX_DEV_QMSI) += drivers/qm_pinmux.o
+obj-$(CONFIG_I2C_QMSI_SS) += drivers/sensor/qm_ss_i2c.o

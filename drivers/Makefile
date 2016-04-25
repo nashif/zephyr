@@ -3,8 +3,11 @@ subdir-ccflags-y += -I$(srctree)/include/drivers
 subdir-ccflags-$(CONFIG_QMSI_LIBRARY) += -I$(CONFIG_QMSI_INSTALL_PATH)/include
 subdir-ccflags-$(CONFIG_QMSI_BUILTIN) +=-I$(srctree)/drivers/qmsi-dev/include
 subdir-ccflags-$(CONFIG_QMSI_BUILTIN) +=-I$(srctree)/drivers/qmsi-dev/drivers/include
+subdir-ccflags-$(CONFIG_QMSI_BUILTIN) +=-I$(srctree)/drivers/qmsi-dev/drivers/sensor/include
 subdir-ccflags-$(CONFIG_QMSI_BUILTIN) +=-I$(srctree)/drivers/qmsi-dev/soc/$(SOC_NAME)/include/
+subdir-ccflags-$(CONFIG_QMSI_BUILTIN) +=-I$(srctree)/drivers/qmsi-dev/soc/quark_se/include/
 subdir-ccflags-$(CONFIG_QMSI_BUILTIN) +=-DISR_HANDLED
+subdir-ccflags-$(CONFIG_SOC_QUARK_SE_SS) +=-DQM_SENSOR
 
 obj-y = console/
 obj-y += random/

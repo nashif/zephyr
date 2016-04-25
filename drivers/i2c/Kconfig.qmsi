@@ -28,14 +28,13 @@ menuconfig I2C_QMSI
 
 menuconfig I2C_QMSI_SS
         bool "QMSI I2C driver for the Sensor Subsystem"
-        depends on QMSI_DRIVERS && I2C
+        depends on QMSI && I2C
         default n
         help
         This option enable the Sensor QMSI I2C driver.
 
         This driver is simply a shim driver based on the I2C driver
-        provided by the QMSI BSP. For more information about QMSI BSP
-        see CONFIG_QMSI_DRIVERS.
+        provided by the QMSI BSP.
 
 if I2C_QMSI || I2C_QMSI_SS
 

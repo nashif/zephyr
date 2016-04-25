@@ -33,6 +33,11 @@ config  NUM_IRQS
 	# must be > the highest interrupt number used
 	default 68
 
+config QMSI
+        def_bool y
+
+config QMSI_BUILTIN
+        def_bool y
 
 config SYS_CLOCK_HW_CYCLES_PER_SEC
 	default 32000000
@@ -118,7 +123,7 @@ endif # GPIO
 if I2C
 
 config I2C_QUARK_SE_SS
-	def_bool y
+	def_bool n
 
 if I2C_QUARK_SE_SS
 
@@ -147,7 +152,34 @@ endif # I2C_QUARK_SE_SS_1
 
 endif # I2C_QUARK_SE_SS
 
+config I2C_QMSI_SS
+        def_bool y
+
+config I2C_QMSI_0
+        def_bool y
+
+if I2C_QMSI_0
+
+config I2C_QMSI_0_IRQ_PRI
+        default 2
+config I2C_QMSI_0_DEFAULT_CFG
+        default 0x12
+
+endif # I2C_QMSI_0
+
+config I2C_QMSI_1
+        def_bool y
+
+if I2C_QMSI_1
+config I2C_QMSI_1_IRQ_PRI
+        default 2
+config I2C_QMSI_1_DEFAULT_CFG
+        default 0x12
+
+endif # I2C_QMSI_1
+
 endif # I2C
+
 
 if UART_NS16550
 
