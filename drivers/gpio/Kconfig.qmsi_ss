@@ -16,50 +16,50 @@
 # limitations under the License.
 #
 
-menuconfig SS_GPIO_QMSI
+menuconfig GPIO_QMSI_SS
 	bool "QMSI SENSOR GPIO driver"
-	depends on GPIO && QMSI_DRIVERS && ARC
+	depends on GPIO && QMSI && ARC
 	default n
 	help
 	  Enable the driver for GPIO found on sensor system,
 	  using the QMSI library.
 
-if SS_GPIO_QMSI
+if GPIO_QMSI_SS
 
-config SS_GPIO_QMSI_0
+config GPIO_QMSI_SS_0
 	bool
 	prompt "QMSI GPIO block 0"
 	default n
 	help
 	  Include support for the GPIO port 0 using QMSI.
 
-config SS_GPIO_QMSI_0_NAME
+config GPIO_QMSI_SS_0_NAME
 	string "Driver name"
-	depends on SS_GPIO_QMSI_0
+	depends on GPIO_QMSI_SS_0
 	default "GPIO_0"
 
-config SS_GPIO_QMSI_0_PRI
+config GPIO_QMSI_SS_0_PRI
 	int "Controller interrupt priority"
-	depends on SS_GPIO_QMSI_0
+	depends on GPIO_QMSI_SS_0
 	help
 	  IRQ priority
 
-config SS_GPIO_QMSI_1
+config GPIO_QMSI_SS_1
 	bool
 	prompt "QMSI GPIO block 1"
 	default n
 	help
 	  Include support for the GPIO port 1 using QMSI.
 
-config SS_GPIO_QMSI_1_NAME
+config GPIO_QMSI_SS_1_NAME
 	string "Driver name"
-	depends on SS_GPIO_QMSI_1
+	depends on GPIO_QMSI_SS_1
 	default "GPIO_1"
 
-config SS_GPIO_QMSI_1_PRI
+config GPIO_QMSI_SS_1_PRI
 	int "Controller interrupt priority"
-	depends on SS_GPIO_QMSI_1
+	depends on GPIO_QMSI_SS_1
 	help
 	  IRQ priority
 
-endif # SS_GPIO_QMSI
+endif # GPIO_QMSI_SS
