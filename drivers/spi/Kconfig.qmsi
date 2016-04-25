@@ -23,17 +23,15 @@ menuconfig SPI_QMSI
 	help
 	  SPI driver implementation using QMSI library.
 
-config LMT_SPI_QMSI
-	bool
-	depends on SPI_QMSI && X86
-	default y
+menuconfig SPI_QMSI_SS
+	bool "QMSI driver for SPI controller on Sensor Subsystem"
+	depends on SPI && QMSI
+	default n
+	help
+	  SPI driver implementation using QMSI library. This instance is
+          for the Sensor Subsystem.
 
-config SS_SPI_QMSI
-	bool
-	depends on SPI_QMSI && ARC
-	default y
-
-if SPI_QMSI
+if SPI_QMSI || SPI_QMSI_SS
 
 config	SPI_QMSI_PORT_0
 	bool
