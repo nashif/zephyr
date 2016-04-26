@@ -177,7 +177,21 @@ static int ss_spi_qmsi_transceive(struct device *dev,
 	}
 
 	if (context->loopback) {
-		QM_SPI[spi_id]->ctrlr0 |= BIT(11);
+		uint32_t ctrl;
+
+		if (spi_id == 0) {
+			ctrl = __builtin_arc_lr(QM_SS_SPI_0_BASE +
+						QM_SS_SPI_CTRL);
+			ctrl |= BIT(11);
+			__builtin_arc_sr(ctrl, QM_SS_SPI_0_BASE +
+					 QM_SS_SPI_CTRL);
+		} else {
+			ctrl = __builtin_arc_lr(QM_SS_SPI_1_BASE +
+						QM_SS_SPI_CTRL);
+			ctrl |= BIT(11);
+			__builtin_arc_sr(ctrl, QM_SS_SPI_1_BASE +
+					 QM_SS_SPI_CTRL);
+		}
 	}
 
 	rc = qm_ss_spi_set_config(spi_id, cfg);
@@ -256,7 +270,7 @@ static struct ss_spi_qmsi_runtime spi_qmsi_mst_0_runtime;
 
 DEVICE_INIT(ss_spi_master_0, CONFIG_SPI_QMSI_PORT_0_DRV_NAME,
 	    ss_spi_qmsi_init, &spi_qmsi_mst_0_runtime, &spi_qmsi_mst_0_config,
-	    SECONDARY, CONFIG_SPI_QMSI_INIT_PRIORITY);
+	    SECONDARY, CONFIG_SPI_INIT_PRIORITY);
 
 
 #endif /* CONFIG_SPI_QMSI_PORT_0 */
@@ -274,7 +288,7 @@ static struct ss_spi_qmsi_runtime spi_qmsi_mst_1_runtime;
 
 DEVICE_INIT(ss_spi_master_1, CONFIG_SPI_QMSI_PORT_1_DRV_NAME,
 	    ss_spi_qmsi_init, &spi_qmsi_mst_1_runtime, &spi_qmsi_mst_1_config,
-	    SECONDARY, CONFIG_SPI_QMSI_INIT_PRIORITY);
+	    SECONDARY, CONFIG_SPI_INIT_PRIORITY);
 
 #endif /* CONFIG_SPI_QMSI_PORT_1 */
 

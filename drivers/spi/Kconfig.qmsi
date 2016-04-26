@@ -36,14 +36,13 @@ if SPI_QMSI || SPI_QMSI_SS
 config	SPI_QMSI_PORT_0
 	bool
 	prompt "QMSI SPI port 0"
-	depends on SPI_QMSI
 	default n
 	help
 	  Enable QMSI's SPI controller port 0.
 
 config SPI_QMSI_CS_GPIO
 	bool "SPI port CS pin is controlled via a GPIO port"
-	depends on SPI_QMSI && GPIO
+	depends on GPIO
 	default n
 
 config  SPI_QMSI_PORT_0_DRV_NAME
@@ -61,7 +60,7 @@ config  SPI_QMSI_PORT_0_CS_GPIO_PORT
 	string
 	prompt "The GPIO port which is used to control CS"
 	depends on SPI_QMSI_PORT_0 && SPI_QMSI_CS_GPIO
-	default GPIO_QMSI_0_NAME
+	default "GPIO_0"
 
 config  SPI_QMSI_PORT_0_CS_GPIO_PIN
 	int "The GPIO PIN which is used to act as a CS pin"
@@ -71,7 +70,6 @@ config  SPI_QMSI_PORT_0_CS_GPIO_PIN
 config  SPI_QMSI_PORT_1
 	bool
 	prompt "QMSI SPI port 1"
-	depends on SPI_QMSI
 	default n
 	help
 	  Enable QMSI's SPI controller port 1.
@@ -91,11 +89,11 @@ config  SPI_QMSI_PORT_1_CS_GPIO_PORT
 	string
 	prompt "The GPIO port which is used to control CS"
 	depends on SPI_QMSI_PORT_1 && SPI_QMSI_CS_GPIO
-	default GPIO_QMSI_0_NAME
+	default "GPIO_0"
 
 config  SPI_QMSI_PORT_1_CS_GPIO_PIN
 	int "The GPIO PIN which is used to act as a CS pin"
 	depends on SPI_QMSI_PORT_1 && SPI_QMSI_CS_GPIO
 	default 0
 
-endif # SPI_QMSI
+endif # SPI_QMSI || SPI_QMSI_SS
