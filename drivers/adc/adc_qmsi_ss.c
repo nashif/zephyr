@@ -271,7 +271,7 @@ int adc_qmsi_ss_init(struct device *dev)
 
 struct adc_info adc_info_dev;
 
-DEVICE_INIT(adc_qmsi_ss, CONFIG_ADC_QMSI_NAME, &adc_qmsi_ss_init,
+DEVICE_INIT(adc_qmsi_ss, CONFIG_ADC_QMSI_0_DRV_NAME, &adc_qmsi_ss_init,
 		    &adc_info_dev, NULL,
 			SECONDARY, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT);
 
@@ -279,11 +279,11 @@ static void adc_config_irq(void)
 {
 	uint32_t *scss_intmask;
 
-	IRQ_CONNECT(IRQ_ADC_IRQ, CONFIG_ADC_PRI,
+	IRQ_CONNECT(IRQ_ADC_IRQ, CONFIG_ADC_QMSI_0_IRQ_PRI,
 				adc_qmsi_ss_rx_isr, DEVICE_GET(adc_qmsi_ss), 0);
 	irq_enable(IRQ_ADC_IRQ);
 
-	IRQ_CONNECT(IRQ_ADC_ERR, CONFIG_ADC_PRI,
+	IRQ_CONNECT(IRQ_ADC_ERR, CONFIG_ADC_QMSI_0_IRQ_PRI,
 		    adc_qmsi_ss_err_isr, DEVICE_GET(adc_qmsi_ss), 0);
 	irq_enable(IRQ_ADC_ERR);
 
