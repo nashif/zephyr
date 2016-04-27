@@ -6,7 +6,6 @@
 #define __QM_SS_ADC_H__
 
 #include "qm_common.h"
-#include "qm_soc_regs.h"
 #include "qm_sensor_regs.h"
 
 /**

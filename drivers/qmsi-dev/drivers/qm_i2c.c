@@ -101,9 +101,8 @@ static void qm_i2c_isr_handler(const qm_i2c_t i2c)
 			 */
 			i2c_transfer[i2c].callback(
 			    i2c_transfer[i2c].callback_data, rc, status, 0);
+			controller_disable(i2c);
 		}
-
-		controller_disable(i2c);
 	}
 
 	/* RX read from buffer */
@@ -692,20 +691,28 @@ int qm_i2c_dma_transfer_terminate(const qm_i2c_t i2c)
 	if (i2c_dma_context[i2c].ongoing_dma_tx_operation) {
 		/* First terminate the DMA transfer */
 		rc = qm_dma_transfer_terminate(
-			i2c_dma_context[i2c].dma_controller_id,
-			i2c_dma_context[i2c].dma_tx_channel_id);
+		    i2c_dma_context[i2c].dma_controller_id,
+		    i2c_dma_context[i2c].dma_tx_channel_id);
+		/* Then disable DMA transmit */
+		QM_I2C[i2c]->ic_dma_cr &= ~QM_I2C_IC_DMA_CR_TX_ENABLE;
+		i2c_dma_context[i2c].ongoing_dma_tx_operation = false;
 	}
 
-	if (i2c_dma_context[i2c].ongoing_dma_rx_operation) {
-		/* First terminate the DMA transfer */
-		rc |= qm_dma_transfer_terminate(
-			i2c_dma_context[i2c].dma_controller_id,
-			i2c_dma_context[i2c].dma_rx_channel_id);
+	if (rc == 0) {
+		if (i2c_dma_context[i2c].ongoing_dma_rx_operation) {
+			/* First terminate the DMA transfer */
+			rc = qm_dma_transfer_terminate(
+			    i2c_dma_context[i2c].dma_controller_id,
+			    i2c_dma_context[i2c].dma_rx_channel_id);
+			/* Then disable DMA receive */
+			QM_I2C[i2c]->ic_dma_cr &= ~QM_I2C_IC_DMA_CR_RX_ENABLE;
+			i2c_dma_context[i2c].ongoing_dma_rx_operation = false;
+		}
 	}
 
-	/* Check if any of the calls failed */
-	if (rc != 0) {
-		rc = -EIO;
+	/* And terminate the I2C transfer */
+	if (rc == 0) {
+		QM_I2C[i2c]->ic_enable |= QM_I2C_IC_ENABLE_CONTROLLER_ABORT;
 	}
 
 	return rc;
@@ -962,7 +969,7 @@ int qm_i2c_master_dma_transfer(const qm_i2c_t i2c,
 	QM_CHECK(0 == xfer->rx_len ? xfer->tx_len != 0 : 1, -EINVAL);
 
 	/* Disable all IRQs but the TX abort one */
-	QM_I2C[i2c]->ic_intr_mask = QM_I2C_IC_INTR_MASK_TX_ABORT;
+	QM_I2C[i2c]->ic_intr_mask = QM_I2C_IC_INTR_STAT_TX_ABRT;
 
 	/* write slave address to TAR */
 	QM_I2C[i2c]->ic_tar = slave_addr;

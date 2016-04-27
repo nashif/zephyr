@@ -216,15 +216,6 @@ int qm_ss_spi_irq_transfer(const qm_ss_spi_t spi,
 	rx_c[spi] = xfer->rx_len;
 	tx_p[spi] = xfer->tx;
 	rx_p[spi] = xfer->rx;
-
-	/* Set NDF (Number of Data Frames) in RX or EEPROM Read mode. (-1) */
-	if (tmode == QM_SS_SPI_TMOD_RX || tmode == QM_SS_SPI_TMOD_EEPROM_READ) {
-		ctrl &= ~QM_SS_SPI_CTRL_NDF_MASK;
-		ctrl |= ((xfer->rx_len - 1) << QM_SS_SPI_CTRL_NDF_OFFS) &
-			QM_SS_SPI_CTRL_NDF_MASK;
-		__builtin_arc_sr(ctrl, base[spi] + QM_SS_SPI_CTRL);
-	}
-
 	/* RX only transfers need a dummy frame byte to be sent. */
 	if (tmode == QM_SS_SPI_TMOD_RX) {
 		tx_p[spi] = (uint8_t *)&dummy_frame;

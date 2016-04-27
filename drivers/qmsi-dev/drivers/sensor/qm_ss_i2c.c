@@ -1,19 +1,14 @@
 /*
  * {% copyright %}
  */
-
-#include <string.h>
-#include "qm_ss_i2c.h"
-#include "clk.h"
-
 #define SPK_LEN_SS (1)
 #define SPK_LEN_FS (2)
 #define TX_TL (2)
 #define RX_TL (5)
 
-/* number of retries before giving up on disabling the controller */
-#define MAX_T_POLL_COUNT (100)
-#define TI2C_POLL_MICROSECOND (10000)
+#include <string.h>
+#include "qm_ss_i2c.h"
+#include "clk.h"
 
 /*
  * NOTE: There are a number of differences between this Sensor Subsystem I2C
@@ -44,7 +39,7 @@ static uint32_t i2c_write_pos[QM_SS_I2C_NUM], i2c_read_pos[QM_SS_I2C_NUM],
     i2c_read_buffer_remaining[QM_SS_I2C_NUM];
 
 static void controller_enable(const qm_ss_i2c_t i2c);
-static int controller_disable(const qm_ss_i2c_t i2c);
+static void controller_disable(const qm_ss_i2c_t i2c);
 
 static void qm_ss_i2c_isr_handler(const qm_ss_i2c_t i2c)
 {
@@ -85,8 +80,6 @@ static void qm_ss_i2c_isr_handler(const qm_ss_i2c_t i2c)
 			i2c_transfer[i2c].callback(
 			    i2c_transfer[i2c].callback_data, rc, status, 0);
 		}
-
-		controller_disable(i2c);
 	}
 
 	/* RX read from buffer */
@@ -161,8 +154,8 @@ static void qm_ss_i2c_isr_handler(const qm_ss_i2c_t i2c)
 				/* callback */
 				if (i2c_transfer[i2c].callback) {
 					i2c_transfer[i2c].callback(
-					    i2c_transfer[i2c].callback_data, 0,
-					    QM_I2C_IDLE, i2c_write_pos[i2c]);
+					i2c_transfer[i2c].callback_data, 0,
+					QM_I2C_IDLE, i2c_write_pos[i2c]);
 				}
 			}
 		}
@@ -279,9 +272,7 @@ int qm_ss_i2c_set_config(const qm_ss_i2c_t i2c,
 			 controller + QM_SS_I2C_INTR_MASK);
 
 	/* disable controller */
-	if (controller_disable(i2c)) {
-		return -EAGAIN;
-	}
+	controller_disable(i2c);
 
 	/* set mode */
 	con |= QM_SS_I2C_CON_RESTART_EN |
@@ -464,9 +455,7 @@ int qm_ss_i2c_master_write(const qm_ss_i2c_t i2c, const uint16_t slave_addr,
 
 	/*  disable controller */
 	if (true == stop) {
-		if (controller_disable(i2c)) {
-			ret = -EIO;
-		}
+		controller_disable(i2c);
 	}
 
 	if (status != NULL) {
@@ -545,9 +534,7 @@ int qm_ss_i2c_master_read(const qm_ss_i2c_t i2c, const uint16_t slave_addr,
 
 	/*  disable controller */
 	if (true == stop) {
-		if (controller_disable(i2c)) {
-			ret = -EIO;
-		}
+		controller_disable(i2c);
 	}
 
 	if (status != NULL) {
@@ -633,24 +620,20 @@ static void controller_enable(const qm_ss_i2c_t i2c)
 	}
 }
 
-static int controller_disable(const qm_ss_i2c_t i2c)
+static void controller_disable(const qm_ss_i2c_t i2c)
 {
 	uint32_t controller = i2c_base[i2c];
-	int poll_count = MAX_T_POLL_COUNT;
+	if (__builtin_arc_lr(controller + QM_SS_I2C_ENABLE_STATUS) &
+	    QM_SS_I2C_ENABLE_STATUS_IC_EN) {
+		/* disable controller */
+		QM_SS_REG_AUX_NAND((controller + QM_SS_I2C_CON),
+				   QM_SS_I2C_CON_ENABLE);
 
-	/* disable controller */
-	QM_SS_REG_AUX_NAND((controller + QM_SS_I2C_CON), QM_SS_I2C_CON_ENABLE);
-
-	/* wait until controller is disabled */
-	while ((__builtin_arc_lr(controller + QM_SS_I2C_ENABLE_STATUS) &
-		QM_SS_I2C_ENABLE_STATUS_IC_EN) &&
-	       poll_count--) {
-		clk_sys_udelay(TI2C_POLL_MICROSECOND);
+		/* wait until controller is disabled */
+		while ((__builtin_arc_lr(controller + QM_SS_I2C_ENABLE_STATUS) &
+			QM_SS_I2C_ENABLE_STATUS_IC_EN))
+			;
 	}
-
-	/* returns 0 if ok, meaning controller is disabled */
-	return (__builtin_arc_lr(controller + QM_SS_I2C_ENABLE_STATUS) &
-		QM_SS_I2C_ENABLE_STATUS_IC_EN);
 }
 
 int qm_ss_i2c_irq_transfer_terminate(const qm_ss_i2c_t i2c)

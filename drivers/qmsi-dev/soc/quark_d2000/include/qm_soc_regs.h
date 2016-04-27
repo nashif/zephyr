@@ -358,77 +358,77 @@ qm_scss_info_reg_t test_scss_info;
 
 #define QM_INT_VECTOR_DOUBLE_FAULT 8
 
-#define QM_IRQ_RTC_0 2
-#define QM_IRQ_RTC_0_MASK_OFFSET 12
+#define QM_IRQ_RTC_0 (2)
+#define QM_IRQ_RTC_0_MASK_OFFSET (12)
 #define QM_IRQ_RTC_0_VECTOR 34
 
-#define QM_IRQ_AONPT_0 3
-#define QM_IRQ_AONPT_0_MASK_OFFSET 32
+#define QM_IRQ_AONPT_0 (3)
+#define QM_IRQ_AONPT_0_MASK_OFFSET (32)
 #define QM_IRQ_AONPT_0_VECTOR 35
 
-#define QM_IRQ_SPI_MASTER_0 7
-#define QM_IRQ_SPI_MASTER_0_MASK_OFFSET 3
+#define QM_IRQ_SPI_MASTER_0 (7)
+#define QM_IRQ_SPI_MASTER_0_MASK_OFFSET (3)
 #define QM_IRQ_SPI_MASTER_0_VECTOR 39
 
-#define QM_IRQ_PWM_0 11
-#define QM_IRQ_PWM_0_MASK_OFFSET 10
+#define QM_IRQ_PWM_0 (11)
+#define QM_IRQ_PWM_0_MASK_OFFSET (10)
 #define QM_IRQ_PWM_0_VECTOR 43
 
-#define QM_IRQ_AC 14
-#define QM_IRQ_AC_MASK_OFFSET 26
+#define QM_IRQ_AC (14)
+#define QM_IRQ_AC_MASK_OFFSET (26)
 #define QM_IRQ_AC_VECTOR 46
 
-#define QM_IRQ_ADC_0 9
-#define QM_IRQ_ADC_0_MASK_OFFSET 34
+#define QM_IRQ_ADC_0 (9)
+#define QM_IRQ_ADC_0_MASK_OFFSET (34)
 #define QM_IRQ_ADC_0_VECTOR 41
 
-#define QM_IRQ_ADC_PWR_0 19
-#define QM_IRQ_ADC_PWR_0_MASK_OFFSET 33
+#define QM_IRQ_ADC_PWR_0 (19)
+#define QM_IRQ_ADC_PWR_0_MASK_OFFSET (33)
 #define QM_IRQ_ADC_PWR_0_VECTOR 51
 
-#define QM_IRQ_WDT_0 16
-#define QM_IRQ_WDT_0_MASK_OFFSET 13
+#define QM_IRQ_WDT_0 (16)
+#define QM_IRQ_WDT_0_MASK_OFFSET (13)
 #define QM_IRQ_WDT_0_VECTOR 48
 
-#define QM_IRQ_GPIO_0 15
-#define QM_IRQ_GPIO_0_MASK_OFFSET 9
+#define QM_IRQ_GPIO_0 (15)
+#define QM_IRQ_GPIO_0_MASK_OFFSET (9)
 #define QM_IRQ_GPIO_0_VECTOR 47
 
-#define QM_IRQ_I2C_0 4
-#define QM_IRQ_I2C_0_MASK_OFFSET 0
+#define QM_IRQ_I2C_0 (4)
+#define QM_IRQ_I2C_0_MASK_OFFSET (0)
 #define QM_IRQ_I2C_0_VECTOR 36
 
-#define QM_IRQ_PIC_TIMER 10
+#define QM_IRQ_PIC_TIMER (10)
 /* No SCSS mask register for PIC timer: point to an unused register */
-#define QM_IRQ_PIC_TIMER_MASK_OFFSET 1
+#define QM_IRQ_PIC_TIMER_MASK_OFFSET (1)
 #define QM_IRQ_PIC_TIMER_VECTOR 42
 
-#define QM_IRQ_SRAM 17
-#define QM_IRQ_SRAM_MASK_OFFSET 29
+#define QM_IRQ_SRAM (17)
+#define QM_IRQ_SRAM_MASK_OFFSET (29)
 #define QM_IRQ_SRAM_VECTOR 49
 
-#define QM_IRQ_FLASH_0 18
-#define QM_IRQ_FLASH_0_MASK_OFFSET 30
+#define QM_IRQ_FLASH_0 (18)
+#define QM_IRQ_FLASH_0_MASK_OFFSET (30)
 #define QM_IRQ_FLASH_0_VECTOR 50
 
-#define QM_IRQ_UART_0 8
-#define QM_IRQ_UART_0_MASK_OFFSET 6
+#define QM_IRQ_UART_0 (8)
+#define QM_IRQ_UART_0_MASK_OFFSET (6)
 #define QM_IRQ_UART_0_VECTOR 40
 
-#define QM_IRQ_UART_1 6
-#define QM_IRQ_UART_1_MASK_OFFSET 7
+#define QM_IRQ_UART_1 (6)
+#define QM_IRQ_UART_1_MASK_OFFSET (7)
 #define QM_IRQ_UART_1_VECTOR 38
 
-#define QM_IRQ_DMA_0 13
-#define QM_IRQ_DMA_0_MASK_OFFSET 14
+#define QM_IRQ_DMA_0 (13)
+#define QM_IRQ_DMA_0_MASK_OFFSET (14)
 #define QM_IRQ_DMA_0_VECTOR 45
 
-#define QM_IRQ_DMA_1 12
-#define QM_IRQ_DMA_1_MASK_OFFSET 15
+#define QM_IRQ_DMA_1 (12)
+#define QM_IRQ_DMA_1_MASK_OFFSET (15)
 #define QM_IRQ_DMA_1_VECTOR 44
 
-#define QM_IRQ_DMA_ERR 0
-#define QM_IRQ_DMA_ERR_MASK_OFFSET 28
+#define QM_IRQ_DMA_ERR (0)
+#define QM_IRQ_DMA_ERR_MASK_OFFSET (28)
 #define QM_IRQ_DMA_ERR_VECTOR 32
 
 /**

@@ -25,7 +25,7 @@
 static uint8_t sample_window[QM_ADC_NUM];
 static qm_adc_resolution_t resolution[QM_ADC_NUM];
 
-static qm_adc_xfer_t *irq_xfer[QM_ADC_NUM];
+static qm_adc_xfer_t irq_xfer[QM_ADC_NUM];
 static uint32_t count[QM_ADC_NUM];
 static bool dummy_conversion = false;
 
@@ -54,8 +54,8 @@ static void qm_adc_isr_handler(const qm_adc_t adc)
 		/* Disable all interrupts. */
 		QM_ADC[adc].adc_intr_enable = 0;
 		/* Call the user callback. */
-		if (irq_xfer[adc]->callback) {
-			irq_xfer[adc]->callback(irq_xfer[adc]->callback_data,
+		if (irq_xfer[adc].callback) {
+			irq_xfer[adc].callback(irq_xfer[adc].callback_data,
 					       -EIO, QM_ADC_OVERFLOW,
 					       QM_ADC_TRANSFER);
 		}
@@ -69,16 +69,16 @@ static void qm_adc_isr_handler(const qm_adc_t adc)
 		/* Calculate the number of samples to read. */
 		samples_to_read = QM_ADC[adc].adc_fifo_count;
 		if (samples_to_read >
-		    (irq_xfer[adc]->samples_len - count[adc])) {
+		    (irq_xfer[adc].samples_len - count[adc])) {
 			samples_to_read =
-			    irq_xfer[adc]->samples_len - count[adc];
+			    irq_xfer[adc].samples_len - count[adc];
 		}
 
 		/* Copy data out of FIFO. The sample must be shifted right by
 		 * 2, 4 or 6 bits for 10, 8 and 6 bit resolution respectively
 		 * to get the correct value. */
 		for (i = 0; i < samples_to_read; i++) {
-			irq_xfer[adc]->samples[count[adc]] =
+			irq_xfer[adc].samples[count[adc]] =
 			    (QM_ADC[adc].adc_sample >>
 			     (2 * (3 - resolution[adc])));
 			count[adc]++;
@@ -86,15 +86,15 @@ static void qm_adc_isr_handler(const qm_adc_t adc)
 
 		/* Check if we have the requested number of samples, stop the
 		 * conversion and call the user callback function. */
-		if (count[adc] == irq_xfer[adc]->samples_len) {
+		if (count[adc] == irq_xfer[adc].samples_len) {
 			/* Stop the transfer. */
 			QM_ADC[adc].adc_cmd = QM_ADC_CMD_STOP_CONT;
 			/* Disable all interrupts. */
 			QM_ADC[adc].adc_intr_enable = 0;
 			/* Call the user callback. */
-			if (irq_xfer[adc]->callback) {
-				irq_xfer[adc]->callback(
-				    irq_xfer[adc]->callback_data, 0,
+			if (irq_xfer[adc].callback) {
+				irq_xfer[adc].callback(
+				    irq_xfer[adc].callback_data, 0,
 				    QM_ADC_COMPLETE, QM_ADC_TRANSFER);
 			}
 		}
@@ -109,7 +109,7 @@ static void qm_adc_isr_handler(const qm_adc_t adc)
 
 		/* Call the user callback if it is set. */
 		if (cal_callback[adc]) {
-			cal_callback[adc](irq_xfer[adc]->callback_data, 0,
+			cal_callback[adc](irq_xfer[adc].callback_data, 0,
 					  QM_ADC_IDLE, QM_ADC_CAL_COMPLETE);
 		}
 	}
@@ -127,7 +127,7 @@ static void qm_adc_isr_handler(const qm_adc_t adc)
 
 		/* Call the user callback if it is set. */
 		if (mode_callback[adc]) {
-			mode_callback[adc](irq_xfer[adc]->callback_data, 0,
+			mode_callback[adc](irq_xfer[adc].callback_data, 0,
 					   QM_ADC_IDLE, QM_ADC_MODE_CHANGED);
 		}
 	}
@@ -158,7 +158,7 @@ static void qm_adc_pwr_0_isr_handler(const qm_adc_t adc)
 	} else {
 		/* Call the user callback function */
 		if (mode_callback[adc]) {
-			mode_callback[adc](irq_xfer[adc]->callback_data, 0,
+			mode_callback[adc](irq_xfer[adc].callback_data, 0,
 					   QM_ADC_IDLE, QM_ADC_MODE_CHANGED);
 		}
 	}
@@ -403,7 +403,7 @@ int qm_adc_irq_convert(const qm_adc_t adc, qm_adc_xfer_t *xfer)
 	setup_seq_table(adc, xfer);
 
 	/* Copy the xfer struct so we can get access from the ISR. */
-	irq_xfer[adc] = xfer;
+	memcpy(&irq_xfer[adc], xfer, sizeof(qm_adc_xfer_t));
 
 	/* Clear all pending interrupts. */
 	QM_ADC[adc].adc_intr_status = QM_ADC_INTR_STATUS_CC |

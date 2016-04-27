@@ -18,11 +18,11 @@
 #define QM_SS_ADC_CMD_START_CAL (3)
 #define QM_SS_ADC_CMD_LOAD_CAL (4)
 
-/* Mode change delay is (clock speed * 5). */
+/* Mode change delay is clock speed * 5. */
 #define CALCULATE_DELAY() (clk_sys_get_ticks_per_us() * 5)
 
 static uint32_t adc_base[QM_SS_ADC_NUM] = {QM_SS_ADC_BASE};
-static qm_ss_adc_xfer_t *irq_xfer[QM_SS_ADC_NUM];
+static qm_ss_adc_xfer_t irq_xfer[QM_SS_ADC_NUM];
 
 static uint8_t sample_window[QM_SS_ADC_NUM];
 static qm_ss_adc_resolution_t resolution[QM_SS_ADC_NUM];
@@ -62,8 +62,8 @@ static void qm_ss_adc_isr_handler(const qm_ss_adc_t adc)
 
 	/* Calculate the number of samples to read. */
 	samples_to_read = FIFO_INTERRUPT_THRESHOLD;
-	if (samples_to_read > (irq_xfer[adc]->samples_len - count[adc])) {
-		samples_to_read = irq_xfer[adc]->samples_len - count[adc];
+	if (samples_to_read > (irq_xfer[adc].samples_len - count[adc])) {
+		samples_to_read = irq_xfer[adc].samples_len - count[adc];
 	}
 
 	/* Read the samples into the array. */
@@ -72,7 +72,7 @@ static void qm_ss_adc_isr_handler(const qm_ss_adc_t adc)
 		QM_SS_REG_AUX_OR(controller + QM_SS_ADC_SET,
 				 QM_SS_ADC_SET_POP_RX);
 		/* Read the sample in the array. */
-		irq_xfer[adc]->samples[count[adc]] =
+		irq_xfer[adc].samples[count[adc]] =
 		    (__builtin_arc_lr(controller + QM_SS_ADC_SAMPLE) >>
 		     (ADC_SAMPLE_SHIFT - resolution[adc]));
 		count[adc]++;
@@ -81,7 +81,7 @@ static void qm_ss_adc_isr_handler(const qm_ss_adc_t adc)
 	QM_SS_REG_AUX_OR(controller + QM_SS_ADC_CTRL,
 			 QM_SS_ADC_CTRL_CLR_DATA_A);
 
-	if (count[adc] == irq_xfer[adc]->samples_len) {
+	if (count[adc] == irq_xfer[adc].samples_len) {
 		/* Stop the sequencer. */
 		QM_SS_REG_AUX_NAND(controller + QM_SS_ADC_CTRL,
 				   QM_SS_ADC_CTRL_SEQ_START);
@@ -91,8 +91,8 @@ static void qm_ss_adc_isr_handler(const qm_ss_adc_t adc)
 				 QM_SS_ADC_CTRL_MSK_ALL_INT);
 
 		/* Call the user callback. */
-		if (irq_xfer[adc]->callback) {
-			irq_xfer[adc]->callback(irq_xfer[adc]->callback_data, 0,
+		if (irq_xfer[adc].callback) {
+			irq_xfer[adc].callback(irq_xfer[adc].callback_data, 0,
 					       QM_SS_ADC_COMPLETE,
 					       QM_SS_ADC_TRANSFER);
 		}
@@ -119,22 +119,22 @@ static void qm_ss_adc_isr_err_handler(const qm_ss_adc_t adc)
 
 	/* Call the user callback and pass it the status code. */
 	if (intstat & QM_SS_ADC_INTSTAT_OVERFLOW) {
-		if (irq_xfer[adc]->callback) {
-			irq_xfer[adc]->callback(irq_xfer[adc]->callback_data,
+		if (irq_xfer[adc].callback) {
+			irq_xfer[adc].callback(irq_xfer[adc].callback_data,
 					       -EIO, QM_SS_ADC_OVERFLOW,
 					       QM_SS_ADC_TRANSFER);
 		}
 	}
 	if (intstat & QM_SS_ADC_INTSTAT_UNDERFLOW) {
-		if (irq_xfer[adc]->callback) {
-			irq_xfer[adc]->callback(irq_xfer[adc]->callback_data,
+		if (irq_xfer[adc].callback) {
+			irq_xfer[adc].callback(irq_xfer[adc].callback_data,
 					       -EIO, QM_SS_ADC_UNDERFLOW,
 					       QM_SS_ADC_TRANSFER);
 		}
 	}
 	if (intstat & QM_SS_ADC_INTSTAT_SEQERROR) {
-		if (irq_xfer[adc]->callback) {
-			irq_xfer[adc]->callback(irq_xfer[adc]->callback_data,
+		if (irq_xfer[adc].callback) {
+			irq_xfer[adc].callback(irq_xfer[adc].callback_data,
 					       -EIO, QM_SS_ADC_SEQERROR,
 					       QM_SS_ADC_TRANSFER);
 		}
@@ -357,16 +357,11 @@ int qm_ss_adc_set_config(const qm_ss_adc_t adc,
 
 int qm_ss_adc_set_mode(const qm_ss_adc_t adc, const qm_ss_adc_mode_t mode)
 {
-	uint32_t creg, delay, intstat;
+	uint32_t creg, delay;
 	uint32_t controller = adc_base[adc];
 
 	QM_CHECK(adc < QM_SS_ADC_NUM, -EINVAL);
 	QM_CHECK(mode <= QM_SS_ADC_MODE_NORM_NO_CAL, -EINVAL);
-
-	/* Save the state of the mode interrupt mask. */
-	intstat = QM_SCSS_INT->int_adc_pwr_mask & QM_INT_ADC_PWR_MASK;
-	/* Mask the ADC mode change interrupt. */
-	QM_SCSS_INT->int_adc_pwr_mask |= QM_INT_ADC_PWR_MASK;
 
 	/* Calculate the delay. */
 	delay = CALCULATE_DELAY();
@@ -381,11 +376,6 @@ int qm_ss_adc_set_mode(const qm_ss_adc_t adc, const qm_ss_adc_mode_t mode)
 	/* Wait for the mode change to complete. */
 	while (!(__builtin_arc_lr(QM_SS_CREG_BASE + QM_SS_IO_CREG_SLV0_OBSR) &
 		 QM_SS_ADC_PWR_MODE_STS)) {
-	}
-
-	/* Restore the state of the mode change interrupt mask if necessary. */
-	if (!intstat) {
-		QM_SCSS_INT->int_adc_pwr_mask &= ~(QM_INT_ADC_PWR_MASK);
 	}
 
 	/* Perform a dummy conversion if transitioning to Normal Mode. */
@@ -425,13 +415,8 @@ int qm_ss_adc_irq_set_mode(const qm_ss_adc_t adc, const qm_ss_adc_mode_t mode,
 
 int qm_ss_adc_calibrate(const qm_ss_adc_t adc __attribute__((unused)))
 {
-	uint32_t creg, intstat;
+	uint32_t creg;
 	QM_CHECK(adc < QM_SS_ADC_NUM, -EINVAL);
-
-	/* Save the state of the calibration interrupt mask. */
-	intstat = QM_SCSS_INT->int_adc_calib_mask & QM_INT_ADC_CALIB_MASK;
-	/* Mask the ADC calibration interrupt. */
-	QM_SCSS_INT->int_adc_calib_mask |= QM_INT_ADC_CALIB_MASK;
 
 	/* Enable the ADC. */
 	enable_adc();
@@ -448,20 +433,12 @@ int qm_ss_adc_calibrate(const qm_ss_adc_t adc __attribute__((unused)))
 		 QM_SS_ADC_CAL_ACK)) {
 	}
 
-	/* Clear the calibration request reg and wait for it to complete. */
+	/* Clear the calibration request reg. */
 	QM_SS_REG_AUX_NAND(QM_SS_CREG_BASE + QM_SS_IO_CREG_MST0_CTRL,
 			   QM_SS_ADC_CAL_REQ);
-	while (__builtin_arc_lr(QM_SS_CREG_BASE + QM_SS_IO_CREG_SLV0_OBSR) &
-	       QM_SS_ADC_CAL_ACK) {
-	}
 
 	/* Disable the ADC. */
 	disable_adc();
-
-	/* Restore the state of the calibration interrupt mask if necessary. */
-	if (!intstat) {
-		QM_SCSS_INT->int_adc_calib_mask &= ~(QM_INT_ADC_CALIB_MASK);
-	}
 
 	return 0;
 }
@@ -494,15 +471,10 @@ int qm_ss_adc_irq_calibrate(const qm_ss_adc_t adc,
 int qm_ss_adc_set_calibration(const qm_ss_adc_t adc __attribute__((unused)),
 			      const qm_ss_adc_calibration_t cal_data)
 {
-	uint32_t creg, intstat;
+	uint32_t creg;
 
 	QM_CHECK(adc < QM_SS_ADC_NUM, -EINVAL);
 	QM_CHECK(cal_data <= QM_SS_ADC_CAL_MAX, -EINVAL);
-
-	/* Save the state of the calibration interrupt mask. */
-	intstat = QM_SCSS_INT->int_adc_calib_mask & QM_INT_ADC_CALIB_MASK;
-	/* Mask the ADC calibration interrupt. */
-	QM_SCSS_INT->int_adc_calib_mask |= QM_INT_ADC_CALIB_MASK;
 
 	/* Issue the load calibrate command. */
 	creg = __builtin_arc_lr(QM_SS_CREG_BASE + QM_SS_IO_CREG_MST0_CTRL);
@@ -518,17 +490,9 @@ int qm_ss_adc_set_calibration(const qm_ss_adc_t adc __attribute__((unused)),
 		 QM_SS_ADC_CAL_ACK)) {
 	}
 
-	/* Clear the calibration request reg and wait for it to complete. */
+	/* Clear the calibration request reg. */
 	QM_SS_REG_AUX_NAND(QM_SS_CREG_BASE + QM_SS_IO_CREG_MST0_CTRL,
 			   QM_SS_ADC_CAL_REQ);
-	while (__builtin_arc_lr(QM_SS_CREG_BASE + QM_SS_IO_CREG_SLV0_OBSR) &
-	       QM_SS_ADC_CAL_ACK) {
-	}
-
-	/* Restore the state of the calibration interrupt mask if necessary. */
-	if (!intstat) {
-		QM_SCSS_INT->int_adc_calib_mask &= ~(QM_INT_ADC_CALIB_MASK);
-	}
 
 	return 0;
 }
@@ -636,7 +600,7 @@ int qm_ss_adc_irq_convert(const qm_ss_adc_t adc, qm_ss_adc_xfer_t *xfer)
 	setup_seq_table(adc, xfer, false);
 
 	/* Copy the xfer struct so we can get access from the ISR. */
-	irq_xfer[adc] = xfer;
+	memcpy(&irq_xfer[adc], xfer, sizeof(qm_ss_adc_xfer_t));
 
 	/* Set count back to 0. */
 	count[adc] = 0;
