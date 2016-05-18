@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Intel Corporation
+ * Copyright (c) Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef __INC_BOARD_H
-#define __INC_BOARD_H
+#ifndef _SHARED_MEM_H_
+#define _SHARED_MEM_H_
 
-#include <soc.h>
+/* Start of the shared RAM */
+#define SHARED_ADDR_START 0xA8000000
 
-#endif /* __INC_BOARD_H */
+struct shared_mem {
+	uint32_t arc_start;
+	uint32_t flags;
+};
+
+#define ARC_READY	(1 << 0)
+
+#define shared_data ((volatile struct shared_mem *) SHARED_ADDR_START)
+
+#endif
