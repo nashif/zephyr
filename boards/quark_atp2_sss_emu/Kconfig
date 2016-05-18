@@ -1,7 +1,0 @@
-
-if BOARD_QUARK_ATP2_SSS_EMU
-
-config BOARD
-        default "quark_atp2_sss_emu"
-
-endif # BOARD_QUARK_ATP2_SSS_EMU

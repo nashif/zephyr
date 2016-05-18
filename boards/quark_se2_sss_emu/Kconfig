@@ -1,0 +1,7 @@
+
+if BOARD_QUARK_SE2_SSS_EMU
+
+config BOARD
+	default "quark_se2_sss_emu"
+
+endif # BOARD_QUARK_SE2_SSS_EMU
