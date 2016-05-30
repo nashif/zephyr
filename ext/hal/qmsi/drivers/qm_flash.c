@@ -72,6 +72,14 @@ int qm_flash_word_write(const qm_flash_t flash, const qm_flash_region_t region,
 
 	qm_flash_reg_t *const controller = QM_FLASH[flash];
 
+	/* Before issuing flash erase/program operation:
+	 1. FW must disable all interrupts except the flash interrupt
+	    that indicates completion of erase/program operation.
+	 2. Issue the MMIO write that triggers the program or erase operation.
+	 3. Issue HALT instruction.
+	 As part of program/erase completion ISR, interrupts can be re-enabled*/
+	qm_irq_disable();
+
 	/* Rom and flash write registers are laid out the same, but different */
 	/* locations in memory, so point to those to have the same function to*/
 	/* update page section based on main or rom. */
@@ -110,6 +118,8 @@ int qm_flash_word_write(const qm_flash_t flash, const qm_flash_region_t region,
 	/* Wait for write to finish. */
 	while (!(controller->flash_stts & WR_DONE))
 		;
+	/*Re-enable interrupts as we are done writing*/
+	qm_irq_enable();
 	return 0;
 }
 
@@ -127,6 +137,14 @@ int qm_flash_page_write(const qm_flash_t flash, const qm_flash_region_t region,
 	volatile uint32_t *p_wr_data, *p_wr_ctrl;
 
 	qm_flash_reg_t *const controller = QM_FLASH[flash];
+
+	/* Before issuing flash erase/program operation:
+	 1. FW must disable all interrupts except the flash interrupt
+	    that indicates completion of erase/program operation.
+	 2. Issue the MMIO write that triggers the program or erase operation.
+	 3. Issue HALT instruction.
+	 As part of program/erase completion ISR, interrupts can be re-enabled*/
+	qm_irq_disable();
 
 	/* Rom and flash write registers are laid out the same, but different */
 	/* locations in memory, so point to those to have the same function to*/
@@ -172,6 +190,9 @@ int qm_flash_page_write(const qm_flash_t flash, const qm_flash_region_t region,
 		while (!(controller->flash_stts & WR_DONE))
 			;
 	}
+	/*Re-enable interrupts as we are done writing*/
+	qm_irq_enable();
+
 	return 0;
 }
 
@@ -190,6 +211,14 @@ int qm_flash_page_update(const qm_flash_t flash, const qm_flash_region_t region,
 	volatile uint32_t *p_flash = NULL, *p_wr_data, *p_wr_ctrl;
 
 	qm_flash_reg_t *const controller = QM_FLASH[flash];
+
+	/* Before issuing flash erase/program operation:
+	 1. FW must disable all interrupts except the flash interrupt
+	    that indicates completion of erase/program operation.
+	 2. Issue the MMIO write that triggers the program or erase operation.
+	 3. Issue HALT instruction.
+	 As part of program/erase completion ISR, interrupts can be re-enabled*/
+	qm_irq_disable();
 
 	/* Rom and flash write registers are laid out the same, but different */
 	/* locations in memory, so point to those to have the same function to*/
@@ -269,6 +298,8 @@ int qm_flash_page_update(const qm_flash_t flash, const qm_flash_region_t region,
 		while (!(controller->flash_stts & WR_DONE))
 			;
 	}
+	/*Re-enable interrupts as we are done updating*/
+	qm_irq_enable();
 	return 0;
 }
 
@@ -280,6 +311,14 @@ int qm_flash_page_erase(const qm_flash_t flash, const qm_flash_region_t region,
 	QM_CHECK(page_num <= QM_FLASH_MAX_PAGE_NUM, -EINVAL);
 
 	qm_flash_reg_t *const controller = QM_FLASH[flash];
+
+	/* Before issuing flash erase/program operation:
+	 1. FW must disable all interrupts except the flash interrupt
+	    that indicates completion of erase/program operation.
+	 2. Issue the MMIO write that triggers the program or erase operation.
+	 3. Issue HALT instruction.
+	 As part of program/erase completion ISR, interrupts can be re-enabled*/
+	qm_irq_disable();
 
 	switch (region) {
 
@@ -305,7 +344,8 @@ int qm_flash_page_erase(const qm_flash_t flash, const qm_flash_region_t region,
 
 	while (!(controller->flash_stts & ER_DONE))
 		;
-
+	/*Re-enable interrupts as we are done erasing*/
+	qm_irq_enable();
 	return 0;
 }
 
@@ -315,6 +355,14 @@ int qm_flash_mass_erase(const qm_flash_t flash, const uint8_t include_rom)
 
 	qm_flash_reg_t *const controller = QM_FLASH[flash];
 
+	/* Before issuing flash erase/program operation:
+	 1. FW must disable all interrupts except the flash interrupt
+	    that indicates completion of erase/program operation.
+	 2. Issue the MMIO write that triggers the program or erase operation.
+	 3. Issue HALT instruction.
+	 As part of program/erase completion ISR, interrupts can be re-enabled*/
+	qm_irq_disable();
+
 	/* Erase all the Flash pages */
 	if (include_rom) {
 		controller->ctrl |= MASS_ERASE_INFO;
@@ -322,5 +370,8 @@ int qm_flash_mass_erase(const qm_flash_t flash, const uint8_t include_rom)
 	controller->ctrl |= MASS_ERASE;
 	while (!(controller->flash_stts & ER_DONE))
 		;
+	/*Re-enable interrupts as we are done erasing*/
+	qm_irq_enable();
+
 	return 0;
 }
