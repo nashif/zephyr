@@ -184,5 +184,12 @@ config SPI_1_IRQ_PRI
 	default 1
 endif # SPI
 
+if ADC
+config ADC_QMSI_SS
+	def_bool y
+config ADC_QMSI
+	def_bool n
+endif
+
 
 endif #SOC_QUARK_SE_ARC
