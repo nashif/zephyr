@@ -38,7 +38,7 @@ static void *callback_data[QM_WDT_NUM];
 QM_ISR_DECLARE(qm_wdt_isr_0)
 {
 	if (callback[QM_WDT_0]) {
-		callback[QM_WDT_0](callback_data);
+		callback[QM_WDT_0](callback_data[QM_WDT_0]);
 	}
 	QM_ISR_EOI(QM_IRQ_WDT_0_VECTOR);
 }
