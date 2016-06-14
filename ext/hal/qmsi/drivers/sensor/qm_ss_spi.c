@@ -257,13 +257,13 @@ int qm_ss_spi_irq_transfer(const qm_ss_spi_t spi,
 	/* Unmask all interrupts */
 	__builtin_arc_sr(QM_SS_SPI_INTR_ALL, base[spi] + QM_SS_SPI_INTR_MASK);
 
+	/* Enable SPI device */
+	QM_SS_REG_AUX_OR(base[spi] + QM_SS_SPI_SPIEN, QM_SS_SPI_SPIEN_EN);
+
 	/* RX only transfers need a dummy frame byte to be sent. */
 	if (tmode == QM_SS_SPI_TMOD_RX) {
 		fifo_write(spi, (uint8_t *)&dummy_frame, bytes);
 	}
-
-	/* Enable SPI device */
-	QM_SS_REG_AUX_OR(base[spi] + QM_SS_SPI_SPIEN, QM_SS_SPI_SPIEN_EN);
 
 	return 0;
 }
