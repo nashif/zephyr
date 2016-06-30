@@ -73,8 +73,8 @@ struct interrupt_frame;
 
 #define REG_VAL(addr) (*((volatile uint32_t *)addr))
 
-/* QM_ASSERT is not currently available for Zephyr on the sensor subsystem. */
-#define ASSERT_EXCLUDE (ZEPHYR_OS & QM_SENSOR)
+/* QM_ASSERT is not currently available for Zephyr. */
+#define ASSERT_EXCLUDE (ZEPHYR_OS)
 
 /**
  * In our reference implementation, by default DEBUG enables QM_PUTS and

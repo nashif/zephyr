@@ -674,6 +674,10 @@ qm_scss_mailbox_reg_t test_scss_mailbox;
 #define QM_IRQ_PWM_0_MASK_OFFSET 10
 #define QM_IRQ_PWM_0_VECTOR 45
 
+#define QM_IRQ_USB_0 (10)
+#define QM_IRQ_USB_0_MASK_OFFSET (11)
+#define QM_IRQ_USB_0_VECTOR 46
+
 #define QM_IRQ_SPI_MASTER_0 2
 #define QM_IRQ_SPI_MASTER_0_MASK_OFFSET 3
 #define QM_IRQ_SPI_MASTER_0_VECTOR 38
@@ -1607,6 +1611,9 @@ extern qm_dma_reg_t *qm_dma[QM_DMA_NUM];
  * @name USB
  * @{
  */
+
+/** USB register base address */
+#define QM_USB_BASE (0xB0500000)
 
 /* USB PLL enable bit*/
 #define QM_USB_PLL_PDLD BIT(0)
