@@ -39,27 +39,9 @@
 #include <stdbool.h>
 #include <errno.h>
 
-#if (ZEPHYR_OS)
-#include "sections.h"
-#endif
-
 #define QM_R volatile const
 #define QM_W volatile
 #define QM_RW volatile
-
-/**
- * __noinit attribute for uninitialized variables.
- *
- * Declare an uninitialized variable like this:
- *   int __noinit var;
- *
- * If a __noinit variable is initialized at declaration time, the
- * initialization value is simply discarded.
- *
- */
-#ifndef __noinit
-#define __noinit __attribute__((section(".noinit")))
-#endif
 
 /* __attribute__((interrupt)) API requires that the interrupt handlers
  * take an interrupt_frame parameter, but it is still undefined, so add

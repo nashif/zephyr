@@ -54,6 +54,52 @@
 #define QM_SS_SLEEP_MODE_CORE_OFF_TIMER_OFF (0x20)
 #define QM_SS_SLEEP_MODE_CORE_TIMERS_RTC_OFF (0x60)
 
+void ss_power_soc_lpss_enable()
+{
+	uint32_t creg_mst0_ctrl = 0;
+
+	creg_mst0_ctrl = __builtin_arc_lr(QM_SS_CREG_BASE);
+
+	/*
+	 * Clock gate the sensor peripherals at CREG level.
+	 * This clock gating is independent of the peripheral-specific clock
+	 * gating provided in ss_clk.h .
+	 */
+	creg_mst0_ctrl |= (QM_SS_IO_CREG_MST0_CTRL_ADC_CLK_GATE |
+			   QM_SS_IO_CREG_MST0_CTRL_I2C1_CLK_GATE |
+			   QM_SS_IO_CREG_MST0_CTRL_I2C0_CLK_GATE |
+			   QM_SS_IO_CREG_MST0_CTRL_SPI1_CLK_GATE |
+			   QM_SS_IO_CREG_MST0_CTRL_SPI0_CLK_GATE);
+
+	__builtin_arc_sr(creg_mst0_ctrl, QM_SS_CREG_BASE);
+
+	QM_SCSS_CCU->ccu_lp_clk_ctl |= QM_SCSS_CCU_SS_LPS_EN;
+	SOC_WATCH_LOG_EVENT(SOCW_EVENT_REGISTER, SOCW_REG_CCU_LP_CLK_CTL);
+}
+
+void ss_power_soc_lpss_disable()
+{
+	uint32_t creg_mst0_ctrl = 0;
+
+	creg_mst0_ctrl = __builtin_arc_lr(QM_SS_CREG_BASE);
+
+	/*
+	 * Restore clock gate of the sensor peripherals at CREG level.
+	 * CREG is not used anywhere else so we can safely restore
+	 * the configuration to its POR default.
+	 */
+	creg_mst0_ctrl &= ~(QM_SS_IO_CREG_MST0_CTRL_ADC_CLK_GATE |
+			    QM_SS_IO_CREG_MST0_CTRL_I2C1_CLK_GATE |
+			    QM_SS_IO_CREG_MST0_CTRL_I2C0_CLK_GATE |
+			    QM_SS_IO_CREG_MST0_CTRL_SPI1_CLK_GATE |
+			    QM_SS_IO_CREG_MST0_CTRL_SPI0_CLK_GATE);
+
+	__builtin_arc_sr(creg_mst0_ctrl, QM_SS_CREG_BASE);
+
+	QM_SCSS_CCU->ccu_lp_clk_ctl &= ~QM_SCSS_CCU_SS_LPS_EN;
+	SOC_WATCH_LOG_EVENT(SOCW_EVENT_REGISTER, SOCW_REG_CCU_LP_CLK_CTL);
+}
+
 /* Enter SS1 :
  * SLEEP + sleep operand
  * __builtin_arc_sleep is not used here as it does not propagate sleep operand.
