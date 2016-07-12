@@ -283,7 +283,7 @@ SECTION_FUNC(TEXT, _IntExitWithEoi)
 	popl %eax			/* Pushed onto stack by stub */
 #if CONFIG_EOI_FORWARDING_BUG
 	call	_lakemont_eoi
-#endif
+#else
 	xorl %eax, %eax			/* zeroes eax */
 	/* TODO not great to have hard-coded LOAPIC stuff here. When
 	 * we get around to introducing the interrupt controller abstraction
@@ -293,6 +293,7 @@ SECTION_FUNC(TEXT, _IntExitWithEoi)
 	 */
 	loapic_eoi_reg = (CONFIG_LOAPIC_BASE_ADDRESS + LOAPIC_EOI)
 	movl %eax, loapic_eoi_reg	/* tell LOAPIC the IRQ is handled */
+#endif
 	/* fall through to _IntExit */
 
 /**
