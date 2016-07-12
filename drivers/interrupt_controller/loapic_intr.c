@@ -420,6 +420,8 @@ void _loapic_irq_disable(unsigned int irq)
  * in service. And the higher vector is the indentification of the interrupt
  * being currently processed.
  *
+ * This function must be called with interrupts locked in interrupt context.
+ *
  * ISR registers' offsets:
  * --------------------
  * | Offset | bits    |
@@ -434,24 +436,26 @@ void _loapic_irq_disable(unsigned int irq)
  * | 0170H  | 224:255 |
  * --------------------
  *
- * @return The vector of the interrupt that is currently being processed.
+ * @return The vector of the interrupt that is currently being processed, or
+ *         -1 if no vector is in service.
  */
 int _loapic_isr_vector_get(void)
 {
 	/* pointer to ISR vector table */
-	volatile int *pReg;
-	int block = 0;
+	int pReg, ret, block;
 
-	while (block < 8) {
-		pReg = (volatile int *)
-		(CONFIG_LOAPIC_BASE_ADDRESS + LOAPIC_ISR + (block * 0x10));
-		if (*pReg) {
-			return (block * 32) + (find_lsb_set(*pReg) - 1);
+	ret = -1;
+
+	for (block = 7; block >= 0; block--) {
+		pReg = sys_read32(CONFIG_LOAPIC_BASE_ADDRESS + LOAPIC_ISR +
+				  (block * 0x10));
+		if (pReg) {
+			ret = (block * 32) + (find_msb_set(pReg) - 1);
+			break;
 		}
-		block++;
 	}
 
-	return 0;
+	return ret;
 }
 
 #ifdef CONFIG_DEVICE_POWER_MANAGEMENT
