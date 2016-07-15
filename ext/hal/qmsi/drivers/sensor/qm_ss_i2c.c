@@ -80,6 +80,7 @@ static void qm_ss_i2c_isr_handler(const qm_ss_i2c_t i2c)
 	int rc = 0;
 	uint32_t read_buffer_remaining = transfer->rx_len - i2c_read_pos[i2c];
 	uint32_t write_buffer_remaining = transfer->tx_len - i2c_write_pos[i2c];
+	uint32_t missing_bytes;
 
 	/* Check for errors */
 	QM_ASSERT(!(__builtin_arc_lr(controller + QM_SS_I2C_INTR_STAT) &
@@ -222,14 +223,26 @@ static void qm_ss_i2c_isr_handler(const qm_ss_i2c_t i2c)
 			 */
 		}
 
-		/* TX read command */
+		/* If missing_bytes is not null, then that means we are already
+		 * waiting for some bytes after sending read request on the
+		 * previous interruption. We have to take into account this
+		 * value in order to not send too much request so we won't fall
+		 * into rx overflow */
+		missing_bytes = read_buffer_remaining - i2c_read_cmd_send[i2c];
+
+		/* Sanity check: The number of read data but not processed
+		 * cannot be more than the number of expected bytes  */
+		QM_ASSERT(__builtin_arc_lr(controller + QM_SS_I2C_RXFLR) <=
+			  missing_bytes);
+
+		/* count_tx is the remaining size in the fifo */
 		count_tx = QM_SS_I2C_FIFO_SIZE -
-			   (__builtin_arc_lr(controller + QM_SS_I2C_TXFLR) +
-			    (__builtin_arc_lr(controller + QM_SS_I2C_RXFLR)));
-		/* count_tx is the remaining size in the fifo, their could be
-		 * one more byte left in the HW buffer. */
-		if (count_tx) {
-			count_tx--;
+			   __builtin_arc_lr(controller + QM_SS_I2C_TXFLR);
+
+		if (count_tx > missing_bytes) {
+			count_tx -= missing_bytes;
+		} else {
+			count_tx = 0;
 		}
 
 		while (i2c_read_cmd_send[i2c] &&

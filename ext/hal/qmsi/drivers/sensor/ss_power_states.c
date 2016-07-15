@@ -107,11 +107,14 @@ void ss_power_soc_lpss_disable()
 void ss_power_cpu_ss1(const ss_power_cpu_ss1_mode_t mode)
 {
 	/* The sensor cannot be woken up with an edge triggered
-	 * interrupt from the RTC.
+	 * interrupt from the RTC and the AON Counter.
 	 * Switch to Level triggered interrupts and restore
-	 * the setting after when waking up.
+	 * the setting when waking up.
 	 */
 	__builtin_arc_sr(QM_IRQ_RTC_0_VECTOR, QM_SS_AUX_IRQ_SELECT);
+	__builtin_arc_sr(QM_SS_IRQ_LEVEL_SENSITIVE, QM_SS_AUX_IRQ_TRIGGER);
+
+	__builtin_arc_sr(QM_IRQ_AONPT_0_VECTOR, QM_SS_AUX_IRQ_SELECT);
 	__builtin_arc_sr(QM_SS_IRQ_LEVEL_SENSITIVE, QM_SS_AUX_IRQ_TRIGGER);
 
 	/* Enter SS1 */
@@ -130,8 +133,11 @@ void ss_power_cpu_ss1(const ss_power_cpu_ss1_mode_t mode)
 		break;
 	}
 
-	/* Restore the RTC to edge interrupt after when waking up. */
+	/* Restore the RTC and AONC to edge interrupt after when waking up. */
 	__builtin_arc_sr(QM_IRQ_RTC_0_VECTOR, QM_SS_AUX_IRQ_SELECT);
+	__builtin_arc_sr(QM_SS_IRQ_EDGE_SENSITIVE, QM_SS_AUX_IRQ_TRIGGER);
+
+	__builtin_arc_sr(QM_IRQ_AONPT_0_VECTOR, QM_SS_AUX_IRQ_SELECT);
 	__builtin_arc_sr(QM_SS_IRQ_EDGE_SENSITIVE, QM_SS_AUX_IRQ_TRIGGER);
 }
 
@@ -142,11 +148,14 @@ void ss_power_cpu_ss1(const ss_power_cpu_ss1_mode_t mode)
 void ss_power_cpu_ss2(void)
 {
 	/* The sensor cannot be woken up with an edge triggered
-	 * interrupt from the RTC.
+	 * interrupt from the RTC and the AON Counter.
 	 * Switch to Level triggered interrupts and restore
-	 * the setting after when waking up.
+	 * the setting when waking up.
 	 */
 	__builtin_arc_sr(QM_IRQ_RTC_0_VECTOR, QM_SS_AUX_IRQ_SELECT);
+	__builtin_arc_sr(QM_SS_IRQ_LEVEL_SENSITIVE, QM_SS_AUX_IRQ_TRIGGER);
+
+	__builtin_arc_sr(QM_IRQ_AONPT_0_VECTOR, QM_SS_AUX_IRQ_SELECT);
 	__builtin_arc_sr(QM_SS_IRQ_LEVEL_SENSITIVE, QM_SS_AUX_IRQ_TRIGGER);
 
 	/* Enter SS2 */
@@ -154,7 +163,10 @@ void ss_power_cpu_ss2(void)
 			     :
 			     : "i"(QM_SS_SLEEP_MODE_CORE_TIMERS_RTC_OFF));
 
-	/* Restore the RTC to edge interrupt after when waking up. */
+	/* Restore the RTC and AONC to edge interrupt after when waking up. */
 	__builtin_arc_sr(QM_IRQ_RTC_0_VECTOR, QM_SS_AUX_IRQ_SELECT);
+	__builtin_arc_sr(QM_SS_IRQ_EDGE_SENSITIVE, QM_SS_AUX_IRQ_TRIGGER);
+
+	__builtin_arc_sr(QM_IRQ_AONPT_0_VECTOR, QM_SS_AUX_IRQ_SELECT);
 	__builtin_arc_sr(QM_SS_IRQ_EDGE_SENSITIVE, QM_SS_AUX_IRQ_TRIGGER);
 }
