@@ -280,6 +280,8 @@ BRANCH_LABEL(_HandleIdle)
  * the stack and EOI is set to the LOAPIC.
  */
 SECTION_FUNC(TEXT, _IntExitWithEoi)
+
+	cli			/* disable interrupts */
 	popl %eax			/* Pushed onto stack by stub */
 #if CONFIG_EOI_FORWARDING_BUG
 	call	_lakemont_eoi
@@ -294,7 +296,7 @@ SECTION_FUNC(TEXT, _IntExitWithEoi)
 	loapic_eoi_reg = (CONFIG_LOAPIC_BASE_ADDRESS + LOAPIC_EOI)
 	movl %eax, loapic_eoi_reg	/* tell LOAPIC the IRQ is handled */
 #endif
-	/* fall through to _IntExit */
+	jmp _IntExitWithCli
 
 /**
  *
@@ -321,6 +323,8 @@ SECTION_FUNC(TEXT, _IntExitWithEoi)
 BRANCH_LABEL(_IntExit)
 
 	cli			/* disable interrupts */
+
+BRANCH_LABEL(_IntExitWithCli)
 #ifdef CONFIG_INT_LATENCY_BENCHMARK
 	call	_int_latency_start
 #endif
