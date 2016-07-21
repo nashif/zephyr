@@ -97,9 +97,10 @@ void _execute_handler(int_handler_t function, int context)
 	enable_nested_interrupts();
 
 	(*function)(context);
-	_loapic_eoi();
 
 	disable_nested_interrupts();
+
+	_loapic_eoi();
 	_nanokernel.nested--;
 
 	/* Are we returning to a task or fiber context? If so we need
