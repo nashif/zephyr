@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <nanokernel.h>
+
 struct bt_conn {
 	uint16_t handle;
 	uint8_t role;
@@ -36,4 +38,5 @@ struct bt_conn {
 	} state;
 
 	void *gatt_private;
+	struct nano_sem gatt_notif_sem;
 };
