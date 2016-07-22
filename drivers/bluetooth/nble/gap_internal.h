@@ -63,14 +63,21 @@ struct nble_log_s {
 
 void nble_log(const struct nble_log_s *par, char *data, uint8_t len);
 
-void on_nble_up(void);
-
 struct nble_common_rsp {
 	int status;
 	void *user_data;
 };
 
+struct bt_local_addr {
+	bt_addr_le_t id_addr;
+#if defined(CONFIG_BLUETOOTH_PRIVACY)
+	bt_addr_le_t rpa;
+#endif
+};
+
 void on_nble_common_rsp(const struct nble_common_rsp *rsp);
+
+void nble_panic_req(void);
 
 struct nble_version {
 	uint8_t version;
@@ -78,6 +85,7 @@ struct nble_version {
 	uint8_t minor;
 	uint8_t patch;
 	char version_string[20];
+	uint8_t build_hash[4];
 	uint8_t hash[4];
 };
 
@@ -245,18 +253,6 @@ struct nble_gap_disconnect_req {
 
 void nble_gap_disconnect_req(const struct nble_gap_disconnect_req *req);
 
-struct nble_sm_config_req {
-	/* Security options (see BLE_GAP_SM_OPTIONS) */
-	uint8_t options;
-	/* I/O Capabilities (see BLE_GAP_IO_CAPABILITIES) */
-	uint8_t io_caps;
-	/* Maximum encryption key size (7-16) */
-	uint8_t key_size;
-	uint8_t oob_present;
-};
-
-void nble_sm_config_req(const struct nble_sm_config_req *req);
-
 struct nble_sm_config_rsp {
 	void *user_data;
 	int status;
@@ -267,7 +263,11 @@ void on_nble_sm_config_rsp(struct nble_sm_config_rsp *rsp);
 
 struct nble_sm_pairing_param {
 	/* authentication level see BLE_GAP_SM_OPTIONS */
-	uint8_t auth_level;
+	uint8_t auth;
+	uint8_t io_capabilities;
+	uint8_t max_key_size;
+	uint8_t min_key_size;
+	uint8_t oob_flag;
 };
 
 struct nble_sm_security_req {
@@ -317,6 +317,7 @@ void on_nble_sm_common_rsp(const struct nble_sm_common_rsp *rsp);
 struct nble_sm_pairing_response_req {
 	struct bt_conn *conn;
 	uint16_t conn_handle;
+	struct nble_sm_pairing_param params;
 };
 
 void nble_sm_pairing_response_req(const struct nble_sm_pairing_response_req *req);
@@ -503,8 +504,10 @@ struct nble_sm_status_evt {
 void on_nble_sm_status_evt(const struct nble_sm_status_evt *evt);
 
 struct nble_sec_param {
-	uint8_t mitm;
-	uint8_t remote_io;
+	uint8_t auth;
+	uint8_t io_capabilities;
+	uint8_t min_key_size;
+	uint8_t max_key_size;
 };
 
 struct nble_sm_pairing_request_evt {
@@ -549,6 +552,27 @@ struct nble_sm_bond_info_rsp {
 void on_nble_sm_bond_info_rsp(const struct nble_sm_bond_info_rsp *rsp,
 			      const bt_addr_le_t *peer_addr, uint16_t len);
 
+struct nble_uart_test_req {
+	/* Test type: 1 = start peer test, 2 = loopback test */
+	uint16_t test_type;
+	/* Test type 1: Number of test events packets sent from peer to host */
+	uint16_t nb_loops;
+	/* Test type 1: The maximum delay between packets (in ms) */
+	uint16_t max_delay;
+	/* Test type 1: The maximum length of packets (in bytes) */
+	uint16_t max_len;
+};
+
+void nble_uart_test_req(const struct nble_uart_test_req *req,
+			const uint8_t *data, uint8_t len);
+
+struct nble_uart_test_evt {
+	/* Number of loops executed */
+	uint16_t nb_loops;
+};
+
+void on_nble_uart_test_evt(const struct nble_uart_test_evt *evt,
+			   const uint8_t *data, uint8_t len);
 
 /*
  * The following functions are NOT RPC functions
@@ -558,6 +582,8 @@ void ble_gap_get_bonding_info(ble_bond_info_cb_t func, void *user_data,
 			      bool include_bonded_addrs);
 
 void ble_gap_get_version(ble_get_version_cb_t func);
+
+void ble_gap_get_bda_info(struct bt_local_addr *addr);
 
 enum NBLE_GAP_RSSI_OPS {
 	NBLE_GAP_RSSI_DISABLE_REPORT = 0,

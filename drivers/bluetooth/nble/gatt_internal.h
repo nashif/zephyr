@@ -23,6 +23,8 @@
  */
 #define BLE_GATTS_MAX_SERVICES 10
 
+void bt_gatt_init(void);
+
 /*
  * GATT Attribute stream structure.
  *
@@ -45,6 +47,8 @@ struct nble_gatts_register_req {
 	struct bt_gatt_attr *attr_base;
 	/* Number of of attributes in this service */
 	uint8_t attr_count;
+	/* Size of struct bt_gatt_attr */
+	uint8_t attr_size;
 };
 
 void nble_gatts_register_req(const struct nble_gatts_register_req *req,
@@ -83,10 +87,12 @@ void on_nble_gatts_write_evt(const struct nble_gatts_write_evt *evt,
 
 struct nble_gatts_write_reply_req {
 	uint16_t conn_handle;
+	uint16_t offset;
 	int32_t status;
 };
 
-void nble_gatts_write_reply_req(const struct nble_gatts_write_reply_req *req);
+void nble_gatts_write_reply_req(const struct nble_gatts_write_reply_req *req,
+				const uint8_t *data, uint8_t len);
 
 struct nble_gatts_write_exec_evt {
 	uint16_t conn_handle;

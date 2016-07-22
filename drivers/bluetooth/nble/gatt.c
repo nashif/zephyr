@@ -134,6 +134,7 @@ int bt_gatt_register(struct bt_gatt_attr *attrs, size_t count)
 	svc_count++;
 	param.attr_base = attrs;
 	param.attr_count = count;
+	param.attr_size = sizeof(struct bt_gatt_attr);
 
 	attr_table_size = 0;
 
@@ -316,12 +317,16 @@ ssize_t bt_gatt_attr_read_included(struct bt_conn *conn,
 				   const struct bt_gatt_attr *attr,
 				   void *buf, uint16_t len, uint16_t offset)
 {
-	struct bt_gatt_attr *incl = attr->user_data;
+	/*
+	 * bt_gatt_attr_read uses memcpy to copy the address of the attr
+	 * to the buf, so pointer to pointer is needed here.
+	 */
+	struct bt_gatt_attr **incl = (struct bt_gatt_attr **)&attr->user_data;
 
 	/* nble gatt register case reading user_data. */
 	if (!conn) {
 		return bt_gatt_attr_read(conn, attr, buf, len, offset, incl,
-				sizeof(incl));
+					 sizeof(*incl));
 	}
 
 	/* nble handles gattc reads internally */
@@ -489,6 +494,12 @@ static int notify(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 	nble_gatts_notify_req(&notif, (uint8_t *)data, len);
 
 	return 0;
+}
+
+void on_nble_gatts_notify_tx_evt(const struct nble_gatts_notify_tx_evt *evt)
+{
+	BT_DBG("conn handle %u status %d attr %p", evt->conn_handle,
+	       evt->status, evt->attr);
 }
 
 static int indicate(struct bt_conn *conn,
@@ -1414,8 +1425,9 @@ void on_nble_gatts_write_evt(const struct nble_gatts_write_evt *ev,
 reply:
 	if (ev->flag & NBLE_GATT_WR_FLAG_REPLY) {
 		reply_data.conn_handle = ev->conn_handle;
+		reply_data.offset = ev->offset;
 
-		nble_gatts_write_reply_req(&reply_data);
+		nble_gatts_write_reply_req(&reply_data, buf, buflen);
 	}
 
 	if (conn) {
@@ -1475,7 +1487,7 @@ void on_nble_gatts_write_exec_evt(const struct nble_gatts_write_exec_evt *evt)
 	rsp.status = flush_data.status;
 
 reply:
-	nble_gatts_write_reply_req(&rsp);
+	nble_gatts_write_reply_req(&rsp, NULL, 0);
 
 	bt_conn_unref(conn);
 }
@@ -1517,6 +1529,16 @@ void on_nble_gatts_read_evt(const struct nble_gatts_read_evt *ev)
 	reply_data.conn_handle = ev->conn_handle;
 
 	nble_gatts_read_reply_req(&reply_data, data, len);
+}
+
+void bt_gatt_init(void)
+{
+	BT_DBG("");
+
+#if CONFIG_BLUETOOTH_ATT_PREPARE_COUNT > 0
+	nano_fifo_init(&queue);
+	net_buf_pool_init(prep_pool);
+#endif
 }
 
 void bt_gatt_disconnected(struct bt_conn *conn)
