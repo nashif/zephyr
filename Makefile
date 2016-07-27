@@ -2,7 +2,7 @@ VERSION_MAJOR 	   = 1
 VERSION_MINOR 	   = 4
 PATCHLEVEL 	   = 2
 VERSION_RESERVED   = 0
-EXTRAVERSION       = -rc4-mrr
+EXTRAVERSION       = -mrr
 NAME 		   = Zephyr Kernel
 
 export SOURCE_DIR PROJECT MDEF_FILE
