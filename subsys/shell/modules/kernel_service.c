@@ -11,6 +11,22 @@
 
 #define SHELL_KERNEL "kernel"
 
+extern struct device __device_init_start[];
+extern struct device __device_PRE_KERNEL_1_start[];
+extern struct device __device_PRE_KERNEL_2_start[];
+extern struct device __device_POST_KERNEL_start[];
+extern struct device __device_APPLICATION_start[];
+extern struct device __device_init_end[];
+
+static struct device *config_levels[] = {
+        __device_PRE_KERNEL_1_start,
+        __device_PRE_KERNEL_2_start,
+        __device_POST_KERNEL_start,
+        __device_APPLICATION_start,
+        /* End marker */
+        __device_init_end,
+};
+
 static int shell_cmd_version(int argc, char *argv[])
 {
 	u32_t version = sys_kernel_version_get();
@@ -41,6 +57,37 @@ static int shell_cmd_cycles(int argc, char *argv[])
 	ARG_UNUSED(argv);
 
 	printk("cycles: %u hw cycles\n", k_cycle_get_32());
+
+	return 0;
+}
+
+static int shell_cmd_devices(int argc, char *argv[])
+{
+	ARG_UNUSED(argc);
+	ARG_UNUSED(argv);
+
+        struct device *info;
+	int level;
+
+	printk("Name\t\tLevel\n");
+	printk("------\t\t--------\n");
+        for (info = __device_init_start; info != __device_init_end; info++) {
+		if (strcmp(info->config->name, "") ) {
+			if (info == config_levels[_SYS_INIT_LEVEL_PRE_KERNEL_1]) {
+				level = _SYS_INIT_LEVEL_PRE_KERNEL_1;
+			} else if (info == config_levels[_SYS_INIT_LEVEL_PRE_KERNEL_2]) {
+				level = _SYS_INIT_LEVEL_PRE_KERNEL_2;
+			} else if (info == config_levels[_SYS_INIT_LEVEL_POST_KERNEL]) {
+				level = _SYS_INIT_LEVEL_POST_KERNEL;
+			} else if (info == config_levels[_SYS_INIT_LEVEL_APPLICATION]) {
+				level = _SYS_INIT_LEVEL_APPLICATION;
+			} else {
+				level = -1;
+			}
+
+			printk("%s\t\t%d\n", info->config->name, level);
+		}
+        }
 
 	return 0;
 }
@@ -80,6 +127,7 @@ struct shell_cmd kernel_commands[] = {
 	{ "version", shell_cmd_version, "show kernel version" },
 	{ "uptime", shell_cmd_uptime, "show system uptime in milliseconds" },
 	{ "cycles", shell_cmd_cycles, "show system hardware cycles" },
+	{ "devices", shell_cmd_devices, "show devices" },
 #if defined(CONFIG_OBJECT_TRACING) && defined(CONFIG_THREAD_MONITOR)
 	{ "tasks", shell_cmd_tasks, "show running tasks" },
 #endif
