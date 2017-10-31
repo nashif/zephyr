@@ -33,3 +33,5 @@ zephyr_sources_ifdef(CONFIG_SX9500		sx9500)
 zephyr_sources_ifdef(CONFIG_TH02		th02)
 zephyr_sources_ifdef(CONFIG_TMP007		tmp007)
 zephyr_sources_ifdef(CONFIG_TMP112		tmp112)
+
+zephyr_sources_ifdef(CONFIG_USERSPACE   sensor_handlers.c)

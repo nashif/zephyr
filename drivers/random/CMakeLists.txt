@@ -7,3 +7,5 @@ else()
   zephyr_sources_ifdef(CONFIG_RANDOM_STM32_RNG          random_stm32_rng.c)
   zephyr_sources_ifdef(CONFIG_X86_TSC_RANDOM_GENERATOR  rand32_timestamp.c)
 endif()
+
+zephyr_sources_ifdef(CONFIG_USERSPACE   random_handlers.c)

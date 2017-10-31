@@ -15,3 +15,5 @@ zephyr_sources_ifdef(CONFIG_GPIO_QMSI       gpio_qmsi.c)
 zephyr_sources_ifdef(CONFIG_GPIO_QMSI_SS    gpio_qmsi_ss.c)
 zephyr_sources_ifdef(CONFIG_GPIO_SCH        gpio_sch.c)
 zephyr_sources_ifdef(CONFIG_GPIO_STM32      gpio_stm32.c)
+
+zephyr_sources_ifdef(CONFIG_USERSPACE   gpio_handlers.c)

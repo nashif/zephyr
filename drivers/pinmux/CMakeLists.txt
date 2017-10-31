@@ -9,3 +9,5 @@ zephyr_sources_ifdef(CONFIG_PINMUX_STM32           stm32/pinmux_stm32.c)
 
 # "runtime" pinmux
 add_subdirectory_ifdef(CONFIG_PINMUX_DEV dev)
+
+zephyr_sources_ifdef(CONFIG_USERSPACE   pinmux_handlers.c)

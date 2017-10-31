@@ -5,3 +5,4 @@ zephyr_sources_ifdef(CONFIG_TIMER_TMR_CMSDK_APB		timer_tmr_cmsdk_apb.c)
 zephyr_sources_ifdef(CONFIG_COUNTER_DTMR_CMSDK_APB	counter_dtmr_cmsdk_apb.c)
 zephyr_sources_ifdef(CONFIG_TIMER_DTMR_CMSDK_APB	timer_dtmr_cmsdk_apb.c)
 
+zephyr_sources_ifdef(CONFIG_USERSPACE   counter_handlers.c)

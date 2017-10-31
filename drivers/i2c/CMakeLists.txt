@@ -16,3 +16,5 @@ zephyr_sources_ifdef(CONFIG_I2C_STM32_V2
 	i2c_ll_stm32.c
 	)
 zephyr_sources_ifdef(CONFIG_TWIHS_SAM		twihs_sam.c)
+
+zephyr_sources_ifdef(CONFIG_USERSPACE   i2c_handlers.c)
