@@ -136,10 +136,12 @@ if(CONFIG_X86_MMU)
     ${PYTHON_EXECUTABLE}
     ${PROJECT_SOURCE_DIR}/scripts/gen_mmu.py
     -i mmulist.bin
+    -k $<TARGET_FILE:zephyr_prebuilt>
     -o mmu_tables.bin
     $<$<BOOL:${CMAKE_VERBOSE_MAKEFILE}>:-v>
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     DEPENDS mmulist.bin
+    DEPENDS zephyr_prebuilt
     )
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/mmu_tables.o
