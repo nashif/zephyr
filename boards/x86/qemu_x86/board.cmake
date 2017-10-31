@@ -4,7 +4,7 @@ if(NOT CONFIG_REBOOT)
   set(REBOOT_FLAG -no-reboot)
 endif()
 
-set(QEMU_CPU_TYPE_${ARCH} qemu32)
+set(QEMU_CPU_TYPE_${ARCH} qemu32,+nx,+pae)
 set(QEMU_FLAGS_${ARCH}
   -m 8
   -cpu ${QEMU_CPU_TYPE_${ARCH}}
