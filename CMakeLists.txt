@@ -391,15 +391,38 @@ if(CONFIG_APPLICATION_MEMORY)
     app
     )
 
-  # The libraries in the zephyr/lib/* directory belong in userspace
+  # The zephyr libraries in zephyr/lib/ and zephyr/test/ belong in
+  # userspace.
+
+  # NB: The business logic for determing what source files are in
+  # kernel space and what source files are in user space is
+  # fragile. Fix ASAP.
+  #
+  # The intended design is that certain directories are designated as
+  # containing userspace code and others for kernel space code. The
+  # implementation we have however is not working on directories of
+  # code, it is working on zephyr libraries. It is exploiting the fact
+  # that zephyr libraries follow a naming scheme as described in
+  # extensions.cmake:zephyr_library_get_current_dir_lib_name
+  #
+  # But code from test/ and lib/ that is placed in the "zephyr"
+  # library (with zephyr_sources()) will not be in a library that is
+  # prefixed with lib__ or test__ and will end up in the wrong address
+  # space.
+  set(application_space_dirs
+    lib
+    tests
+    )
   foreach(f ${kernel_object_file_list})
-    if(${f} MATCHES "^lib") # Begins with lib, e.g. lib__libc
-      list(
-        REMOVE_ITEM
-        kernel_object_file_list
-        ${f}
-        )
-    endif()
+    foreach(app_dir ${application_space_dirs})
+      if(${f} MATCHES "^${app_dir}__") # Begins with ${app_dir}__, e.g. lib__libc
+        list(
+          REMOVE_ITEM
+          kernel_object_file_list
+          ${f}
+          )
+      endif()
+    endforeach()
   endforeach()
 
   # Create a list ks, with relative paths to kernel space libs.
