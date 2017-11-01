@@ -1,4 +1,5 @@
-zephyr_sources(libc-hooks.c)
+zephyr_library()
+zephyr_library_sources(libc-hooks.c)
 
 zephyr_include_directories(${LIBC_INCLUDE_DIR})
 zephyr_link_libraries(
