@@ -103,9 +103,11 @@ class ArcBinaryRunner(ZephyrBinaryRunner):
         if command not in {'flash', 'debug', 'debugserver'}:
             raise ValueError('{} is not supported'.format(command))
 
-        kwargs['openocd-cfg'] = path.join(self.zephyr_base, 'boards',
-                                          self.arch, self.board_name,
-                                          'support', 'openocd.cfg')
+        for dirpath, dirnames, filenames in os.walk(path.join(self.zephyr_base, 'boards', self.arch),
+                topdown=True):
+            board_def = "%s.yaml" %self.board_name
+            if board_def in filenames:
+                kwargs['openocd-cfg'] = path.join(dirpath, 'support', 'openocd.cfg')
 
         if command in {'flash', 'debug'}:
             self.flash_debug(command, **kwargs)

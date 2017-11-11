@@ -94,8 +94,12 @@ class OpenOcdBinaryRunner(ZephyrBinaryRunner):
         zephyr_base = get_env_or_bail('ZEPHYR_BASE')
         arch = get_env_or_bail('ARCH')
         board_name = get_env_or_bail('BOARD_NAME')
-        openocd_config = path.join(zephyr_base, 'boards', arch,
-                                   board_name, 'support', 'openocd.cfg')
+        for dirpath, dirnames, filenames in os.walk(path.join(zephyr_base, 'boards', arch),
+                topdown=True):
+            board_def = "%s.yaml" %board_name
+            if board_def in filenames:
+                openocd_config = path.join(dirpath, 'support', 'openocd.cfg')
+                print(openocd_config)
 
         openocd = os.environ.get('OPENOCD', 'openocd')
         default_path = os.environ.get('OPENOCD_DEFAULT_PATH', None)
