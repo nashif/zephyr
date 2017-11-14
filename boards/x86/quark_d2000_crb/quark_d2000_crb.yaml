@@ -15,7 +15,8 @@ supported:
   - aio
   - rtc
   - watchdog
+  - pwm
 testing:
-        ignore_tags:
-          - net
-          - bluetooth
+  ignore_tags:
+    - net
+    - bluetooth
