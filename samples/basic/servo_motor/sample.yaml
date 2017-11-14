@@ -1,8 +1,7 @@
 sample:
-  description: TBD
-  name: TBD
+  name: Servo Motor using PWM
 tests:
   - test:
       build_only: true
-      platform_whitelist: arduino_101 quark_d2000_crb
       tags: apps
+      depends_on: pwm

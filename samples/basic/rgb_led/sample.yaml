@@ -1,8 +1,7 @@
 sample:
-  description: TBD
-  name: TBD
+  name: RGB LED
 tests:
   - test:
       build_only: true
-      platform_whitelist: arduino_101 hexiwear_k64
       tags: apps
+      depends_on: pwm
