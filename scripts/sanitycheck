@@ -297,6 +297,33 @@ class Handler:
         self.lock.release()
         return ret
 
+class DeviceHandler(Handler):
+    def __init__(self, name, sourcedir, outdir, run_log, handler_log, timeout):
+        """Constructor
+
+        @param name Arbitrary name of the created thread
+        @param outdir Working directory containing the test binary
+        @param run_log Absolute path to runtime logs
+        @param handler_log Absolute path to handler's log
+        @param timeout Kill the handler process if it doesn't finish up within
+            the given number of seconds
+        """
+        super().__init__(name, outdir, run_log, timeout, True)
+
+        self.timeout = timeout
+        self.sourcedir = sourcedir
+        self.outdir = outdir
+        self.run_log = run_log
+        self.handler_log = handler_log
+        self.returncode = 0
+        self.set_state("running", {})
+
+    def handle(self):
+        out_state = "failed"
+
+
+        self.set_state(out_state, {})
+
 class NativeHandler(Handler):
     def __init__(self, name, sourcedir, outdir, run_log, valgrind_log, timeout):
         """Constructor
@@ -329,14 +356,15 @@ class NativeHandler(Handler):
                 if shutil.which("valgrind") and self.valgrind:
                     command = ["valgrind", "--error-exitcode=2",
                                "--leak-check=full"] + command
+
                 returncode = subprocess.call(command, timeout=self.timeout,
                                              stdout=rl, stderr=vl)
                 self.returncode = returncode
                 if returncode != 0:
-                    if self.returncode == 1:
-                        out_state = "failed"
+                    if self.returncode != 1 and self.valgrind:
+                        out_state = "failed (valgrind)"
                     else:
-                        out_state = "failed valgrind"
+                        out_state = "failed"
 
             except subprocess.TimeoutExpired:
                 out_state = "timeout"
@@ -864,6 +892,23 @@ class MakeGenerator:
         self.goals[name] = MakeGoal(name, text, qemu_handler, self.logfile, build_logfile,
                                     run_logfile, qemu_logfile)
 
+    def add_device_goal(self, name, directory, outdir, args, timeout=30):
+        self._add_goal(outdir)
+        build_logfile = os.path.join(outdir, "build.log")
+        run_logfile = os.path.join(outdir, "run.log")
+        flash_logfile = os.path.join(outdir, "flash.log")
+
+        text = (self._get_rule_header(name) +
+                self._get_sub_make(name, "building", directory,
+                                   outdir, build_logfile, args) +
+                self._get_sub_make(name, "flashing", directory,
+                                   outdir, run_logfile,
+                                   args, make_args="flash") +
+                self._get_rule_footer(name))
+        device_handler = UnitHandler(name, directory, outdir, run_logfile, flash_logfile, timeout)
+        self.goals[name] = MakeGoal(name, text, device_handler, self.logfile, build_logfile,
+                                    run_logfile, flash_logfile)
+
     def add_unit_goal(self, name, directory, outdir, args, timeout=30, coverage=False):
         self._add_goal(outdir)
         build_logfile = os.path.join(outdir, "build.log")
@@ -921,8 +966,7 @@ class MakeGenerator:
             self.add_native_goal(ti.name, ti.test.code_location, ti.outdir,
                                args, ti.test.timeout, coverage)
         else:
-            self.add_build_goal(ti.name, ti.test.code_location, ti.outdir,
-                    args, "build.log")
+            self.add_device_goal(ti.name, ti.test.code_location, ti.outdir, args)
 
     def execute(self, callback_fn=None, context=None):
         """Execute all the registered build goals
@@ -947,7 +991,7 @@ class MakeGenerator:
             tf.write("all: %s\n" % (" ".join(self.goals.keys())))
             tf.flush()
 
-            cmd = ["make", "-k", "-j", str(CPU_COUNTS * 2), "-f", tf.name, "all"]
+            cmd = ["make", "-k", "-j", str(CPU_COUNTS), "-f", tf.name, "all"]
             p = subprocess.Popen(cmd, stderr=subprocess.PIPE,
                                  stdout=devnull)
 
