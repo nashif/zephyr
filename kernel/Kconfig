@@ -586,8 +586,6 @@ config MP_NUM_CPUS
 	Number of multiprocessing-capable cores available to the
 	multicpu API and SMP features.
 
-source "kernel/Kconfig.event_logger"
-
 source "kernel/Kconfig.power_mgmt"
 
 endmenu
