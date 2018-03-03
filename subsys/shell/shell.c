@@ -442,6 +442,7 @@ static void shell(void *p1, void *p2, void *p3)
 	ARG_UNUSED(p1);
 	ARG_UNUSED(p2);
 	ARG_UNUSED(p3);
+	k_thread_name_set("shell");
 
 	printk("Zephyr Shell, Zephyr version: %s\n", KERNEL_VERSION_STRING);
 	printk("Type 'help' for a list of available commands\n");
