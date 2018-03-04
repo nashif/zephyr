@@ -8,6 +8,7 @@
 
 #include <kernel.h>
 
+/* Below IDs are used with systemview, not final to the zephyr tracing API */
 #define SYS_TRACE_ID_OFFSET                  (32u)
 
 #define SYS_TRACE_ID_MUTEX_INIT              (1u + SYS_TRACE_ID_OFFSET)
