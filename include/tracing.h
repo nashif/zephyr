@@ -8,76 +8,52 @@
 
 #include <kernel.h>
 
-static inline void sys_trace_thread_switched_out(void)
-{
-}
+/* Below IDs are used with systemview, not final to the zephyr tracing API */
+#define SYS_TRACE_ID_OFFSET                  (32u)
 
-static inline void sys_trace_thread_switched_in(void)
-{
-}
+#define SYS_TRACE_ID_MUTEX_INIT              (1u + SYS_TRACE_ID_OFFSET)
+#define SYS_TRACE_ID_MUTEX_UNLOCK            (2u + SYS_TRACE_ID_OFFSET)
+#define SYS_TRACE_ID_MUTEX_LOCK              (3u + SYS_TRACE_ID_OFFSET)
+#define SYS_TRACE_ID_SEMA_INIT               (4u + SYS_TRACE_ID_OFFSET)
+#define SYS_TRACE_ID_SEMA_GIVE               (5u + SYS_TRACE_ID_OFFSET)
+#define SYS_TRACE_ID_SEMA_TAKE               (6u + SYS_TRACE_ID_OFFSET)
 
-static inline void sys_trace_thread_priority_get(struct k_thread *thread)
-{
-}
+#define sys_trace_thread_switched_out()
 
-static inline void sys_trace_thread_priority_set(struct k_thread *thread)
-{
-}
+#define sys_trace_thread_switched_in()
 
-static inline void sys_trace_thread_create(struct k_thread *thread)
-{
-}
+#define sys_trace_thread_priority_set(thread)
 
-static inline void sys_trace_thread_abort(struct k_thread *thread)
-{
-}
+#define sys_trace_thread_create(thread)
 
-static inline void sys_trace_thread_cancel(struct k_thread *thread)
-{
-}
+#define sys_trace_thread_abort(thread)
 
-static inline void sys_trace_thread_suspend(struct k_thread *thread)
-{
-}
+#define sys_trace_thread_suspend(thread)
 
-static inline void sys_trace_thread_resume(struct k_thread *thread)
-{
-}
+#define sys_trace_thread_resume(thread)
 
-static inline void sys_trace_thread_ready(struct k_thread *thread)
-{
-}
+#define sys_trace_thread_ready(thread)
 
-static inline void sys_trace_thread_pend(struct k_thread *thread)
-{
-}
+#define sys_trace_thread_pend(thread)
 
-static inline void sys_trace_thread_info(struct k_thread *thread)
-{
-}
+#define sys_trace_thread_info(thread)
 
-static inline void sys_trace_isr_enter(void)
-{
-}
+#define sys_trace_isr_enter()
 
-static inline void sys_trace_isr_exit(void)
-{
-}
+#define sys_trace_isr_exit()
 
-static inline void sys_trace_isr_exit_to_scheduler(void)
-{
-}
+#define sys_trace_isr_exit_to_scheduler()
 
-static inline void sys_trace_idle(void)
-{
-}
+#define sys_trace_void(id)
 
-static inline void sys_trace_void(unsigned id)
-{
-}
+#define sys_trace_end_call(id)
 
-static inline void sys_trace_end_call(unsigned id)
-{
-}
+#define z_sys_trace_idle()
+
+#define z_sys_trace_isr_enter()
+
+#define z_sys_trace_isr_exit_to_scheduler()
+
+#define z_sys_trace_thread_switched_in()
 
 #endif
