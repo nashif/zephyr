@@ -28,6 +28,7 @@
 #include <init.h>
 #include <syscall_handler.h>
 #include <kswap.h>
+#include <tracing.h>
 
 extern struct k_sem _k_sem_list_start[];
 extern struct k_sem _k_sem_list_end[];
@@ -60,6 +61,7 @@ void _impl_k_sem_init(struct k_sem *sem, unsigned int initial_count,
 {
 	__ASSERT(limit != 0, "limit cannot be zero");
 
+	sys_trace_void(SYS_TRACE_ID_SEMA_INIT);
 	sem->count = initial_count;
 	sem->limit = limit;
 	sys_dlist_init(&sem->wait_q);
@@ -70,6 +72,7 @@ void _impl_k_sem_init(struct k_sem *sem, unsigned int initial_count,
 	SYS_TRACING_OBJ_INIT(k_sem, sem);
 
 	_k_object_init(sem);
+	sys_trace_end_call(SYS_TRACE_ID_SEMA_INIT);
 }
 
 #ifdef CONFIG_USERSPACE
@@ -142,6 +145,8 @@ void _impl_k_sem_give(struct k_sem *sem)
 {
 	unsigned int key;
 
+	sys_trace_void(SYS_TRACE_ID_SEMA_GIVE);
+
 	key = irq_lock();
 
 	if (do_sem_give(sem)) {
@@ -149,6 +154,7 @@ void _impl_k_sem_give(struct k_sem *sem)
 	} else {
 		irq_unlock(key);
 	}
+	sys_trace_end_call(SYS_TRACE_ID_SEMA_GIVE);
 }
 
 #ifdef CONFIG_USERSPACE
@@ -159,21 +165,25 @@ int _impl_k_sem_take(struct k_sem *sem, s32_t timeout)
 {
 	__ASSERT(!_is_in_isr() || timeout == K_NO_WAIT, "");
 
+	sys_trace_void(SYS_TRACE_ID_SEMA_TAKE);
 	unsigned int key = irq_lock();
 
 	if (likely(sem->count > 0)) {
 		sem->count--;
 		irq_unlock(key);
+		sys_trace_end_call(SYS_TRACE_ID_SEMA_TAKE);
 		return 0;
 	}
 
 	if (timeout == K_NO_WAIT) {
 		irq_unlock(key);
+		sys_trace_end_call(SYS_TRACE_ID_SEMA_TAKE);
 		return -EBUSY;
 	}
 
 	_pend_current_thread(&sem->wait_q, timeout);
 
+	sys_trace_end_call(SYS_TRACE_ID_SEMA_TAKE);
 	return _Swap(key);
 }
 

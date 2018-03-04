@@ -272,6 +272,7 @@ int __must_switch_threads(void)
 
 int _impl_k_thread_priority_get(k_tid_t thread)
 {
+	sys_trace_thread_priority_get(thread);
 	return thread->base.prio;
 }
 
@@ -293,6 +294,8 @@ void _impl_k_thread_priority_set(k_tid_t tid, int prio)
 	int key = irq_lock();
 
 	_thread_priority_set(thread, prio);
+	sys_trace_thread_priority_set(tid);
+
 	_reschedule_threads(key);
 }
 
