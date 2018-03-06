@@ -5,8 +5,8 @@
  */
 
 #include <zephyr.h>
-#include <kernel_structs.h>
 #include <logging/kernel_event_logger.h>
+#include <debug/object_tracing.h>
 #include <misc/util.h>
 #include <device.h>
 #include <init.h>
@@ -61,7 +61,7 @@ static void publish_sleep(u32_t *event_data)
 
 static void publish_task(u32_t *event_data)
 {
-#if defined(CONFIG_KERNEL_EVENT_LOGGER_THREAD)
+#ifdef CONFIG_KERNEL_EVENT_LOGGER_THREAD
 	u32_t thread_id;
 
 	thread_id = event_data[1];
@@ -79,6 +79,7 @@ static void publish_task(u32_t *event_data)
 	}
 
 	/* FIXME: Maybe we need a KERNEL_LOG_THREAD_EVENT_CREATE? */
+
 #endif
 }
 
@@ -93,8 +94,11 @@ static void send_system_desc(void)
 static void sysview_api_send_task_list(void)
 {
 	struct k_thread *thr;
+	struct k_thread *thread_list = NULL;
 
-	for (thr = _kernel.threads; thr; thr = thr->next_thread) {
+	thread_list   = (struct k_thread *)SYS_THREAD_MONITOR_HEAD;
+
+	for (thr = thread_list; thr; thr = thr->next_thread) {
 		char name[20];
 
 		if (thr->name == NULL) {
@@ -113,6 +117,10 @@ static void sysview_api_send_task_list(void)
 			.TaskID = (u32_t)(uintptr_t)thr,
 			.sName = name,
 			.Prio = thr->base.prio,
+#if defined(CONFIG_THREAD_STACK_INFO)
+			.StackBase = thr->stack_info.start,
+			.StackSize = thr->stack_info.size,
+#endif
 		});
 	}
 }
@@ -144,10 +152,14 @@ static u32_t zephyr_to_sysview(int event_type)
 #define ENABLE_SYSVIEW_EVENT(event) \
 	(MUST_LOG(event) ? zephyr_to_sysview(event ## _EVENT_ID) : 0)
 
-static void sysview_setup(void)
+
+
+static int sysview_setup(struct device *arg)
 {
+	ARG_UNUSED(arg);
+
 	static const SEGGER_SYSVIEW_OS_API api = {
-		.pfGetTime = NULL, /* sysview_get_timestamp() used instead */
+		.pfGetTime = sysview_get_timestamp,
 		.pfSendTaskList = sysview_api_send_task_list,
 	};
 	u32_t evs;
@@ -176,6 +188,8 @@ static void sysview_setup(void)
 		ENABLE_SYSVIEW_EVENT(KERNEL_EVENT_LOGGER_INTERRUPT) |
 		ENABLE_SYSVIEW_EVENT(KERNEL_EVENT_LOGGER_THREAD);
 	SEGGER_SYSVIEW_EnableEvents(evs);
+
+	return 0;
 }
 
 #undef ENABLE_SYSVIEW_EVENT
@@ -183,7 +197,6 @@ static void sysview_setup(void)
 
 static void sysview_thread(void)
 {
-	sysview_setup();
 
 	for (;;) {
 		u32_t event_data[4];
@@ -220,5 +233,7 @@ static void sysview_thread(void)
 }
 
 K_THREAD_DEFINE(event_logger, STACKSIZE, sysview_thread, NULL, NULL, NULL,
-                PRIORITY, 0, K_NO_WAIT);
+                K_PRIO_COOP(PRIORITY), 0, K_NO_WAIT);
 
+
+SYS_INIT(sysview_setup, PRE_KERNEL_1, 0 );

@@ -47,14 +47,14 @@ static int _sys_k_event_logger_init(struct device *arg)
 	ARG_UNUSED(arg);
 
 	sys_event_logger_init(&sys_k_event_logger, _sys_k_event_logger_buffer,
-		CONFIG_KERNEL_EVENT_LOGGER_BUFFER_SIZE);
+			      CONFIG_KERNEL_EVENT_LOGGER_BUFFER_SIZE);
 
 	initialized = 1;
 
 	return 0;
 }
 SYS_INIT(_sys_k_event_logger_init,
-		POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT);
+	 POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT);
 
 #ifdef CONFIG_KERNEL_EVENT_LOGGER_CUSTOM_TIMESTAMP
 /*
@@ -75,13 +75,13 @@ void sys_k_event_logger_put_timed(u16_t event_id)
 	data[0] = _sys_k_get_time();
 
 	sys_event_logger_put(&sys_k_event_logger, event_id, data,
-		ARRAY_SIZE(data));
+			     ARRAY_SIZE(data));
 }
 
 #ifdef CONFIG_KERNEL_EVENT_LOGGER_CONTEXT_SWITCH
 void _sys_k_event_logger_context_switch(void)
 {
-	extern struct _kernel _kernel;
+
 	u32_t data[2];
 
 	extern void _sys_event_logger_put_non_preemptible(
@@ -126,11 +126,11 @@ void _sys_k_event_logger_context_switch(void)
 	 * triggering any new context switch during the process.
 	 */
 	_sys_event_logger_put_non_preemptible(&sys_k_event_logger,
-		KERNEL_EVENT_LOGGER_CONTEXT_SWITCH_EVENT_ID, data,
-		ARRAY_SIZE(data));
+					      KERNEL_EVENT_LOGGER_CONTEXT_SWITCH_EVENT_ID, data,
+					      ARRAY_SIZE(data));
 }
 
-#define ASSERT_CURRENT_IS_COOP_THREAD() \
+#define ASSERT_CURRENT_IS_COOP_THREAD()	\
 	__ASSERT(_current->base.prio < 0, "must be a coop thread")
 
 void sys_k_event_logger_register_as_collector(void)
@@ -164,7 +164,7 @@ void _sys_k_event_logger_interrupt(void)
 	data[1] = _sys_current_irq_key_get();
 
 	sys_k_event_logger_put(KERNEL_EVENT_LOGGER_INTERRUPT_EVENT_ID, data,
-		ARRAY_SIZE(data));
+			       ARRAY_SIZE(data));
 }
 #endif /* CONFIG_KERNEL_EVENT_LOGGER_INTERRUPT */
 
@@ -190,7 +190,7 @@ void _sys_k_event_logger_exit_sleep(void)
 	if (_sys_k_event_logger_sleep_start_time != 0) {
 		data[0] = _sys_k_get_time();
 		data[1] = (k_cycle_get_32() - _sys_k_event_logger_sleep_start_time)
-			/ sys_clock_hw_cycles_per_tick;
+			  / sys_clock_hw_cycles_per_tick;
 		/* register the cause of exiting sleep mode */
 		data[2] = _sys_current_irq_key_get();
 
@@ -202,7 +202,7 @@ void _sys_k_event_logger_exit_sleep(void)
 		_sys_k_event_logger_sleep_start_time = 0;
 
 		sys_k_event_logger_put(KERNEL_EVENT_LOGGER_SLEEP_EVENT_ID, data,
-			ARRAY_SIZE(data));
+				       ARRAY_SIZE(data));
 	}
 }
 #endif /* CONFIG_KERNEL_EVENT_LOGGER_SLEEP */

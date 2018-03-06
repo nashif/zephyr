@@ -63,7 +63,7 @@ static int shell_cmd_threads(int argc, char *argv[])
 	while (thread_list != NULL) {
 
 		int size = thread_list->stack_info.size;
-		unused = stack_unused_space_get(K_THREAD_STACK_BUFFER(thread_list->stack_obj), size);
+		unused = stack_unused_space_get(K_THREAD_STACK_BUFFER(thread_list->stack_info.start), size);
 
 		/* Calculate the real size reserved for the stack */
 		pcnt = ((size - unused) * 100) / size;

@@ -52,10 +52,11 @@ void sys_event_logger_put(struct event_logger *logger, u16_t event_id,
 	 */
 
 	struct k_thread *event_logger_thread =
-	(struct k_thread *)sys_dlist_peek_head(&(logger->sync_sema.wait_q));
+		(struct k_thread *)sys_dlist_peek_head(&(logger->sync_sema.wait_q));
+
 	if (_current != event_logger_thread) {
 		event_logger_put(logger, event_id, event_data,
-		data_size, k_sem_give);
+				 data_size, k_sem_give);
 	}
 }
 
@@ -90,11 +91,11 @@ void _sys_event_logger_put_non_preemptible(struct event_logger *logger,
 	 */
 
 	struct k_thread *event_logger_thread =
-	(struct k_thread *)sys_dlist_peek_head(&(logger->sync_sema.wait_q));
+		(struct k_thread *)sys_dlist_peek_head(&(logger->sync_sema.wait_q));
 
 	if (_current != event_logger_thread) {
 		event_logger_put(logger, event_id, event_data, data_size,
-						 _sem_give_non_preemptible);
+				 _sem_give_non_preemptible);
 	}
 }
 
