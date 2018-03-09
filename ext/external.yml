@@ -1,0 +1,48 @@
+---
+
+- name: TinyCrypt
+  origin: TinyCrypt Project
+  url: https://github.com/01org/tinycrypt
+  version: 0.2.8
+  scm: git@github.com:01org/tinycrypt.git
+  sha: 3a5ca91f28eb586740660daf78fccad44e5a826f
+  prupose: TinyCrypt Cryptographic Library
+  website: https://github.com/01org/tinycrypt
+  maintained-by: external
+  license:     BSD-3-Clause
+  license-link: https://github.com/01org/tinycrypt/blob/master/LICENSE
+  type: crypto
+- name: mbedTLS
+  origin: mBed Project
+  url: https://tls.mbed.org/download/start/mbedtls-2.7.0-apache.tgz
+  version: 2.7.0
+  scm: https://github.com/ARMmbed/mbedtls
+  prupose: SSL Library
+  website: https://tls.mbed.org/
+  maintained-by: external
+  license: Apache-2.0
+  license-link: https://github.com/ARMmbed/mbedtls/blob/master/LICENSE
+  type: crypto
+- name: Altera HAL
+  origin: Altera Quartus Prime Lite SDK
+  url: http://dl.altera.com/?edition=lite
+  version: v17.0
+  purpose: Hardware Abstraction Layer for NIOSII based soft IP blocks.
+  description: |
+   Altera Hardware Abstraction Layer(or Altera HAL) provides the
+   low level driver support for NIOSII based soft IP blocks.
+
+   Altera HAL primarily abstracts the low level hardware interactions
+   of different NIOSII based soft IP blocks like UART, I2C, SPI etc...
+   and provides the high level API's for the shim drivers.
+  dependencies: |
+   Some of the Altera HAL drivers have dependency on the newlibc and
+   it needs to be enabled before enabling the Altera HAL.
+
+   The NIOSII port of Zephyr will be accessing the Altera HAL through
+   shim drivers to enable the different soft IP blocks on Zephyr.
+  website: https://www.altera.com/products/processors/support.html
+  maintained-by: external
+  license: MIT
+  type: hal
+
