@@ -495,42 +495,7 @@ config APPLICATION_INIT_PRIORITY
 	  This priority level is for end-user drivers such as sensors and display
 	  which have no inward dependencies.
 
-config PTHREAD_IPC
-	bool
-	prompt "POSIX pthread IPC API"
-	default n
-	help
-	  This enables a mostly-standards-compliant implementation of
-	  the pthread mutex, condition variable and barrier IPC
-	  mechanisms.
-
-if PTHREAD_IPC
-config MAX_PTHREAD_COUNT
-	int
-	prompt "Maximum pthread count in POSIX application"
-	default 5
-	range 0 255
-	help
-	  Mention maximum number of threads in POSIX compliant application.
-
-config SEM_VALUE_MAX
-	int
-	prompt "Maximum semaphore limit"
-	default 32767
-	range 1 32767
-	help
-	  Maximum semaphore count in POSIX compliant Application.
-
-config MAX_TIMER_COUNT
-	int
-	prompt "Maximum timer count in POSIX application"
-	default 5
-	range 0 255
-	help
-	  Mention maximum number of timers in POSIX compliant application.
-endif
 endmenu
-
 menu "Security Options"
 
 config STACK_CANARIES

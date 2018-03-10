@@ -1,0 +1,13 @@
+zephyr_include_directories(${PROJECT_SOURCE_DIR}/include/posix)
+zephyr_sources(
+  pthread_common.c
+  pthread_cond.c
+  pthread_mutex.c
+  pthread_barrier.c
+  pthread.c
+  pthread_sched.c
+  clock.c
+  timer.c
+  pthread_rwlock.c
+  semaphore.c
+  )
