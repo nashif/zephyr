@@ -21,8 +21,6 @@ extern void _check_stack_sentinel(void);
 #define _check_stack_sentinel() /**/
 #endif
 
-extern void _sys_k_event_logger_context_switch(void);
-
 #ifdef CONFIG_TRACING
 extern void sys_trace_thread_switched_out(void);
 #endif
@@ -47,10 +45,6 @@ static inline unsigned int _Swap(unsigned int key)
 
 #ifdef CONFIG_TRACING
 	sys_trace_thread_switched_out();
-#endif
-
-#ifdef CONFIG_KERNEL_EVENT_LOGGER_CONTEXT_SWITCH
-	_sys_k_event_logger_context_switch();
 #endif
 
 	new_thread = _get_next_ready_thread();

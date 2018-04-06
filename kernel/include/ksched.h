@@ -8,10 +8,6 @@
 #define _ksched__h_
 
 #include <kernel_structs.h>
-
-#ifdef CONFIG_KERNEL_EVENT_LOGGER
-#include <logging/kernel_event_logger.h>
-#endif /* CONFIG_KERNEL_EVENT_LOGGER */
 #include <tracing.h>
 
 extern k_tid_t const _main_thread;
@@ -366,9 +362,6 @@ static inline void _mark_thread_as_pending(struct k_thread *thread)
 
 	sys_trace_thread_pend(thread);
 
-#ifdef CONFIG_KERNEL_EVENT_LOGGER_THREAD
-	_sys_k_event_logger_thread_pend(thread);
-#endif
 }
 
 /* mark a thread as not pending in its TCS */
@@ -427,9 +420,6 @@ static inline void _ready_thread(struct k_thread *thread)
 
 	sys_trace_thread_ready(thread);
 
-#ifdef CONFIG_KERNEL_EVENT_LOGGER_THREAD
-	_sys_k_event_logger_thread_ready(thread);
-#endif
 }
 
 /*
