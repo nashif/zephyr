@@ -483,7 +483,6 @@ int _impl_k_thread_cancel(k_tid_t tid)
 	_thread_monitor_exit(thread);
 
 	irq_unlock(key);
-	sys_trace_thread_cancel(tid);
 
 	return 0;
 }
