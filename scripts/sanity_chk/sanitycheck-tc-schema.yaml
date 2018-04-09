@@ -26,6 +26,11 @@ mapping:
      "build_on_all":
        type: bool
        required: no
+     "cases":
+       type: seq
+       required: no
+       sequence:
+         - type: str
      "depends_on":
        type: str
        required: no
@@ -140,6 +145,11 @@ mapping:
              "extra_args":
                type: str
                required: no
+             "cases":
+               type: seq
+               required: no
+               sequence:
+                 - type: str
              "extra_configs":
                type: seq
                required: no

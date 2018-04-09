@@ -1123,6 +1123,7 @@ testcase_valid_keys = {"tags": {"type": "set", "required": False},
                        "type": {"type": "str", "default": "integration"},
                        "extra_args": {"type": "list"},
                        "extra_configs": {"type": "list"},
+                       "cases": {"type": "list"},
                        "build_only": {"type": "bool", "default": False},
                        "build_on_all": {"type": "bool", "default": False},
                        "skip": {"type": "bool", "default": False},
@@ -1366,6 +1367,7 @@ class TestCase:
         self.tags = tc_dict["tags"]
         self.extra_args = tc_dict["extra_args"]
         self.extra_configs = tc_dict["extra_configs"]
+        self.cases = tc_dict["cases"]
         self.arch_whitelist = tc_dict["arch_whitelist"]
         self.arch_exclude = tc_dict["arch_exclude"]
         self.skip = tc_dict["skip"]
