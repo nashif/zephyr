@@ -2,3 +2,9 @@ tests:
   kernel.memory_protection.protection:
     filter: CONFIG_CPU_HAS_MPU or CONFIG_X86_MMU
     tags: core security ignore_faults
+    cases:
+      - exec_data
+      - exec_stack
+      - exec_heap
+      - write_ro
+      - write_text
