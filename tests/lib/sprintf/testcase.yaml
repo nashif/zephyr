@@ -1,3 +1,11 @@
+common:
+  cases:
+    - sprintf_double
+    - sprintf_integer
+    - vsprintf
+    - vsnprintf
+    - sprintf_string
+    - sprintf_misc
 tests:
   libraries.libc:
     tags: libc

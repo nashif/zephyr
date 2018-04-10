@@ -1,3 +1,16 @@
+common:
+  cases:
+    - ringbuffer_init/*keep
+    - init
+    - first!*/
+    - ringbuffer_declare_pow2
+    - ringbuffer_declare_size
+    - ringbuffer_put_get_thread
+    - ringbuffer_put_get_isr
+    - ringbuffer_put_get_thread_isr
+    - ringbuffer_pow2_put_get_thread_isr
+    - ringbuffer_size_put_get_thread_isr
+    - ring_buffer_main_test
 tests:
   libraries.ringbuffer:
     tags: ring_buffer circular_buffer

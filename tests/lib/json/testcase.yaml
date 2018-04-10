@@ -1,3 +1,19 @@
+common:
+  cases:
+    - json_encoding
+    - json_decoding
+    - json_obj_arr_encoding
+    - json_obj_arr_decoding
+    - json_invalid_unicode
+    - json_missing_quote
+    - json_wrong_token
+    - json_item_wrong_type
+    - json_key_not_in_descr
+    - json_escape
+    - json_escape_one
+    - json_escape_empty
+    - json_escape_no_op
+    - json_escape_bounds_check
 tests:
   libraries.encoding:
     filter: not CONFIG_NEWLIB_LIBC

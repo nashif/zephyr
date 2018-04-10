@@ -1,3 +1,16 @@
+common:
+  cases:
+    - limits
+    - stdbool
+    - stddef
+    - stdint
+    - memcmp
+    - strchr
+    - strcpy
+    - strncpy
+    - memset
+    - strlen
+    - strcmp
 tests:
   libraries.libc:
     tags: clib

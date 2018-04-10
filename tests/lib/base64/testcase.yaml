@@ -1,3 +1,6 @@
+common:
+  cases:
+    - base64_codec
 tests:
   libraries.encoding:
     tags: base64

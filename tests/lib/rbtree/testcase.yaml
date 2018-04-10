@@ -1,3 +1,6 @@
+common:
+  cases:
+    - rbtree_spam
 tests:
     misc.rbtree:
        tags: rbtree
