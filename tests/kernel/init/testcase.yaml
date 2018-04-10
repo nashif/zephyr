@@ -1,3 +1,6 @@
+common:
+  cases:
+    - verify_bootdelay
 tests:
   kernel.bootdelay:
     tags: init

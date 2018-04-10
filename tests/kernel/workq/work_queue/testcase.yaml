@@ -1,3 +1,11 @@
+common:
+  cases:
+    - sequence
+    - resubmit
+    - delayed
+    - delayed_resubmit
+    - delayed_resubmit_thread
+    - delayed_cancel
 tests:
   kernel.workqueue:
     tags: core bat_commit

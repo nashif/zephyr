@@ -1,3 +1,18 @@
+common:
+  cases:
+    - byteorder_memcpy_swap
+    - byteorder_mem_swap
+    - atomic
+    - bitfield
+    - printk
+    - slist
+    - dlist
+    - intmath
+    - timeout_order
+    - clock_uptime
+    - clock_cycle
+    - version
+    - multilib
 tests:
   kernel.common:
     tags: kernel

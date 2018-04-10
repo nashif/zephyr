@@ -1,3 +1,9 @@
+common:
+  cases:
+    - pool_block_get
+    - pool_block_get_timeout
+    - pool_block_get_wait
+    - pool_malloc
 tests:
   kernel.memory_pool:
     min_ram: 32

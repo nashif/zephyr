@@ -1,3 +1,8 @@
+common:
+  cases:
+    - poll_no_wait
+    - poll_wait
+    - poll_multi
 tests:
   kernel.poll:
     tags: kernel

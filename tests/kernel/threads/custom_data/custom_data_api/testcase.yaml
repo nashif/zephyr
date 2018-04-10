@@ -1,3 +1,7 @@
+common:
+  cases:
+    - customdata_get_set_coop
+    - customdata_get_set_preempt
 tests:
   kernel.threads:
     tags: kernel threads userspace

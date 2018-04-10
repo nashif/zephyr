@@ -1,3 +1,9 @@
+common:
+  cases:
+    - sema_thread2thread
+    - sema_thread2isr
+    - sema_reset
+    - sema_count_get
 tests:
   kernel.semaphore:
     tags: kernel userspace

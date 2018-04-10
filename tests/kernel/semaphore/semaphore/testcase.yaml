@@ -1,3 +1,20 @@
+common:
+  cases:
+    - simple_sem_from_isr
+    - simple_sem_from_task
+    - sem_take_no_wait
+    - sem_take_no_wait_fails
+    - sem_take_timeout_fails
+    - sem_take_timeout
+    - sem_take_timeout_forever
+    - sem_take_timeout_isr
+    - sem_take_multiple
+    - sem_give_take_from_isr
+    - sem_multiple_threads_wait
+    - sem_measure_timeouts
+    - sem_measure_timeout_from_thread
+    - sem_multiple_take_and_timeouts
+    - sem_multi_take_timeout_diff_sem
 tests:
   kernel.semaphore:
     min_ram: 32

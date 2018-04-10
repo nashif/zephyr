@@ -1,25 +1,26 @@
+common:
+  cases:
+    - is_usermode
+    - write_control
+    - disable_mmu_mpu
+    - read_kernram
+    - write_kernram
+    - write_kernro
+    - write_kerntext
+    - read_kernel_data
+    - write_kernel_data
+    - read_priv_stack
+    - write_priv_stack
+    - pass_user_object
+    - pass_noperms_object
+    - start_kernel_thread
+    - read_other_stack
+    - write_other_stack
+    - revoke_noperms_object
+    - access_after_revoke
+    - revoke_other_thread
+    - write_kobject_user_pipe
 tests:
   kernel.memory_protection.userspace:
     filter: CONFIG_ARCH_HAS_USERSPACE
     tags: core security userspace ignore_faults
-    cases:
-      - is_usermode
-      - write_control
-      - disable_mmu_mpu
-      - read_kernram
-      - write_kernram
-      - write_kernro
-      - write_kerntext
-      - read_kernel_data
-      - write_kernel_data
-      - read_priv_stack
-      - write_priv_stack
-      - pass_user_object
-      - pass_noperms_object
-      - start_kernel_thread
-      - read_other_stack
-      - write_other_stack
-      - revoke_noperms_object
-      - access_after_revoke
-      - revoke_other_thread
-      - write_kobject_user_pipe

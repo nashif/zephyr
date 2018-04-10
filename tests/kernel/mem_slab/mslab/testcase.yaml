@@ -1,3 +1,6 @@
+common:
+  cases:
+    - mslab
 tests:
   kernel.memory_slabs:
     tags: bat_commit core

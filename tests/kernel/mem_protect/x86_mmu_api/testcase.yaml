@@ -1,21 +1,22 @@
+common:
+  cases:
+    - buffer_rw_read
+    - buffer_writeable_write
+    - buffer_readable_read
+    - buffer_readable_write
+    - buffer_supervisor_rw
+    - buffer_supervisor_w
+    - buffer_user_rw_user
+    - buffer_user_rw_supervisor
+    - multi_page_buffer_user
+    - multi_page_buffer_write_user
+    - multi_page_buffer_read_user
+    - multi_page_buffer_read
+    - multi_pde_buffer_rw
+    - multi_pde_buffer_writeable_write
+    - multi_pde_buffer_readable_read
+    - multi_pde_buffer_readable_write
 tests:
   kernel.memory_protection.mmu:
     platform_whitelist: qemu_x86
     tags: kernel
-    cases:
-      - buffer_rw_read
-      - buffer_writeable_write
-      - buffer_readable_read
-      - buffer_readable_write
-      - buffer_supervisor_rw
-      - buffer_supervisor_w
-      - buffer_user_rw_user
-      - buffer_user_rw_supervisor
-      - multi_page_buffer_user
-      - multi_page_buffer_write_user
-      - multi_page_buffer_read_user
-      - multi_page_buffer_read
-      - multi_pde_buffer_rw
-      - multi_pde_buffer_writeable_write
-      - multi_pde_buffer_readable_read
-

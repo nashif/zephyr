@@ -1,3 +1,6 @@
+common:
+  cases:
+    - tracing
 tests:
   kernel.object_tracing:
     min_ram: 32

@@ -1,3 +1,7 @@
+common:
+  cases:
+    - spinlock_basic
+    - spinlock_bounce
 tests:
   kernel.smp:
     platform_whitelist: esp32

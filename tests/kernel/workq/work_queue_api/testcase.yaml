@@ -1,3 +1,20 @@
+common:
+  cases:
+    - workq_start_before_submit
+    - work_submit_to_multipleq
+    - work_resubmit_to_queue
+    - work_submit_to_queue_thread
+    - work_submit_to_queue_isr
+    - work_submit_thread
+    - work_submit_isr
+    - delayed_work_submit_to_queue_thread
+    - delayed_work_submit_to_queue_isr
+    - delayed_work_submit_thread
+    - delayed_work_submit_isr
+    - delayed_work_cancel_from_queue_thread
+    - delayed_work_cancel_from_queue_isr
+    - delayed_work_cancel_thread
+    - delayed_work_cancel_isr
 tests:
   kernel.workqueue.api:
     tags: kernel

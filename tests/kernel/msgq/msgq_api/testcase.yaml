@@ -1,3 +1,12 @@
+common:
+  cases:
+    - msgq_thread
+    - msgq_thread_overflow
+    - msgq_isr
+    - msgq_put_fail
+    - msgq_get_fail
+    - msgq_attrs_get
+    - msgq_purge_when_put
 tests:
   kernel.message_queue:
     tags: kernel userspace

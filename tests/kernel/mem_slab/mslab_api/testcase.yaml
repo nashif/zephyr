@@ -1,3 +1,12 @@
+common:
+  cases:
+    - mslab_kinit
+    - mslab_kdefine
+    - mslab_kdefine_extern
+    - mslab_alloc_free_thread
+    - mslab_alloc_align
+    - mslab_alloc_timeout
+    - mslab_used_get
 tests:
   kernel.memory_slabs:
     tags: kernel

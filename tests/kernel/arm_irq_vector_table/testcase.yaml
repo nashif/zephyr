@@ -1,3 +1,6 @@
+common:
+  cases:
+    - arm_irq_vector_table
 tests:
   arch.interrupt:
     filter: CONFIG_ARMV7_M_ARMV8_M_MAINLINE

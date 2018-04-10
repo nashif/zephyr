@@ -1,3 +1,13 @@
+common:
+  cases:
+    - fifo_thread2thread
+    - fifo_thread2isr
+    - fifo_isr2thread
+    - fifo_get_fail
+    - fifo_loop
+    - fifo_cancel_wait
+    - fifo_is_empty_thread
+    - fifo_is_empty_isr
 tests:
   kernel.fifo:
     tags: kernel

@@ -1,3 +1,11 @@
+common:
+  cases:
+    - pipe_thread2thread
+    - pipe_put_fail
+    - pipe_get_fail
+    - pipe_block_put
+    - pipe_block_put_sema
+    - pipe_get_put
 tests:
   kernel.pipe:
       tags: kernel userspace

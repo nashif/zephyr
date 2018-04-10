@@ -1,3 +1,6 @@
+common:
+  cases:
+    - mpool_threadsafe
 tests:
   kernel.memory_pool:
     tags: kernel mem_pool

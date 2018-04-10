@@ -1,3 +1,7 @@
+common:
+  cases:
+    - tickless_sysclock
+    - tickless_slice
 tests:
   kernel.tickless:
     arch_exclude: riscv32 nios2

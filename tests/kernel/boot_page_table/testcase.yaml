@@ -1,3 +1,6 @@
+common:
+  cases:
+    - boot_page_table
 tests:
   kernel.memory_protection:
     platform_whitelist: qemu_x86

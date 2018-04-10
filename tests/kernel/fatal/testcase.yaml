@@ -1,3 +1,6 @@
+common:
+  cases:
+    - fatal
 tests:
   kernel.fatal.stack_protection:
     extra_args: CONF_FILE=prj.conf

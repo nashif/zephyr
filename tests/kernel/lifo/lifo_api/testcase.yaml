@@ -1,3 +1,10 @@
+common:
+  cases:
+    - lifo_thread2thread
+    - lifo_thread2isr
+    - lifo_isr2thread
+    - lifo_get_fail
+    - lifo_loop
 tests:
   kernel.lifo:
     tags: kernel

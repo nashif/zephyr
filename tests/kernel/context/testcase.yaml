@@ -1,3 +1,6 @@
+common:
+  cases:
+    - context
 tests:
   kernel.context:
     tags: core bat_commit

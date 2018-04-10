@@ -1,3 +1,6 @@
+common:
+  cases:
+    - mutex
 tests:
   kernel.mutex:
     tags: bat_commit core userspace

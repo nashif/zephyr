@@ -1,3 +1,6 @@
+common:
+  cases:
+    - mslab_alloc_wait_prio
 tests:
   kernel.memory_slabs:
     tags: kernel

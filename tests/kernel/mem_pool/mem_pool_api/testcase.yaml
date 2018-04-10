@@ -1,3 +1,10 @@
+common:
+  cases:
+    - mpool_alloc_free_thread
+    - mpool_alloc_free_isr
+    - mpool_kdefine_extern
+    - mpool_alloc_size
+    - mpool_alloc_timeout
 tests:
   kernel.memory_pool:
     tags: kernel mem_pool

@@ -1,3 +1,10 @@
+common:
+  cases:
+    - mheap_malloc_free
+    - mheap_calloc
+    - mheap_malloc_align4
+    - mheap_min_block_size
+    - mheap_block_desc
 tests:
   kernel.memory_heap:
     tags: kernel

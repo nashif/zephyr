@@ -1,3 +1,9 @@
+common:
+  cases:
+    - mpool_alloc_wait_prio
+    - mpool_alloc_size_roundup
+    - mpool_alloc_merge_failed_diff_size
+    - mpool_alloc_merge_failed_diff_parent
 tests:
   kernel.memory_pool:
     tags: kernel mem_pool

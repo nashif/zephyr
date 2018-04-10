@@ -1,3 +1,7 @@
+common:
+  cases:
+    - idt_stub
+    - static_idt
 tests:
   arch.x86.interrupt:
     arch_whitelist: x86

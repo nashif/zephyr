@@ -1,3 +1,14 @@
+common:
+  cases:
+    - timer_duration_period
+    - timer_period_0
+    - timer_expirefn_null
+    - timer_periodicity
+    - timer_status_get
+    - timer_status_get_anytime
+    - timer_status_sync
+    - timer_k_define
+    - timer_user_data
 tests:
   kernel.timer:
     tags: kernel

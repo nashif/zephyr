@@ -1,6 +1,7 @@
+common:
+  cases:
+    - stack_pt_randomization
 tests:
   kernel.memory_protection.stack_random:
     arch_exclude: posix
     tags: memory_protection
-    cases:
-      - stack_pt_randomization

@@ -1,3 +1,7 @@
+common:
+  cases:
+    - msg_receiver
+    - msg_receiver_unlimited
 tests:
   kernel.mailbox:
     tags: kernel

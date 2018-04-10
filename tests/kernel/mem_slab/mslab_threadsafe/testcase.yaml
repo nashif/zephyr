@@ -1,3 +1,6 @@
+common:
+  cases:
+    - mslab_threadsafe
 tests:
   kernel.memory_slabs:
     tags: kernel

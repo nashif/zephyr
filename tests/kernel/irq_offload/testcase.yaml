@@ -1,3 +1,6 @@
+common:
+  cases:
+    - irq_offload
 tests:
   arch.interrupt:
     tags: interrupts

@@ -1,3 +1,11 @@
+common:
+  cases:
+    - lifo_nowait
+    - lifo_wait
+    - timeout_empty_lifo
+    - timeout_non_empty_lifo
+    - timeout_lifo_thread
+    - timeout_threads_pend_on_lifo
 tests:
   kernel.lifo.usage:
     min_ram: 32

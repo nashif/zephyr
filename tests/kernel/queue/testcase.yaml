@@ -1,3 +1,11 @@
+common:
+  cases:
+    - queue_thread2thread
+    - queue_thread2isr
+    - queue_isr2thread
+    - queue_get_2threads
+    - queue_get_fail
+    - queue_loop
 tests:
   kernel.queue:
     tags: kernel

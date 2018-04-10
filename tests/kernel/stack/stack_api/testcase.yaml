@@ -1,3 +1,8 @@
+common:
+  cases:
+    - stack_thread2thread
+    - stack_thread2isr
+    - stack_pop_fail
 tests:
   kernel.stack:
     tags: kernel userspace

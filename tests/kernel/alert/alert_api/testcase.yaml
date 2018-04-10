@@ -1,3 +1,18 @@
+common:
+  cases:
+    - thread_alert_timeout
+    - thread_alert_wait
+    - thread_alert_handler
+    - thread_alert_default
+    - thread_alert_ignore
+    - thread_alert_consumed
+    - thread_alert_pending
+    - isr_alert_default
+    - isr_alert_ignore
+    - isr_alert_consumed
+    - isr_alert_pending
+    - thread_kinit_alert
+    - isr_kinit_alert
 tests:
   kernel.alert:
     tags: kernel userspace

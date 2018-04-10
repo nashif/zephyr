@@ -1,3 +1,26 @@
+common:
+  cases:
+    - mbox_kinit/*keep
+    - init
+    - first!*/
+    - mbox_kdefine
+    - mbox_put_get_null
+    - mbox_put_get_buffer
+    - mbox_async_put_get_buffer
+    - mbox_async_put_get_block
+    - mbox_target_source_thread_buffer
+    - mbox_target_source_thread_block
+    - mbox_incorrect_receiver_tid
+    - mbox_incorrect_transmit_tid
+    - mbox_timed_out_mbox_get
+    - mbox_block_get_invalid_pool
+    - mbox_msg_tid_mismatch
+    - mbox_block_get_buff_to_pool
+    - mbox_dispose_size_0_msg
+    - mbox_clean_up_tx_pool
+    - mbox_async_put_to_waiting_get
+    - mbox_async_multiple_put
+    - mbox_multiple_waiting_get
 tests:
   kernel.mailbox:
     tags: kernel

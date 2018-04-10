@@ -1,3 +1,6 @@
+common:
+  cases:
+    - globals
 tests:
   arch.xip:
     arch_exclude: xtensa

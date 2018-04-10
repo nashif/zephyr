@@ -1,3 +1,11 @@
+common:
+  cases:
+    - timeout_empty_fifo
+    - timeout_non_empty_fifo
+    - timeout_fifo_thread
+    - timeout_threads_pend_on_fifo
+    - timeout_threads_pend_on_dual_fifos
+    - timeout_threads_pend_fail_on_fifo
 tests:
   kernel.fifo.timeout:
     min_ram: 32

@@ -1,4 +1,9 @@
 common:
+  cases:
+    - dummy_device_pm
+    - dummy_device
+    - bogus_dynamic_name
+    - dynamic_name
   tags: device
   platform_whitelist: native_posix qemu_x86
 tests:

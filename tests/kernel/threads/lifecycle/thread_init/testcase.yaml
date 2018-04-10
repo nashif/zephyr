@@ -1,3 +1,9 @@
+common:
+  cases:
+    - kdefine_preempt_thread
+    - kdefine_coop_thread
+    - kinit_preempt_thread
+    - kinit_coop_thread
 tests:
   kernel.threads:
     tags: kernel threads userspace

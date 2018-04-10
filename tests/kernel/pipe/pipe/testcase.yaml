@@ -1,3 +1,12 @@
+common:
+  cases:
+    - pipe_on_single_elements
+    - pipe_on_multiple_elements
+    - pipe_forever_wait
+    - pipe_timeout
+    - pipe_get_on_empty_pipe
+    - pipe_forever_timeout
+    - pipe_get_timeout
 tests:
   kernel.pipe:
       tags: kernel userspace

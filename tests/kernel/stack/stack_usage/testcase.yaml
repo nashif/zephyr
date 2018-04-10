@@ -1,3 +1,8 @@
+common:
+  cases:
+    - single_stack_play
+    - dual_stack_play
+    - isr_stack_play
 tests:
   kernel.stack.usage:
     tags: kernel userspace

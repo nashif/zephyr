@@ -1,3 +1,10 @@
+common:
+  cases:
+    - mutex_lock_unlock
+    - mutex_reent_lock_forever
+    - mutex_reent_lock_no_wait
+    - mutex_reent_lock_timeout_fail
+    - mutex_reent_lock_timeout_pass
 tests:
   kernel.mutex:
     tags: kernel

@@ -1,3 +1,20 @@
+common:
+  cases:
+    - threads_spawn_params
+    - threads_spawn_priority
+    - threads_spawn_delay
+    - threads_spawn_forever
+    - thread_start
+    - threads_suspend_resume_cooperative
+    - threads_suspend_resume_preemptible
+    - threads_cancel_undelayed
+    - threads_cancel_delayed
+    - threads_cancel_started
+    - threads_abort_self
+    - threads_abort_others
+    - threads_abort_repeat
+    - abort_handler
+    - essential_thread_operation
 tests:
   kernel.threads:
     tags: kernel threads userspace

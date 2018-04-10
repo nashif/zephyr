@@ -1,3 +1,6 @@
+common:
+  cases:
+    - arm_runtime_nmi
 tests:
   arch.interrupt:
     arch_whitelist: arm

@@ -1,3 +1,6 @@
+common:
+  cases:
+    - smp
 tests:
-  test:
+  kernel.multiprocessing:
     platform_whitelist: esp32

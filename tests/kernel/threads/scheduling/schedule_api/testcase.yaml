@@ -1,3 +1,18 @@
+common:
+  cases:
+    - priority_cooperative
+    - priority_preemptible
+    - yield_cooperative
+    - sleep_cooperative
+    - sleep_wakeup_preemptible
+    - time_slicing_preemptible
+    - time_slicing_disable_preemptible
+    - lock_preemptible
+    - unlock_preemptible
+    - sched_is_preempt_thread
+    - slice_reset
+    - slice_scheduling
+    - priority_scheduling
 tests:
   kernel.threads.scheduling:
     min_ram: 20
