@@ -1,4 +1,4 @@
 tests:
-  test:
+  net.coap:
     min_ram: 16
     tags: net

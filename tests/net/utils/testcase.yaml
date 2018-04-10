@@ -1,4 +1,10 @@
+common:
+  cases:
+    - run_tests
+    - net_addr
+    - addr_parse
+    - net_pkt_addr_parse
 tests:
-  test:
+  net.util:
     min_ram: 24
     tags: net

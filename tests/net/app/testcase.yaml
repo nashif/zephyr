@@ -1,18 +1,46 @@
 common:
   depends_on: netif
+  cases:
+    - iface_setup
+    - app_init
+    - app_udp_server_init
+    - app_tcp_server_init
+    - app_udp_server_listen
+    - app_tcp_server_listen
+    - app_tcp6_client_peer
+    - app_udp6_client_peer
+    - app_tcp4_client_peer
+    - app_udp4_client_peer
+    - app_tcp6_client_peer_with_port
+    - app_tcp4_client_peer_with_port
+    - app_udp6_client_peer_with_port
+    - app_udp4_client_peer_with_port
+    - app_tcp6_client_peer_addr
+    - app_tcp4_client_peer_addr
+    - app_udp6_client_peer_addr
+    - app_udp4_client_peer_addr
+    - app_tcp6_client_hostname_fail
+    - app_tcp4_client_hostname_fail
+    - app_udp6_client_hostname_fail
+    - app_udp4_client_hostname_fail
+    - app_tcp6_client_hostname
+    - app_tcp4_client_hostname
+    - app_udp6_client_hostname
+    - app_udp4_client_hostname
+    - app_close_server
 tests:
-  test:
+  net.app:
     min_ram: 32
     tags: net
-  test-no-ipv4:
+  net.app.no-ipv4:
     extra_args: CONF_FILE=prj-no-ipv4.conf
     min_ram: 32
     tags: net
-  test-no-ipv6:
+  net.app.no-ipv6:
     extra_args: CONF_FILE=prj-no-ipv6.conf
     min_ram: 32
     tags: net
-  test-with-dns:
+  net.app.with-dns:
     extra_args: CONF_FILE=prj-with-dns.conf
     min_ram: 32
     tags: net dns

@@ -1,3 +1,15 @@
+common:
+  cases:
+    - eth_setup
+    - address_setup
+    - tx_chksum_offload_disabled_test_v6
+    - tx_chksum_offload_disabled_test_v4
+    - tx_chksum_offload_enabled_test_v6
+    - tx_chksum_offload_enabled_test_v4
+    - rx_chksum_offload_disabled_test_v6
+    - rx_chksum_offload_disabled_test_v4
+    - rx_chksum_offload_enabled_test_v6
+    - rx_chksum_offload_enabled_test_v4
 tests:
   net.offload:
     min_ram: 16

@@ -1,3 +1,6 @@
+common:
+  cases:
+    - run_tests
 tests:
   net.arp:
     min_ram: 16

@@ -1,5 +1,34 @@
+common:
+  cases:
+    - websocket_init_server
+    - init
+    - v6_init
+    - v6_connect
+    - v6_send_recv_1
+    - v6_send_recv_2
+    - v6_send_recv_3
+    - v6_send_recv_4
+    - v6_send_recv_5
+    - v6_send_recv_6
+    - v6_send_recv_7
+    - v6_send_multi_msg
+    - v6_close
+    - websocket_cleanup_server
+    - websocket_init_server
+    - v4_init
+    - v4_connect
+    - v4_send_recv_1
+    - v4_send_recv_2
+    - v4_send_recv_3
+    - v4_send_recv_4
+    - v4_send_recv_5
+    - v4_send_recv_6
+    - v4_send_recv_7
+    - v4_send_multi_msg
+    - v4_close
+    - websocket_cleanup_server
 tests:
-  test:
-      build_only: true
+  net.websocket:
       min_ram: 46
       tags: net http websocket
+      depends_on: netif

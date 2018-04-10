@@ -1,4 +1,8 @@
+common:
+  cases:
+    - getaddrinfo_ok
+    - getaddrinfo_no_host
 tests:
-  test:
+  net.socket:
     min_ram: 21
     tags: net

@@ -1,4 +1,7 @@
 common:
+  cases:
+    - http_header_fields
+common:
   tags: http net
   depends_on: netif
 tests:

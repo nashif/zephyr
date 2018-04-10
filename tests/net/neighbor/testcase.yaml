@@ -1,3 +1,6 @@
+common:
+  cases:
+    - neighbor
 tests:
   net.neighbour:
     min_ram: 16

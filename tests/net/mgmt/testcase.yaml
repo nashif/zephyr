@@ -1,3 +1,6 @@
+common:
+  cases:
+    - mgmt
 tests:
   net.management:
     min_ram: 16

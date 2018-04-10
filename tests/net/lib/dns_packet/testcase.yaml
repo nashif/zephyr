@@ -1,3 +1,7 @@
+common:
+  cases:
+    - dns_query
+    - dns_response
 tests:
   net.dns:
     min_ram: 16

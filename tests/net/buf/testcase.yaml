@@ -1,3 +1,14 @@
+common:
+  cases:
+    - net_buf_test_1
+    - net_buf_test_2
+    - net_buf_test_3
+    - net_buf_test_4
+    - net_buf_test_big_buf
+    - net_buf_test_multi_frags
+    - net_buf_test_clone
+    - net_buf_test_fixed_pool
+    - net_buf_test_var_pool
 tests:
   net.buf:
     min_ram: 16

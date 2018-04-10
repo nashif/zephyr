@@ -1,3 +1,37 @@
+common:
+  cases:
+    - init
+    - net_ctx_get_fail
+    - net_ctx_get_all
+    - net_ctx_get_success
+    - net_ctx_create
+    - net_ctx_bind_fail
+    - net_ctx_bind_uni_success_v6
+    - net_ctx_bind_uni_success_v4
+    - net_ctx_bind_mcast_success
+    - net_ctx_listen_v6
+    - net_ctx_listen_v4
+    - net_ctx_connect_v6
+    - net_ctx_connect_v4
+    - net_ctx_accept_v6
+    - net_ctx_accept_v4
+    - net_ctx_send_v6
+    - net_ctx_send_v4
+    - net_ctx_sendto_v6
+    - net_ctx_sendto_v4
+    - net_ctx_recv_v6
+    - net_ctx_recv_v4
+    - net_ctx_recv_v6_fail
+    - net_ctx_recv_v4_fail
+    - net_ctx_recv_v6_again
+    - net_ctx_recv_v4_again
+    - net_ctx_recv_v6_reconfig
+    - net_ctx_recv_v4_reconfig
+    - net_ctx_recv_v6_timeout
+    - net_ctx_recv_v4_timeout
+    - net_ctx_recv_v6_timeout_forever
+    - net_ctx_recv_v4_timeout_forever
+    - net_ctx_put
 tests:
   net.context:
     min_ram: 16

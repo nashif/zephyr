@@ -1,4 +1,14 @@
+common:
+  cases:
+    - vlan_setup
+    - address_setup
+    - vlan_tci
+    - vlan_enable
+    - vlan_disable
+    - vlan_enable_all
+    - vlan_disable_all
+    - vlan_send_data
 tests:
-  test:
+  net.vlan:
     min_ram: 32
     tags: net vlan

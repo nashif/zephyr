@@ -1,4 +1,23 @@
 common:
+  cases:
+    - init
+    - dns_query_invalid_timeout
+    - dns_query_invalid_context
+    - dns_query_invalid_callback
+    - dns_query_invalid_query
+    - dns_query_too_many
+    - dns_query_server_count
+    - dns_query_ipv4_server_count
+    - dns_query_ipv6_server_count
+    - dns_query_ipv4_timeout
+    - dns_query_ipv6_timeout
+    - dns_query_ipv4_cancel
+    - dns_query_ipv6_cancel
+    - dns_query_ipv4
+    - dns_query_ipv6
+    - dns_query_ipv4_numeric
+    - dns_query_ipv6_numeric
+common:
   tags: dns net
   depends_on: netif
 tests:

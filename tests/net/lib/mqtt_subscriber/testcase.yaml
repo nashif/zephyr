@@ -1,3 +1,10 @@
+common:
+  cases:
+    - mqtt_init
+    - mqtt_connect
+    - mqtt_subscribe
+    - mqtt_unsubscribe
+    - mqtt_disconnect
 tests:
   net.mqtt.subscriber:
     min_ram: 16

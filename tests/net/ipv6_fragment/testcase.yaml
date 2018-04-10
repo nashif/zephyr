@@ -1,3 +1,11 @@
+common:
+  cases:
+    - setup
+    - find_last_ipv6_fragment_udp
+    - find_last_ipv6_fragment_hbho_udp
+    - find_last_ipv6_fragment_hbho_frag
+    - send_ipv6_fragment
+    - recv_ipv6_fragment
 tests:
   net.ipv6.fragment:
     tags: net ipv6 fragment

@@ -1,5 +1,12 @@
+common:
+  cases:
+    - send_recv_2_sock
+    - v4_sendto_recvfrom
+    - v6_sendto_recvfrom
+    - v4_bind_sendto
+    - v6_bind_sendto
 tests:
-  test:
+  net.socket.udp:
     extra_configs:
       - CONFIG_NET_TEST=y
       - CONFIG_NET_LOOPBACK=y

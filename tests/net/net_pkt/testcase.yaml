@@ -1,3 +1,11 @@
+common:
+  cases:
+    - ipv6_multi_frags
+    - fragment_copy
+    - pkt_read_append
+    - pkt_read_write_insert
+    - fragment_compact
+    - fragment_split
 tests:
   net.packet:
     depends_on: netif

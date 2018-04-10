@@ -1,3 +1,21 @@
+common:
+  cases:
+    - init
+    - net_ctx_create
+    - populate_nbr_cache
+    - route_add
+    - route_update
+    - route_get_nexthop
+    - route_lookup_ok
+    - route_lookup_fail
+    - route_del
+    - route_add
+    - route_del_nexthop
+    - route_del_again
+    - route_del_nexthop_again
+    - populate_nbr_cache
+    - route_add_many
+    - route_del_many
 tests:
   net.route:
     min_ram: 16

@@ -1,4 +1,12 @@
+common:
+  cases:
+    - v4_send_recv
+    - v6_send_recv
+    - v4_sendto_recvfrom
+    - v6_sendto_recvfrom
+    - v4_sendto_recvfrom_null_dest
+    - v6_sendto_recvfrom_null_dest
 tests:
-  test:
+  net.socket.tcp:
     min_ram: 32
     tags: net

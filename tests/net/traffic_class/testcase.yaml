@@ -1,4 +1,34 @@
 common:
+  cases:
+    - traffic_class_general_setup
+    - traffic_class_setup_tx
+    - traffic_class_send_data_prio_bk
+    - traffic_class_send_data_prio_be
+    - traffic_class_send_data_prio_ee
+    - traffic_class_send_data_prio_ca
+    - traffic_class_send_data_prio_vi
+    - traffic_class_send_data_prio_vo
+    - traffic_class_send_data_prio_ic
+    - traffic_class_send_data_prio_nc
+    - traffic_class_send_data_mix
+    - traffic_class_send_data_mix_all_1
+    - traffic_class_send_data_mix_all_2
+    - traffic_class_cleanup_tx
+    - traffic_class_setup_rx
+    - traffic_class_setup_recv
+    - traffic_class_recv_data_prio_bk
+    - traffic_class_recv_data_prio_be
+    - traffic_class_recv_data_prio_ee
+    - traffic_class_recv_data_prio_ca
+    - traffic_class_recv_data_prio_vi
+    - traffic_class_recv_data_prio_vo
+    - traffic_class_recv_data_prio_ic
+    - traffic_class_recv_data_prio_nc
+    - traffic_class_recv_data_mix
+    - traffic_class_recv_data_mix_all_1
+    - traffic_class_recv_data_mix_all_2
+    - traffic_class_cleanup_rx
+common:
     platform_whitelist: native_posix
     tags: net traffic_class
 tests:

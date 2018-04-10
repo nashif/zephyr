@@ -1,3 +1,16 @@
+common:
+  cases:
+    - mld_setup
+    - join_group
+    - leave_group
+    - catch_join_group
+    - catch_leave_group
+    - verify_join_group
+    - verify_leave_group
+    - catch_query
+    - verify_send_report
+    - allnodes
+    - solicit_node
 tests:
   net.mld:
     tags: net mld

@@ -1,3 +1,13 @@
+common:
+  cases:
+    - init
+    - net_ctx_create
+    - rpl_mcast_addr
+    - dio_dummy_input
+    - dis_sending
+    - dao_sending_fail
+    - populate_nbr_cache
+    - dio_receive_dest
 tests:
   net.rpl:
     min_ram: 16

@@ -1,3 +1,6 @@
+common:
+  cases:
+    - dhcp
 tests:
   net.dhcp:
     tags: net dhcpv4

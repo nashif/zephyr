@@ -1,3 +1,12 @@
+common:
+  cases:
+    - init
+    - parsing_ns_pkt
+    - sending_ns_pkt
+    - parsing_ack_pkt
+    - replying_ack_pkt
+    - parsing_beacon_pkt
+    - parsing_sec_data_pkt
 tests:
   net.ieee802154.l2:
     min_ram: 16

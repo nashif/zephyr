@@ -1,3 +1,6 @@
+common:
+  cases:
+    - run_tests
 tests:
   net.icmpv6:
     min_ram: 16

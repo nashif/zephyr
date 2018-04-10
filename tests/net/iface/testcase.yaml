@@ -1,3 +1,11 @@
+common:
+  cases:
+    - iface_setup
+    - send_iface1
+    - send_iface2
+    - send_iface3
+    - send_iface1_down
+    - send_iface1_up
 tests:
   net.iface:
     min_ram: 16

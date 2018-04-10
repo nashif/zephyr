@@ -1,5 +1,16 @@
+common:
+  cases:
+    - change_mac_when_up
+    - change_mac_when_down
+    - change_auto_neg
+    - change_to_same_auto_neg
+    - change_link
+    - change_same_link
+    - change_unsupported_link
+    - change_duplex
+    - change_same_duplex
 tests:
-  test:
+  net.ethernet_mgmt:
     min_ram: 32
     depends_on: netif
     tags: net ethernet_mgmt

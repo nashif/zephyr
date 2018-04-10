@@ -1,4 +1,21 @@
+common:
+  cases:
+    - init
+    - trickle_create
+    - trickle_start
+    - trickle_1_status
+    - trickle_2_status
+    - trickle_1_wait
+    - trickle_2_wait
+    - trickle_1_update
+    - trickle_1_status
+    - trickle_2_inc
+    - trickle_2_status
+    - trickle_1_status
+    - trickle_1_wait_long
+    - trickle_stop
+    - trickle_1_stopped
 tests:
-  test:
+  net.trickle:
     min_ram: 12
     tags: net
