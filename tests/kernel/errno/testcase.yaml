@@ -1,7 +1,6 @@
 common:
   cases:
     - thread_context
-common:
   arch_exclude: xtensa
   min_ram: 32
   tags: core

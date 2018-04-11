@@ -5,7 +5,6 @@ common:
     - mqtt_pingreq
     - mqtt_publish
     - mqtt_disconnect
-common:
   tags: net mqtt
   harness: net
   depends_on: netif

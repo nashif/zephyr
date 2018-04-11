@@ -1,4 +1,5 @@
 common:
+  depends_on: netif
   cases:
     - getaddrinfo_ok
     - getaddrinfo_no_host

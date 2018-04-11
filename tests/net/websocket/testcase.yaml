@@ -1,4 +1,5 @@
 common:
+  depends_on: netif
   cases:
     - websocket_init_server
     - init
@@ -31,4 +32,3 @@ tests:
   net.websocket:
       min_ram: 46
       tags: net http websocket
-      depends_on: netif

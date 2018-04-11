@@ -1,4 +1,5 @@
 common:
+  depends_on: netif
   cases:
     - dns_query
     - dns_response
@@ -7,4 +8,3 @@ tests:
     min_ram: 16
     tags: dns net
     timeout: 200
-    depends_on: netif

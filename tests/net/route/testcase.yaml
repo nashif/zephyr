@@ -1,4 +1,5 @@
 common:
+  depends_on: netif
   cases:
     - init
     - net_ctx_create

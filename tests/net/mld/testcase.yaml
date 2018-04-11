@@ -1,4 +1,5 @@
 common:
+  depends_on: netif
   cases:
     - mld_setup
     - join_group
@@ -14,4 +15,3 @@ common:
 tests:
   net.mld:
     tags: net mld
-    depends_on: netif

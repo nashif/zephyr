@@ -17,7 +17,6 @@ common:
     - dns_query_ipv6
     - dns_query_ipv4_numeric
     - dns_query_ipv6_numeric
-common:
   tags: dns net
   depends_on: netif
 tests:

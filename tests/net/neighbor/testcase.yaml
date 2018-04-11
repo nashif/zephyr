@@ -1,4 +1,5 @@
 common:
+  depends_on: netif
   cases:
     - neighbor
 tests:

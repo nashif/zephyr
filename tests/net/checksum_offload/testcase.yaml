@@ -1,4 +1,5 @@
 common:
+  depends_on: netif
   cases:
     - eth_setup
     - address_setup
@@ -14,4 +15,3 @@ tests:
   net.offload:
     min_ram: 16
     tags: net checksum_offload
-    depends_on: netif

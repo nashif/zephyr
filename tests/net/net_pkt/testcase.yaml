@@ -1,4 +1,5 @@
 common:
+  depends_on: netif
   cases:
     - ipv6_multi_frags
     - fragment_copy
@@ -8,6 +9,5 @@ common:
     - fragment_split
 tests:
   net.packet:
-    depends_on: netif
     min_ram: 20
     tags: net

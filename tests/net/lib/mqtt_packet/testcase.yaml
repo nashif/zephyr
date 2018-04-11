@@ -1,8 +1,8 @@
 common:
+  depends_on: netif
   cases:
     - run_tests
 tests:
   net.mqtt.packet:
     min_ram: 16
     tags: mqtt net
-    depends_on: netif

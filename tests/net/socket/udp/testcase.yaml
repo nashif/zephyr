@@ -1,4 +1,5 @@
 common:
+  depends_on: netif
   cases:
     - send_recv_2_sock
     - v4_sendto_recvfrom

@@ -1,4 +1,5 @@
 common:
+  depends_on: netif
   cases:
     - vlan_setup
     - address_setup

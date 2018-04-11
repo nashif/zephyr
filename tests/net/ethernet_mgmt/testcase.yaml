@@ -1,4 +1,5 @@
 common:
+  depends_on: netif
   cases:
     - change_mac_when_up
     - change_mac_when_down
@@ -12,5 +13,4 @@ common:
 tests:
   net.ethernet_mgmt:
     min_ram: 32
-    depends_on: netif
     tags: net ethernet_mgmt

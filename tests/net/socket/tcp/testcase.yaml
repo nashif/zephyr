@@ -1,4 +1,5 @@
 common:
+  depends_on: netif
   cases:
     - v4_send_recv
     - v6_send_recv
