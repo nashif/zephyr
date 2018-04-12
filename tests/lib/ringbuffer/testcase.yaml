@@ -1,8 +1,6 @@
 common:
   cases:
-    - ringbuffer_init/*keep
-    - init
-    - first!*/
+    - ringbuffer_init
     - ringbuffer_declare_pow2
     - ringbuffer_declare_size
     - ringbuffer_put_get_thread

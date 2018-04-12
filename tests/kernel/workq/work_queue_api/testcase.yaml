@@ -16,5 +16,5 @@ common:
     - delayed_work_cancel_thread
     - delayed_work_cancel_isr
 tests:
-  kernel.workqueue.api:
+  kernel.workqueue:
     tags: kernel

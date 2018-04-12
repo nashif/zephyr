@@ -1,6 +1,6 @@
 common:
   cases:
-    - smp
+    - scheduling
 tests:
   kernel.multiprocessing:
     platform_whitelist: esp32

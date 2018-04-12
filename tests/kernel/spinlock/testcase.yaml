@@ -3,5 +3,5 @@ common:
     - spinlock_basic
     - spinlock_bounce
 tests:
-  kernel.smp:
+  kernel.multiprocessing:
     platform_whitelist: esp32
