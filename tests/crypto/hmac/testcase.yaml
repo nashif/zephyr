@@ -1,3 +1,12 @@
+common:
+  cases:
+    - hmac_1
+    - hmac_2
+    - hmac_3
+    - hmac_4
+    - hmac_5
+    - hmac_6
+    - hmac_7
 tests:
   crypto.hmac:
     min_ram: 20

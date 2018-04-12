@@ -1,3 +1,9 @@
+common:
+  cases:
+    - ctr_prng_vector
+    - reseed
+    - uninstantiate
+    - robustness
 tests:
   crypto.ctr_prng:
     tags: crypto ctr prng

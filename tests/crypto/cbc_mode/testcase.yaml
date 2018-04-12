@@ -1,3 +1,6 @@
+common:
+  cases:
+    - sp_800_38a_encrypt_decrypt
 tests:
   crypto.cbc_mode:
     tags: crypto aes cbc

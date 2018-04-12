@@ -1,3 +1,6 @@
+common:
+  cases:
+    - mbedtls
 tests:
   crypto.mbedtls:
     filter: not CONFIG_DEBUG

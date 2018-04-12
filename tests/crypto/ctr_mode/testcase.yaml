@@ -1,3 +1,6 @@
+common:
+  cases:
+    - 1_and_2
 tests:
   crypto.ctr_mode:
     tags: crypto aes ctr

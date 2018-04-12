@@ -1,3 +1,6 @@
+common:
+  cases:
+    - hmac_prng
 tests:
   crypto.hmac_prng:
     min_ram: 48

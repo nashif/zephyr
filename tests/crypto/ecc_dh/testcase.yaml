@@ -1,3 +1,6 @@
+common:
+  cases:
+    - ecc_dh
 tests:
   crypto.ecc_dh:
     min_flash: 35

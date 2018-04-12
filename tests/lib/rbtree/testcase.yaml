@@ -2,5 +2,5 @@ common:
   cases:
     - rbtree_spam
 tests:
-  lib.rbtree:
+  libraries.rbtree:
     tags: rbtree

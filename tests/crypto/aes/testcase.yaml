@@ -1,3 +1,9 @@
+common:
+  cases:
+    - key_chain
+    - vectors
+    - fixed_key_variable_text
+    - variable_key_fixed_text
 tests:
   crypto.aes:
     tags: crypto aes

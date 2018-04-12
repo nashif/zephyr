@@ -1,3 +1,6 @@
+common:
+  cases:
+    - ecc_dsa
 tests:
   crypto.ecc_dsa:
     min_flash: 45

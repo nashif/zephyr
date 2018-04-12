@@ -1,3 +1,13 @@
+common:
+  cases:
+    - vector_1
+    - vector_2
+    - vector_3
+    - vector_4
+    - vector_5
+    - vector_6
+    - vector_7
+    - vector_8
 tests:
   crypto.ccm_mode:
     tags: crypto aes ccm

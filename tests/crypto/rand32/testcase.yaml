@@ -1,3 +1,6 @@
+common:
+  cases:
+    - rand32
 tests:
   crypto.rand32:
     tags: crypto security

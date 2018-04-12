@@ -1,3 +1,18 @@
+common:
+  cases:
+    - sha256_1
+    - sha256_2
+    - sha256_3
+    - sha256_4
+    - sha256_5
+    - sha256_6
+    - sha256_7
+    - sha256_7
+    - sha256_9
+    - sha256_10
+    - sha256_11
+    - sha256_12
+    - sha256_13_and_14
 tests:
   crypto.sha256:
     min_ram: 48
