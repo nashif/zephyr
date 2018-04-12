@@ -1,3 +1,8 @@
+common:
+  cases:
+    - sched_policy
+    - clock_support
+    - timer_support
 tests:
-  posix.posix_checks:
-    tags: core
+  portability.posix:
+    tags: posix

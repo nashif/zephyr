@@ -1,3 +1,6 @@
+common:
+  cases:
+    - posix_clock
 tests:
-  posix.clock:
+  portability.posix:
     tags: posix

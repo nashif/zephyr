@@ -1,3 +1,6 @@
+common:
+  cases:
+    - timer
 tests:
-  posix.timer:
+  portability.posix:
     tags: posix

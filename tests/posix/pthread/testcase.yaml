@@ -1,3 +1,6 @@
+common:
+  cases:
+    - pthread
 tests:
-  posix.pthread:
+  portability.posix:
     tags: posix

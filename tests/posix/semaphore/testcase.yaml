@@ -1,4 +1,7 @@
+common:
+  cases:
+    - sema
 tests:
-  posix.semaphore:
+  portability.posix:
     tags: posix
 

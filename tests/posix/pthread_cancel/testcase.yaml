@@ -1,4 +1,7 @@
+common:
+  cases:
+    - pthread_cancel
 tests:
-  posix.pthread:
+  portability.posix:
     min_ram: 16
     tags: posix

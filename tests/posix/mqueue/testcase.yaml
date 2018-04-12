@@ -1,4 +1,7 @@
+common:
+  cases:
+    - mqueue
 tests:
-  posix.mqueue:
+  portability.posix:
     min_ram: 16
-    tags: core
+    tags: posix
