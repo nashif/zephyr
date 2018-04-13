@@ -32,8 +32,6 @@
 #include <entropy.h>
 #include <tracing.h>
 
-#define MAIN_THREAD_NAME	"main"
-
 /* kernel build timestamp items */
 #define BUILD_TIMESTAMP "BUILD: " __DATE__ " " __TIME__
 
@@ -209,8 +207,6 @@ static void bg_thread_main(void *unused1, void *unused2, void *unused3)
 	ARG_UNUSED(unused2);
 	ARG_UNUSED(unused3);
 
-	k_thread_name_set(MAIN_THREAD_NAME);
-
 	_sys_device_do_config_level(_SYS_INIT_LEVEL_POST_KERNEL);
 #if CONFIG_STACK_POINTER_RANDOM
 	z_stack_adjust_initialized = 1;
@@ -384,7 +380,6 @@ static void switch_to_main_thread(void)
 
 	_Swap(irq_lock());
 #endif
-	k_thread_name_set(MAIN_THREAD_NAME);
 }
 
 u32_t z_early_boot_rand32_get(void)
