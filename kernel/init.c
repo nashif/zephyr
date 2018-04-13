@@ -31,8 +31,6 @@
 #include <kswap.h>
 #include <tracing.h>
 
-#define MAIN_THREAD_NAME	"main"
-
 /* kernel build timestamp items */
 #define BUILD_TIMESTAMP "BUILD: " __DATE__ " " __TIME__
 
@@ -220,8 +218,6 @@ static void bg_thread_main(void *unused1, void *unused2, void *unused3)
 	ARG_UNUSED(unused2);
 	ARG_UNUSED(unused3);
 
-	k_thread_name_set(MAIN_THREAD_NAME);
-
 	_sys_device_do_config_level(_SYS_INIT_LEVEL_POST_KERNEL);
 	if (boot_delay > 0) {
 		printk("***** delaying boot " STRINGIFY(CONFIG_BOOT_DELAY)
@@ -404,7 +400,6 @@ static void switch_to_main_thread(void)
 
 	_Swap(irq_lock());
 #endif
-	k_thread_name_set(MAIN_THREAD_NAME);
 }
 
 #ifdef CONFIG_STACK_CANARIES
