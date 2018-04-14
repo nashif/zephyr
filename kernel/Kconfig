@@ -256,6 +256,14 @@ config THREAD_MONITOR
 	  This option instructs the kernel to maintain a list of all threads
 	  (excluding those that have not yet started or have already
 	  terminated).
+
+config MAX_THREAD_NAME_LEN
+	int
+	prompt "Maximal thread name length"
+	default 16
+	help
+	  The maximal thread name length when thread names are used, mainly for
+	  debugging purposes.
 endmenu
 
 menu "Work Queue Options"

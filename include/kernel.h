@@ -468,7 +468,7 @@ struct k_thread {
 	struct k_thread *next_thread;
 
 	/* Thread name */
-	const char *name;
+	char name[CONFIG_MAX_THREAD_NAME_LEN];
 #endif
 
 #ifdef CONFIG_THREAD_CUSTOM_DATA
@@ -774,7 +774,7 @@ struct _static_thread_data {
 	u32_t init_options;
 	s32_t init_delay;
 	void (*init_abort)(void);
-	const char *init_name;
+	char *init_name;
 };
 
 #define _THREAD_INITIALIZER(thread, stack, stack_size,           \

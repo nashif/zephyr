@@ -103,9 +103,19 @@ int saved_always_on = k_enable_sys_clock_always_on();
 #endif
 
 #ifdef CONFIG_THREAD_MONITOR
-void _impl_k_thread_name_set(const char *value)
+void _impl_k_thread_name_set(const char *thread_name)
 {
-	_current->name = value;
+	int i;
+        for( i = 0; i < CONFIG_MAX_THREAD_NAME_LEN; i++ )
+        {
+                _current->name[ i ] = thread_name[ i ];
+
+                if( thread_name[ i ] == 0x00 ) {
+                        break;
+                }
+        }
+
+        _current->name[ CONFIG_MAX_THREAD_NAME_LEN - 1 ] = '\0';
 }
 
 #ifdef CONFIG_USERSPACE
@@ -116,9 +126,9 @@ _SYSCALL_HANDLER(k_thread_name_set, data)
 }
 #endif
 #else
-void _impl_k_thread_name_set(const char *value)
+void _impl_k_thread_name_set(const char *thread_name)
 {
-	ARG_UNUSED(value);
+	ARG_UNUSED(thread_name);
 }
 #endif /* CONFIG_THREAD_MONITOR */
 
@@ -311,7 +321,7 @@ void _setup_new_thread(struct k_thread *new_thread,
 		       k_thread_stack_t *stack, size_t stack_size,
 		       k_thread_entry_t entry,
 		       void *p1, void *p2, void *p3,
-		       int prio, u32_t options, const char *name)
+		       int prio, u32_t options, const char *thread_name)
 {
 	stack_size = adjust_stack_size(stack_size);
 
@@ -319,7 +329,18 @@ void _setup_new_thread(struct k_thread *new_thread,
 		    prio, options);
 
 #ifdef CONFIG_THREAD_MONITOR
-	new_thread->name = name;
+	if (thread_name) {
+		for( int i = 0; i < CONFIG_MAX_THREAD_NAME_LEN; i++ )
+		{
+			new_thread->name[ i ] = thread_name[ i ];
+
+			if( thread_name[ i ] == 0x00 ) {
+				break;
+			}
+		}
+        	new_thread->name[ CONFIG_MAX_THREAD_NAME_LEN - 1 ] = '\0';
+	}
+
 #endif
 #ifdef CONFIG_USERSPACE
 	_k_object_init(new_thread);
