@@ -4,7 +4,7 @@ common:
     - sys_mem_pool_alloc_align4
     - sys_mem_pool_min_block_size
 tests:
-  kernel.sys_mem_pool:
+  kernel.memory_pool:
     min_ram: 32
     tags: kernel userspace mem_pool
     cases:

@@ -2,5 +2,5 @@ common:
   cases:
     - critical
 tests:
-  kernel.critical:
+  kernel.common:
     tags: core bat_commit

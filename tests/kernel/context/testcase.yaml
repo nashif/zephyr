@@ -2,5 +2,5 @@ common:
   cases:
     - context
 tests:
-  kernel.context:
+  kernel.common:
     tags: core bat_commit

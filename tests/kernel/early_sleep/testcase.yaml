@@ -2,5 +2,5 @@ common:
   cases:
     - verify_early_sleep
 tests:
-  kernel.earlysleep:
+  kernel.common:
     tags: core

@@ -10,5 +10,5 @@ common:
     - ringbuffer_size_put_get_thread_isr
     - ring_buffer_main_test
 tests:
-  libraries.ringbuffer:
+  libraries.data_structures:
     tags: ring_buffer circular_buffer

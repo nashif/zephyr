@@ -1,8 +1,6 @@
 common:
   cases:
-    - mbox_kinit/*keep
-    - init
-    - first!*/
+    - mbox_kinit
     - mbox_kdefine
     - mbox_put_get_null
     - mbox_put_get_buffer
