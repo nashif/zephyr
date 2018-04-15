@@ -1363,6 +1363,7 @@ class TestCase:
             from the testcase.yaml file
         """
         self.code_location = os.path.join(testcase_root, workdir)
+        self.id = name
         self.type = tc_dict["type"]
         self.tags = tc_dict["tags"]
         self.extra_args = tc_dict["extra_args"]
@@ -2143,6 +2144,9 @@ def parse_arguments():
     parser.add_argument("--list-tags", action="store_true",
             help="list all tags in selected tests")
 
+    parser.add_argument("--list-tests", action="store_true",
+            help="list all tests.")
+
     parser.add_argument(
         "-r", "--release", action="store_true",
         help="Update the benchmark database with the results of this test "
@@ -2440,6 +2444,17 @@ def main():
         for t in tags:
             print("- {}".format(t))
 
+        return
+
+    if options.list_tests:
+        cnt = 0
+        for n,tc in ts.testcases.items():
+            for c in tc.cases:
+                cnt = cnt + 1
+                identifier = "{}.{}".format(tc.id, c)
+                print(" - {}".format(identifier))
+
+        print("{} total.".format(cnt))
         return
 
     discards = []
