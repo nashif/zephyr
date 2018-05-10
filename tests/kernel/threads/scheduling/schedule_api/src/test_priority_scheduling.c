@@ -52,7 +52,8 @@ static void thread_tslice(void *p1, void *p2, void *p3)
 /*test cases*/
 
 /**
- *
+ * @addtogroup kernel_threads
+ * @{
  * @brief Check the behavior of preemptive threads with different priorities
  *
  * @details Create multiple threads of different priorities - all are preemptive,
@@ -100,3 +101,7 @@ void test_priority_scheduling(void)
 	/* Set priority of Main thread to its old value */
 	k_thread_priority_set(k_current_get(), old_prio);
 }
+
+/**
+ * @}
+ */

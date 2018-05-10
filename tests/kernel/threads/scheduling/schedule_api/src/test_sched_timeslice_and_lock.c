@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/**
- * @addtogroup t_threads_scheduling
- * @{
- * @defgroup t_sched_timeslice_and_lock test_sched_timeslice_and_lock
- * @brief TestPurpose: verify sched time slice and lock/unlock
- * @}
- */
 
 #include "test_sched.h"
 #define THREADS_NUM     3
@@ -73,6 +66,8 @@ static void teardown_threads(void)
 /*test cases*/
 
 /**
+ * @addtogroup kernel_threads
+ * @{
  * @brief Validate the behavior of cooperative thread
  * when it yields
  *
@@ -286,3 +281,7 @@ void test_unlock_preemptible(void)
 	/* restore environment */
 	teardown_threads();
 }
+
+/**
+ * @}
+ */

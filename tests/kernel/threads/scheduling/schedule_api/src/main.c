@@ -5,11 +5,10 @@
  */
 
 /**
- * @addtogroup t_kernel_threads
+ * @brief Tests for Thread objects
+ * @defgroup kernel_threads Threads
+ * @ingroup all_tests
  * @{
- * @defgroup t_threads_scheduling test_threads_scheduling
- * @brief TestPurpose: verify threads scheduling based on priority, time
- * slice and lock/unlock
  * @}
  */
 

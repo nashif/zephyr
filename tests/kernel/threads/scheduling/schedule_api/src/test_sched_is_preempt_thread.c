@@ -4,16 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/**
- * @addtogroup t_sched_api
- * @{
- * @defgroup t_sched_is_preempt_thread test_sched_is_preempt_thread
- * @brief TestPurpose: verify context type is preempt thread
- * - API coverage
- *   -# k_is_preempt_thread
- * @}
- */
-
 #include <ztest.h>
 #include <irq_offload.h>
 
@@ -66,6 +56,8 @@ static void tcoop_ctx(void *p1, void *p2, void *p3)
 /*test cases*/
 
 /**
+ * @addtogroup kernel_threads
+ * @{
  * @brief Validate the correctness of k_is_preempt_thread()
  *
  * @details Create a preemptive thread, lock the scheduler
@@ -98,3 +90,7 @@ void test_sched_is_preempt_thread(void)
 	/*invoke isr*/
 	irq_offload(tIsr, NULL);
 }
+
+/**
+ * @}
+ */

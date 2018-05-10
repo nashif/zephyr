@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/**
- * @addtogroup t_threads_scheduling
- * @{
- * @defgroup t_threads_priority test_threads_priority
- * @brief TestPurpose: verify threads scheduling priority
- * @}
- */
 
 #include "test_sched.h"
 
@@ -26,6 +19,8 @@ static void thread_entry(void *p1, void *p2, void *p3)
 /*test cases*/
 
 /**
+ * @addtogroup kernel_threads
+ * @{
  * @brief Validate that the cooperative thread will
  * not be preempted
  *
@@ -61,6 +56,7 @@ void test_priority_cooperative(void)
 
 /**
  * @brief Validate preemptiveness of preemptive thread
+ *
  *
  * @details Create a preemptive thread which is of priority
  * lower than current thread. Current thread is made has preemptive.
@@ -98,3 +94,7 @@ void test_priority_preemptible(void)
 	/* restore environment */
 	k_thread_priority_set(k_current_get(), old_prio);
 }
+
+/**
+ * @}
+ */
