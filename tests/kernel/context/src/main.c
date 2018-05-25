@@ -101,6 +101,7 @@ typedef struct {
 	};
 } ISR_INFO;
 
+
 typedef int (*disable_int_func) (int);
 typedef void (*enable_int_func) (int);
 
@@ -120,7 +121,6 @@ static struct k_thread thread_data2;
 static ISR_INFO isr_info;
 
 /**
- *
  * @brief Handler to perform various actions from within an ISR context
  *
  * This routine is the ISR handler for isr_handler_trigger().  It performs
@@ -181,18 +181,51 @@ static int kernel_init_objects(void)
 	return TC_PASS;
 }
 
-#ifdef HAS_POWERSAVE_INSTRUCTION
 /**
+ * @brief A wrapper for irq_lock()
  *
- * @brief Test the k_cpu_idle() routine
- *
- * This tests the k_cpu_idle() routine.  The first thing it does is align to
- * a tick boundary.  The only source of interrupts while the test is running is
- * expected to be the tick clock timer which should wake the CPU.  Thus after
- * each call to k_cpu_idle(), the tick count should be one higher.
- *
+ * @return irq_lock() return value
  */
-static void test_kernel_cpu_idle(int atomic)
+int irq_lock_wrapper(int unused)
+{
+        ARG_UNUSED(unused);
+
+        return irq_lock();
+}
+
+/**
+ * @brief A wrapper for irq_unlock()
+ *
+ * @return N/A
+ */
+void irq_unlock_wrapper(int imask)
+{
+        irq_unlock(imask);
+}
+
+/**
+ * @brief A wrapper for irq_disable()
+ *
+ * @return @a irq
+ */
+int irq_disable_wrapper(int irq)
+{
+        irq_disable(irq);
+        return irq;
+}
+
+/**
+ * @brief A wrapper for irq_enable()
+ *
+ * @return N/A
+ */
+void irq_enable_wrapper(int irq)
+{
+        irq_enable(irq);
+}
+
+
+static void _test_kernel_cpu_idle(int atomic)
 {
 	int tms, tms2;;         /* current time in millisecond */
 	int i;                  /* loop variable */
@@ -222,64 +255,49 @@ static void test_kernel_cpu_idle(int atomic)
 				 tms2, tms);
 	}
 }
+
+#ifdef HAS_POWERSAVE_INSTRUCTION
+/**
+ *
+ * @brief Test the k_cpu_idle() routine
+ *
+ * This tests the k_cpu_idle() routine.  The first thing it does is align to
+ * a tick boundary.  The only source of interrupts while the test is running is
+ * expected to be the tick clock timer which should wake the CPU.  Thus after
+ * each call to k_cpu_idle(), the tick count should be one higher.
+ *
+ * @see k_cpu_idle()
+ */
+#ifndef CONFIG_ARM
+static void test_kernel_cpu_idle_atomic(void)
+{
+	_test_kernel_cpu_idle(1)
+}
+#else
+static void test_kernel_cpu_idle_atomic(void)
+{
+	ztest_test_skip();
+}
 #endif
 
-/**
- *
- * @brief A wrapper for irq_lock()
- *
- * @return irq_lock() return value
- */
-int irq_lock_wrapper(int unused)
+static void test_kernel_cpu_idle(void)
 {
-	ARG_UNUSED(unused);
-
-	return irq_lock();
+	_test_kernel_cpu_idle(0);
 }
 
-/**
- *
- * @brief A wrapper for irq_unlock()
- *
- * @return N/A
- */
-void irq_unlock_wrapper(int imask)
+#else
+static void test_kernel_cpu_idle(void)
 {
-	irq_unlock(imask);
+	ztest_test_skip();
 }
-
-/**
- * @brief A wrapper for irq_disable()
- *
- * @return @a irq
- */
-int irq_disable_wrapper(int irq)
+static void test_kernel_cpu_idle_atomic(void)
 {
-	irq_disable(irq);
-	return irq;
+	ztest_test_skip();
 }
+#endif
 
-/**
- *
- * @brief A wrapper for irq_enable()
- *
- * @return N/A
- */
-void irq_enable_wrapper(int irq)
-{
-	irq_enable(irq);
-}
-
-/**
- *
- * @brief Test routines for disabling and enabling ints
- *
- * This routine tests the routines for disabling and enabling interrupts.
- * These include irq_lock() and irq_unlock(), irq_disable() and irq_enable().
- *
- */
-static void test_kernel_interrupts(disable_int_func disable_int,
-				  enable_int_func enable_int, int irq)
+static void _test_kernel_interrupts(disable_int_func disable_int,
+				    enable_int_func enable_int, int irq)
 {
 	unsigned long long count = 0;
 	unsigned long long i = 0;
@@ -327,7 +345,6 @@ static void test_kernel_interrupts(disable_int_func disable_int,
 	 * Re-enable interrupts before returning (for both success and failure
 	 * cases).
 	 */
-
 	enable_int(imask);
 
 	zassert_equal(tick2, tick,
@@ -348,6 +365,39 @@ static void test_kernel_interrupts(disable_int_func disable_int,
 
 /**
  *
+ * @brief Test routines for disabling and enabling interrupts
+ *
+ * This routine tests the routines for disabling and enabling interrupts.
+ * These include irq_lock() and irq_unlock(), irq_disable() and irq_enable().
+ *
+ * @see irq_lock(), irq_unlock(), irq_disable(), irq_enable()
+ */
+static void test_kernel_interrupts(void)
+{
+	_test_kernel_interrupts(irq_lock_wrapper, irq_unlock_wrapper, -1);
+}
+
+/**
+ *
+ * @brief Test routines for disabling and enabling interrupts (disable timer)
+ *
+ * This routine tests the routines for disabling and enabling interrupts.
+ * These include irq_lock() and irq_unlock(), irq_disable() and irq_enable().
+ *
+ * @see irq_lock(), irq_unlock(), irq_disable(), irq_enable()
+ */
+static void test_kernel_timer_interrupts(void)
+{
+#ifdef TICK_IRQ
+       /* Disable interrupts coming from the timer. */
+	_test_kernel_interrupts(irq_disable_wrapper, irq_enable_wrapper, TICK_IRQ);
+#else
+	ztest_test_skip();
+#endif
+}
+
+/**
+ *
  * @brief Test some context routines from a preemptible thread
  *
  * This routines tests the k_current_get() and
@@ -355,12 +405,14 @@ static void test_kernel_interrupts(disable_int_func disable_int,
  * interrupted a preemptible thread). Checking those routines with cooperative
  * threads are done elsewhere.
  *
+ * @see k_current_get(), k_is_in_isr()
  */
-static void test_kernel_ctx_task(void)
+static void test_kernel_ctx_thread(void)
 {
 	k_tid_t self_thread_id;
+	k_thread_priority_set(k_current_get(), 0);
 
-	TC_PRINT("Testing k_current_get() from an ISR and task\n");
+	TC_PRINT("Testing k_current_get() from an ISR and thread\n");
 
 	self_thread_id = k_current_get();
 	isr_info.command = THREAD_SELF_CMD;
@@ -387,7 +439,8 @@ static void test_kernel_ctx_task(void)
 	zassert_false(k_is_in_isr(), "Should not be in ISR context");
 
 	zassert_false(_current->base.prio < 0,
-			"Current thread should have preemptible priority");
+			"Current thread should have preemptible priority: %d",
+			_current->base.prio);
 
 }
 
@@ -401,7 +454,7 @@ static void test_kernel_ctx_task(void)
  * done elsewhere.
  *
  * This routine may set @a thread_detected_error to the following values:
- *   1 - if thread ID matches that of the task
+ *   1 - if thread ID matches that of the thread
  *   2 - if thread ID taken during ISR does not match that of the thread
  *   3 - k_is_in_isr() when called from an ISR is false
  *   4 - k_is_in_isr() when called from a thread is true
@@ -410,12 +463,12 @@ static void test_kernel_ctx_task(void)
  * @return TC_PASS on success
  * @return TC_FAIL on failure
  */
-static int test_kernel_thread(k_tid_t task_thread_id)
+static int test_kernel_thread(k_tid_t _thread_id)
 {
 	k_tid_t self_thread_id;
 
 	self_thread_id = k_current_get();
-	if (self_thread_id == task_thread_id) {
+	if (self_thread_id == _thread_id) {
 		thread_detected_error = 1;
 		return TC_FAIL;
 	}
@@ -495,32 +548,14 @@ static void thread_helper(void *arg1, void *arg2, void *arg3)
 
 }
 
-/**
- *
- * @brief Test the k_yield() routine
- *
- * This routine tests the k_yield() routine.  It starts another thread
- * (thus also testing k_thread_create() and checks that behavior of
- * k_yield() against the cases of there being a higher priority thread,
- * a lower priority thread, and another thread of equal priority.
- *
- * On error, it may set @a thread_detected_error to one of the following values:
- *   10 - helper thread ran prematurely
- *   11 - k_yield() did not yield to a higher priority thread
- *   12 - k_yield() did not yield to an equal priority thread
- *   13 - k_yield() yielded to a lower priority thread
- *
- * @return TC_PASS on success
- * @return TC_FAIL on failure
- */
-static int test_k_yield(void)
+static int _test_k_yield(void)
 {
 	k_tid_t self_thread_id;
 
 	/*
 	 * Start a thread of higher priority.  Note that since the new thread is
 	 * being started from a thread, it will not automatically switch to the
-	 * thread as it would if done from a task.
+	 * thread as it would if done from another thread.
 	 */
 
 	self_thread_id = k_current_get();
@@ -571,7 +606,7 @@ static int test_k_yield(void)
 
 	/*
 	 * Block on sem_thread.  This will allow the helper thread to
-	 * complete. The main task will wake this thread.
+	 * complete. The main thread will wake this thread.
 	 */
 
 	k_sem_take(&sem_thread, K_FOREVER);
@@ -580,35 +615,35 @@ static int test_k_yield(void)
 }
 
 /**
- * @brief Entry point to thread started by the task
+ * @brief Entry point to thread started by another thread
  *
- * This routine is the entry point to the thread started by the task.
+ * This routine is the entry point to the thread started by the thread.
  *
- * @param task_thread_id	thread ID of the spawning task
+ * @param _thread_id		ID of the spawning thread
  * @param arg1			unused
  * @param arg2			unused
  *
  * @return N/A
  */
-static void thread_entry(void *task_thread_id, void *arg1, void *arg2)
+static void thread_entry(void *_thread_id, void *arg1, void *arg2)
 {
 	int rv;
 
 	ARG_UNUSED(arg1);
 	ARG_UNUSED(arg2);
 
-	thread_evidence++;      /* Prove to the task that the thread has run */
+	thread_evidence++;      /* Prove that the thread has run */
 	k_sem_take(&sem_thread, K_FOREVER);
 
-	rv = test_kernel_thread((k_tid_t) task_thread_id);
+	rv = test_kernel_thread((k_tid_t) _thread_id);
 	if (rv != TC_PASS) {
 		return;
 	}
 
-	/* Allow the task to print any messages before the next test runs */
+	/* Allow the thread to print any messages before the next test runs */
 	k_sem_take(&sem_thread, K_FOREVER);
 
-	rv = test_k_yield();
+	rv = _test_k_yield();
 	if (rv != TC_PASS) {
 		return;
 	}
@@ -665,7 +700,7 @@ static void test_busy_wait(void *mseconds, void *arg2, void *arg3)
 	 *
 	 * Consequently, the best we can do for now to test busy waiting is
 	 * to invoke the API and verify that it returns. (If it takes way
-	 * too long, or never returns, the main test task may be able to
+	 * too long, or never returns, the main test thread may be able to
 	 * time out and report an error.)
 	 */
 
@@ -727,7 +762,7 @@ static void test_timeout(void)
 
 	rv = k_sem_take(&reply_timeout, timeout * 2);
 
-	zassert_false(rv, " *** task timed out waiting for " "k_busy_wait()");
+	zassert_false(rv, " *** thread timed out waiting for " "k_busy_wait()");
 
 	/* test k_sleep() */
 
@@ -740,7 +775,7 @@ static void test_timeout(void)
 			NULL, K_PRIO_COOP(THREAD_PRIORITY), 0, 0);
 
 	rv = k_sem_take(&reply_timeout, timeout * 2);
-	zassert_equal(rv, 0, " *** task timed out waiting for thread on "
+	zassert_equal(rv, 0, " *** thread timed out waiting for thread on "
 			 "k_sleep().");
 
 	/* test k_thread_create() without cancellation */
@@ -807,7 +842,7 @@ static void test_timeout(void)
 			}
 
 			if (j < NUM_TIMEOUT_THREADS) {
-				k_thread_cancel(delayed_threads[j]);
+				k_thread_abort(delayed_threads[j]);
 				++next_cancellation;
 				continue;
 			}
@@ -838,47 +873,24 @@ static void test_timeout(void)
 }
 
 /**
- * @brief Entry point to timer tests
  *
- * This is the entry point to the CPU and thread tests.
+ * @brief Test the k_yield() routine
  *
- * @return N/A
+ * This routine tests the k_yield() routine.  It starts another thread
+ * (thus also testing k_thread_create() and checks that behavior of
+ * k_yield() against the cases of there being a higher priority thread,
+ * a lower priority thread, and another thread of equal priority.
+ *
+ * On error, it may set @a thread_detected_error to one of the following values:
+ *   10 - helper thread ran prematurely
+ *   11 - k_yield() did not yield to a higher priority thread
+ *   12 - k_yield() did not yield to an equal priority thread
+ *   13 - k_yield() yielded to a lower priority thread
+ *
+ * @see k_yield()
  */
-void test_context(void)
+void test_k_yield(void)
 {
-	int rv;                 /* return value from tests */
-
-	thread_detected_error = 0;
-	thread_evidence = 0;
-	/*
-	 * Main thread(test_main) priority is 0 but ztest thread runs at
-	 * priority -1. To run the test smoothly make both main and ztest
-	 * threads run at same priority level.
-	 */
-	k_thread_priority_set(k_current_get(), 0);
-
-	TC_PRINT("Initializing kernel objects\n");
-	rv = kernel_init_objects();
-	zassert_equal(rv, TC_PASS, "failure kernel objects");
-
-	TC_PRINT("Testing interrupt locking and unlocking\n");
-	TC_START("test_kernel_interrupts");
-	test_kernel_interrupts(irq_lock_wrapper, irq_unlock_wrapper, -1);
-#ifdef TICK_IRQ
-	/* Disable interrupts coming from the timer. */
-
-	TC_PRINT("Testing irq_disable() and irq_enable()\n");
-	test_kernel_interrupts(irq_disable_wrapper, irq_enable_wrapper,
-				    TICK_IRQ);
-#else
-	TC_PRINT("Test of irq_disable() and irq_enable() skipped "
-		"(TICK_IRQ not defined in this platform)\n");
-#endif
-
-	TC_PRINT("Testing some kernel context routines\n");
-	test_kernel_ctx_task();
-
-	TC_PRINT("Spawning a thread from a task\n");
 	thread_evidence = 0;
 
 	k_thread_create(&thread_data1, thread_stack1, THREAD_STACKSIZE,
@@ -897,32 +909,40 @@ void test_context(void)
 
 	zassert_equal(thread_detected_error, 0,
 		      "  - failure detected in thread; "
-		      "thread_detected_error = %d\n", thread_detected_error);
+		      "thread_detected_error = %d", thread_detected_error);
 
 	TC_PRINT("Thread to test k_yield()\n");
 	k_sem_give(&sem_thread);
 
 	zassert_equal(thread_detected_error, 0,
 		      "  - failure detected in thread; "
-		      "thread_detected_error = %d\n", thread_detected_error);
+		      "thread_detected_error = %d", thread_detected_error);
 
 	k_sem_give(&sem_thread);
 
-	test_timeout();
-
-#ifdef HAS_POWERSAVE_INSTRUCTION
-	TC_PRINT("Testing k_cpu_idle()\n");
-	test_kernel_cpu_idle(0);
-#ifndef CONFIG_ARM
-	TC_PRINT("Testing k_cpu_atomic_idle()\n");
-	test_kernel_cpu_idle(1);
-#endif
-#endif
 }
 
 /*test case main entry*/
 void test_main(void)
 {
-	ztest_test_suite(context, ztest_unit_test(test_context));
+	thread_detected_error = 0;
+	thread_evidence = 0;
+	/*
+	 * Main thread(test_main) priority is 0 but ztest thread runs at
+	 * priority -1. To run the test smoothly make both main and ztest
+	 * threads run at same priority level.
+	 */
+
+	kernel_init_objects();
+
+	ztest_test_suite(context,
+			ztest_unit_test(test_kernel_interrupts),
+			ztest_unit_test(test_kernel_timer_interrupts),
+			ztest_unit_test(test_kernel_ctx_thread),
+			ztest_unit_test(test_timeout),
+			ztest_unit_test(test_kernel_cpu_idle_atomic),
+			ztest_unit_test(test_kernel_cpu_idle),
+			ztest_unit_test(test_k_yield)
+			);
 	ztest_run_test_suite(context);
 }
