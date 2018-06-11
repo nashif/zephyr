@@ -78,7 +78,7 @@ void sys_trace_thread_info(struct k_thread *thread)
 
 	if (thread->name == NULL) {
 		snprintk(name, sizeof(name), "T%xE%x", (uintptr_t)thread,
-			 (uintptr_t)thread->entry);
+			 (uintptr_t)&thread->entry);
 	} else {
 		snprintk(name, sizeof(name), "%s", thread->name);
 	}
@@ -157,7 +157,7 @@ static void send_task_list_cb(void)
 
 		if (thread->name == NULL) {
 			snprintk(name, sizeof(name), "T%xE%x", (uintptr_t)thread,
-				 (uintptr_t)thread->entry);
+				 (uintptr_t)&thread->entry);
 		} else {
 			snprintk(name, sizeof(name), "%s", thread->name);
 		}
