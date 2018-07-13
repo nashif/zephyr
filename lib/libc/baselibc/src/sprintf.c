@@ -1,0 +1,20 @@
+/*
+ * sprintf.c
+ */
+
+#include <stdio.h>
+#ifndef NO_UNISTD_H
+#include <unistd.h>
+#endif
+
+int sprintf(char *buffer, const char *format, ...)
+{
+	va_list ap;
+	int rv;
+
+	va_start(ap, format);
+	rv = vsnprintf(buffer, ~(size_t) 0, format, ap);
+	va_end(ap);
+
+	return rv;
+}
