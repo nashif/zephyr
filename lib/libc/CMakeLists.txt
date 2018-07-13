@@ -3,5 +3,5 @@
 if(CONFIG_NEWLIB_LIBC)
   add_subdirectory(newlib)
 else()
-  add_subdirectory(minimal)
+  add_subdirectory(baselibc)
 endif()

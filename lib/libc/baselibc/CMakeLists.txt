@@ -1,0 +1,71 @@
+zephyr_include_directories(include)
+zephyr_include_directories(src/templates)
+
+zephyr_library()
+zephyr_library_sources(
+	src/strchr.c
+	src/strcpy.c
+	src/vsprintf.c
+	src/vasprintf.c
+	src/strtok_r.c
+	src/strstr.c
+	src/jrand48.c
+	src/strtoul.c
+	src/asprintf.c
+	src/mrand48.c
+	src/atoll.c
+	src/nrand48.c
+	src/strnlen.c
+	src/strncasecmp.c
+	src/strlcat.c
+	src/tinyprintf.c
+	src/sscanf.c
+	src/qsort.c
+	src/bzero.c
+	src/strdup.c
+	src/strsep.c
+	src/strlcpy.c
+	src/memccpy.c
+	src/strlen.c
+	src/strrchr.c
+	src/strtoumax.c
+	src/strspn.c
+	src/strtoimax.c
+	src/bsearch.c
+	src/strcasecmp.c
+	src/strncpy.c
+	src/strntoimax.c
+	src/inline.c
+	src/strpbrk.c
+	src/atol.c
+	src/lrand48.c
+	src/memcmp.c
+	src/vsscanf.c
+	src/memcpy.c
+	src/memmove.c
+	src/memfile.c
+	src/memmem.c
+	src/atoi.c
+	src/strndup.c
+	src/realloc.c
+	src/strncmp.c
+	src/strtoll.c
+	src/strcmp.c
+	src/memset.c
+	src/memchr.c
+	src/strntoumax.c
+	src/memswap.c
+	src/fgets.c
+	src/strncat.c
+	src/srand48.c
+	src/vprintf.c
+	src/memrchr.c
+	src/strtoull.c
+	src/strtok.c
+	src/calloc.c
+	src/malloc.c
+	src/strtol.c
+	src/strcspn.c
+	src/strcat.c
+	src/sprintf.c
+)
