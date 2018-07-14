@@ -10,6 +10,10 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 __extern_inline int abs(int __n)
 {
 	return (__n < 0) ? -__n : __n;
@@ -18,6 +22,9 @@ __extern_inline int abs(int __n)
 __extern int atoi(const char *);
 __extern long atol(const char *);
 __extern long long atoll(const char *);
+
+__extern double atof(const char *str);
+__extern double strtod(const char *nptr, char **endptr);
 
 __extern_inline long labs(long __n)
 {
@@ -63,6 +70,19 @@ __extern long lrand48(void);
 __extern unsigned short *seed48(const unsigned short *);
 __extern void srand48(long);
 
+__extern_inline char *getenv(const char *name)
+{
+	return NULL;
+}
+
+#define EXIT_SUCCESS	0
+#define EXIT_FAILURE	1
+__extern void _exit(int s);
+__extern_inline void exit(int err)
+{
+	_exit(err);
+}
+
 #define RAND_MAX 0x7fffffff
 __extern_inline int rand(void)
 {
@@ -80,5 +100,9 @@ __extern_inline void srandom(unsigned int __s)
 {
 	srand48(__s);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif				/* _STDLIB_H */

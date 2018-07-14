@@ -11,6 +11,10 @@
 #include <stddef.h>
 #include <string.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* The File structure is designed to be compatible with ChibiOS/RT type
  * BaseSequentialStream.
  */
@@ -33,6 +37,10 @@ struct File
 # define EOF (-1)
 #endif
 
+#ifndef BUFSIZ
+# define BUFSIZ 1
+#endif
+
 /* Standard file descriptors - implement these globals yourself. */
 extern FILE* const stdin;
 extern FILE* const stdout;
@@ -42,13 +50,13 @@ extern FILE* const stderr;
 __extern_inline size_t fread(void *buf, size_t size, size_t nmemb, FILE *stream)
 {
     if (stream->vmt->read == NULL) return 0;
-    return stream->vmt->read(stream, buf, size*nmemb) / size;
+    return stream->vmt->read(stream, (char*)buf, size*nmemb) / size;
 }
 
 __extern_inline size_t fwrite(const void *buf, size_t size, size_t nmemb, FILE *stream)
 {
     if (stream->vmt->write == NULL) return 0;
-    return stream->vmt->write(stream, buf, size*nmemb) / size;
+    return stream->vmt->write(stream, (char*)buf, size*nmemb) / size;
 }
 
 __extern_inline int fputs(const char *s, FILE *f)
@@ -74,10 +82,21 @@ __extern_inline int fgetc(FILE *f)
 	return fread(&ch, 1, 1, f) == 1 ? ch : EOF;
 }
 
+__extern int errno;
+__extern_inline char *strerror(int errnum)
+{
+	return (char*)"error_str";
+}
+
 #define putc(c,f)  fputc((c),(f))
 #define putchar(c) fputc((c),stdout)
 #define getc(f) fgetc(f)
 #define getchar() fgetc(stdin)
+
+__extern_inline int fflush(FILE *stream)
+{
+	return 0;
+}
 
 __extern int printf(const char *, ...);
 __extern int vprintf(const char *, va_list);
@@ -105,5 +124,9 @@ struct MemFile
 
 FILE *fmemopen_w(struct MemFile* storage, char *buffer, size_t size);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif				/* _STDIO_H */

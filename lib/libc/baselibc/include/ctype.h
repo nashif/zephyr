@@ -10,6 +10,10 @@
 #include <klibc/extern.h>
 #include <klibc/inline.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 __extern_inline int isupper(int __c)
 {
 	return __c >= 'A' && __c <= 'Z';
@@ -60,6 +64,19 @@ __extern_inline int isxdigit(int __c)
 	return isdigit(__c) || (__c >= 'a' && __c <= 'f') || (__c >= 'A' && __c <= 'F');
 }
 
+__extern_inline int ispunct(int __c)
+{
+	return (__c >= '!' && __c <= '/') ||
+	    (__c >= ':' && __c <= '@') ||
+	    (__c >= '[' && __c <= '`') ||
+	    (__c >= '{' && __c <= '~');
+}
+
+__extern_inline int isprint(int __c)
+{
+	return (__c >= 0x20 && __c <= 0x7e);
+}
+
 __extern_inline int toupper(int __c)
 {
 	return islower(__c) ? (__c & ~32) : __c;
@@ -69,5 +86,9 @@ __extern_inline int tolower(int __c)
 {
 	return isupper(__c) ? (__c | 32) : __c;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif				/* _CTYPE_H */

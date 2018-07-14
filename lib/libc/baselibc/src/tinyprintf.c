@@ -52,7 +52,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* This is a smaller implementation of printf-family of functions,
  * based on tinyprintf code by Kustaa Nyholm.
- * The formats supported by this implementation are: 'd' 'u' 'c' 's' 'x' 'X'.
+ * The formats supported by this implementation are:
+ *     'd' 'u' 'c' 's' 'x' 'X' 'p'.
  * Zero padding and field width are also supported.
  * If the library is compiled with 'PRINTF_SUPPORT_LONG' defined then the
  * long specifier is also supported.
@@ -60,29 +61,30 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * PRINTF_SUPPORT_LONG because int == long.
  */
 
+#include <stdarg.h>
 #include <stdio.h>
+#include <inttypes.h>
 
 struct param {
-    int width; /**< field width */
+    unsigned char width; /**< field width */
     char lz;            /**< Leading zeros */
-    char sign;          /**<  The sign to display (if any) */
-    char alt;           /**< alternate form */
+    char sign:1;        /**<  The sign to display (if any) */
+    char alt:1;         /**< alternate form */
+    char uc:1;          /**<  Upper case (for base16 only) */
+    char left:1;        /**<  Force text to left (padding on right) */
     char base;  /**<  number base (e.g.: 8, 10, 16) */
-    char uc;            /**<  Upper case (for base16 only) */
     char *bf;           /**<  Buffer to output */
 };
 
-#ifdef PRINTF_LONG_SUPPORT
-
-static void uli2a(unsigned long int num, struct param *p)
+static void ui2a(unsigned long long int num, struct param *p)
 {
     int n = 0;
-    unsigned long int d = 1;
+    unsigned long long int d = 1;
     char *bf = p->bf;
     while (num / d >= p->base)
         d *= p->base;
     while (d != 0) {
-        int dgt = num / d;
+        unsigned long long  dgt = num / d;
         num %= d;
         d /= p->base;
         if (n || dgt > 0 || d == 0) {
@@ -93,40 +95,11 @@ static void uli2a(unsigned long int num, struct param *p)
     *bf = 0;
 }
 
-static void li2a(long num, struct param *p)
+static void i2a(long long int num, struct param *p)
 {
     if (num < 0) {
         num = -num;
-        p->sign = '-';
-    }
-    uli2a(num, p);
-}
-#endif
-
-static void ui2a(unsigned int num, struct param *p)
-{
-    int n = 0;
-    unsigned int d = 1;
-    char *bf = p->bf;
-    while (num / d >= p->base)
-        d *= p->base;
-    while (d != 0) {
-        int dgt = num / d;
-        num %= d;
-        d /= p->base;
-        if (n || dgt > 0 || d == 0) {
-            *bf++ = dgt + (dgt < 10 ? '0' : (p->uc ? 'A' : 'a') - 10);
-            ++n;
-        }
-    }
-    *bf = 0;
-}
-
-static void i2a(int num, struct param *p)
-{
-    if (num < 0) {
-        num = -num;
-        p->sign = '-';
+        p->sign = 1;
     }
     ui2a(num, p);
 }
@@ -143,7 +116,7 @@ static int a2d(char ch)
         return -1;
 }
 
-static char a2i(char ch, const char **src, int base, int *nump)
+static char a2i(char ch, const char **src, int base, unsigned char *nump)
 {
     const char *p = *src;
     int num = 0;
@@ -184,15 +157,15 @@ static unsigned putchw(FILE *putp, struct param *p)
     else if (p->alt && p->base == 8)
         n--;
 
-    /* Fill with space, before alternate or sign */
-    if (!p->lz) {
+    /* Unless left-aligned, fill with space, before alternate or sign */
+    if (!p->lz && !p->left) {
         while (n-- > 0)
             written += putf(putp, ' ');
     }
 
     /* print sign */
     if (p->sign)
-        written += putf(putp, p->sign);
+        written += putf(putp, '-');
 
     /* Alternate */
     if (p->alt && p->base == 16) {
@@ -212,22 +185,65 @@ static unsigned putchw(FILE *putp, struct param *p)
     bf = p->bf;
     while ((ch = *bf++))
         written += putf(putp, ch);
+
+    /* If left-aligned, pad the end with spaces. */
+    if (p->left) {
+        while (n-- > 0)
+            written += putf(putp, ' ');
+    }
     
     return written;
+}
+
+static unsigned long long
+intarg(int lng, int sign, va_list *va)
+{
+    unsigned long long val;
+
+    switch (lng) {
+    case 0:
+        if (sign) {
+            val = va_arg(*va, int);
+        } else {
+            val = va_arg(*va, unsigned int);
+        }
+        break;
+
+    case 1:
+        if (sign) {
+            val = va_arg(*va, long);
+        } else {
+            val = va_arg(*va, unsigned long);
+        }
+        break;
+
+    case 2:
+    default:
+        if (sign) {
+            val = va_arg(*va, long long);
+        } else {
+            val = va_arg(*va, unsigned long long);
+        }
+        break;
+    }
+
+    return val;
 }
 
 size_t tfp_format(FILE *putp, const char *fmt, va_list va)
 {
     size_t written = 0;
     struct param p;
-#ifdef PRINTF_LONG_SUPPORT
     char bf[23];
-#else
-    char bf[12];
-#endif
-    p.bf = bf;
-
     char ch;
+    char lng;
+    void *v;
+#if defined(CONFIG_FLOAT_USER)
+    double d;
+    int n;
+#endif
+
+    p.bf = bf;
 
     while ((ch = *(fmt++))) {
         if (ch != '%') {
@@ -238,18 +254,24 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
             p.alt = 0;
             p.width = 0;
             p.sign = 0;
-#ifdef PRINTF_LONG_SUPPORT
-            char lng = 0;
-#endif
+            p.left = 0;
+            p.uc = 0;
+            lng = 0;
 
             /* Flags */
             while ((ch = *(fmt++))) {
                 switch (ch) {
                 case '0':
-                    p.lz = 1;
+                    if (!p.left) {
+                        p.lz = 1;
+                    }
                     continue;
                 case '#':
                     p.alt = 1;
+                    continue;
+                case '-':
+                    p.left = 1;
+                    p.lz = 0;
                     continue;
                 default:
                     break;
@@ -263,9 +285,16 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
             }
             if (ch == 'l') {
                 ch = *(fmt++);
-#ifdef PRINTF_LONG_SUPPORT
                 lng = 1;
-#endif
+
+                if (ch == 'l') {
+                    ch = *(fmt++);
+                    lng = 2;
+                }
+            }
+
+            if (ch == 'z') {
+                ch = *(fmt++);
             }
 
             switch (ch) {
@@ -273,40 +302,35 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
                 goto abort;
             case 'u':
                 p.base = 10;
-#ifdef PRINTF_LONG_SUPPORT
-                if (lng)
-                    uli2a(va_arg(va, unsigned long int), &p);
-                else
-#endif
-                    ui2a(va_arg(va, unsigned int), &p);
+                ui2a(intarg(lng, 0, &va), &p);
                 written += putchw(putp, &p);
                 break;
             case 'd':
             case 'i':
                 p.base = 10;
-#ifdef PRINTF_LONG_SUPPORT
-                if (lng)
-                    li2a(va_arg(va, unsigned long int), &p);
-                else
-#endif
-                    i2a(va_arg(va, int), &p);
+                i2a(intarg(lng, 1, &va), &p);
                 written += putchw(putp, &p);
                 break;
             case 'x':
             case 'X':
                 p.base = 16;
                 p.uc = (ch == 'X');
-#ifdef PRINTF_LONG_SUPPORT
-                if (lng)
-                    uli2a(va_arg(va, unsigned long int), &p);
-                else
-#endif
-                    ui2a(va_arg(va, unsigned int), &p);
+                ui2a(intarg(lng, 0, &va), &p);
                 written += putchw(putp, &p);
                 break;
             case 'o':
                 p.base = 8;
-                ui2a(va_arg(va, unsigned int), &p);
+                ui2a(intarg(lng, 0, &va), &p);
+                written += putchw(putp, &p);
+                break;
+            case 'p':
+                v = va_arg(va, void *);
+                p.base = 16;
+                ui2a((uintptr_t)v, &p);
+                p.width = 2 * sizeof(void*);
+                p.lz = 1;
+                written += putf(putp, '0');
+                written += putf(putp, 'x');
                 written += putchw(putp, &p);
                 break;
             case 'c':
@@ -317,8 +341,43 @@ size_t tfp_format(FILE *putp, const char *fmt, va_list va)
                 written += putchw(putp, &p);
                 p.bf = bf;
                 break;
+#if defined(CONFIG_FLOAT_USER)
+            case 'f':
+                p.base = 10;
+                d = va_arg(va, double);
+                /* Cast to an int to get the integer part of the number */
+                n = d;
+                /* Convert to ascii */
+                i2a(n, &p);
+                /* Ignore left align for integer part */
+                p.left = 0;
+                /* Subtract width for decimal part and decimal point */
+                if (p.width >= 4) {
+                    p.width -= 4;
+                } else {
+                    p.width = 0;
+                }
+                /* Write integer part to console */
+                written += putchw(putp, &p);
+                /* Take the decimal part and multiply by 1000 */
+                n = (d-n)*1000;
+                /* Convert to ascii */
+                i2a(n, &p);
+                /* Set the leading zeros for the next integer output to 3 */
+                p.lz = 3;
+                /* Always use the same decimal width */
+                p.width = 3;
+                /* Ignore sign for decimal part*/
+                p.sign = 0;
+                /* Output a decimal point */
+                putf(putp, '.');
+                /* Output the decimal part. */
+                written += putchw(putp, &p);
+                break;
+#endif
             case '%':
                 written += putf(putp, ch);
+                break;
             default:
                 break;
             }
@@ -355,9 +414,15 @@ int printf(const char *fmt, ...)
 int vsnprintf(char *str, size_t size, const char *fmt, va_list va)
 {
     struct MemFile state;
-    FILE *f = fmemopen_w(&state, str, size - 1);
+    FILE *f = fmemopen_w(&state, str, size);
     tfp_format(f, fmt, va);
-    *(state.buffer) = '\0';
+    if (size > 0) {
+        if (state.bytes_written < size) {
+            *(state.buffer) = '\0';
+        } else {
+            str[size - 1] = '\0';
+        }
+    }
     return state.bytes_written;
 }
 

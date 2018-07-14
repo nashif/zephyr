@@ -1,3 +1,3 @@
 #define TYPE intmax_t
 #define NAME strtoimax
-#include "strtox.c"
+#include "templates/strtox.c.template"

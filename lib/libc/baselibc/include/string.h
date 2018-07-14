@@ -8,6 +8,10 @@
 #include <klibc/extern.h>
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 __extern void *memccpy(void *, const void *, int, size_t);
 __extern void *memchr(const void *, int, size_t);
 __extern void *memrchr(const void *, int, size_t);
@@ -41,6 +45,7 @@ __extern char *strpbrk(const char *, const char *);
 __extern char *strsep(char **, const char *);
 __extern size_t strspn(const char *, const char *);
 __extern char *strstr(const char *, const char *);
+__extern char *strnstr(const char *, const char *, size_t);
 __extern char *strtok(char *, const char *);
 __extern char *strtok_r(char *, const char *, char **);
 
@@ -55,5 +60,9 @@ inline static size_t strxfrm(char *dest, const char *src, size_t n)
 	strncpy(dest, src, n);
 	return strlen(src);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif				/* _STRING_H */

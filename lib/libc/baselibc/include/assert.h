@@ -5,6 +5,10 @@
 #ifndef _ASSERT_H
 #define _ASSERT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef NDEBUG
 
 /*
@@ -16,11 +20,24 @@
 #define assert(x) ((void)(0))
 
 #else
+#include <stddef.h>
 
-extern void __assert_fail(const char *, const char *, unsigned int);
+extern void __assert_func(const char *, int, const char *, const char *)
+    __attribute((noreturn));
 
-#define assert(x) ((x) ? (void)0 : __assert_fail(#x, __FILE__, __LINE__))
+#if defined(CONFIG_BASELIBC_ASSERT_FILE_LINE)
+#define assert(x) ((x) ? (void)0 : \
+    __assert_func(__FILE__, __LINE__, NULL, NULL))
+#else
+#define assert(x) ((x) ? (void)0 : \
+    __assert_func(NULL, 0, NULL, NULL))
+#endif
 
+
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif				/* _ASSERT_H */
