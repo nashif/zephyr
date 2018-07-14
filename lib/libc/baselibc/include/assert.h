@@ -1,43 +1,33 @@
 /*
- * assert.h
+ * Copyright (c) 2016 Intel Corporation
+ * Copyright (c) 2016, Freescale Semiconductor, Inc.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef _ASSERT_H
-#define _ASSERT_H
+#ifndef __INC_assert_h__
+#define __INC_assert_h__
+
+#include <misc/__assert.h>
 
 #ifdef __cplusplus
 extern "C" {
+#else
+#define static_assert _Static_assert
 #endif
 
-#ifdef NDEBUG
-
-/*
- * NDEBUG doesn't just suppress the faulting behavior of assert(),
- * but also all side effects of the assert() argument.  This behavior
- * is required by the C standard, and allows the argument to reference
- * variables that are not defined without NDEBUG.
- */
-#define assert(x) ((void)(0))
-
-#else
-#include <stddef.h>
-
-extern void __assert_func(const char *, int, const char *, const char *)
-    __attribute((noreturn));
-
-#if defined(CONFIG_BASELIBC_ASSERT_FILE_LINE)
-#define assert(x) ((x) ? (void)0 : \
-    __assert_func(__FILE__, __LINE__, NULL, NULL))
-#else
-#define assert(x) ((x) ? (void)0 : \
-    __assert_func(NULL, 0, NULL, NULL))
+#ifndef NDEBUG
+#ifndef assert
+#define assert(test) __ASSERT_NO_MSG(test)
 #endif
-
-
+#else
+#ifndef assert
+#define assert(test) ((void)0)
+#endif
 #endif
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif				/* _ASSERT_H */
+#endif  /* __INC_assert_h__ */
