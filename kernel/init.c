@@ -33,6 +33,10 @@
 #include <logging/log_ctrl.h>
 #include <tracing.h>
 
+#define LOG_LEVEL CONFIG_KERNEL_LOG_LEVEL
+#include <logging/log.h>
+LOG_MODULE_REGISTER(kernel);
+
 /* kernel build timestamp items */
 #define BUILD_TIMESTAMP "BUILD: " __DATE__ " " __TIME__
 
