@@ -211,7 +211,7 @@ to the emulator. For this purpose you will need some tools described in the
 :ref:`bluetooth_bluez` section.
 
 Using Host System Bluetooth Controller in QEMU
-++++++++++++++++++++++++++++++++++++++++++++++
+----------------------------------------------
 
 The host OS's Bluetooth controller is connected to the second QEMU
 serial line using a UNIX socket. This socket gets used with the help of
