@@ -321,6 +321,16 @@ endmenu
 
 menu "Boot Options"
 
+config BOOTLOADER
+	bool "Build a bootloader"
+	help
+	  Bootloader functionality
+
+config BOOT_FROM_FLASH
+	bool "Boot from flash"
+	help
+	  Boot from flash by loading into SRAM first.
+
 config IS_BOOTLOADER
 	bool "Act as a bootloader"
 	depends on XIP
