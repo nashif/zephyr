@@ -31,11 +31,18 @@ config MCUBOOT_IMG_MANAGER
 	select FLASH_MAP
 	help
 	  Enable support for managing DFU image downloaded using mcuboot.
+
+config GENERIC_IMG_MANAGER
+	bool "generic Image Manager"
+	select FLASH_MAP
+	help
+	  Enable support for managing DFU image using a custom image manager.
+
+
 endchoice
 
 config IMG_BLOCK_BUF_SIZE
 	int "Image writer buffer size"
-	depends on MCUBOOT_IMG_MANAGER
 	default 512
 	help
 	  Size (in Bytes) of buffer for image writer. Must be a multiple of
