@@ -1,1 +1,2 @@
 zephyr_sources_ifdef(CONFIG_MCUBOOT_IMG_MANAGER mcuboot.c)
+zephyr_sources_ifdef(CONFIG_GENERIC_IMG_MANAGER generic_img_mgr.c)
