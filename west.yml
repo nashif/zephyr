@@ -44,6 +44,9 @@ manifest:
     - name: fatfs
       revision: df96914dd989907f3a5de4cb95b116c2f305820d
       path: modules/fs/fatfs
+    - name: hal_st
+      revision: 2f4d2f73fc8d4a494ebd8a12312f7084d2c84ed4
+      path: modules/hal/st
 
   self:
     path: zephyr
