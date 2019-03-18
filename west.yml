@@ -35,6 +35,9 @@ manifest:
   projects:
     - name: net-tools
       revision: 30b7efa827b04d2e47840716b0372737fe7d6c92
+    - name: hal_qmsi
+      revision: master
+      path: modules/hals/qmsi
 
   self:
     path: zephyr
