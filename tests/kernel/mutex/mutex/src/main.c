@@ -52,7 +52,6 @@
 
 K_MUTEX_DEFINE(private_mutex);
 
-
 K_MUTEX_DEFINE(mutex_1);
 K_MUTEX_DEFINE(mutex_2);
 K_MUTEX_DEFINE(mutex_3);
@@ -73,10 +72,9 @@ void thread_05(void)
 
 	/* Wait and boost owner priority to 5 */
 	rv = k_mutex_lock(&mutex_4, K_SECONDS(1));
-	zassert_equal(rv, -EAGAIN,
-			"Failed to timeout on mutex 0x%x", (u32_t)&mutex_4);
+	zassert_equal(rv, -EAGAIN, "Failed to timeout on mutex 0x%x",
+		      (u32_t)&mutex_4);
 }
-
 
 /**
  *
@@ -127,8 +125,8 @@ void thread_07(void)
 	 */
 
 	rv = k_mutex_lock(&mutex_3, K_SECONDS(3));
-	zassert_equal(rv, -EAGAIN,
-			"Failed to timeout on mutex 0x%x", (u32_t)&mutex_3);
+	zassert_equal(rv, -EAGAIN, "Failed to timeout on mutex 0x%x",
+		      (u32_t)&mutex_3);
 }
 
 /**
@@ -161,13 +159,12 @@ void thread_09(void)
 {
 	int rv;
 
-	k_sleep(K_MSEC(500));	/* Allow lower priority thread to run */
+	k_sleep(K_MSEC(500)); /* Allow lower priority thread to run */
 
 	/*<mutex_1> is already locked. */
 	rv = k_mutex_lock(&mutex_1, K_NO_WAIT);
-	zassert_equal(rv, -EBUSY,
-			"Failed to NOT take locked mutex 0x%x",
-			(u32_t)&mutex_1);
+	zassert_equal(rv, -EBUSY, "Failed to NOT take locked mutex 0x%x",
+		      (u32_t)&mutex_1);
 
 	/* Wait and boost owner priority to 9 */
 	rv = k_mutex_lock(&mutex_1, K_FOREVER);
@@ -239,7 +236,6 @@ void test_mutex(void)
 		rv = k_thread_priority_get(k_current_get());
 		zassert_equal(rv, priority[i], "expected priority %d, not %d",
 			      priority[i], rv);
-
 	}
 
 	/* ~ 4 seconds have passed */
@@ -247,7 +243,7 @@ void test_mutex(void)
 	TC_PRINT("Done LOCKING!  Current priority = %d\n",
 		 k_thread_priority_get(k_current_get()));
 
-	k_sleep(K_SECONDS(1));       /* thread_05 should time out */
+	k_sleep(K_SECONDS(1)); /* thread_05 should time out */
 
 	/* ~ 5 seconds have passed */
 
@@ -261,7 +257,7 @@ void test_mutex(void)
 	zassert_equal(rv, 7, "Gave %s and priority should drop.", "mutex_4");
 	zassert_equal(rv, 7, "Expected priority %d, not %d", 7, rv);
 
-	k_sleep(K_SECONDS(1));       /* thread_07 should time out */
+	k_sleep(K_SECONDS(1)); /* thread_07 should time out */
 
 	/* ~ 6 seconds have passed */
 
@@ -270,13 +266,12 @@ void test_mutex(void)
 		zassert_equal(rv, droppri[i], "Expected priority %d, not %d",
 			      droppri[i], rv);
 		k_mutex_unlock(givemutex[i]);
-
 	}
 
 	rv = k_thread_priority_get(k_current_get());
 	zassert_equal(rv, 10, "Expected priority %d, not %d", 10, rv);
 
-	k_sleep(K_SECONDS(1));     /* Give thread_11 time to run */
+	k_sleep(K_SECONDS(1)); /* Give thread_11 time to run */
 
 	/* test recursive locking using a private mutex */
 
@@ -291,7 +286,7 @@ void test_mutex(void)
 			(k_thread_entry_t)thread_12, NULL, NULL, NULL,
 			K_PRIO_PREEMPT(12), K_USER | K_INHERIT_PERMS,
 			K_NO_WAIT);
-	k_sleep(1);     /* Give thread_12 a chance to block on the mutex */
+	k_sleep(1); /* Give thread_12 a chance to block on the mutex */
 
 	k_mutex_unlock(&private_mutex);
 	k_mutex_unlock(&private_mutex); /* thread_12 should now have lock */
@@ -303,26 +298,25 @@ void test_mutex(void)
 	zassert_equal(rv, 0, "Failed to re-obtain lock on private mutex");
 
 	k_mutex_unlock(&private_mutex);
-
 }
 
-K_THREAD_DEFINE(THREAD_05, STACKSIZE, thread_05, NULL, NULL, NULL,
-		5, K_USER, K_NO_WAIT);
+K_THREAD_DEFINE(THREAD_05, STACKSIZE, thread_05, NULL, NULL, NULL, 5, K_USER,
+		K_NO_WAIT);
 
-K_THREAD_DEFINE(THREAD_06, STACKSIZE, thread_06, NULL, NULL, NULL,
-		6, K_USER, K_NO_WAIT);
+K_THREAD_DEFINE(THREAD_06, STACKSIZE, thread_06, NULL, NULL, NULL, 6, K_USER,
+		K_NO_WAIT);
 
-K_THREAD_DEFINE(THREAD_07, STACKSIZE, thread_07, NULL, NULL, NULL,
-		7, K_USER, K_NO_WAIT);
+K_THREAD_DEFINE(THREAD_07, STACKSIZE, thread_07, NULL, NULL, NULL, 7, K_USER,
+		K_NO_WAIT);
 
-K_THREAD_DEFINE(THREAD_08, STACKSIZE, thread_08, NULL, NULL, NULL,
-		8, K_USER, K_NO_WAIT);
+K_THREAD_DEFINE(THREAD_08, STACKSIZE, thread_08, NULL, NULL, NULL, 8, K_USER,
+		K_NO_WAIT);
 
-K_THREAD_DEFINE(THREAD_09, STACKSIZE, thread_09, NULL, NULL, NULL,
-		9, K_USER, K_NO_WAIT);
+K_THREAD_DEFINE(THREAD_09, STACKSIZE, thread_09, NULL, NULL, NULL, 9, K_USER,
+		K_NO_WAIT);
 
-K_THREAD_DEFINE(THREAD_11, STACKSIZE, thread_11, NULL, NULL, NULL,
-		11, K_USER, K_NO_WAIT);
+K_THREAD_DEFINE(THREAD_11, STACKSIZE, thread_11, NULL, NULL, NULL, 11, K_USER,
+		K_NO_WAIT);
 
 K_THREAD_ACCESS_GRANT(THREAD_05, &mutex_4);
 K_THREAD_ACCESS_GRANT(THREAD_06, &mutex_4);
@@ -334,8 +328,8 @@ K_THREAD_ACCESS_GRANT(THREAD_11, &mutex_3);
 /*test case main entry*/
 void test_main(void)
 {
-	k_thread_access_grant(k_current_get(), &private_mutex,
-			      &mutex_1, &mutex_2, &mutex_3, &mutex_4,
+	k_thread_access_grant(k_current_get(), &private_mutex, &mutex_1,
+			      &mutex_2, &mutex_3, &mutex_4,
 			      &thread_12_thread_data, &thread_12_stack_area);
 
 	ztest_test_suite(mutex_complex, ztest_user_unit_test(test_mutex));
