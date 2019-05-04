@@ -3273,11 +3273,17 @@ struct k_mutex {
  *
  * @param mutex Address of the mutex.
  *
- * @return N/A
+ * @retval 0 Mutex object created
+ * @retval -EBUSY An attempt was detected to reinitialize
+ *                the object referenced by mutex, a previously
+ *                initialized, but not yet reset, mutex.
+ *
  * @req K-MUTEX-002
  */
-__syscall void k_mutex_init(struct k_mutex *mutex);
+__syscall int k_mutex_init(struct k_mutex *mutex);
 
+
+__syscall int k_mutex_reset(struct k_mutex *mutex);
 /**
  * @brief Lock a mutex.
  *
@@ -3312,10 +3318,14 @@ __syscall int k_mutex_lock(struct k_mutex *mutex, s32_t timeout);
  *
  * @param mutex Address of the mutex.
  *
- * @return N/A
+ * @retval 0 Mutex unlocked.
+ * @retval -EPERM The current thread does not own the mutex
+ * @retval -EINVAL The mutex is not locked
+ * already unlocked
+ *
  * @req K-MUTEX-002
  */
-__syscall void k_mutex_unlock(struct k_mutex *mutex);
+__syscall int k_mutex_unlock(struct k_mutex *mutex);
 
 /**
  * @}
