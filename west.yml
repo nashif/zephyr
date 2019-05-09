@@ -50,6 +50,9 @@ manifest:
     - name: hal_nxp
       revision: 8e4d884d60da14e7d28857d3af37d25de727b171
       path: modules/hal/nxp
+    - name: mbedtls
+      revision: c1e33fc0805e676a9164362d1e6696b449f5a931
+      path: modules/crypto/mbedtls
 
   self:
     path: zephyr
