@@ -53,6 +53,9 @@ manifest:
     - name: mbedtls
       revision: c1e33fc0805e676a9164362d1e6696b449f5a931
       path: modules/crypto/mbedtls
+    - name: mcumgr
+      revision: 3622a3eebe65ba07156552432f735461965a182c
+      path: modules/lib/mcumgr
 
   self:
     path: zephyr
