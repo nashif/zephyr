@@ -28,4 +28,5 @@ zephyr_library_sources_ifdef(CONFIG_X86_USERSPACE	ia32/userspace.S)
 zephyr_library_sources_ifdef(CONFIG_LAZY_FP_SHARING	ia32/float.c)
 
 # Last since we declare default exception handlers here
+zephyr_library_include_directories($ENV{ZEPHYR_BASE}/arch/include)
 zephyr_library_sources(ia32/fatal.c)

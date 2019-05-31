@@ -18,4 +18,3 @@ if(CONFIG_X86_LONGMODE)
 else()
   include(ia32.cmake)
 endif()
-

@@ -2,6 +2,8 @@
 
 zephyr_library()
 
+zephyr_library_include_directories($ENV{ZEPHYR_BASE}/arch/include)
+
 zephyr_library_sources(
 	thread.c
 	thread_entry_wrapper.S

@@ -21,8 +21,8 @@
 #include <arch/x86/ia32/segmentation.h>
 #include <ia32/exception.h>
 #include <inttypes.h>
-#include <exc_handle.h>
 #include <logging/log_ctrl.h>
+#include "exc_handle.h"
 
 __weak void z_debug_fatal_hook(const NANO_ESF *esf) { ARG_UNUSED(esf); }
 

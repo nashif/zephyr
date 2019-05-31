@@ -17,7 +17,7 @@
 #include <kernel.h>
 #include <kernel_structs.h>
 #include <inttypes.h>
-#include <exc_handle.h>
+#include "exc_handle.h"
 #include <logging/log_ctrl.h>
 
 #ifdef CONFIG_PRINTK

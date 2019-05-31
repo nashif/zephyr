@@ -18,7 +18,7 @@
 #include <kernel.h>
 #include <kernel_structs.h>
 #include <sys/printk.h>
-#include <exc_handle.h>
+#include "exc_handle.h"
 #include <logging/log_ctrl.h>
 
 u32_t arc_exc_saved_sp;

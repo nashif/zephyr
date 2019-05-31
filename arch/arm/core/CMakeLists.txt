@@ -2,6 +2,8 @@
 
 zephyr_library()
 
+zephyr_library_include_directories($ENV{ZEPHYR_BASE}/arch/include)
+
 zephyr_compile_options_ifdef(CONFIG_COVERAGE_GCOV
   -ftest-coverage
   -fprofile-arcs
