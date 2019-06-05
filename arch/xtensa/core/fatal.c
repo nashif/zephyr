@@ -203,7 +203,7 @@ XTENSA_ERR_NORET void ReservedInterruptHandler(unsigned int intNo)
 	z_NanoFatalErrorHandler(_NANO_ERR_RESERVED_IRQ, &_default_esf);
 }
 
-void exit(int return_code)
+__weak void exit(int return_code)
 {
 #ifdef XT_SIMULATOR
 	__asm__ (
