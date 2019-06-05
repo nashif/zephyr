@@ -33,19 +33,26 @@ void __stdout_hook_install(int (*hook)(int))
         _stdout_hook = hook;
 }
 
-
-static size_t
-stdin_read(FILE *fp, char *bp, size_t n)
+static size_t stdin_read(FILE *fp, char *bp, size_t n)
 {
     return 0;
 }
 
-static size_t
-stdout_write(FILE *fp, const char *bp, size_t n)
+static void console_write(const char *str, int cnt)
 {
-    //console_write(bp, n);
-    _stdout_hook((int )bp);
-    return n;
+	int i;
+
+	for (i = 0; i < cnt; i++) {
+		if (_stdout_hook((int)str[i]) == EOF) {
+			break;
+		}
+	}
+}
+
+static size_t stdout_write(FILE *fp, const char *bp, size_t n)
+{
+	console_write(bp, n);
+	return n;
 }
 
 static struct File_methods _stdin_methods = {
