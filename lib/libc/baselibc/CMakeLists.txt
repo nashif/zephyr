@@ -48,7 +48,7 @@ zephyr_library_sources(
   src/memmem.c
   src/atoi.c
   src/strndup.c
-  src/realloc.c
+  #src/realloc.c
   src/strncmp.c
   src/strtoll.c
   src/strcmp.c
@@ -63,8 +63,9 @@ zephyr_library_sources(
   src/memrchr.c
   src/strtoull.c
   src/strtok.c
-  src/calloc.c
-  src/malloc.c
+  #src/calloc.c
+  #src/malloc.c
+  src/malloc_minimal.c
   src/strtol.c
   src/strcspn.c
   src/strcat.c

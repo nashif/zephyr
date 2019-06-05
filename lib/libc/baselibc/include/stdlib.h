@@ -40,6 +40,8 @@ __extern void free(void *);
 __extern void *malloc(size_t);
 __extern void *calloc(size_t, size_t);
 __extern void *realloc(void *, size_t);
+/* FIXME */
+__extern void *reallocarray(void *ptr, size_t nmemb, size_t size);
 
 /* Giving malloc some memory from which to allocate */
 __extern void add_malloc_block(void *, size_t);
