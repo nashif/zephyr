@@ -14,8 +14,6 @@
  */
 
 #include <kernel.h>
-#include <arch/cpu.h>
-
 #include <stdio.h>
 #include <zephyr/types.h>
 #include <errno.h>
@@ -40,6 +38,7 @@ static struct device *uart_console_dev;
 #ifdef CONFIG_UART_CONSOLE_DEBUG_SERVER_HOOKS
 
 static uart_console_in_debug_hook_t debug_hook_in;
+
 void uart_console_in_debug_hook_install(uart_console_in_debug_hook_t hook)
 {
 	debug_hook_in = hook;
@@ -51,10 +50,12 @@ static UART_CONSOLE_OUT_DEBUG_HOOK_SIG(debug_hook_out_nop) {
 }
 
 static uart_console_out_debug_hook_t *debug_hook_out = debug_hook_out_nop;
+
 void uart_console_out_debug_hook_install(uart_console_out_debug_hook_t *hook)
 {
 	debug_hook_out = hook;
 }
+
 #define HANDLE_DEBUG_HOOK_OUT(c) \
 	(debug_hook_out(c) == UART_CONSOLE_DEBUG_HOOK_HANDLED)
 
@@ -71,7 +72,6 @@ void uart_console_out_debug_hook_install(uart_console_out_debug_hook_t *hook)
  *
  * @return The character passed as input.
  */
-
 static int console_out(int c)
 {
 #ifdef CONFIG_UART_CONSOLE_DEBUG_SERVER_HOOKS
