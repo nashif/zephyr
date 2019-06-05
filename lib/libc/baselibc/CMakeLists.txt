@@ -20,6 +20,8 @@ zephyr_library_sources(
   src/strncasecmp.c
   src/strlcat.c
   src/tinyprintf.c
+  # FIXME: Copied from minimal
+  src/exit.c
   src/sscanf.c
   src/qsort.c
   src/bzero.c
