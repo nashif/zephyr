@@ -198,7 +198,7 @@ static bool char_in_set(char chr, const char *set)
 	return false;
 }
 
-static char *strsep(char *strp, const char *delims)
+static char *_strsep(char *strp, const char *delims)
 {
 	const char *delim;
 	char *ptr;
@@ -264,14 +264,14 @@ static int handle_server_msg(struct nats *nats, char *payload, size_t len,
 	char prev_end = payload[len];
 	size_t payload_size;
 
-	/* strsep() uses strchr(), ensure payload is NUL-terminated */
+	/* _strsep() uses strchr(), ensure payload is NUL-terminated */
 	payload[len] = '\0';
 
 	/* Slice the tokens */
 	subject = payload;
-	sid = strsep(subject, " \t");
-	reply_to = strsep(sid, " \t");
-	bytes = strsep(reply_to, " \t");
+	sid = _strsep(subject, " \t");
+	reply_to = _strsep(sid, " \t");
+	bytes = _strsep(reply_to, " \t");
 
 	if (!bytes) {
 		if (!reply_to) {
@@ -357,9 +357,9 @@ static int handle_server_cmd(struct nats *nats, char *cmd, size_t len,
 	char *payload;
 	size_t payload_len;
 
-	payload = strsep(cmd, " \t");
+	payload = _strsep(cmd, " \t");
 	if (!payload) {
-		payload = strsep(cmd, "\r");
+		payload = _strsep(cmd, "\r");
 		if (!payload) {
 			return -EINVAL;
 		}
