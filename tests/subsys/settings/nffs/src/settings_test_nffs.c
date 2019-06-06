@@ -183,7 +183,7 @@ int fsutil_write_file(const char *path, const void *data, size_t len)
 	fs_close(&file);
 	return rc;
 }
-
+#if 0
 char const *memmem(char const *mem, size_t mem_len, char const *sub,
 		   size_t sub_len)
 {
@@ -199,6 +199,7 @@ char const *memmem(char const *mem, size_t mem_len, char const *sub,
 
 	return NULL;
 }
+#endif
 
 int settings_test_file_strstr(const char *fname, char const *string,
 			      size_t str_len)
