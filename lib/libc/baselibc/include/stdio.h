@@ -42,40 +42,26 @@ struct File
 #endif
 
 /* Standard file descriptors - implement these globals yourself. */
-extern FILE* const stdin;
-extern FILE* const stdout;
-extern FILE* const stderr;
+//extern FILE* const stdin;
+//extern FILE* const stdout;
+//extern FILE* const stderr;
+#define stdin  ((FILE *) 1)
+#define stdout ((FILE *) 2)
+#define stderr ((FILE *) 3)
 
 /* Wrappers around stream write and read */
-__extern_inline size_t fread(void *buf, size_t size, size_t nmemb, FILE *stream)
-{
-    if (stream->vmt->read == NULL) return 0;
-    return stream->vmt->read(stream, (char*)buf, size*nmemb) / size;
-}
+__extern size_t fread(void *buf, size_t size, size_t nmemb, FILE *stream);
 
-__extern_inline size_t fwrite(const void *buf, size_t size, size_t nmemb, FILE *stream)
-{
-    if (stream->vmt->write == NULL) return 0;
-    return stream->vmt->write(stream, (char*)buf, size*nmemb) / size;
-}
+__extern size_t fwrite(const void *buf, size_t size, size_t nmemb, FILE *stream);
 
-__extern_inline int fputs(const char *s, FILE *f)
-{
-	return fwrite(s, 1, strlen(s), f);
-}
+__extern int fputs(const char *s, FILE *f);
 
-__extern_inline int puts(const char *s)
-{
-	return fwrite(s, 1, strlen(s), stdout) + fwrite("\n", 1, 1, stdout);
-}
+__extern int puts(const char *s);
 
-__extern_inline int fputc(int c, FILE *f)
-{
-	unsigned char ch = c;
-	return fwrite(&ch, 1, 1, f) == 1 ? ch : EOF;
-}
+__extern int fputc(int c, FILE *f);
 
 __extern char *fgets(char *, int, FILE *);
+
 __extern_inline int fgetc(FILE *f)
 {
 	unsigned char ch;

@@ -3,11 +3,11 @@ zephyr_include_directories(src/templates)
 
 zephyr_library()
 zephyr_library_sources(
-  zephyr-baselibc.c
+  #src/zephyr.c
   src/strchr.c
   src/strcpy.c
-  src/vsprintf.c
-  src/vasprintf.c
+  #src/vsprintf.c
+  #src/vasprintf.c
   src/strtok_r.c
   src/strstr.c
   src/jrand48.c
@@ -19,8 +19,13 @@ zephyr_library_sources(
   src/strnlen.c
   src/strncasecmp.c
   src/strlcat.c
-  src/tinyprintf.c
+  #src/tinyprintf.c
+  src/printf-minimal.c
   # FIXME: Copied from minimal
+  src/fprintf.c
+  src/printf-minimal.c
+  src/sprintf.c
+  src/stdout_console.c
   src/exit.c
   src/sscanf.c
   src/qsort.c
@@ -61,7 +66,7 @@ zephyr_library_sources(
   src/fgets.c
   src/strncat.c
   src/srand48.c
-  src/vprintf.c
+  #src/vprintf.c
   src/memrchr.c
   src/strtoull.c
   src/strtok.c
@@ -71,5 +76,5 @@ zephyr_library_sources(
   src/strtol.c
   src/strcspn.c
   src/strcat.c
-  src/sprintf.c
+  #src/sprintf.c
   )

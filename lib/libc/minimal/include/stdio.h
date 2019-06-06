@@ -36,31 +36,31 @@ typedef int  FILE;
  * declared below.
  */
 
-int __printf_like(1, 2) printf(const char *_MLIBC_RESTRICT fmt, ...);
-int __printf_like(3, 4) snprintf(char *_MLIBC_RESTRICT s, size_t len,
-				 const char *_MLIBC_RESTRICT fmt, ...);
-int __printf_like(2, 3) sprintf(char *_MLIBC_RESTRICT s,
-				const char *_MLIBC_RESTRICT fmt, ...);
-int __printf_like(2, 3) fprintf(FILE * _MLIBC_RESTRICT stream,
-				const char *_MLIBC_RESTRICT format, ...);
+int __printf_like(1, 2) printf(const char *fmt, ...);
+int __printf_like(3, 4) snprintf(char *s, size_t len,
+				 const char *fmt, ...);
+int __printf_like(2, 3) sprintf(char *s,
+				const char *fmt, ...);
+int __printf_like(2, 3) fprintf(FILE * stream,
+				const char *format, ...);
 
 
-int __printf_like(1, 0) vprintf(const char *_MLIBC_RESTRICT fmt, va_list list);
-int __printf_like(3, 0) vsnprintf(char *_MLIBC_RESTRICT s, size_t len,
-				  const char *_MLIBC_RESTRICT fmt,
+int __printf_like(1, 0) vprintf(const char *fmt, va_list list);
+int __printf_like(3, 0) vsnprintf(char *s, size_t len,
+				  const char *fmt,
 				  va_list list);
-int __printf_like(2, 0) vsprintf(char *_MLIBC_RESTRICT s,
-				 const char *_MLIBC_RESTRICT fmt, va_list list);
-int __printf_like(2, 0) vfprintf(FILE * _MLIBC_RESTRICT stream,
-				 const char *_MLIBC_RESTRICT format,
+int __printf_like(2, 0) vsprintf(char *s,
+				 const char *fmt, va_list list);
+int __printf_like(2, 0) vfprintf(FILE * stream,
+				 const char *format,
 				 va_list ap);
 
 int puts(const char *s);
 
 int fputc(int c, FILE *stream);
-int fputs(const char *_MLIBC_RESTRICT s, FILE *_MLIBC_RESTRICT stream);
-size_t fwrite(const void *_MLIBC_RESTRICT ptr, size_t size, size_t nitems,
-	      FILE *_MLIBC_RESTRICT stream);
+int fputs(const char *s, FILE *stream);
+size_t fwrite(const void *ptr, size_t size, size_t nitems,
+	      FILE *stream);
 
 #ifdef __cplusplus
 }

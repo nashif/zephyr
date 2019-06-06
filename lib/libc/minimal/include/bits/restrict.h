@@ -6,20 +6,20 @@
 
 /**
  * @file
- * @brief _MLIBC_RESTRICT definition
+ * @brief definition
  *
- * The macro "_MLIBC_RESTRICT" is intended to be private to the minimal libc
+ * The macro "" is intended to be private to the minimal libc
  * library.  It evaluates to the "restrict" keyword when a C99 compiler is
  * used, and to "__restrict__" when a C++ compiler is used.
  */
 
-#if !defined(_MLIBC_RESTRICT_defined)
-#define _MLIBC_RESTRICT_defined
+#if !defined(_defined)
+#define _defined
 
 #ifdef __cplusplus
-	#define _MLIBC_RESTRICT __restrict__
+	#define __restrict__
 #else
-	#define _MLIBC_RESTRICT restrict
+	#define restrict
 #endif
 
 #endif

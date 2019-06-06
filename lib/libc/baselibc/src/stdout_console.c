@@ -107,3 +107,4 @@ int puts(const char *string)
 
 	return fputc('\n', stdout) == EOF ? EOF : 0;
 }
+
