@@ -1,5 +1,5 @@
 common:
-  arch_exclude: nios2 posix
+  arch_exclude: nios2 posix xtensa
   min_ram: 128
   tags: posix filesystem
 tests:

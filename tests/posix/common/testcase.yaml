@@ -1,7 +1,7 @@
 common:
   tags: posix
   min_ram: 64
-  arch_exclude: posix
+  arch_exclude: posix xtensa
 
 tests:
   portability.posix:
