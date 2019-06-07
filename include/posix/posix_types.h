@@ -19,10 +19,6 @@ extern "C" {
 
 typedef unsigned long useconds_t;
 
-/* time related attributes */
-#ifndef CONFIG_NEWLIB_LIBC
-typedef u32_t clockid_t;
-#endif /*CONFIG_NEWLIB_LIBC */
 typedef unsigned long timer_t;
 
 #ifdef CONFIG_PTHREAD_IPC
