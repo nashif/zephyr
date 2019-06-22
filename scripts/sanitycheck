@@ -200,8 +200,7 @@ from pathlib import Path
 from distutils.spawn import find_executable
 
 import logging
-from sanity_chk import scl
-from sanity_chk import expr_parser
+
 
 log_format = "%(levelname)s %(name)s::%(module)s.%(funcName)s():%(lineno)d: %(message)s"
 logging.basicConfig(format=log_format, level=30)
@@ -220,6 +219,9 @@ if not ZEPHYR_BASE:
 canonical_zephyr_base = os.path.realpath(ZEPHYR_BASE)
 
 sys.path.insert(0, os.path.join(ZEPHYR_BASE, "scripts/"))
+
+from sanity_chk import scl
+from sanity_chk import expr_parser
 
 
 VERBOSE = 0
@@ -1506,14 +1508,22 @@ class SanityConfigParser:
 
         @param filename Source .yaml file to read
         """
-        self.data = scl.yaml_load_verify(filename, schema)
+        self.data = {}
+        self.schema = schema
         self.filename = filename
         self.tests = {}
         self.common = {}
+
+
+
+    def load(self):
+        self.data = scl.yaml_load_verify(self.filename, self.schema)
+
         if 'tests' in self.data:
             self.tests = self.data['tests']
         if 'common' in self.data:
             self.common = self.data['common']
+
 
     def _cast_value(self, value, typestr):
         if isinstance(value, str):
@@ -1644,6 +1654,7 @@ class Platform:
         scp = SanityConfigParser(cfile, self.yaml_platform_schema)
         data = scp.data
 
+        print(data)
         self.name = data['identifier']
         self.sanitycheck = data.get("sanitycheck", True)
         # if no RAM size is specified by the board, take a default of 128K
@@ -1697,7 +1708,12 @@ class TestCase:
     """Class representing a test application
     """
 
-    def __init__(self, testcase_root, workdir, name, tc_dict, yamlfile):
+    tc_schema = scl.yaml_load(
+        os.path.join(ZEPHYR_BASE,
+                     "scripts", "sanity_chk", "sanitycheck-tc-schema.yaml"))
+
+
+    def __init__(self):
         """TestCase constructor.
 
         This gets called by TestSuite as it finds and reads test yaml files.
@@ -1719,39 +1735,81 @@ class TestCase:
         @param tc_dict Dictionary with test values for this test case
             from the testcase.yaml file
         """
-        self.test_path = os.path.join(testcase_root, workdir)
+        #self.test_path = os.path.join(testcase_root, workdir)
 
-        self.id = name
+
+        self.id = None
         self.cases = []
-        self.type = tc_dict["type"]
-        self.tags = tc_dict["tags"]
-        self.extra_args = tc_dict["extra_args"]
-        self.extra_configs = tc_dict["extra_configs"]
-        self.arch_whitelist = tc_dict["arch_whitelist"]
-        self.arch_exclude = tc_dict["arch_exclude"]
-        self.skip = tc_dict["skip"]
-        self.platform_exclude = tc_dict["platform_exclude"]
-        self.platform_whitelist = tc_dict["platform_whitelist"]
-        self.toolchain_exclude = tc_dict["toolchain_exclude"]
-        self.toolchain_whitelist = tc_dict["toolchain_whitelist"]
-        self.tc_filter = tc_dict["filter"]
-        self.timeout = tc_dict["timeout"]
-        self.harness = tc_dict["harness"]
-        self.harness_config = tc_dict["harness_config"]
-        self.build_only = tc_dict["build_only"]
-        self.build_on_all = tc_dict["build_on_all"]
-        self.slow = tc_dict["slow"]
-        self.min_ram = tc_dict["min_ram"]
-        self.depends_on = tc_dict["depends_on"]
-        self.min_flash = tc_dict["min_flash"]
-        self.extra_sections = tc_dict["extra_sections"]
+        self.type = None
+        self.tags = None
+        self.extra_args = None
+        self.extra_configs = None
+        self.arch_whitelist = None
+        self.arch_exclude = None
+        self.skip = None
+        self.platform_exclude = None
+        self.platform_whitelist = None
+        self.toolchain_exclude = None
+        self.toolchain_whitelist = None
+        self.tc_filter = None
+        self.timeout = None
+        self.harness = None
+        self.harness_config = None
+        self.build_only = None
+        self.build_on_all = None
+        self.slow = None
+        self.min_ram = None
+        self.depends_on = None
+        self.min_flash = None
+        self.extra_sections = None
 
-        self.name = self.get_unique(testcase_root, workdir, name)
+        self.name = ""
 
         self.defconfig = {}
         self.dt_config = {}
         self.cmake_cache = {}
-        self.yamlfile = yamlfile
+
+
+    def discover(self, tc_path):
+
+        try:
+            parsed_data = SanityConfigParser(tc_path, self.tc_schema)
+            parsed_data.load()
+
+            for name in parsed_data.tests.keys():
+                print(name)
+                tc_dict = parsed_data.get_test(name, testcase_valid_keys)
+                self.type = tc_dict["type"]
+                self.tags = tc_dict["tags"]
+                self.extra_args = tc_dict["extra_args"]
+                self.extra_configs = tc_dict["extra_configs"]
+                self.arch_whitelist = tc_dict["arch_whitelist"]
+                self.arch_exclude = tc_dict["arch_exclude"]
+                self.skip = tc_dict["skip"]
+                self.platform_exclude = tc_dict["platform_exclude"]
+                self.platform_whitelist = tc_dict["platform_whitelist"]
+                self.toolchain_exclude = tc_dict["toolchain_exclude"]
+                self.toolchain_whitelist = tc_dict["toolchain_whitelist"]
+                self.tc_filter = tc_dict["filter"]
+                self.timeout = tc_dict["timeout"]
+                self.harness = tc_dict["harness"]
+                self.harness_config = tc_dict["harness_config"]
+                self.build_only = tc_dict["build_only"]
+                self.build_on_all = tc_dict["build_on_all"]
+                self.slow = tc_dict["slow"]
+                self.min_ram = tc_dict["min_ram"]
+                self.depends_on = tc_dict["depends_on"]
+                self.min_flash = tc_dict["min_flash"]
+                self.extra_sections = tc_dict["extra_sections"]
+
+                self.parse_subcases(tc_path)
+
+        except Exception as e:
+            error("E: %s: can't load (skipping): %s" % (tc_path, e))
+            self.load_errors += 1
+            return False
+
+        return True
 
 
     def get_unique(self, testcase_root, workdir, name):
@@ -1841,8 +1899,8 @@ class TestCase:
         return subcases
 
 
-    def parse_subcases(self):
-        results = self.scan_path(self.test_path)
+    def parse_subcases(self, test_path):
+        results = self.scan_path(test_path)
         for sub in results:
             name = "{}.{}".format(self.id, sub)
             self.cases.append(name)
@@ -1948,11 +2006,13 @@ class TestSuite:
     config_re = re.compile('(CONFIG_[A-Za-z0-9_]+)[=]\"?([^\"]*)\"?$')
     dt_re = re.compile('([A-Za-z0-9_]+)[=]\"?([^\"]*)\"?$')
 
-    yaml_tc_schema = scl.yaml_load(
-        os.path.join(ZEPHYR_BASE,
-                     "scripts", "sanity_chk", "sanitycheck-tc-schema.yaml"))
 
     def __init__(self, board_root_list, testcase_roots, outdir):
+
+
+        self.roots = testcase_roots
+        self.board_roots = board_root_list
+
         # Keep track of which test cases we've filtered out and why
         self.arches = {}
         self.testcases = {}
@@ -1962,49 +2022,16 @@ class TestSuite:
         self.goals = None
         self.discards = None
         self.load_errors = 0
+        self.instances = {}
 
-        for testcase_root in testcase_roots:
-            testcase_root = os.path.abspath(testcase_root)
+    def add_configurations(self):
 
-            debug("Reading test case configuration files under %s..." %
-                  testcase_root)
-            for dirpath, dirnames, filenames in os.walk(testcase_root,
-                                                        topdown=True):
-                verbose("scanning %s" % dirpath)
-                if 'sample.yaml' in filenames:
-                    filename = 'sample.yaml'
-                elif 'testcase.yaml' in filenames:
-                    filename = 'testcase.yaml'
-                else:
-                    continue
-
-                verbose("Found possible test case in " + dirpath)
-                dirnames[:] = []
-                yaml_path = os.path.join(dirpath, filename)
-                try:
-                    parsed_data = SanityConfigParser(
-                        yaml_path, self.yaml_tc_schema)
-
-                    workdir = os.path.relpath(dirpath, testcase_root)
-
-                    for name in parsed_data.tests.keys():
-                        tc_dict = parsed_data.get_test(name, testcase_valid_keys)
-                        tc = TestCase(testcase_root, workdir, name, tc_dict,
-                                      yaml_path)
-                        tc.parse_subcases()
-                        self.testcases[tc.name] = tc
-
-                except Exception as e:
-                    error("E: %s: can't load (skipping): %s" % (yaml_path, e))
-                    self.load_errors += 1
-
-
-        for board_root in board_root_list:
+        for board_root in self.board_roots:
             board_root = os.path.abspath(board_root)
 
-            debug(
-                "Reading platform configuration files under %s..." %
+            debug("Reading platform configuration files under %s..." %
                 board_root)
+
             for fn in glob.glob(os.path.join(board_root, "*", "*", "*.yaml")):
                 verbose("Found plaform configuration " + fn)
                 try:
@@ -2023,7 +2050,37 @@ class TestSuite:
             arch = Architecture(a, aplatforms)
             self.arches[a] = arch
 
-        self.instances = {}
+    def add_testcases(self):
+        for root in self.roots:
+            root = os.path.abspath(root)
+
+            debug("Reading test case configuration files under %s..." %root)
+            for dirpath, dirnames, filenames in os.walk(root, topdown=True):
+                verbose("scanning %s" % dirpath)
+                if 'sample.yaml' in filenames:
+                    filename = 'sample.yaml'
+                elif 'testcase.yaml' in filenames:
+                    filename = 'testcase.yaml'
+                else:
+                    continue
+
+                verbose("Found possible test case in " + dirpath)
+
+                dirnames[:] = []
+                tc_path = os.path.join(dirpath, filename)
+                self.add_testcase(tc_path)
+                print("added %s" %(tc_path))
+
+
+    def add_testcase(self, tc_path):
+        tc = TestCase()
+        tc.discover(tc_path)
+
+        if tc.name:
+            self.testcases[tc.name] = tc
+
+
+
 
     def get_platform(self, name):
         selected_platform = None
@@ -3340,6 +3397,13 @@ def main():
                               os.path.join(ZEPHYR_BASE, "samples")]
 
     ts = TestSuite(options.board_root, options.testcase_root, options.outdir)
+    ts.add_testcases()
+    for t in ts.testcases:
+        print(t)
+
+    #ts.add_configurations()
+
+    sys.exit(0)
 
     if ts.load_errors:
         sys.exit(1)
