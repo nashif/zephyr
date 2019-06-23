@@ -498,7 +498,7 @@ class Handler:
         self.name = instance.name
         self.instance = instance
         self.timeout = instance.test.timeout
-        self.sourcedir = instance.test.test_path
+        self.sourcedir = instance.test.path
         self.outdir = instance.outdir
         self.log = os.path.join(self.outdir, "handler.log")
         self.returncode = 0
@@ -1255,7 +1255,7 @@ class MakeGenerator:
         """
 
         name = instance.name
-        directory = instance.test.test_path
+        directory = instance.test.path
         outdir = instance.outdir
 
         build_logfile = os.path.join(outdir, "build.log")
@@ -1496,8 +1496,6 @@ class SanityConfigParser:
         self.tests = {}
         self.common = {}
 
-
-
     def load(self):
         self.data = scl.yaml_load_verify(self.filename, self.schema)
 
@@ -1620,23 +1618,40 @@ class Platform:
 
     Maps directly to BOARD when building"""
 
-    yaml_platform_schema = scl.yaml_load(
-        os.path.join(
-            ZEPHYR_BASE,
-            "scripts",
-            "sanity_chk",
-            "sanitycheck-platform-schema.yaml"))
+    platform_schema = scl.yaml_load(os.path.join(ZEPHYR_BASE,
+            "scripts","sanity_chk","sanitycheck-platform-schema.yaml"))
 
-    def __init__(self, cfile):
+    def __init__(self):
         """Constructor.
 
-        @param cfile Path to platform configuration file, which gives
-            info about the platform to be added.
         """
-        scp = SanityConfigParser(cfile, self.yaml_platform_schema)
+
+        self.name = ""
+        self.sanitycheck = True
+        # if no RAM size is specified by the board, take a default of 128K
+        self.ram = 128
+
+        self.ignore_tags = []
+        self.default = False
+        # if no flash size is specified by the board, take a default of 512K
+        self.flash = 512
+        self.supported = set()
+
+        self.qemu_support = False
+        self.arch = ""
+        self.type = "na"
+        self.simulation = "na"
+        self.supported_toolchains = []
+        self.env = []
+        self.env_satisfied = True
+        self.defconfig = None
+
+
+    def load(self, platform_file):
+        scp = SanityConfigParser(platform_file, self.platform_schema)
+        scp.load()
         data = scp.data
 
-        print(data)
         self.name = data['identifier']
         self.sanitycheck = data.get("sanitycheck", True)
         # if no RAM size is specified by the board, take a default of 128K
@@ -1662,7 +1677,6 @@ class Platform:
             if os.environ.get(env, None) == None:
                 self.env_satisfied = False
         self.defconfig = None
-        pass
 
     def __repr__(self):
         return "<%s on %s>" % (self.name, self.arch)
@@ -1686,7 +1700,7 @@ class Architecture:
         return "<arch %s>" % self.name
 
 
-class TestCase:
+class TestCase(object):
     """Class representing a test application
     """
 
@@ -1717,10 +1731,10 @@ class TestCase:
         @param tc_dict Dictionary with test values for this test case
             from the testcase.yaml file
         """
-        #self.test_path = os.path.join(testcase_root, workdir)
 
 
         self.id = None
+        self.path = None
         self.cases = []
         self.type = None
         self.tags = None
@@ -1745,6 +1759,7 @@ class TestCase:
         self.min_flash = None
         self.extra_sections = None
 
+
         self.name = ""
 
         self.defconfig = {}
@@ -1759,8 +1774,12 @@ class TestCase:
             parsed_data.load()
 
             for name in parsed_data.tests.keys():
-                print(name)
+                self.name = name
+
                 tc_dict = parsed_data.get_test(name, testcase_valid_keys)
+
+                self.path = tc_path
+                self.id = name
                 self.type = tc_dict["type"]
                 self.tags = tc_dict["tags"]
                 self.extra_args = tc_dict["extra_args"]
@@ -1880,9 +1899,8 @@ class TestCase:
                 error("%s: can't find: %s" % (filename, e))
         return subcases
 
-
     def parse_subcases(self, test_path):
-        results = self.scan_path(test_path)
+        results = self.scan_path(os.path.dirname(test_path))
         for sub in results:
             name = "{}.{}".format(self.id, sub)
             self.cases.append(name)
@@ -1895,7 +1913,7 @@ class TestCase:
         return self.name
 
 
-class TestInstance:
+class TestInstance():
     """Class representing the execution of a particular TestCase on a platform
 
     @param test The TestCase object we want to build/execute
@@ -1905,13 +1923,14 @@ class TestInstance:
     """
 
     def __init__(self, test, platform, base_outdir):
+
         self.test = test
         self.platform = platform
         self.name = os.path.join(platform.name, test.name)
         self.outdir = os.path.join(base_outdir, platform.name, test.name)
-
         self.build_only = options.build_only or test.build_only \
                 or self.check_dependency() or options.cmake_only
+
         self.results = {}
 
     def __lt__(self, other):
@@ -2009,14 +2028,15 @@ class TestSuite:
             debug("Reading platform configuration files under %s..." %
                 board_root)
 
-            for fn in glob.glob(os.path.join(board_root, "*", "*", "*.yaml")):
-                verbose("Found plaform configuration " + fn)
+            for file in glob.glob(os.path.join(board_root, "*", "*", "*.yaml")):
+                verbose("Found plaform configuration " + file)
                 try:
-                    platform = Platform(fn)
+                    platform = Platform()
+                    platform.load(file)
                     if platform.sanitycheck:
                         self.platforms.append(platform)
                 except RuntimeError as e:
-                    error("E: %s: can't load: %s" % (fn, e))
+                    error("E: %s: can't load: %s" % (file, e))
                     self.load_errors += 1
 
         arches = []
@@ -2045,8 +2065,9 @@ class TestSuite:
 
                 dirnames[:] = []
                 tc_path = os.path.join(dirpath, filename)
+                print("added %s" % (tc_path))
                 self.add_testcase(tc_path)
-                print("added %s" %(tc_path))
+
 
 
     def add_testcase(self, tc_path):
@@ -2055,6 +2076,7 @@ class TestSuite:
 
         if tc.name:
             self.testcases[tc.name] = tc
+            print(tc.cases)
 
 
 
@@ -2231,16 +2253,18 @@ class TestSuite:
                         # each other since they all try to build them
                         # simultaneously
 
-                        o = os.path.join(self.outdir, plat.name, tc.name)
-                        cmake_cache_path = os.path.join(o, "CMakeCache.txt")
+                        outdir = os.path.join(self.outdir, plat.name, tc.name)
+                        cmake_cache_path = os.path.join(outdir, "CMakeCache.txt")
                         generated_dt_confg = "include/generated/generated_dts_board.conf"
-                        dt_config_path = os.path.join(o, "zephyr", generated_dt_confg)
+                        dt_config_path = os.path.join(outdir, "zephyr", generated_dt_confg)
                         dt_list[tc, plat, tc.name.split("/")[-1]] = dt_config_path
                         cmake_list[tc, plat, tc.name.split("/")[-1]] = cmake_cache_path
-                        defconfig_list[tc, plat, tc.name.split("/")[-1]] = os.path.join(o, "zephyr", ".config")
+
+                        defconfig_list[tc, plat, tc.name.split("/")[-1]] = os.path.join(outdir, "zephyr", ".config")
                         goal = "_".join([plat.name, "_".join(tc.name.split("/")), "config-sanitycheck"])
-                        mg.add_build_goal(goal, os.path.join(ZEPHYR_BASE, tc.test_path),
-                                o, args, "config-sanitycheck.log", make_args="config-sanitycheck")
+
+                        mg.add_build_goal(goal, os.path.join(ZEPHYR_BASE, os.path.dirname(tc.path)),
+                                outdir, args, "config-sanitycheck.log", make_args="config-sanitycheck")
 
         info("Building testcase defconfigs...")
         results = mg.execute(defconfig_cb)
@@ -3335,12 +3359,9 @@ def main():
 
     ts = TestSuite(options.board_root, options.testcase_root, options.outdir)
     ts.add_testcases()
-    for t in ts.testcases:
-        print(t)
+    ts.add_configurations()
 
-    #ts.add_configurations()
-
-    sys.exit(0)
+    #sys.exit(0)
 
     if ts.load_errors:
         sys.exit(1)
