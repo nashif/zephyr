@@ -798,7 +798,7 @@ RECURSIVE              = YES
 # run.
 
 EXCLUDE                = @ZEPHYR_BASE@/include/compat/cmsis_rtos//cmsis_os.h \
-                         @ZEPHYR_BASE@/include/cmsis_rtos_v2/cmsis_os2.h \
+                         @ZEPHYR_BASE@/include/compat/cmsis_rtos//cmsis_os2.h \
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded
