@@ -1619,7 +1619,7 @@ class Platform:
     Maps directly to BOARD when building"""
 
     platform_schema = scl.yaml_load(os.path.join(ZEPHYR_BASE,
-            "scripts","sanity_chk","sanitycheck-platform-schema.yaml"))
+            "scripts","sanity_chk","platform-schema.yaml"))
 
     def __init__(self):
         """Constructor.
@@ -1706,7 +1706,7 @@ class TestCase(object):
 
     tc_schema = scl.yaml_load(
         os.path.join(ZEPHYR_BASE,
-                     "scripts", "sanity_chk", "sanitycheck-tc-schema.yaml"))
+                     "scripts", "sanity_chk", "testcase-schema.yaml"))
 
 
     def __init__(self):
