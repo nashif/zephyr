@@ -1683,25 +1683,6 @@ class Platform:
     def __repr__(self):
         return "<%s on %s>" % (self.name, self.arch)
 
-
-class Architecture:
-    """Class representing metadata for a particular architecture
-    """
-
-    def __init__(self, name, platforms):
-        """Architecture constructor
-
-        @param name String name for this architecture
-        @param platforms list of platforms belonging to this architecture
-        """
-        self.platforms = platforms
-
-        self.name = name
-
-    def __repr__(self):
-        return "<arch %s>" % self.name
-
-
 class TestCase(object):
     """Class representing a test application
     """
@@ -2012,6 +1993,7 @@ class TestSuite:
         self.arches = {}
         self.testcases = {}
         self.platforms = []
+
         self.outdir = os.path.abspath(outdir)
         self.instances = {}
         self.goals = None
@@ -2034,18 +2016,10 @@ class TestSuite:
                     platform.load(file)
                     if platform.sanitycheck:
                         self.platforms.append(platform)
-                        
+
                 except RuntimeError as e:
                     error("E: %s: can't load: %s" % (file, e))
                     self.load_errors += 1
-
-        arches = []
-        for p in self.platforms:
-            arches.append(p.arch)
-        for a in list(set(arches)):
-            aplatforms = [p for p in self.platforms if p.arch == a]
-            arch = Architecture(a, aplatforms)
-            self.arches[a] = arch
 
     def add_testcases(self):
         for root in self.roots:
@@ -2076,9 +2050,6 @@ class TestSuite:
 
         if tc.name:
             self.testcases[tc.name] = tc
-            print(tc.cases)
-
-
 
 
     def get_platform(self, name):
@@ -2176,101 +2147,103 @@ class TestSuite:
             default_platforms = True
 
         mg = MakeGenerator(self.outdir)
+
         defconfig_list = {}
         dt_list = {}
         cmake_list = {}
+
+
         for tc_name, tc in self.testcases.items():
-            for arch_name, arch in self.arches.items():
-                for plat in arch.platforms:
-                    instance = TestInstance(tc, plat, self.outdir)
+            for plat in self.platforms:
+                instance = TestInstance(tc, plat, self.outdir)
 
-                    if (arch_name == "unit") != (tc.type == "unit"):
+                if (plat.arch == "unit") != (tc.type == "unit"):
+                    continue
+
+                if tc.build_on_all and not platform_filter:
+                    platform_filter = []
+
+                if tc.skip:
+                    continue
+
+                if tag_filter and not tc.tags.intersection(tag_filter):
+                    continue
+
+                if exclude_tag and tc.tags.intersection(exclude_tag):
+                    continue
+
+                if testcase_filter and tc_name not in testcase_filter:
+                    continue
+
+                if arch_filter and plat.arch not in arch_filter:
+                    continue
+
+                if tc.arch_whitelist and plat.name not in tc.arch_whitelist:
+                    continue
+
+                if tc.arch_exclude and plat.arch in tc.arch_exclude:
+                    continue
+
+                if tc.platform_exclude and plat.name in tc.platform_exclude:
+                    continue
+
+                if tc.toolchain_exclude and toolchain in tc.toolchain_exclude:
+                    continue
+
+                if platform_filter and plat.name not in platform_filter:
+                    continue
+
+                if plat.ram < tc.min_ram:
+                    continue
+
+                if set(plat.ignore_tags) & tc.tags:
+                    continue
+
+                if tc.depends_on:
+                    dep_intersection = tc.depends_on.intersection(
+                        set(plat.supported))
+                    if dep_intersection != set(tc.depends_on):
                         continue
 
-                    if tc.build_on_all and not platform_filter:
-                        platform_filter = []
+                if plat.flash < tc.min_flash:
+                    continue
 
-                    if tc.skip:
-                        continue
+                if tc.platform_whitelist and plat.name not in tc.platform_whitelist:
+                    continue
 
-                    if tag_filter and not tc.tags.intersection(tag_filter):
-                        continue
+                if tc.toolchain_whitelist and toolchain not in tc.toolchain_whitelist:
+                    continue
 
-                    if exclude_tag and tc.tags.intersection(exclude_tag):
-                        continue
+                if (plat.env_satisfied and tc.tc_filter
+                        and (plat.default or all_plats or platform_filter)
+                        and (toolchain in plat.supported_toolchains or options.force_toolchain)):
+                    args = tc.extra_args[:]
+                    args.append("BOARD={}".format(plat.name))
+                    args.extend(extra_args)
 
-                    if testcase_filter and tc_name not in testcase_filter:
-                        continue
+                    # FIXME would be nice to use a common outdir for this so that
+                    # conf, gen_idt, etc aren't rebuilt for every  combination,
+                    # need a way to avoid different Make processes from clobbering
+                    # each other since they all try to build them
+                    # simultaneously
 
-                    if arch_filter and arch_name not in arch_filter:
-                        continue
+                    outdir = os.path.join(self.outdir, plat.name, tc.name)
+                    cmake_cache_path = os.path.join(outdir, "CMakeCache.txt")
+                    _generated_dt_confg = "include/generated/generated_dts_board.conf"
+                    dt_config_path = os.path.join(outdir, "zephyr", _generated_dt_confg)
 
-                    if tc.arch_whitelist and arch.name not in tc.arch_whitelist:
-                        continue
+                    xxx = tc.name.split("/")[-1]
+                    verbose("xxxx: %s" %xxx)
 
-                    if tc.arch_exclude and arch.name in tc.arch_exclude:
-                        continue
-
-                    if tc.platform_exclude and plat.name in tc.platform_exclude:
-                        continue
-
-                    if tc.toolchain_exclude and toolchain in tc.toolchain_exclude:
-                        continue
-
-                    if platform_filter and plat.name not in platform_filter:
-                        continue
-
-                    if plat.ram < tc.min_ram:
-                        continue
-
-                    if set(plat.ignore_tags) & tc.tags:
-                        continue
-
-                    if tc.depends_on:
-                        dep_intersection = tc.depends_on.intersection(
-                            set(plat.supported))
-                        if dep_intersection != set(tc.depends_on):
-                            continue
-
-                    if plat.flash < tc.min_flash:
-                        continue
-
-                    if tc.platform_whitelist and plat.name not in tc.platform_whitelist:
-                        continue
-
-                    if tc.toolchain_whitelist and toolchain not in tc.toolchain_whitelist:
-                        continue
-
-                    if (plat.env_satisfied and tc.tc_filter
-                            and (plat.default or all_plats or platform_filter)
-                            and (toolchain in plat.supported_toolchains or options.force_toolchain)):
-                        args = tc.extra_args[:]
-                        args.append("BOARD={}".format(plat.name))
-                        args.extend(extra_args)
-
-                        # FIXME would be nice to use a common outdir for this so that
-                        # conf, gen_idt, etc aren't rebuilt for every  combination,
-                        # need a way to avoid different Make processes from clobbering
-                        # each other since they all try to build them
-                        # simultaneously
-
-                        outdir = os.path.join(self.outdir, plat.name, tc.name)
-                        cmake_cache_path = os.path.join(outdir, "CMakeCache.txt")
-                        _generated_dt_confg = "include/generated/generated_dts_board.conf"
-                        dt_config_path = os.path.join(outdir, "zephyr", _generated_dt_confg)
-
-                        xxx = tc.name.split("/")[-1]
-                        verbose("xxxx: %s" %xxx)
-
-                        dt_list[tc, plat, xxx] = dt_config_path
-                        cmake_list[tc, plat, xxx] = cmake_cache_path
-                        defconfig_list[tc, plat, xxx] = os.path.join(outdir, "zephyr", ".config")
+                    dt_list[tc, plat, xxx] = dt_config_path
+                    cmake_list[tc, plat, xxx] = cmake_cache_path
+                    defconfig_list[tc, plat, xxx] = os.path.join(outdir, "zephyr", ".config")
 
 
-                        goal = "_".join([plat.name, "_".join(tc.name.split("/")), "config-sanitycheck"])
+                    goal = "_".join([plat.name, "_".join(tc.name.split("/")), "config-sanitycheck"])
 
-                        mg.add_build_goal(goal, os.path.join(ZEPHYR_BASE, os.path.dirname(tc.path)),
-                                outdir, args, "config-sanitycheck.log", make_args="config-sanitycheck")
+                    mg.add_build_goal(goal, os.path.join(ZEPHYR_BASE, os.path.dirname(tc.path)),
+                            outdir, args, "config-sanitycheck.log", make_args="config-sanitycheck")
 
         info("Building testcase defconfigs...")
         results = mg.execute(defconfig_cb)
@@ -2331,151 +2304,150 @@ class TestSuite:
             test.dt_config[plat] = dt_conf
 
         for tc_name, tc in self.testcases.items():
-            for arch_name, arch in self.arches.items():
-                instance_list = []
-                for plat in arch.platforms:
-                    instance = TestInstance(tc, plat, self.outdir)
+            instance_list = []
+            for plat in self.platforms:
+                instance = TestInstance(tc, plat, self.outdir)
 
-                    if (arch_name == "unit") != (tc.type == "unit"):
-                        # Discard silently
-                        continue
-
-                    if tc.skip:
-                        discards[instance] = "Skip filter"
-                        continue
-
-                    if tc.build_on_all and not platform_filter:
-                        platform_filter = []
-
-                    if tag_filter and not tc.tags.intersection(tag_filter):
-                        discards[instance] = "Command line testcase tag filter"
-                        continue
-
-                    if exclude_tag and tc.tags.intersection(exclude_tag):
-                        discards[instance] = "Command line testcase exclude filter"
-                        continue
-
-                    if testcase_filter and tc_name not in testcase_filter:
-                        discards[instance] = "Testcase name filter"
-                        continue
-
-                    if arch_filter and arch_name not in arch_filter:
-                        discards[instance] = "Command line testcase arch filter"
-                        continue
-
-                    if tc.arch_whitelist and arch.name not in tc.arch_whitelist:
-                        discards[instance] = "Not in test case arch whitelist"
-                        continue
-
-                    if tc.arch_exclude and arch.name in tc.arch_exclude:
-                        discards[instance] = "In test case arch exclude"
-                        continue
-
-                    if tc.platform_exclude and plat.name in tc.platform_exclude:
-                        discards[instance] = "In test case platform exclude"
-                        continue
-
-                    if tc.toolchain_exclude and toolchain in tc.toolchain_exclude:
-                        discards[instance] = "In test case toolchain exclude"
-                        continue
-
-                    if platform_filter and plat.name not in platform_filter:
-                        discards[instance] = "Command line platform filter"
-                        continue
-
-                    if tc.platform_whitelist and plat.name not in tc.platform_whitelist:
-                        discards[instance] = "Not in testcase platform whitelist"
-                        continue
-
-                    if tc.toolchain_whitelist and toolchain not in tc.toolchain_whitelist:
-                        discards[instance] = "Not in testcase toolchain whitelist"
-                        continue
-
-                    if not plat.env_satisfied:
-                        discards[instance] = "Environment ({}) not satisfied".format(", ".join(plat.env))
-                        continue
-
-                    if not options.force_toolchain \
-                        and toolchain and (toolchain not in plat.supported_toolchains) \
-                        and tc.type != 'unit':
-                        discards[instance] = "Not supported by the toolchain"
-                        continue
-
-                    if plat.ram < tc.min_ram:
-                        discards[instance] = "Not enough RAM"
-                        continue
-
-                    if tc.depends_on:
-                        dep_intersection = tc.depends_on.intersection(set(plat.supported))
-                        if dep_intersection != set(tc.depends_on):
-                            discards[instance] = "No hardware support"
-                            continue
-
-                    if plat.flash < tc.min_flash:
-                        discards[instance] = "Not enough FLASH"
-                        continue
-
-                    if set(plat.ignore_tags) & tc.tags:
-                        discards[instance] = "Excluded tags per platform"
-                        continue
-
-                    defconfig = {
-                            "ARCH": arch.name,
-                            "PLATFORM": plat.name
-                            }
-                    defconfig.update(os.environ)
-                    for p, tdefconfig in tc.defconfig.items():
-                        if p == plat:
-                            defconfig.update(tdefconfig)
-                            break
-
-                    for p, tdefconfig in tc.dt_config.items():
-                        if p == plat:
-                            defconfig.update(tdefconfig)
-                            break
-
-                    for p, tdefconfig in tc.cmake_cache.items():
-                        if p == plat:
-                            defconfig.update(tdefconfig)
-                            break
-
-                    if tc.tc_filter:
-                        try:
-                            res = expr_parser.parse(tc.tc_filter, defconfig)
-                        except (ValueError, SyntaxError) as se:
-                            sys.stderr.write(
-                                "Failed processing %s\n" % tc.yamlfile)
-                            raise se
-                        if not res:
-                            discards[instance] = (
-                                "defconfig doesn't satisfy expression '%s'" %
-                                tc.tc_filter)
-                            continue
-
-                    instance_list.append(instance)
-
-                if not instance_list:
-                    # Every platform in this arch was rejected already
+                if (plat.arch == "unit") != (tc.type == "unit"):
+                    # Discard silently
                     continue
 
-                if default_platforms and not tc.build_on_all:
-                    if not tc.platform_whitelist:
-                        instances = list(
-                            filter(
-                                lambda tc: tc.platform.default,
-                                instance_list))
-                        self.add_instances(instances)
-                    else:
-                        self.add_instances(instance_list[:1])
+                if tc.skip:
+                    discards[instance] = "Skip filter"
+                    continue
 
-                    for instance in list(
-                            filter(lambda tc: not tc.platform.default, instance_list)):
-                        discards[instance] = "Not a default test platform"
+                if tc.build_on_all and not platform_filter:
+                    platform_filter = []
+
+                if tag_filter and not tc.tags.intersection(tag_filter):
+                    discards[instance] = "Command line testcase tag filter"
+                    continue
+
+                if exclude_tag and tc.tags.intersection(exclude_tag):
+                    discards[instance] = "Command line testcase exclude filter"
+                    continue
+
+                if testcase_filter and tc_name not in testcase_filter:
+                    discards[instance] = "Testcase name filter"
+                    continue
+
+                if arch_filter and plat.arch not in arch_filter:
+                    discards[instance] = "Command line testcase arch filter"
+                    continue
+
+                if tc.arch_whitelist and plat.arch not in tc.arch_whitelist:
+                    discards[instance] = "Not in test case arch whitelist"
+                    continue
+
+                if tc.arch_exclude and plat.arch in tc.arch_exclude:
+                    discards[instance] = "In test case arch exclude"
+                    continue
+
+                if tc.platform_exclude and plat.name in tc.platform_exclude:
+                    discards[instance] = "In test case platform exclude"
+                    continue
+
+                if tc.toolchain_exclude and toolchain in tc.toolchain_exclude:
+                    discards[instance] = "In test case toolchain exclude"
+                    continue
+
+                if platform_filter and plat.name not in platform_filter:
+                    discards[instance] = "Command line platform filter"
+                    continue
+
+                if tc.platform_whitelist and plat.name not in tc.platform_whitelist:
+                    discards[instance] = "Not in testcase platform whitelist"
+                    continue
+
+                if tc.toolchain_whitelist and toolchain not in tc.toolchain_whitelist:
+                    discards[instance] = "Not in testcase toolchain whitelist"
+                    continue
+
+                if not plat.env_satisfied:
+                    discards[instance] = "Environment ({}) not satisfied".format(", ".join(plat.env))
+                    continue
+
+                if not options.force_toolchain \
+                    and toolchain and (toolchain not in plat.supported_toolchains) \
+                    and tc.type != 'unit':
+                    discards[instance] = "Not supported by the toolchain"
+                    continue
+
+                if plat.ram < tc.min_ram:
+                    discards[instance] = "Not enough RAM"
+                    continue
+
+                if tc.depends_on:
+                    dep_intersection = tc.depends_on.intersection(set(plat.supported))
+                    if dep_intersection != set(tc.depends_on):
+                        discards[instance] = "No hardware support"
+                        continue
+
+                if plat.flash < tc.min_flash:
+                    discards[instance] = "Not enough FLASH"
+                    continue
+
+                if set(plat.ignore_tags) & tc.tags:
+                    discards[instance] = "Excluded tags per platform"
+                    continue
+
+                defconfig = {
+                        "ARCH": plat.arch,
+                        "PLATFORM": plat.name
+                        }
+                defconfig.update(os.environ)
+                for p, tdefconfig in tc.defconfig.items():
+                    if p == plat:
+                        defconfig.update(tdefconfig)
+                        break
+
+                for p, tdefconfig in tc.dt_config.items():
+                    if p == plat:
+                        defconfig.update(tdefconfig)
+                        break
+
+                for p, tdefconfig in tc.cmake_cache.items():
+                    if p == plat:
+                        defconfig.update(tdefconfig)
+                        break
+
+                if tc.tc_filter:
+                    try:
+                        res = expr_parser.parse(tc.tc_filter, defconfig)
+                    except (ValueError, SyntaxError) as se:
+                        sys.stderr.write(
+                            "Failed processing %s\n" % tc.yamlfile)
+                        raise se
+                    if not res:
+                        discards[instance] = (
+                            "defconfig doesn't satisfy expression '%s'" %
+                            tc.tc_filter)
+                        continue
+
+                instance_list.append(instance)
+
+            if not instance_list:
+                # Every platform in this arch was rejected already
+                continue
+
+            if default_platforms and not tc.build_on_all:
+                if not tc.platform_whitelist:
+                    instances = list(
+                        filter(
+                            lambda tc: tc.platform.default,
+                            instance_list))
+                    self.add_instances(instances)
                 else:
-                    self.add_instances(instance_list)
+                    self.add_instances(instance_list[:1])
 
-                for name, case in self.instances.items():
-                    case.create_overlay(case.platform.name)
+                for instance in list(
+                        filter(lambda tc: not tc.platform.default, instance_list)):
+                    discards[instance] = "Not a default test platform"
+            else:
+                self.add_instances(instance_list)
+
+            for name, case in self.instances.items():
+                case.create_overlay(case.platform.name)
 
         self.discards = discards
 
