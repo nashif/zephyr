@@ -2006,25 +2006,75 @@ def defconfig_cb(context, goals, goal):
 
 class CMake(threading.Thread):
 
+    config_re = re.compile('(CONFIG_[A-Za-z0-9_]+)[=]\"?([^\"]*)\"?$')
+    dt_re = re.compile('([A-Za-z0-9_]+)[=]\"?([^\"]*)\"?$')
 
-    def __init__(self, group=None, target=None, name=None,
-                 args=(), kwargs=None, verbose=None):
+    def __init__(self,):
 
-        threading.Thread.__init__(self, group=group, target=target, name=name)
-
-        self.args = args
-        self.kwargs = kwargs
         self.cwd = None
         self.capture_output = True
+        self.defconfig = {}
+        self.cmake_cache = {}
+        self.devicetree = {}
         return
 
-    def run(self):
-        verbose("Building %s for %s" %(self.kwargs['source_dir'], self.kwargs['board']))
-        cmake_args = ['-B{}'.format(self.kwargs['build_dir']),
-                      '-S{}'.format(self.kwargs['source_dir']),
-                      '-G{}'.format(self.kwargs['generator'])]
 
-        cmake_opts = ['-DBOARD={}'.format(self.kwargs['board'])]
+
+    def parse_generated(self, outdir):
+
+        _generated_dt_confg = "include/generated/generated_dts_board.conf"
+
+        cmake_cache_path = os.path.join(outdir, "CMakeCache.txt")
+        dt_config_path = os.path.join(outdir, "zephyr", _generated_dt_confg)
+        defconfig_path = os.path.join(outdir, "zephyr", ".config")
+
+        with open(defconfig_path, "r") as fp:
+            defconfig = {}
+            for line in fp.readlines():
+                m = self.config_re.match(line)
+                if not m:
+                    if line.strip() and not line.startswith("#"):
+                        sys.stderr.write("Unrecognized line %s\n" % line)
+                    continue
+                defconfig[m.group(1)] = m.group(2).strip()
+
+        self.defconfig = defconfig
+
+
+        cmake_conf = {}
+        try:
+            cache = CMakeCache.from_file(cmake_cache_path)
+        except FileNotFoundError:
+            cache = {}
+
+        for k in iter(cache):
+            cmake_conf[k.name] = k.value
+
+        self.cmake_cache = cmake_conf
+
+
+        dt_conf = {}
+        with open(dt_config_path, "r") as fp:
+            for line in fp.readlines():
+                m = self.dt_re.match(line)
+                if not m:
+                    if line.strip() and not line.startswith("#"):
+                        sys.stderr.write("Unrecognized line %s\n" % line)
+                    continue
+                dt_conf[m.group(1)] = m.group(2).strip()
+        self.devicetree = dt_conf
+
+
+
+    def run(self, args=None):
+
+        verbose("Building %s for %s" %(args['source_dir'], args['board']))
+
+        cmake_args = ['-B{}'.format(args['build_dir']),
+                      '-S{}'.format(args['source_dir']),
+                      '-G{}'.format(args['generator'])]
+
+        cmake_opts = ['-DBOARD={}'.format(args['board'])]
 
         cmake_args.extend(cmake_opts)
 
@@ -2043,8 +2093,10 @@ class CMake(threading.Thread):
         p = subprocess.Popen(cmd, **kwargs)
         out, _ = p.communicate()
 
+
         if p.returncode == 0:
-            verbose("Done building %s for %s" % (self.kwargs['source_dir'], self.kwargs['board']))
+            self.parse_generated(args['build_dir'])
+            return("Finished building %s for %s" %(args['source_dir'], args['board']))
             if out:
                 return out.decode(sys.getdefaultencoding()).splitlines()
             else:
@@ -2230,7 +2282,7 @@ class TestSuite:
         dt_list = {}
         cmake_list = {}
 
-
+        kwarg_list = []
         for tc_name, tc in self.testcases.items():
             for plat in self.platforms:
                 if (plat.arch == "unit") != (tc.type == "unit"):
@@ -2294,92 +2346,26 @@ class TestSuite:
                         and (plat.default or all_plats or platform_filter)
                         and (toolchain in plat.supported_toolchains or options.force_toolchain)):
                     args = tc.extra_args[:]
-                    args.append("BOARD={}".format(plat.name))
                     args.extend(extra_args)
 
-                    # FIXME would be nice to use a common outdir for this so that
-                    # conf, gen_idt, etc aren't rebuilt for every  combination,
-                    # need a way to avoid different Make processes from clobbering
-                    # each other since they all try to build them
-                    # simultaneously
-
                     outdir = os.path.join(self.outdir, plat.name, tc.name)
-                    cmake_cache_path = os.path.join(outdir, "CMakeCache.txt")
-                    _generated_dt_confg = "include/generated/generated_dts_board.conf"
-                    dt_config_path = os.path.join(outdir, "zephyr", _generated_dt_confg)
-
-                    dt_list[tc, plat, tc.id] = dt_config_path
-                    cmake_list[tc, plat, tc.id] = cmake_cache_path
-                    defconfig_list[tc, plat, tc.id] = os.path.join(outdir, "zephyr", ".config")
-
-
-                    #goal = "_".join([plat.name, "_".join(tc.name.split("/")), "config-sanitycheck"])
-
-                    #mg.add_build_goal(goal, os.path.join(ZEPHYR_BASE, os.path.dirname(tc.path)),
-                    #        outdir, args, "config-sanitycheck.log", make_args="config-sanitycheck")
-
                     source_dir = os.path.join(ZEPHYR_BASE, os.path.dirname(tc.path))
 
-                    kwargs = {
+                    kwarg_list.append({
                         'build_dir': outdir,
                         'source_dir': source_dir,
                         'generator': 'Ninja',
                         'board': plat.name
-                    }
-                    c = CMake(args=(), kwargs=kwargs)
-
-                    c.start()
-                    c.join()
-
+                    })
         info("Building testcase defconfigs...")
-        results = mg.execute(defconfig_cb)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=JOBS) as executor:
+
+            c = CMake()
+            futures = [executor.submit(c.run, kw) for kw in kwarg_list]
+            for future in concurrent.futures.as_completed(futures):
+                verbose("%s" %future.result())
 
         info("Filtering test cases...")
-
-        for k, out_config in defconfig_list.items():
-            test, plat, name = k
-            defconfig = {}
-            with open(out_config, "r") as fp:
-                for line in fp.readlines():
-                    m = TestSuite.config_re.match(line)
-                    if not m:
-                        if line.strip() and not line.startswith("#"):
-                            sys.stderr.write("Unrecognized line %s\n" % line)
-                        continue
-                    defconfig[m.group(1)] = m.group(2).strip()
-            test.defconfig[plat] = defconfig
-
-        for k, cache_file in cmake_list.items():
-            if not os.path.exists(out_config):
-                continue
-
-            test, plat, name = k
-            cmake_conf = {}
-            try:
-                cache = CMakeCache.from_file(cache_file)
-            except FileNotFoundError:
-                cache = {}
-
-            for k in iter(cache):
-                cmake_conf[k.name] = k.value
-
-            test.cmake_cache[plat] = cmake_conf
-
-        for k, out_config in dt_list.items():
-            if not os.path.exists(out_config):
-                continue
-
-            test, plat, name = k
-            dt_conf = {}
-            with open(out_config, "r") as fp:
-                for line in fp.readlines():
-                    m = TestSuite.dt_re.match(line)
-                    if not m:
-                        if line.strip() and not line.startswith("#"):
-                            sys.stderr.write("Unrecognized line %s\n" % line)
-                        continue
-                    dt_conf[m.group(1)] = m.group(2).strip()
-            test.dt_config[plat] = dt_conf
 
         for tc_name, tc in self.testcases.items():
             instance_list = []
@@ -3457,7 +3443,6 @@ def main():
     ts.add_testcases()
     ts.add_configurations()
 
-    #sys.exit(0)
 
     if ts.load_errors:
         sys.exit(1)
@@ -3545,6 +3530,10 @@ def main():
     else:
         discards = ts.apply_filters()
 
+
+    duration = time.time() - start_time
+    info("Completed in %d seconds" % ( duration))
+    sys.exit(0)
 
     if options.discard_report:
         ts.discard_report(options.discard_report)
