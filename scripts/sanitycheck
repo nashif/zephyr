@@ -2142,7 +2142,6 @@ class TestSuite:
             sys.exit(2)
 
 
-        instances = []
         discards = {}
         platform_filter = options.platform
         testcase_filter = run_individual_tests
@@ -2177,9 +2176,7 @@ class TestSuite:
 
 
         for tc_name, tc in self.testcases.items():
-            for plat in self.platforms:
-                instance = TestInstance(tc, plat, self.outdir)
-
+            for plat in self.platforms:               
                 if (plat.arch == "unit") != (tc.type == "unit"):
                     continue
 
