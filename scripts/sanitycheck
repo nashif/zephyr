@@ -181,6 +181,7 @@ import shutil
 import shlex
 import signal
 import threading
+import concurrent.futures
 import time
 import datetime
 import csv
@@ -1978,6 +1979,61 @@ def defconfig_cb(context, goals, goal):
         info("\tsee: " + COLOR_YELLOW + goal.get_error_log() + COLOR_NORMAL)
 
 
+
+
+class CMake(threading.Thread):
+
+
+    def __init__(self, group=None, target=None, name=None,
+                 args=(), kwargs=None, verbose=None):
+
+        threading.Thread.__init__(self, group=group, target=target, name=name)
+
+        self.args = args
+        self.kwargs = kwargs
+        self.cwd = None
+        self.capture_output = True
+        return
+
+    def run(self):
+        verbose("Building %s for %s" %(self.kwargs['source_dir'], self.kwargs['board']))
+        cmake_args = ['-B{}'.format(self.kwargs['build_dir']),
+                      '-S{}'.format(self.kwargs['source_dir']),
+                      '-G{}'.format(self.kwargs['generator'])]
+
+        cmake_opts = ['-DBOARD={}'.format(self.kwargs['board'])]
+
+        cmake_args.extend(cmake_opts)
+
+        cmake = shutil.which('cmake')
+        cmd = [cmake] + cmake_args
+        kwargs = dict()
+
+        if self.capture_output:
+            kwargs['stdout'] = subprocess.PIPE
+            # CMake sends the output of message() to stderr unless it's STATUS
+            kwargs['stderr'] = subprocess.STDOUT
+
+        if self.cwd:
+            kwargs['cwd'] = self.cwd
+
+        p = subprocess.Popen(cmd, **kwargs)
+        out, _ = p.communicate()
+
+        if p.returncode == 0:
+            verbose("Done building %s for %s" % (self.kwargs['source_dir'], self.kwargs['board']))
+            if out:
+                return out.decode(sys.getdefaultencoding()).splitlines()
+            else:
+                return None
+        else:
+            # A real error occurred, raise an exception
+            raise subprocess.CalledProcessError(p.returncode, p.args)
+
+
+
+
+
 class TestSuite:
     config_re = re.compile('(CONFIG_[A-Za-z0-9_]+)[=]\"?([^\"]*)\"?$')
     dt_re = re.compile('([A-Za-z0-9_]+)[=]\"?([^\"]*)\"?$')
@@ -2153,7 +2209,7 @@ class TestSuite:
 
 
         for tc_name, tc in self.testcases.items():
-            for plat in self.platforms:               
+            for plat in self.platforms:
                 if (plat.arch == "unit") != (tc.type == "unit"):
                     continue
 
@@ -2229,31 +2285,33 @@ class TestSuite:
                     _generated_dt_confg = "include/generated/generated_dts_board.conf"
                     dt_config_path = os.path.join(outdir, "zephyr", _generated_dt_confg)
 
-                    xxx = tc.name.split("/")[-1]
-                    verbose("xxxx: %s" %xxx)
-
-                    dt_list[tc, plat, xxx] = dt_config_path
-                    cmake_list[tc, plat, xxx] = cmake_cache_path
-                    defconfig_list[tc, plat, xxx] = os.path.join(outdir, "zephyr", ".config")
+                    dt_list[tc, plat, tc.id] = dt_config_path
+                    cmake_list[tc, plat, tc.id] = cmake_cache_path
+                    defconfig_list[tc, plat, tc.id] = os.path.join(outdir, "zephyr", ".config")
 
 
-                    goal = "_".join([plat.name, "_".join(tc.name.split("/")), "config-sanitycheck"])
+                    #goal = "_".join([plat.name, "_".join(tc.name.split("/")), "config-sanitycheck"])
 
-                    mg.add_build_goal(goal, os.path.join(ZEPHYR_BASE, os.path.dirname(tc.path)),
-                            outdir, args, "config-sanitycheck.log", make_args="config-sanitycheck")
+                    #mg.add_build_goal(goal, os.path.join(ZEPHYR_BASE, os.path.dirname(tc.path)),
+                    #        outdir, args, "config-sanitycheck.log", make_args="config-sanitycheck")
+
+                    source_dir = os.path.join(ZEPHYR_BASE, os.path.dirname(tc.path))
+
+                    kwargs = {
+                        'build_dir': outdir,
+                        'source_dir': source_dir,
+                        'generator': 'Ninja',
+                        'board': plat.name
+                    }
+                    c = CMake(args=(), kwargs=kwargs)
+
+                    c.start()
+                    c.join()
 
         info("Building testcase defconfigs...")
         results = mg.execute(defconfig_cb)
 
         info("Filtering test cases...")
-        for name, goal in results.items():
-            try:
-                if goal.failed:
-                    raise SanityRuntimeError("Couldn't build some defconfigs")
-            except Exception as e:
-                error(str(e))
-                sys.exit(2)
-
 
         for k, out_config in defconfig_list.items():
             test, plat, name = k
