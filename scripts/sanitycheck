@@ -1239,6 +1239,8 @@ class MakeGenerator:
                 args, make_args=make_args)
         text += self._get_rule_footer(name)
 
+        verbose("Adding build goal for %s" %name)
+
         self.goals[name] = MakeGoal( name, text, None, self.logfile, build_logfile, None, None)
 
     def add_goal(self, instance, type, args, make_args=""):
@@ -1383,7 +1385,7 @@ class MakeGenerator:
                 tf.write(goal.text)
             tf.write("all: %s\n" % (" ".join(sorted(self.goals.keys()))))
             tf.flush()
-
+            verbose("Running make on generated goals")
             cmd = ["make", "-k", "-j", str(JOBS), "-f", tf.name, "all"]
 
             # assure language neutral environment
@@ -1732,7 +1734,6 @@ class TestCase(object):
             from the testcase.yaml file
         """
 
-
         self.id = None
         self.path = None
         self.cases = []
@@ -1758,8 +1759,6 @@ class TestCase(object):
         self.depends_on = None
         self.min_flash = None
         self.extra_sections = None
-
-
         self.name = ""
 
         self.defconfig = {}
@@ -2035,6 +2034,7 @@ class TestSuite:
                     platform.load(file)
                     if platform.sanitycheck:
                         self.platforms.append(platform)
+                        
                 except RuntimeError as e:
                     error("E: %s: can't load: %s" % (file, e))
                     self.load_errors += 1
@@ -2247,6 +2247,7 @@ class TestSuite:
                         args = tc.extra_args[:]
                         args.append("BOARD={}".format(plat.name))
                         args.extend(extra_args)
+
                         # FIXME would be nice to use a common outdir for this so that
                         # conf, gen_idt, etc aren't rebuilt for every  combination,
                         # need a way to avoid different Make processes from clobbering
@@ -2255,12 +2256,17 @@ class TestSuite:
 
                         outdir = os.path.join(self.outdir, plat.name, tc.name)
                         cmake_cache_path = os.path.join(outdir, "CMakeCache.txt")
-                        generated_dt_confg = "include/generated/generated_dts_board.conf"
-                        dt_config_path = os.path.join(outdir, "zephyr", generated_dt_confg)
-                        dt_list[tc, plat, tc.name.split("/")[-1]] = dt_config_path
-                        cmake_list[tc, plat, tc.name.split("/")[-1]] = cmake_cache_path
+                        _generated_dt_confg = "include/generated/generated_dts_board.conf"
+                        dt_config_path = os.path.join(outdir, "zephyr", _generated_dt_confg)
 
-                        defconfig_list[tc, plat, tc.name.split("/")[-1]] = os.path.join(outdir, "zephyr", ".config")
+                        xxx = tc.name.split("/")[-1]
+                        verbose("xxxx: %s" %xxx)
+
+                        dt_list[tc, plat, xxx] = dt_config_path
+                        cmake_list[tc, plat, xxx] = cmake_cache_path
+                        defconfig_list[tc, plat, xxx] = os.path.join(outdir, "zephyr", ".config")
+
+
                         goal = "_".join([plat.name, "_".join(tc.name.split("/")), "config-sanitycheck"])
 
                         mg.add_build_goal(goal, os.path.join(ZEPHYR_BASE, os.path.dirname(tc.path)),
