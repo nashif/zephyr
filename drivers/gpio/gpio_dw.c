@@ -19,7 +19,7 @@
 #include <drivers/clock_control.h>
 
 #ifdef CONFIG_SHARED_IRQ
-#include <shared_irq.h>
+#include <drivers/shared_irq/shared_irq.h>
 #endif
 
 #ifdef CONFIG_IOAPIC

@@ -29,7 +29,7 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include "ethernet/eth_stats.h"
 
 #ifdef CONFIG_SHARED_IRQ
-#include <shared_irq.h>
+#include <drivers/shared_irq/shared_irq.h>
 #endif
 
 #include "eth_smsc911x_priv.h"

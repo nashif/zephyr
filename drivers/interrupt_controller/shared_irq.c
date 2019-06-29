@@ -8,7 +8,7 @@
 
 #include <kernel.h>
 #include <device.h>
-#include <shared_irq.h>
+#include <drivers/shared_irq/shared_irq.h>
 #include <init.h>
 #include <sys/sys_io.h>
 
