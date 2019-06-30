@@ -2129,7 +2129,7 @@ class TestSuite:
 
                 tc_dict = parsed_data.get_test(name, testcase_valid_keys)
 
-                tc.path = tc_data_file
+                tc.path = tc_path
 
                 tc.id = name
                 tc.type = tc_dict["type"]
@@ -2327,11 +2327,11 @@ class TestSuite:
                     args = tc.extra_args[:]
                     args.extend(extra_args)
 
-                    outdir = os.path.join(self.outdir, plat.name, tc.name)
-                    source_dir = os.path.join(ZEPHYR_BASE, os.path.dirname(tc.path))
+                    build_dir = os.path.join(self.outdir, plat.name, tc.name)
+                    source_dir = os.path.join(ZEPHYR_BASE, tc.path)
 
                     jobs.append({
-                        'build_dir': outdir,
+                        'build_dir': build_dir,
                         'source_dir': source_dir,
                         'generator': 'Ninja',
                         'platform': plat,
@@ -2340,10 +2340,16 @@ class TestSuite:
 
         info("Building testcase defconfigs...")
         filter_results = dict()
+        if options.ninja:
+            generator = "Ninja"
+        else:
+            generator = "Unix Makefiles"
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=JOBS) as executor:
             futures = []
             for job in jobs:
-                c = CMake(job['testcase'], job['platform'], job['source_dir'], job['build_dir'], 'Ninja')
+
+                c = CMake(job['testcase'], job['platform'], job['source_dir'], job['build_dir'], generator)
                 futures.append(executor.submit(c.run))
 
             for future in concurrent.futures.as_completed(futures):
