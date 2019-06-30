@@ -862,9 +862,9 @@ class QEMUHandler(Handler):
 
         # We pass this to QEMU which looks for fifos with .in and .out
         # suffixes.
-        self.fifo_fn = os.path.join(instance.outdir, "qemu-fifo")
+        self.fifo_fn = os.path.join(instance.build_dir, "qemu-fifo")
 
-        self.pid_fn = os.path.join(instance.outdir, "qemu.pid")
+        self.pid_fn = os.path.join(instance.build_dir, "qemu.pid")
         if os.path.exists(self.pid_fn):
             os.unlink(self.pid_fn)
 
@@ -1233,7 +1233,7 @@ class MakeGenerator:
 
         name = instance.name
         directory = instance.testcase.path
-        outdir = instance.outdir
+        outdir = instance.build_dir
 
         build_logfile = os.path.join(outdir, "build.log")
         run_logfile = os.path.join(outdir, "run.log")
@@ -1261,7 +1261,7 @@ class MakeGenerator:
             handler = DeviceHandler(instance, "device")
         elif type == "renode":
             handler = BinaryHandler(instance, "renode")
-            handler.pid_fn = os.path.join(instance.outdir, "renode.pid")
+            handler.pid_fn = os.path.join(instance.build_dir, "renode.pid")
             handler.call_make_run = True
 
         if type == 'qemu':
@@ -1662,10 +1662,6 @@ class TestCase(object):
     """Class representing a test application
     """
 
-    tc_schema = scl.yaml_load(
-        os.path.join(ZEPHYR_BASE,
-                     "scripts", "sanity_chk", "testcase-schema.yaml"))
-
 
     def __init__(self):
         """TestCase constructor.
@@ -1690,9 +1686,11 @@ class TestCase(object):
             from the testcase.yaml file
         """
 
-        self.id = None
-        self.path = None
+        self.id = ""
+        self.path = ""
         self.cases = []
+        self.name = ""
+
         self.type = None
         self.tags = None
         self.extra_args = None
@@ -1715,57 +1713,6 @@ class TestCase(object):
         self.depends_on = None
         self.min_flash = None
         self.extra_sections = None
-        self.name = ""
-
-        self.defconfig = {}
-        self.dt_config = {}
-        self.cmake_cache = {}
-
-
-    def discover(self, tc_path):
-
-        try:
-            parsed_data = SanityConfigParser(tc_path, self.tc_schema)
-            parsed_data.load()
-
-            for name in parsed_data.tests.keys():
-                self.name = name
-
-                tc_dict = parsed_data.get_test(name, testcase_valid_keys)
-
-                self.path = tc_path
-                self.id = name
-                self.type = tc_dict["type"]
-                self.tags = tc_dict["tags"]
-                self.extra_args = tc_dict["extra_args"]
-                self.extra_configs = tc_dict["extra_configs"]
-                self.arch_whitelist = tc_dict["arch_whitelist"]
-                self.arch_exclude = tc_dict["arch_exclude"]
-                self.skip = tc_dict["skip"]
-                self.platform_exclude = tc_dict["platform_exclude"]
-                self.platform_whitelist = tc_dict["platform_whitelist"]
-                self.toolchain_exclude = tc_dict["toolchain_exclude"]
-                self.toolchain_whitelist = tc_dict["toolchain_whitelist"]
-                self.tc_filter = tc_dict["filter"]
-                self.timeout = tc_dict["timeout"]
-                self.harness = tc_dict["harness"]
-                self.harness_config = tc_dict["harness_config"]
-                self.build_only = tc_dict["build_only"]
-                self.build_on_all = tc_dict["build_on_all"]
-                self.slow = tc_dict["slow"]
-                self.min_ram = tc_dict["min_ram"]
-                self.depends_on = tc_dict["depends_on"]
-                self.min_flash = tc_dict["min_flash"]
-                self.extra_sections = tc_dict["extra_sections"]
-
-                self.parse_subcases(tc_path)
-
-        except Exception as e:
-            error("E: %s: can't load (skipping): %s" % (tc_path, e))
-            self.load_errors += 1
-            return False
-
-        return True
 
 
     def get_unique(self, testcase_root, workdir, name):
@@ -2102,6 +2049,12 @@ class TestSuite:
     dt_re = re.compile('([A-Za-z0-9_]+)[=]\"?([^\"]*)\"?$')
 
 
+    tc_schema = scl.yaml_load(
+        os.path.join(ZEPHYR_BASE,
+                     "scripts", "sanity_chk", "testcase-schema.yaml"))
+
+
+
     def __init__(self, board_root_list, testcase_roots, outdir):
 
 
@@ -2144,6 +2097,7 @@ class TestSuite:
             root = os.path.abspath(root)
 
             debug("Reading test case configuration files under %s..." %root)
+
             for dirpath, dirnames, filenames in os.walk(root, topdown=True):
                 verbose("scanning %s" % dirpath)
                 if 'sample.yaml' in filenames:
@@ -2157,16 +2111,61 @@ class TestSuite:
 
                 dirnames[:] = []
                 tc_path = os.path.join(dirpath, filename)
-                self.add_testcase(tc_path)
+                self.add_testcase(tc_path, root)
 
 
 
-    def add_testcase(self, tc_path):
-        tc = TestCase()
-        tc.discover(tc_path)
+    def add_testcase(self, tc_data_file, root):
+        try:
+            parsed_data = SanityConfigParser(tc_data_file, self.tc_schema)
+            parsed_data.load()
 
-        if tc.name:
-            self.testcases[tc.name] = tc
+            tc_path = os.path.dirname(tc_data_file)
+            workdir = os.path.relpath(tc_path, root)
+
+            for name in parsed_data.tests.keys():
+                tc = TestCase()
+                tc.name = tc.get_unique(root, workdir, name)
+
+                tc_dict = parsed_data.get_test(name, testcase_valid_keys)
+
+                tc.path = tc_data_file
+
+                tc.id = name
+                tc.type = tc_dict["type"]
+                tc.tags = tc_dict["tags"]
+                tc.extra_args = tc_dict["extra_args"]
+                tc.extra_configs = tc_dict["extra_configs"]
+                tc.arch_whitelist = tc_dict["arch_whitelist"]
+                tc.arch_exclude = tc_dict["arch_exclude"]
+                tc.skip = tc_dict["skip"]
+                tc.platform_exclude = tc_dict["platform_exclude"]
+                tc.platform_whitelist = tc_dict["platform_whitelist"]
+                tc.toolchain_exclude = tc_dict["toolchain_exclude"]
+                tc.toolchain_whitelist = tc_dict["toolchain_whitelist"]
+                tc.tc_filter = tc_dict["filter"]
+                tc.timeout = tc_dict["timeout"]
+                tc.harness = tc_dict["harness"]
+                tc.harness_config = tc_dict["harness_config"]
+                tc.build_only = tc_dict["build_only"]
+                tc.build_on_all = tc_dict["build_on_all"]
+                tc.slow = tc_dict["slow"]
+                tc.min_ram = tc_dict["min_ram"]
+                tc.depends_on = tc_dict["depends_on"]
+                tc.min_flash = tc_dict["min_flash"]
+                tc.extra_sections = tc_dict["extra_sections"]
+
+                tc.parse_subcases(tc_path)
+
+                if tc.name:
+                    self.testcases[tc.name] = tc
+
+        except Exception as e:
+            error("E: %s: can't load (skipping): %s" % (tc_data_file, e))
+            self.load_errors += 1
+            return False
+
+        return True
 
 
     def get_platform(self, name):
@@ -3454,7 +3453,7 @@ def main():
 
     duration = time.time() - start_time
     info("Completed in %d seconds" % ( duration))
-    sys.exit(0)
+    #sys.exit(0)
 
     if options.discard_report:
         ts.discard_report(options.discard_report)
