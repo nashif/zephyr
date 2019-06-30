@@ -1231,32 +1231,6 @@ class MakeGenerator:
     def _get_rule_footer(self, name):
         return MakeGenerator.GOAL_FOOTER_TMPL.format(goal=name)
 
-    def add_build_goal(self, name, directory, outdir,
-                       args, buildlog, make_args=""):
-        """Add a goal to invoke a build session
-
-        @param name A unique string name for this build goal. The results
-            dictionary returned by execute() will be keyed by this name.
-        @param directory Absolute path to working directory, will be passed
-            to make -C
-        @param outdir Absolute path to output directory, will be passed to
-            cmake via -B=<path>
-        @param args Extra command line arguments to pass to 'cmake', typically
-            environment variables or specific Make goals
-        """
-
-        if not os.path.exists(outdir):
-            os.makedirs(outdir)
-
-        build_logfile = os.path.join(outdir, buildlog)
-        text = self._get_rule_header(name)
-        text +=  self._get_sub_make(name, "building", directory, outdir, build_logfile,
-                args, make_args=make_args)
-        text += self._get_rule_footer(name)
-
-        verbose("Adding build goal for %s" %name)
-
-        self.goals[name] = MakeGoal( name, text, None, self.logfile, build_logfile, None, None)
 
     def add_goal(self, instance, type, args, make_args=""):
 
@@ -2156,7 +2130,6 @@ class TestSuite:
         self.board_roots = board_root_list
 
         # Keep track of which test cases we've filtered out and why
-        self.arches = {}
         self.testcases = {}
         self.platforms = []
 
