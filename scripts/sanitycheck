@@ -2059,14 +2059,15 @@ class CMake(threading.Thread):
         self.cmake_cache = cmake_conf
 
         dt_conf = {}
-        with open(dt_config_path, "r") as fp:
-            for line in fp.readlines():
-                m = self.dt_re.match(line)
-                if not m:
-                    if line.strip() and not line.startswith("#"):
-                        sys.stderr.write("Unrecognized line %s\n" % line)
-                    continue
-                dt_conf[m.group(1)] = m.group(2).strip()
+        if os.path.exists(dt_config_path):
+            with open(dt_config_path, "r") as fp:
+                for line in fp.readlines():
+                    m = self.dt_re.match(line)
+                    if not m:
+                        if line.strip() and not line.startswith("#"):
+                            sys.stderr.write("Unrecognized line %s\n" % line)
+                        continue
+                    dt_conf[m.group(1)] = m.group(2).strip()
         self.devicetree = dt_conf
 
         filter_data = {
