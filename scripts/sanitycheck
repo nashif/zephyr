@@ -498,9 +498,9 @@ class Handler:
 
         self.name = instance.name
         self.instance = instance
-        self.timeout = instance.test.timeout
-        self.sourcedir = instance.test.path
-        self.outdir = instance.outdir
+        self.timeout = instance.testcase.timeout
+        self.sourcedir = instance.testcase.path
+        self.outdir = instance.build_dir
         self.log = os.path.join(self.outdir, "handler.log")
         self.returncode = 0
         self.set_state("running", {})
@@ -559,7 +559,7 @@ class BinaryHandler(Handler):
 
     def handle(self):
 
-        harness_name = self.instance.test.harness.capitalize()
+        harness_name = self.instance.testcase.harness.capitalize()
         harness_import = HarnessImporter(harness_name)
         harness = harness_import.instance
         harness.configure(self.instance)
@@ -699,7 +699,7 @@ class DeviceHandler(Handler):
 
         ser.flush()
 
-        harness_name = self.instance.test.harness.capitalize()
+        harness_name = self.instance.testcase.harness.capitalize()
         harness_import = HarnessImporter(harness_name)
         harness = harness_import.instance
         harness.configure(self.instance)
@@ -726,7 +726,7 @@ class DeviceHandler(Handler):
             ser.close()
 
         if out_state == "timeout":
-            for c in self.instance.test.cases:
+            for c in self.instance.testcase.cases:
                 if c not in harness.tests:
                     harness.tests[c] = "BLOCK"
 
@@ -870,7 +870,7 @@ class QEMUHandler(Handler):
 
         self.log_fn = self.log
 
-        harness_import = HarnessImporter(instance.test.harness.capitalize())
+        harness_import = HarnessImporter(instance.testcase.harness.capitalize())
         harness = harness_import.instance
         harness.configure(self.instance)
         self.thread = threading.Thread(name=self.name, target=QEMUHandler._thread,
@@ -1232,7 +1232,7 @@ class MakeGenerator:
         """
 
         name = instance.name
-        directory = instance.test.path
+        directory = instance.testcase.path
         outdir = instance.outdir
 
         build_logfile = os.path.join(outdir, "build.log")
@@ -1288,7 +1288,7 @@ class MakeGenerator:
         @param ti TestInstance object to build. The status dictionary returned
             by execute() will be keyed by its .name field.
         """
-        args = ti.test.extra_args[:]
+        args = ti.testcase.extra_args[:]
 
         # merge overlay files into one variable
         overlays = ""
@@ -1300,11 +1300,11 @@ class MakeGenerator:
                 del args[idx]
                 idx += 1
 
-        if len(ti.test.extra_configs) > 0 or options.coverage:
+        if len(ti.testcase.extra_configs) > 0 or options.coverage:
             args.append("OVERLAY_CONFIG=\"%s %s\"" %(overlays,
-                        os.path.join(ti.outdir, "overlay.conf")))
+                        os.path.join(ti.build_dir, "overlay.conf")))
 
-        if ti.test.type == "unit" and options.enable_coverage:
+        if ti.testcase.type == "unit" and options.enable_coverage:
             args.append("COVERAGE=1")
 
         args.append("BOARD={}".format(ti.platform.name))
@@ -1312,13 +1312,13 @@ class MakeGenerator:
 
         do_build_only = ti.build_only or options.build_only
         do_run = not do_build_only and not options.cmake_only
-        skip_slow = ti.test.slow and not options.enable_slow
+        skip_slow = ti.testcase.slow and not options.enable_slow
 
         # FIXME: Need refactoring and cleanup
         type = None
         if ti.platform.qemu_support and do_run:
             type = "qemu"
-        elif ti.test.type == "unit":
+        elif ti.testcase.type == "unit":
             type = "unit"
         elif ti.platform.type == "native" and do_run:
             type = "native"
@@ -1877,13 +1877,15 @@ class TestInstance():
         out directory used is <outdir>/<platform>/<test case name>
     """
 
-    def __init__(self, test, platform, base_outdir):
+    def __init__(self, testcase, platform, base_outdir):
 
-        self.test = test
+        self.testcase = testcase
         self.platform = platform
-        self.name = os.path.join(platform.name, test.name)
-        self.outdir = os.path.join(base_outdir, platform.name, test.name)
-        self.build_only = options.build_only or test.build_only \
+
+        self.name = os.path.join(platform.name, testcase.name)
+        self.build_dir = os.path.join(base_outdir, platform.name, testcase.name)
+
+        self.build_only = options.build_only or testcase.build_only \
                 or self.check_dependency() or options.cmake_only
 
         self.results = {}
@@ -1893,24 +1895,24 @@ class TestInstance():
 
     def check_dependency(self):
         build_only = False
-        if self.test.harness == 'console':
-            if "fixture" in self.test.harness_config:
-                fixture = self.test.harness_config['fixture']
+        if self.testcase.harness == 'console':
+            if "fixture" in self.testcase.harness_config:
+                fixture = self.testcase.harness_config['fixture']
                 if fixture not in options.fixture:
                     build_only = True
-        elif self.test.harness:
+        elif self.testcase.harness:
             build_only = True
 
         return build_only
 
     def create_overlay(self, platform):
-        file = os.path.join(self.outdir, "overlay.conf")
-        os.makedirs(self.outdir, exist_ok=True)
+        file = os.path.join(self.build_dir, "overlay.conf")
+        os.makedirs(self.build_dir, exist_ok=True)
         with open(file, "w") as f:
             content = ""
 
-            if len(self.test.extra_configs) > 0:
-                content = "\n".join(self.test.extra_configs)
+            if len(self.testcase.extra_configs) > 0:
+                content = "\n".join(self.testcase.extra_configs)
 
             if options.enable_coverage:
                 if platform in options.coverage_platform:
@@ -1926,15 +1928,15 @@ class TestInstance():
 
         @return A SizeCalculator object
         """
-        fns = glob.glob(os.path.join(self.outdir, "zephyr", "*.elf"))
-        fns.extend(glob.glob(os.path.join(self.outdir, "zephyr", "*.exe")))
+        fns = glob.glob(os.path.join(self.build_dir, "zephyr", "*.elf"))
+        fns.extend(glob.glob(os.path.join(self.build_dir, "zephyr", "*.exe")))
         fns = [x for x in fns if not x.endswith('_prebuilt.elf')]
         if (len(fns) != 1):
             raise BuildError("Missing/multiple output ELF binary")
-        return SizeCalculator(fns[0], self.test.extra_sections)
+        return SizeCalculator(fns[0], self.testcase.extra_sections)
 
     def __repr__(self):
-        return "<TestCase %s on %s>" % (self.test.name, self.platform.name)
+        return "<TestCase %s on %s>" % (self.testcase.name, self.platform.name)
 
 
 def defconfig_cb(context, goals, goal):
@@ -2519,8 +2521,8 @@ class TestSuite:
             cw = csv.DictWriter(csvfile, fieldnames, lineterminator=os.linesep)
             for instance in self.instances.values():
                 rowdict = {
-                    "path": os.path.dirname(instance.test.name),
-                    "test": os.path.basename(instance.test.name),
+                    "path": os.path.dirname(instance.testcase.name),
+                    "test": os.path.basename(instance.testcase.name),
                     "platform": instance.platform.name,
                     "arch": instance.platform.arch
                 }
@@ -2540,7 +2542,7 @@ class TestSuite:
             cw = csv.DictWriter(csvfile, fieldnames, lineterminator=os.linesep)
             cw.writeheader()
             for instance, reason in sorted(self.discards.items()):
-                rowdict = {"test": instance.test.name,
+                rowdict = {"test": instance.testcase.name,
                            "arch": instance.platform.arch,
                            "platform": instance.platform.name,
                            "reason": reason}
@@ -2573,8 +2575,8 @@ class TestSuite:
                 saved_metrics[(row["test"], row["platform"])] = d
 
         for name, goal in self.goals.items():
-            i = self.instances[name]
-            mkey = (i.test.name, i.platform.name)
+            instance = self.instances[name]
+            mkey = (instance.testcase.name, instance.platform.name)
             if mkey not in saved_metrics:
                 continue
             sm = saved_metrics[mkey]
@@ -2586,7 +2588,7 @@ class TestSuite:
                 delta = goal.metrics[metric] - mtype(sm[metric])
                 if delta == 0:
                     continue
-                results.append((i, metric, goal.metrics[metric], delta,
+                results.append((instance, metric, goal.metrics[metric], delta,
                                 lower_better))
         return results
 
@@ -2627,7 +2629,7 @@ class TestSuite:
             for k in ti.results.keys():
 
                 eleTestcase = ET.SubElement(
-                        eleTestsuite, 'testcase', classname="%s:%s" %(ti.platform.name, os.path.basename(ti.test.name)),
+                        eleTestsuite, 'testcase', classname="%s:%s" %(ti.platform.name, os.path.basename(ti.testcase.name)),
                         name="%s" % (k), time=handler_time)
                 if ti.results[k] in ['FAIL', 'BLOCK']:
                     el = None
@@ -2644,7 +2646,7 @@ class TestSuite:
                             'error',
                             type="failure",
                             message="failed")
-                    p = os.path.join(options.outdir, ti.platform.name, ti.test.name)
+                    p = os.path.join(options.outdir, ti.platform.name, ti.testcase.name)
                     log_file = os.path.join(p, "handler.log")
 
                     if os.path.exists(log_file):
@@ -2710,7 +2712,7 @@ class TestSuite:
             if append:
                 for tc in eleTestsuite.findall('testcase'):
                     if tc.get('classname') == "%s:%s" % (
-                            i.platform.name, i.test.name):
+                            i.platform.name, i.testcase.name):
                         eleTestsuite.remove(tc)
 
             if not goal.failed and goal.handler:
@@ -2718,7 +2720,7 @@ class TestSuite:
 
             eleTestcase = ET.SubElement(
                 eleTestsuite, 'testcase', classname="%s:%s" %
-                (i.platform.name, i.test.name), name="%s" %
+                (i.platform.name, i.testcase.name), name="%s" %
                 (name), time=handler_time)
             if goal.failed:
                 failure = ET.SubElement(
@@ -2726,7 +2728,7 @@ class TestSuite:
                     'failure',
                     type="failure",
                     message=goal.reason)
-                p = ("%s/%s/%s" % (options.outdir, i.platform.name, i.test.name))
+                p = ("%s/%s/%s" % (options.outdir, i.platform.name, i.testcase.name))
                 bl = os.path.join(p, "build.log")
                 hl = os.path.join(p, "handler.log")
                 log_file = bl
@@ -2764,10 +2766,10 @@ class TestSuite:
             cw.writeheader()
             for name, goal in sorted(self.goals.items()):
                 i = self.instances[name]
-                rowdict = {"test": i.test.name,
+                rowdict = {"test": i.testcase.name,
                            "arch": i.platform.arch,
                            "platform": i.platform.name,
-                           "extra_args": " ".join(i.test.extra_args),
+                           "extra_args": " ".join(i.testcase.extra_args),
                            "qemu": i.platform.qemu_support}
                 if goal.failed:
                     rowdict["passed"] = False
@@ -3134,7 +3136,7 @@ def terse_test_cb(instances, goals, goal):
         info(
             "\n\n{:<25} {:<50} {}FAILED{}: {}".format(
                 i.platform.name,
-                i.test.name,
+                i.testcase.name,
                 COLOR_RED,
                 COLOR_NORMAL,
                 goal.reason), False)
@@ -3181,7 +3183,7 @@ def chatty_test_cb(instances, goals, goal):
 
     info("{:>{}}/{} {:<25} {:<50} {} ({})".format(
         total_done, total_tests_width, total_tests, i.platform.name,
-        i.test.name, status, handler_type))
+        i.testcase.name, status, handler_type))
     if goal.failed:
         log_info(goal.get_error_log())
 
@@ -3469,7 +3471,7 @@ def main():
             debug(
                 "{:<25} {:<50} {}SKIPPED{}: {}".format(
                     i.platform.name,
-                    i.test.name,
+                    i.testcase.name,
                     COLOR_YELLOW,
                     COLOR_NORMAL,
                     reason))
@@ -3500,7 +3502,7 @@ def main():
         all_tests = set(get_unique_tests(ts))
         to_be_run = set()
         for i,p in ts.instances.items():
-            to_be_run.update(p.test.cases)
+            to_be_run.update(p.testcase.cases)
 
         if (all_tests - to_be_run):
             print("Tests that never build or run:")
@@ -3569,7 +3571,7 @@ def main():
                 continue
 
             info("{:<25} {:<60} {}{}{}: {} {:<+4}, is now {:6} {:+.2%}".format(
-                 i.platform.name, i.test.name, COLOR_YELLOW,
+                 i.platform.name, i.testcase.name, COLOR_YELLOW,
                  "INFO" if options.all_deltas else "WARNING", COLOR_NORMAL,
                  metric, delta, value, percentage))
             warnings += 1
