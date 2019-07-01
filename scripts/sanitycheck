@@ -1954,7 +1954,7 @@ class CMake():
         if p.returncode == 0:
             msg = "Finished building %s for %s" %(self.source_dir, self.platform.name)
 
-            results = {'msg': msg}
+            results = {'msg': msg, "returncode": p.returncode, "instance": self.instance, "reason": None}
 
             if out:
                 log_msg = out.decode(sys.getdefaultencoding())
@@ -1971,7 +1971,12 @@ class CMake():
                 with open(os.path.join(self.build_dir, self.log), "a") as log:
                     log.write(log_msg)
 
-            results = {'returncode': p.returncode, 'msg': 'Build failure'}
+            results = {
+                    "returncode": p.returncode,
+                    "instance": self.instance,
+                    "reason": "Build failure"
+                    }
+
             return results
 
     def run_cmake(self, args=[]):
@@ -1990,7 +1995,6 @@ class CMake():
 
         cmake = shutil.which('cmake')
         cmd = [cmake] + cmake_args
-        print(" ".join(cmd))
         kwargs = dict()
 
         if self.capture_output:
@@ -2097,6 +2101,7 @@ class FilterBuilder(CMake):
             return {os.path.join(self.platform.name, self.testcase.name): False}
 
 
+
 class ProjectBuilder(CMake):
 
     def __init__(self, instance, generator):
@@ -2105,10 +2110,10 @@ class ProjectBuilder(CMake):
         self.log = "build.log"
         self.instance = instance
 
-
     def build(self):
         self.run_cmake(self.testcase.extra_args)
         return self.run_build(['--build', self.build_dir])
+
 
 class TestSuite:
     config_re = re.compile('(CONFIG_[A-Za-z0-9_]+)[=]\"?([^\"]*)\"?$')
@@ -2572,6 +2577,9 @@ class TestSuite:
         else:
             generator = "Unix Makefiles"
 
+        total_tests = len(self.instances)
+        total_done = 0
+        total_failed = 0
         with concurrent.futures.ThreadPoolExecutor(max_workers=JOBS) as executor:
             futures = []
             for instance in self.instances.values():
@@ -2580,8 +2588,25 @@ class TestSuite:
 
             for future in concurrent.futures.as_completed(futures):
                 result = future.result()
-                verbose("%s" %(result['msg']))
+                total_done += 1
+                if result['returncode'] != 0:
+                    instance = result['instance']
+                    total_failed += 1
+                    info(
+                        "\n\n{:<25} {:<50} {}FAILED{}: {}".format(
+                            instance.platform.name,
+                            instance.testcase.name,
+                            COLOR_RED,
+                            COLOR_NORMAL,
+                            result['reason']), False)
 
+                sys.stdout.write(
+                    "\rtotal complete: %s%4d/%4d%s  %2d%%  failed: %s%4d%s" %
+                    (COLOR_GREEN, total_done, total_tests, COLOR_NORMAL,
+                     int((float(total_done) / total_tests) * 100),
+                     COLOR_RED if total_failed > 0 else COLOR_NORMAL, total_failed,
+                     COLOR_NORMAL))
+                sys.stdout.flush()
 
 
         """
@@ -3622,7 +3647,7 @@ def main():
     if VERBOSE or not TERMINAL:
         goals = suite.execute(chatty_test_cb, suite.instances)
     else:
-        goals = suite.execute(terse_test_cb)
+        goals = suite.execute(terse_test_cb, suite.instances)
         info("", False)
 
     if options.detailed_report:
@@ -3693,6 +3718,9 @@ def main():
             log_file.close()
         if failed or (warnings and options.warnings_as_errors):
             sys.exit(1)
+
+    duration = time.time() - start_time
+    info("Completed in %d seconds" %duration)
 
 
 if __name__ == "__main__":
