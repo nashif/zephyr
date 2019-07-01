@@ -1989,7 +1989,13 @@ class CMake():
                 return None
         else:
             # A real error occurred, raise an exception
-            raise subprocess.CalledProcessError(p.returncode, p.args)
+            if out:
+                log_msg = out.decode(sys.getdefaultencoding())
+                with open(os.path.join(self.build_dir, self.log), "a") as log:
+                    log.write(log_msg)
+
+            results = {'returncode': p.returncode, 'msg': 'Build failure'}
+            return results
 
     def run_cmake(self, args=[]):
 
@@ -1999,11 +2005,15 @@ class CMake():
                       '-S{}'.format(self.source_dir),
                       '-G{}'.format(self.generator)]
 
+        args = ["-D{}".format(a.replace('"', '')) for a in args]
+        cmake_args.extend(args)
+
         cmake_opts = ['-DBOARD={}'.format(self.platform.name)]
         cmake_args.extend(cmake_opts)
 
         cmake = shutil.which('cmake')
         cmd = [cmake] + cmake_args
+        print(" ".join(cmd))
         kwargs = dict()
 
         if self.capture_output:
@@ -2023,17 +2033,16 @@ class CMake():
 
             results = {'msg': msg, 'filter': filter_results}
 
-            if out:
-                log_msg = out.decode(sys.getdefaultencoding())
-                with open(os.path.join(self.build_dir, self.log), "a") as log:
-                    log.write(log_msg)
-
-                return(results)
-            else:
-                return None
         else:
-            # A real error occurred, raise an exception
-            raise subprocess.CalledProcessError(p.returncode, p.args)
+            results = {"returncode": p.returncode}
+
+
+        if out:
+            with open(os.path.join(self.build_dir, self.log), "a") as log:
+                log_msg = out.decode(sys.getdefaultencoding())
+                log.write(log_msg)
+
+        return(results)
 
 
 class FilterBuilder(CMake):
@@ -2121,13 +2130,8 @@ class ProjectBuilder(CMake):
 
 
     def build(self):
-        self.run_cmake()
+        self.run_cmake(self.testcase.extra_args)
         return self.run_build(['--build', self.build_dir])
-
-
-
-
-
 
 class TestSuite:
     config_re = re.compile('(CONFIG_[A-Za-z0-9_]+)[=]\"?([^\"]*)\"?$')
