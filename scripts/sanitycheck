@@ -1704,7 +1704,7 @@ class TestCase(object):
         """
 
         self.id = ""
-        self.path = ""
+        self.source_dir = ""
         self.cases = []
         self.name = ""
 
@@ -1924,9 +1924,7 @@ def defconfig_cb(context, goals, goal):
         info("\tsee: " + COLOR_YELLOW + goal.get_error_log() + COLOR_NORMAL)
 
 
-
-
-class CMake(threading.Thread):
+class CMake():
 
     config_re = re.compile('(CONFIG_[A-Za-z0-9_]+)[=]\"?([^\"]*)\"?$')
     dt_re = re.compile('([A-Za-z0-9_]+)[=]\"?([^\"]*)\"?$')
@@ -1935,6 +1933,7 @@ class CMake(threading.Thread):
 
         self.cwd = None
         self.capture_output = True
+
         self.defconfig = {}
         self.cmake_cache = {}
         self.devicetree = {}
@@ -1944,9 +1943,105 @@ class CMake(threading.Thread):
         self.source_dir = source_dir
         self.build_dir = build_dir
         self.generator = generator
+        self.log = "build.log"
         return
 
 
+    def parse_generated(self):
+        return {}
+
+
+    def run_build(self, args=[]):
+
+        verbose("Building %s for %s" % (self.source_dir, self.platform.name))
+
+        cmake_args = []
+        cmake_args.extend(args)
+
+
+        cmake = shutil.which('cmake')
+        cmd = [cmake] + cmake_args
+        kwargs = dict()
+
+        if self.capture_output:
+            kwargs['stdout'] = subprocess.PIPE
+            # CMake sends the output of message() to stderr unless it's STATUS
+            kwargs['stderr'] = subprocess.STDOUT
+
+        if self.cwd:
+            kwargs['cwd'] = self.cwd
+
+        p = subprocess.Popen(cmd, **kwargs)
+        out, _ = p.communicate()
+
+        if p.returncode == 0:
+            msg = "Finished building %s for %s" %(self.source_dir, self.platform.name)
+
+            results = {'msg': msg}
+
+            if out:
+                log_msg = out.decode(sys.getdefaultencoding())
+                with open(os.path.join(self.build_dir, self.log), "a") as log:
+                    log.write(log_msg)
+
+                return(results)
+            else:
+                return None
+        else:
+            # A real error occurred, raise an exception
+            raise subprocess.CalledProcessError(p.returncode, p.args)
+
+    def run_cmake(self, args=[]):
+
+        verbose("Running cmake on %s for %s" %(self.source_dir, self.platform.name))
+
+        cmake_args = ['-B{}'.format(self.build_dir),
+                      '-S{}'.format(self.source_dir),
+                      '-G{}'.format(self.generator)]
+
+        cmake_opts = ['-DBOARD={}'.format(self.platform.name)]
+        cmake_args.extend(cmake_opts)
+
+        cmake = shutil.which('cmake')
+        cmd = [cmake] + cmake_args
+        kwargs = dict()
+
+        if self.capture_output:
+            kwargs['stdout'] = subprocess.PIPE
+            # CMake sends the output of message() to stderr unless it's STATUS
+            kwargs['stderr'] = subprocess.STDOUT
+
+        if self.cwd:
+            kwargs['cwd'] = self.cwd
+
+        p = subprocess.Popen(cmd, **kwargs)
+        out, _ = p.communicate()
+
+        if p.returncode == 0:
+            filter_results = self.parse_generated()
+            msg = "Finished building %s for %s" %(self.source_dir, self.platform.name)
+
+            results = {'msg': msg, 'filter': filter_results}
+
+            if out:
+                log_msg = out.decode(sys.getdefaultencoding())
+                with open(os.path.join(self.build_dir, self.log), "a") as log:
+                    log.write(log_msg)
+
+                return(results)
+            else:
+                return None
+        else:
+            # A real error occurred, raise an exception
+            raise subprocess.CalledProcessError(p.returncode, p.args)
+
+
+class FilterBuilder(CMake):
+
+    def __init__(self, testcase, platform, source_dir, build_dir, generator):
+        super().__init__(testcase, platform, source_dir, build_dir, generator)
+
+        self.log = "config-sanitycheck.log"
 
     def parse_generated(self):
 
@@ -2016,52 +2111,20 @@ class CMake(threading.Thread):
             return {os.path.join(self.platform.name, self.testcase.name): False}
 
 
+class ProjectBuilder(CMake):
 
-    def run(self):
+    def __init__(self, instance, generator):
+        super().__init__(instance.testcase, instance.platform, instance.testcase.source_dir, instance.build_dir, generator)
 
-        verbose("Building %s for %s" %(self.source_dir, self.platform.name))
-
-        cmake_args = ['-B{}'.format(self.build_dir),
-                      '-S{}'.format(self.source_dir),
-                      '-G{}'.format(self.generator)]
-
-        cmake_opts = ['-DBOARD={}'.format(self.platform.name)]
-
-        cmake_args.extend(cmake_opts)
-
-        cmake = shutil.which('cmake')
-        cmd = [cmake] + cmake_args
-        kwargs = dict()
-
-        if self.capture_output:
-            kwargs['stdout'] = subprocess.PIPE
-            # CMake sends the output of message() to stderr unless it's STATUS
-            kwargs['stderr'] = subprocess.STDOUT
-
-        if self.cwd:
-            kwargs['cwd'] = self.cwd
-
-        p = subprocess.Popen(cmd, **kwargs)
-        out, _ = p.communicate()
+        self.log = "build.log"
+        self.instance = instance
 
 
-        if p.returncode == 0:
-            filter_results = self.parse_generated()
-            msg = "Finished building %s for %s" %(self.source_dir, self.platform.name)
+    def build(self):
+        self.run_cmake()
+        return self.run_build(['--build', self.build_dir])
 
-            results = {'msg': msg, 'filter': filter_results}
 
-            if out:
-                log_msg = out.decode(sys.getdefaultencoding())
-                with open(os.path.join(self.build_dir, "config-sanitycheck.log"), "w") as log:
-                    log.write(log_msg)
-
-                return(results)
-            else:
-                return None
-        else:
-            # A real error occurred, raise an exception
-            raise subprocess.CalledProcessError(p.returncode, p.args)
 
 
 
@@ -2151,7 +2214,7 @@ class TestSuite:
 
                 tc_dict = parsed_data.get_test(name, testcase_valid_keys)
 
-                tc.path = tc_path
+                tc.source_dir = tc_path
 
                 tc.id = name
                 tc.type = tc_dict["type"]
@@ -2350,7 +2413,7 @@ class TestSuite:
                     args.extend(extra_args)
 
                     build_dir = os.path.join(self.outdir, plat.name, tc.name)
-                    source_dir = os.path.join(ZEPHYR_BASE, tc.path)
+                    source_dir = os.path.join(ZEPHYR_BASE, tc.source_dir)
 
                     jobs.append({
                         'build_dir': build_dir,
@@ -2370,9 +2433,8 @@ class TestSuite:
         with concurrent.futures.ThreadPoolExecutor(max_workers=JOBS) as executor:
             futures = []
             for job in jobs:
-
-                c = CMake(job['testcase'], job['platform'], job['source_dir'], job['build_dir'], generator)
-                futures.append(executor.submit(c.run))
+                fb = FilterBuilder(job['testcase'], job['platform'], job['source_dir'], job['build_dir'], generator)
+                futures.append(executor.submit(fb.run_cmake))
 
             for future in concurrent.futures.as_completed(futures):
                 result = future.result()
@@ -2470,8 +2532,9 @@ class TestSuite:
                     continue
 
 
+                # Data from kconfig, device-tree and cmake cache files used for filtering.
                 if instance.name in filter_results and filter_results[instance.name]:
-                    discards[instance] = "defconfig doesn't satisfy expression '%s'" %tc.tc_filter
+                    discards[instance] = "Filter not satisfied: '%s'" %tc.tc_filter
                     continue
 
                 instance_list.append(instance)
@@ -2522,10 +2585,27 @@ class TestSuite:
                     goal.metrics["rom_size"] = 0
                     goal.metrics["unrecognized"] = []
 
-        mg = MakeGenerator(self.outdir)
 
-        for instance in self.instances.values():
-            mg.add_test_instance(instance, options.extra_args)
+        if options.ninja:
+            generator = "Ninja"
+        else:
+            generator = "Unix Makefiles"
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=JOBS) as executor:
+            futures = []
+            for instance in self.instances.values():
+                pb = ProjectBuilder(instance, generator)
+                futures.append(executor.submit(pb.build))
+
+            for future in concurrent.futures.as_completed(futures):
+                result = future.result()
+                verbose("%s" %(result['msg']))
+
+
+
+        """
+        mg = MakeGenerator(self.outdir)
+        mg.add_test_instance(instance, options.extra_args)
 
         self.goals = mg.execute(cb, cb_context)
 
@@ -2543,6 +2623,8 @@ class TestSuite:
                 goal.metrics["unrecognized"] = []
 
         return self.goals
+
+"""
 
     def save_tests(self, filename):
         with open(filename, "at") as csvfile:
@@ -3599,7 +3681,7 @@ def main():
     if VERBOSE or not TERMINAL:
         goals = suite.execute(chatty_test_cb, suite.instances)
     else:
-        goals = suite.execute(terse_test_cb, suite.instances)
+        goals = suite.execute(terse_test_cb)
         info("", False)
 
     if options.detailed_report:
@@ -3613,75 +3695,77 @@ def main():
     else:
         report_to_use = RELEASE_DATA
 
-    deltas = suite.compare_metrics(report_to_use)
-    warnings = 0
-    if deltas and options.show_footprint:
-        for i, metric, value, delta, lower_better in deltas:
-            if not options.all_deltas and ((delta < 0 and lower_better) or
-                                        (delta > 0 and not lower_better)):
-                continue
 
-            percentage = (float(delta) / float(value - delta))
-            if not options.all_deltas and (percentage <
-                                        (options.footprint_threshold / 100.0)):
-                continue
+    if 0:
+        deltas = suite.compare_metrics(report_to_use)
+        warnings = 0
+        if deltas and options.show_footprint:
+            for i, metric, value, delta, lower_better in deltas:
+                if not options.all_deltas and ((delta < 0 and lower_better) or
+                                            (delta > 0 and not lower_better)):
+                    continue
 
-            info("{:<25} {:<60} {}{}{}: {} {:<+4}, is now {:6} {:+.2%}".format(
-                 i.platform.name, i.testcase.name, COLOR_YELLOW,
-                 "INFO" if options.all_deltas else "WARNING", COLOR_NORMAL,
-                 metric, delta, value, percentage))
-            warnings += 1
+                percentage = (float(delta) / float(value - delta))
+                if not options.all_deltas and (percentage <
+                                            (options.footprint_threshold / 100.0)):
+                    continue
 
-    if warnings:
-        info("Deltas based on metrics from last %s" %
-             ("release" if not options.last_metrics else "run"))
+                info("{:<25} {:<60} {}{}{}: {} {:<+4}, is now {:6} {:+.2%}".format(
+                     i.platform.name, i.testcase.name, COLOR_YELLOW,
+                     "INFO" if options.all_deltas else "WARNING", COLOR_NORMAL,
+                     metric, delta, value, percentage))
+                warnings += 1
 
-    failed = 0
-    for name, goal in goals.items():
-        if goal.failed:
-            failed += 1
-        elif goal.metrics.get("unrecognized") and not options.disable_unrecognized_section_test:
-            info("%sFAILED%s: %s has unrecognized binary sections: %s" %
-                 (COLOR_RED, COLOR_NORMAL, goal.name,
-                  str(goal.metrics["unrecognized"])))
-            failed += 1
+        if warnings:
+            info("Deltas based on metrics from last %s" %
+                 ("release" if not options.last_metrics else "run"))
 
-    if options.coverage:
-        if options.gcov_tool == None:
-            using_posix = False
+        failed = 0
+        for name, goal in goals.items():
+            if goal.failed:
+                failed += 1
+            elif goal.metrics.get("unrecognized") and not options.disable_unrecognized_section_test:
+                info("%sFAILED%s: %s has unrecognized binary sections: %s" %
+                     (COLOR_RED, COLOR_NORMAL, goal.name,
+                      str(goal.metrics["unrecognized"])))
+                failed += 1
 
-            for plat in options.coverage_platform:
-                ts_plat = ts.get_platform(plat)
-                if ts_plat and ts_plat.type == "native":
-                    using_posix = True
 
-            if using_posix or "ZEPHYR_SDK_INSTALL_DIR" not in os.environ:
-                options.gcov_tool = "gcov"
-            else:
-                options.gcov_tool = os.path.join(os.environ["ZEPHYR_SDK_INSTALL_DIR"],
-                    "i586-zephyr-elf/bin/i586-zephyr-elf-gcov")
+        if options.coverage:
+            if options.gcov_tool == None:
+                using_posix = False
 
-        info("Generating coverage files...")
-        generate_coverage(options.outdir, ["*generated*", "tests/*", "samples/*"])
+                for plat in options.coverage_platform:
+                    ts_plat = ts.get_platform(plat)
+                    if ts_plat and ts_plat.type == "native":
+                        using_posix = True
 
-    duration = time.time() - start_time
-    info("%s%d of %d%s tests passed with %s%d%s warnings in %d seconds" %
-         (COLOR_RED if failed else COLOR_GREEN, len(goals) - failed,
-          len(goals), COLOR_NORMAL, COLOR_YELLOW if warnings else COLOR_NORMAL,
-          warnings, COLOR_NORMAL, duration))
+                if using_posix or "ZEPHYR_SDK_INSTALL_DIR" not in os.environ:
+                    options.gcov_tool = "gcov"
+                else:
+                    options.gcov_tool = os.path.join(os.environ["ZEPHYR_SDK_INSTALL_DIR"],
+                        "i586-zephyr-elf/bin/i586-zephyr-elf-gcov")
 
-    if options.testcase_report:
-        suite.testcase_report(options.testcase_report)
-    if not options.no_update:
-        suite.testcase_xunit_report(LAST_SANITY_XUNIT, duration)
-        suite.testcase_report(LAST_SANITY)
-    if options.release:
-        suite.testcase_report(RELEASE_DATA)
-    if log_file:
-        log_file.close()
-    if failed or (warnings and options.warnings_as_errors):
-        sys.exit(1)
+            info("Generating coverage files...")
+            generate_coverage(options.outdir, ["*generated*", "tests/*", "samples/*"])
 
+        duration = time.time() - start_time
+        info("%s%d of %d%s tests passed with %s%d%s warnings in %d seconds" %
+             (COLOR_RED if failed else COLOR_GREEN, len(goals) - failed,
+              len(goals), COLOR_NORMAL, COLOR_YELLOW if warnings else COLOR_NORMAL,
+              warnings, COLOR_NORMAL, duration))
+
+        if options.testcase_report:
+            suite.testcase_report(options.testcase_report)
+        if not options.no_update:
+            suite.testcase_xunit_report(LAST_SANITY_XUNIT, duration)
+            suite.testcase_report(LAST_SANITY)
+        if options.release:
+            suite.testcase_report(RELEASE_DATA)
+        if log_file:
+            log_file.close()
+        if failed or (warnings and options.warnings_as_errors):
+            sys.exit(1)
 
 if __name__ == "__main__":
     main()
