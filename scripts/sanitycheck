@@ -1805,11 +1805,10 @@ class ProjectBuilder(CMake):
 
 
     def run(self, queue, event):
-        while not queue.empty():
-            message = queue.get()
-            verbose("Running %s (%s)" %(message['instance'].name, message['type']))
-            instance = message['instance']
-            instance.handler.handle()
+        message = queue.get()
+        verbose("Running %s (%s)" %(message['instance'].name, message['type']))
+        instance = message['instance']
+        instance.handler.handle()
 
 
 class TestSuite:
@@ -2279,18 +2278,18 @@ class TestSuite:
         total_done = 0
         total_failed = 0
 
-        pipeline = queue.Queue(maxsize=10)
+        pipeline = queue.Queue()
         event = threading.Event()
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=JOBS) as executor:
             futures = []
+
             for instance in self.instances.values():
                 pb = ProjectBuilder(instance, generator)
                 futures.append(executor.submit(pb.build, pipeline, event))
 
             for future in concurrent.futures.as_completed(futures):
-
-                if not pipeline.empty():
+                while not pipeline.empty():
                     futures.append(executor.submit(pb.run, pipeline, event))
 
                 result = future.result()
@@ -2314,9 +2313,17 @@ class TestSuite:
                     status = COLOR_GREEN + "PASSED" + COLOR_NORMAL
 
                 if VERBOSE or not TERMINAL:
+                    if instance.handler:
+                        handler_type = instance.handler.type_str
+                        htime = instance.metrics.get("handler_time", None)
+                        if htime:
+                            handler_type += " {:.3f}s".format(htime)
+                    else:
+                        handler_type = "build"
+
                     info("{:>{}}/{} {:<25} {:<50} {} ({})".format(
                         total_done, total_tests_width, total_tests, instance.platform.name,
-                        instance.testcase.name, status, "FIXME"))
+                        instance.testcase.name, status, handler_type))
                 else:
                         sys.stdout.write(
                             "\rtotal complete: %s%4d/%4d%s  %2d%%  failed: %s%4d%s" %
