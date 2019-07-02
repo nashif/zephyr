@@ -494,7 +494,7 @@ class Handler:
         self.name = instance.name
         self.instance = instance
         self.timeout = instance.testcase.timeout
-        self.sourcedir = instance.testcase.path
+        self.sourcedir = instance.testcase.source_dir
         self.outdir = instance.build_dir
         self.log = os.path.join(self.outdir, "handler.log")
         self.returncode = 0
@@ -1755,7 +1755,50 @@ class ProjectBuilder(CMake):
     def build(self, queue, event):
         self.run_cmake(self.testcase.extra_args)
         results = self.run_build(['--build', self.build_dir])
-        if not self.instance.build_only:
+        instance = self.instance
+
+
+        do_build_only = instance.build_only or options.build_only
+        do_run = not do_build_only and not options.cmake_only
+        skip_slow = instance.testcase.slow and not options.enable_slow
+
+        handler = None
+        type = None
+
+        if instance.platform.qemu_support and do_run:
+            type = "qemu"
+            handler = QEMUHandler(instance, "qemu")
+        elif instance.testcase.type == "unit":
+            type = "unit"
+            handler = BinaryHandler(instance, "unit")
+            handler.binary = os.path.join(outdir, "testbinary")
+            if options.enable_coverage:
+                args += ["EXTRA_LDFLAGS=--coverage"]
+        elif instance.platform.type == "native" and do_run:
+            type = "native"
+            handler = BinaryHandler(instance, "native")
+            handler.binary = os.path.join(instance.build_dir, "zephyr", "zephyr.exe")
+            if options.enable_coverage:
+                args += ["EXTRA_LDFLAGS=--coverage"]
+        elif instance.platform.simulation == "nsim" and do_run:
+            if find_executable("nsimdrv"):
+                type = "nsim"
+            handler = BinaryHandler(instance, "nsim")
+            handler.call_make_run = True
+        elif instance.platform.simulation == "renode" and do_run:
+            if find_executable("renode"):
+                type = "renode"
+            handler = BinaryHandler(instance, "renode")
+            handler.pid_fn = os.path.join(instance.build_dir, "renode.pid")
+            handler.call_make_run = True
+        elif options.device_testing and (not instance.build_only) and (not options.build_only):
+            type = "device"
+            handler = DeviceHandler(instance, "device")
+
+        instance.handler = handler
+
+        results['type'] = type
+        if not instance.build_only:
             queue.put(results)
 
         return results
@@ -1764,9 +1807,9 @@ class ProjectBuilder(CMake):
     def run(self, queue, event):
         while not queue.empty():
             message = queue.get()
-            verbose("Running %s" %(message['instance'].name))
-
-
+            verbose("Running %s (%s)" %(message['instance'].name, message['type']))
+            instance = message['instance']
+            instance.handler.handle()
 
 
 class TestSuite:
@@ -2236,9 +2279,8 @@ class TestSuite:
         total_done = 0
         total_failed = 0
 
-        pipeline = queue.Queue()
+        pipeline = queue.Queue(maxsize=10)
         event = threading.Event()
-
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=JOBS) as executor:
             futures = []
@@ -2248,8 +2290,8 @@ class TestSuite:
 
             for future in concurrent.futures.as_completed(futures):
 
-                while not pipeline.empty():
-                    executor.submit(pb.run, pipeline, event)
+                if not pipeline.empty():
+                    futures.append(executor.submit(pb.run, pipeline, event))
 
                 result = future.result()
                 total_done += 1
