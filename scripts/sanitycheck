@@ -1797,18 +1797,23 @@ class ProjectBuilder(CMake):
 
         instance.handler = handler
 
-        results['type'] = type
         if not instance.build_only:
             queue.put(results)
-
-        return results
+        else:
+            return results
 
 
     def run(self, queue, event):
         message = queue.get()
-        verbose("Running %s (%s)" %(message['instance'].name, message['type']))
         instance = message['instance']
+        verbose("Running %s (%s)" %(instance.name, instance.handler.type_str))
         instance.handler.handle()
+        state = instance.handler.get_state()
+        return {
+                "instance": instance,
+                "status": "pass",
+
+                }
 
 
 class TestSuite:
@@ -2293,6 +2298,8 @@ class TestSuite:
                     futures.append(executor.submit(pb.run, pipeline, event))
 
                 result = future.result()
+                if not result:
+                    continue
                 total_done += 1
                 instance = result['instance']
                 if instance.status == "fail":
