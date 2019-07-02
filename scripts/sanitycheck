@@ -1846,6 +1846,12 @@ class TestInstance():
         self.testcase = testcase
         self.platform = platform
 
+        self.status = None
+        self.reason = "N/A"
+        self.metrics = dict()
+        self.handler = None
+
+
         self.name = os.path.join(platform.name, testcase.name)
         self.build_dir = os.path.join(base_outdir, platform.name, testcase.name)
 
@@ -1977,7 +1983,10 @@ class CMake():
         if p.returncode == 0:
             msg = "Finished building %s for %s" %(self.source_dir, self.platform.name)
 
-            results = {'msg': msg, "returncode": p.returncode, "instance": self.instance, "reason": None}
+            results = {'msg': msg, "returncode": p.returncode, "instance": self.instance}
+
+            self.instance.status = "pass"
+            self.instance.reason = ""
 
             if out:
                 log_msg = out.decode(sys.getdefaultencoding())
@@ -1994,10 +2003,12 @@ class CMake():
                 with open(os.path.join(self.build_dir, self.log), "a") as log:
                     log.write(log_msg)
 
+
+            self.instance.status = "fail"
+            self.instance.reason = "Build failure"
             results = {
                     "returncode": p.returncode,
                     "instance": self.instance,
-                    "reason": "Build failure"
                     }
 
             return results
@@ -2581,18 +2592,17 @@ class TestSuite:
 
     def execute(self, cb, cb_context):
 
-        def calc_one_elf_size(name, goal):
-            if not goal.failed:
-                if self.instances[name].platform.type != "native":
-                    i = self.instances[name]
-                    sc = i.calculate_sizes()
-                    goal.metrics["ram_size"] = sc.get_ram_size()
-                    goal.metrics["rom_size"] = sc.get_rom_size()
-                    goal.metrics["unrecognized"] = sc.unrecognized_sections()
+        def calc_one_elf_size(instance):
+            if instance.status != "fail":
+                if instance.platform.type != "native":
+                    size_calc = instance.calculate_sizes()
+                    instance.metrics["ram_size"] = size_calc.get_ram_size()
+                    instance.metrics["rom_size"] = size_calc.get_rom_size()
+                    instance.metrics["unrecognized"] = size_calc.unrecognized_sections()
                 else:
-                    goal.metrics["ram_size"] = 0
-                    goal.metrics["rom_size"] = 0
-                    goal.metrics["unrecognized"] = []
+                    instance.metrics["ram_size"] = 0
+                    instance.metrics["rom_size"] = 0
+                    instance.metrics["unrecognized"] = []
 
 
         if options.ninja:
@@ -2601,6 +2611,8 @@ class TestSuite:
             generator = "Unix Makefiles"
 
         total_tests = len(self.instances)
+        total_tests_width = len(str(total_tests))
+
         total_done = 0
         total_failed = 0
         with concurrent.futures.ThreadPoolExecutor(max_workers=JOBS) as executor:
@@ -2612,48 +2624,49 @@ class TestSuite:
             for future in concurrent.futures.as_completed(futures):
                 result = future.result()
                 total_done += 1
-                if result['returncode'] != 0:
-                    instance = result['instance']
+                instance = result['instance']
+                if instance.status == "fail":
                     total_failed += 1
-                    info(
-                        "\n\n{:<25} {:<50} {}FAILED{}: {}".format(
-                            instance.platform.name,
-                            instance.testcase.name,
-                            COLOR_RED,
-                            COLOR_NORMAL,
-                            result['reason']), False)
+                    if VERBOSE or not TERMINAL:
+                        status = COLOR_RED + "FAILED" + COLOR_NORMAL + ": " + instance.reason
+                    else:
 
-                sys.stdout.write(
-                    "\rtotal complete: %s%4d/%4d%s  %2d%%  failed: %s%4d%s" %
-                    (COLOR_GREEN, total_done, total_tests, COLOR_NORMAL,
-                     int((float(total_done) / total_tests) * 100),
-                     COLOR_RED if total_failed > 0 else COLOR_NORMAL, total_failed,
-                     COLOR_NORMAL))
+                        info(
+                            "\n\n{:<25} {:<50} {}FAILED{}: {}".format(
+                                instance.platform.name,
+                                instance.testcase.name,
+                                COLOR_RED,
+                                COLOR_NORMAL,
+                                instance.result), False)
+
+                else:
+                    status = COLOR_GREEN + "PASSED" + COLOR_NORMAL
+
+                if VERBOSE or not TERMINAL:
+                    info("{:>{}}/{} {:<25} {:<50} {} ({})".format(
+                        total_done, total_tests_width, total_tests, instance.platform.name,
+                        instance.testcase.name, status, "FIXME"))
+                else:
+                        sys.stdout.write(
+                            "\rtotal complete: %s%4d/%4d%s  %2d%%  failed: %s%4d%s" %
+                            (COLOR_GREEN, total_done, total_tests, COLOR_NORMAL,
+                             int((float(total_done) / total_tests) * 100),
+                             COLOR_RED if total_failed > 0 else COLOR_NORMAL, total_failed,
+                             COLOR_NORMAL))
                 sys.stdout.flush()
 
-
-        """
-        mg = MakeGenerator(self.outdir)
-        mg.add_test_instance(instance, options.extra_args)
-
-        self.goals = mg.execute(cb, cb_context)
-
-        if not options.disable_size_report and not options.cmake_only:
+        if options.enable_size_report and not options.cmake_only:
             # Parallelize size calculation
             executor = concurrent.futures.ThreadPoolExecutor(JOBS)
-            futures = [executor.submit(calc_one_elf_size, name, goal)
-                       for name, goal in self.goals.items()]
+            futures = [executor.submit(calc_one_elf_size, instance)
+                       for instance in self.instances.values()]
             concurrent.futures.wait(futures)
         else:
-            for goal in self.goals.values():
-                goal.metrics["ram_size"] = 0
-                goal.metrics["rom_size"] = 0
-                goal.metrics["handler_time"] = 0
-                goal.metrics["unrecognized"] = []
-
-        return self.goals
-
-"""
+            for instance in self.instances.values():
+                instance.metrics["ram_size"] = 0
+                instance.metrics["rom_size"] = 0
+                instance.metrics["handler_time"] = 0
+                instance.metrics["unrecognized"] = []
 
     def save_tests(self, filename):
         with open(filename, "at") as csvfile:
@@ -2693,12 +2706,6 @@ class TestSuite:
         interesting_metrics = [("ram_size", int, True),
                                ("rom_size", int, True)]
 
-        try:
-            if self.goals is None:
-                raise SanityRuntimeError("execute() hasn't been run!")
-        except Exception as e:
-            print(str(e))
-            sys.exit(2)
 
         if not os.path.exists(filename):
             info("Cannot compare metrics, %s not found" % filename)
@@ -2714,21 +2721,20 @@ class TestSuite:
                     d[m] = row[m]
                 saved_metrics[(row["test"], row["platform"])] = d
 
-        for name, goal in self.goals.items():
-            instance = self.instances[name]
+        for instance in self.instances.values():
             mkey = (instance.testcase.name, instance.platform.name)
             if mkey not in saved_metrics:
                 continue
             sm = saved_metrics[mkey]
             for metric, mtype, lower_better in interesting_metrics:
-                if metric not in goal.metrics:
+                if metric not in instance.metrics:
                     continue
                 if sm[metric] == "":
                     continue
-                delta = goal.metrics[metric] - mtype(sm[metric])
+                delta = instance.metrics[metric] - mtype(sm[metric])
                 if delta == 0:
                     continue
-                results.append((instance, metric, goal.metrics[metric], delta,
+                results.append((instance, metric, instance.metrics[metric], delta,
                                 lower_better))
         return results
 
@@ -2809,20 +2815,13 @@ class TestSuite:
 
 
     def testcase_xunit_report(self, filename, duration):
-        try:
-            if self.goals is None:
-                raise SanityRuntimeError("execute() hasn't been run!")
-        except Exception as e:
-            print(str(e))
-            sys.exit(2)
-
         fails = 0
         passes = 0
         errors = 0
 
-        for name, goal in self.goals.items():
-            if goal.failed:
-                if goal.reason in ['build_error', 'handler_crash']:
+        for instance in self.instances.values():
+            if instance.status == "fail":
+                if instance.reason in ['build_error', 'handler_crash']:
                     errors += 1
                 else:
                     fails += 1
@@ -2846,33 +2845,31 @@ class TestSuite:
                                          errors="%d" % errors, skip="0")
 
         handler_time = "0"
-        for name, goal in self.goals.items():
-
-            i = self.instances[name]
+        for instance in self.instances.values():
             if append:
                 for tc in eleTestsuite.findall('testcase'):
                     if tc.get('classname') == "%s:%s" % (
-                            i.platform.name, i.testcase.name):
+                            instance.platform.name, instance.testcase.name):
                         eleTestsuite.remove(tc)
 
-            if not goal.failed and goal.handler:
-                handler_time = "%s" %(goal.metrics["handler_time"])
+            if instance != "fail" and instance.handler:
+                handler_time = "%s" %(instance.metrics["handler_time"])
 
             eleTestcase = ET.SubElement(
                 eleTestsuite, 'testcase', classname="%s:%s" %
-                (i.platform.name, i.testcase.name), name="%s" %
-                (name), time=handler_time)
-            if goal.failed:
+                (instance.platform.name, instance.testcase.name), name="%s" %
+                (instance.testcase.name), time=handler_time)
+            if instance.status == "fail":
                 failure = ET.SubElement(
                     eleTestcase,
                     'failure',
                     type="failure",
                     message=goal.reason)
-                p = ("%s/%s/%s" % (options.outdir, i.platform.name, i.testcase.name))
+                p = ("%s/%s/%s" % (options.outdir, instance.platform.name, instance.testcase.name))
                 bl = os.path.join(p, "build.log")
                 hl = os.path.join(p, "handler.log")
                 log_file = bl
-                if goal.reason != 'build_error':
+                if instance.reason != 'Build error':
                     if os.path.exists(hl):
                         log_file = hl
                     else:
@@ -2891,12 +2888,7 @@ class TestSuite:
         f.close()
 
     def testcase_report(self, filename):
-        try:
-            if self.goals is None:
-                raise SanityRuntimeError("execute() hasn't been run!")
-        except Exception as e:
-            print(str(e))
-            sys.exit(2)
+
 
         with open(filename, "wt") as csvfile:
             fieldnames = ["test", "arch", "platform", "passed", "status",
@@ -2904,22 +2896,21 @@ class TestSuite:
                           "rom_size"]
             cw = csv.DictWriter(csvfile, fieldnames, lineterminator=os.linesep)
             cw.writeheader()
-            for name, goal in sorted(self.goals.items()):
-                i = self.instances[name]
-                rowdict = {"test": i.testcase.name,
-                           "arch": i.platform.arch,
-                           "platform": i.platform.name,
-                           "extra_args": " ".join(i.testcase.extra_args),
-                           "qemu": i.platform.qemu_support}
-                if goal.failed:
+            for instance in sorted(self.instances.values()):
+                rowdict = {"test": instance.testcase.name,
+                           "arch": instance.platform.arch,
+                           "platform": instance.platform.name,
+                           "extra_args": " ".join(instance.testcase.extra_args),
+                           "qemu": instance.platform.qemu_support}
+                if instance.status == "fail":
                     rowdict["passed"] = False
-                    rowdict["status"] = goal.reason
+                    rowdict["status"] = instance.reason
                 else:
                     rowdict["passed"] = True
-                    if goal.handler:
-                        rowdict["handler_time"] = goal.metrics["handler_time"]
-                    rowdict["ram_size"] = goal.metrics["ram_size"]
-                    rowdict["rom_size"] = goal.metrics["rom_size"]
+                    if instance.handler:
+                        rowdict["handler_time"] = instance.metrics["handler_time"]
+                    rowdict["ram_size"] = instance.metrics["ram_size"]
+                    rowdict["rom_size"] = instance.metrics["rom_size"]
                 cw.writerow(rowdict)
 
 
@@ -3201,8 +3192,8 @@ Artificially long but functional example:
                         help="deprecated, left for compatibility")
     parser.add_argument("-Q", "--error-on-deprecations", action="store_false",
                         help="Error on deprecation warnings.")
-    parser.add_argument("--disable-size-report", action="store_true",
-                        help="Skip expensive computation of ram/rom segment sizes.")
+    parser.add_argument("--enable-size-report", action="store_true",
+                        help="Enable expensive computation of ram/rom segment sizes.")
 
     parser.add_argument(
         "-x", "--extra-args", action="append", default=[],
@@ -3725,7 +3716,7 @@ def main():
         report_to_use = RELEASE_DATA
 
 
-    if 0:
+    if 1:
         deltas = suite.compare_metrics(report_to_use)
         warnings = 0
         if deltas and options.show_footprint:
@@ -3750,13 +3741,13 @@ def main():
                  ("release" if not options.last_metrics else "run"))
 
         failed = 0
-        for name, goal in goals.items():
-            if goal.failed:
+        for instance in suite.instances.values():
+            if instance.status == "fail":
                 failed += 1
-            elif goal.metrics.get("unrecognized") and not options.disable_unrecognized_section_test:
+            elif instance.metrics.get("unrecognized") and not options.disable_unrecognized_section_test:
                 info("%sFAILED%s: %s has unrecognized binary sections: %s" %
                      (COLOR_RED, COLOR_NORMAL, goal.name,
-                      str(goal.metrics["unrecognized"])))
+                      str(instance.metrics["unrecognized"])))
                 failed += 1
 
 
@@ -3780,8 +3771,8 @@ def main():
 
         duration = time.time() - start_time
         info("%s%d of %d%s tests passed with %s%d%s warnings in %d seconds" %
-             (COLOR_RED if failed else COLOR_GREEN, len(goals) - failed,
-              len(goals), COLOR_NORMAL, COLOR_YELLOW if warnings else COLOR_NORMAL,
+             (COLOR_RED if failed else COLOR_GREEN, len(suite.instances) - failed,
+              len(suite.instances), COLOR_NORMAL, COLOR_YELLOW if warnings else COLOR_NORMAL,
               warnings, COLOR_NORMAL, duration))
 
         if options.testcase_report:
