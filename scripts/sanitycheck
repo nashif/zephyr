@@ -1744,19 +1744,24 @@ class FilterBuilder(CMake):
 
 
 class TestReport:
-    def __init__(self):
-        pass
+    def __init__(self, testcases, instances):
+        self.testcases = testcases
+        self.instances = instances
 
+        self.total_tests = len(instances)
+        self.total_done = 0
+        self.total_failed = 0
 
 
 
 class ProjectBuilder(CMake):
 
-    def __init__(self, instance, generator):
+    def __init__(self, report, instance, generator):
         super().__init__(instance.testcase, instance.platform, instance.testcase.source_dir, instance.build_dir, generator)
 
         self.log = "build.log"
         self.instance = instance
+        self.report = report
 
     def process(self, message):
         op = message.get('op')
@@ -1765,11 +1770,15 @@ class ProjectBuilder(CMake):
 
         if op == "build":
             verbose("build test: %s" %self.instance.name)
-            self.build()
-            if not self.instance.build_only:
-                pipeline.put({"op": "run", "test": self.instance, "status": "built"})
+            results = self.build()
+            if results.get('returncode', 1) > 0:
+                pipeline.put({"op": "report", "test": self.instance, "status": "failure"})
+
             else:
-                pipeline.put({"op": "report", "test": self.instance, "status": "built"})
+                if not self.instance.build_only:
+                    pipeline.put({"op": "run", "test": self.instance, "status": "built"})
+                else:
+                    pipeline.put({"op": "report", "test": self.instance, "status": "built"})
 
         elif op == "run":
             verbose("run test: %s" %self.instance.name)
@@ -1778,19 +1787,15 @@ class ProjectBuilder(CMake):
             pipeline.put({"op": "report", "test": self.instance, "state": "executed", "status": self.instance.status, "reason": None})
 
         elif op == "report":
-            self.report()
+            self.report_out(self.report)
 
-    def report(self):
-        total_done = 0
-        total_failed = 0
-        total_tests = 0
-        total_tests_width = len(str(total_tests))
+    def report_out(self, report):
+        total_tests_width = len(str(report.total_tests))
 
-        total_done += 1
+        report.total_done += 1
         instance = self.instance
-        print(instance.status)
         if instance.status in ["failed", "timeout"]:
-            total_failed += 1
+            report.total_failed += 1
             if VERBOSE or not TERMINAL:
                 status = COLOR_RED + "FAILED" + COLOR_NORMAL + ": " + instance.reason
             else:
@@ -1815,14 +1820,14 @@ class ProjectBuilder(CMake):
                 handler_type = "build"
 
             info("{:>{}}/{} {:<25} {:<50} {} ({})".format(
-                total_done, total_tests_width, total_tests, instance.platform.name,
+                report.total_done, total_tests_width, report.total_tests, instance.platform.name,
                 instance.testcase.name, status, handler_type))
         else:
                 sys.stdout.write(
                     "\rtotal complete: %s%4d/%4d%s  %2d%%  failed: %s%4d%s" %
-                    (COLOR_GREEN, total_done, total_tests, COLOR_NORMAL,
-                     int((float(total_done) / total_tests) * 100),
-                     COLOR_RED if total_failed > 0 else COLOR_NORMAL, total_failed,
+                    (COLOR_GREEN, report.total_done, report.total_tests, COLOR_NORMAL,
+                     int((float(report.total_done) / report.total_tests) * 100),
+                     COLOR_RED if report.total_failed > 0 else COLOR_NORMAL, report.total_failed,
                      COLOR_NORMAL))
         sys.stdout.flush()
 
@@ -1830,6 +1835,7 @@ class ProjectBuilder(CMake):
         self.run_cmake(self.testcase.extra_args)
         results = self.run_build(['--build', self.build_dir])
         instance = self.instance
+        return results
 
     def run(self):
 
@@ -2345,6 +2351,7 @@ class TestSuite:
         else:
             generator = "Unix Makefiles"
 
+        report = TestReport(self.testcases, self.instances)
 
         # We can use a with statement to ensure threads are cleaned up promptly
         with concurrent.futures.ThreadPoolExecutor(max_workers=JOBS) as executor:
@@ -2367,7 +2374,7 @@ class TestSuite:
                     op = message['op']
 
                     # Start the load operation and mark the future with its URL
-                    pb = ProjectBuilder(test, generator)
+                    pb = ProjectBuilder(report, test, generator)
                     future_to_test[executor.submit(pb.process, message)] = test.name
 
                 # process any completed futures
@@ -2380,62 +2387,6 @@ class TestSuite:
 
                     # remove the now completed future
                     del future_to_test[future]
-        """
-        with concurrent.futures.ThreadPoolExecutor(max_workers=JOBS) as executor:
-            futures = []
-
-            for instance in self.instances.values():
-                pb = ProjectBuilder(instance, generator)
-                futures.append(executor.submit(pb.build, pipeline, event))
-
-            for future in concurrent.futures.as_completed(futures):
-                while not pipeline.empty():
-                    futures.append(executor.submit(pb.run, pipeline, event))
-
-                result = future.result()
-                if not result:
-                    continue
-                total_done += 1
-                instance = result['instance']
-                if instance.status == "fail":
-                    total_failed += 1
-                    if VERBOSE or not TERMINAL:
-                        status = COLOR_RED + "FAILED" + COLOR_NORMAL + ": " + instance.reason
-                    else:
-
-                        info(
-                            "\n\n{:<25} {:<50} {}FAILED{}: {}".format(
-                                instance.platform.name,
-                                instance.testcase.name,
-                                COLOR_RED,
-                                COLOR_NORMAL,
-                                instance.reason), False)
-
-                else:
-                    status = COLOR_GREEN + "PASSED" + COLOR_NORMAL
-
-                if VERBOSE or not TERMINAL:
-                    if instance.handler:
-                        handler_type = instance.handler.type_str
-                        htime = instance.metrics.get("handler_time", None)
-                        if htime:
-                            handler_type += " {:.3f}s".format(htime)
-                    else:
-                        handler_type = "build"
-
-                    info("{:>{}}/{} {:<25} {:<50} {} ({})".format(
-                        total_done, total_tests_width, total_tests, instance.platform.name,
-                        instance.testcase.name, status, handler_type))
-                else:
-                        sys.stdout.write(
-                            "\rtotal complete: %s%4d/%4d%s  %2d%%  failed: %s%4d%s" %
-                            (COLOR_GREEN, total_done, total_tests, COLOR_NORMAL,
-                             int((float(total_done) / total_tests) * 100),
-                             COLOR_RED if total_failed > 0 else COLOR_NORMAL, total_failed,
-                             COLOR_NORMAL))
-                sys.stdout.flush()
-
-        """
 
         if options.enable_size_report and not options.cmake_only:
             # Parallelize size calculation
