@@ -1752,7 +1752,30 @@ class ProjectBuilder(CMake):
         self.log = "build.log"
         self.instance = instance
 
-    def build(self, queue, event):
+    def process(self, message):
+        op = message.get('op')
+        status = message.get('status', None)
+        result = message.get('result', None)
+
+        if op == "build":
+            print("build test: %s" %self.instance.name)
+            self.build()
+            if not self.instance.build_only:
+                pipeline.put({"op": "run", "test": self.instance, "status": "built"})
+            else:
+                pipeline.put({"op": "report", "test": self.instance, "status": "built"})
+
+        elif op == "run":
+            print("run test: %s" %self.instance.name)
+            pipeline.put({"op": "report", "test": self.instance, "status": "complete", "result": "PASS"})
+        elif op == "report":
+            self.report()
+            print("test %s: %s" %(self.instance.name, result))
+
+    def report(self):
+        verbose("reporting back")
+
+    def build(self):
         self.run_cmake(self.testcase.extra_args)
         results = self.run_build(['--build', self.build_dir])
         instance = self.instance
@@ -1797,24 +1820,14 @@ class ProjectBuilder(CMake):
 
         instance.handler = handler
 
-        if not instance.build_only:
-            queue.put(results)
-        else:
-            return results
 
 
-    def run(self, queue, event):
-        message = queue.get()
-        instance = message['instance']
-        verbose("Running %s (%s)" %(instance.name, instance.handler.type_str))
-        instance.handler.handle()
-        state = instance.handler.get_state()
-        return {
-                "instance": instance,
-                "status": "pass",
+    def run(self, message):
+        verbose("Running %s (%s)" %(self.instance.name, self.instance.handler.type_str))
+        self.instance.handler.handle()
+        state = self.instance.handler.get_state()
 
-                }
-
+pipeline = queue.LifoQueue()
 
 class TestSuite:
     config_re = re.compile('(CONFIG_[A-Za-z0-9_]+)[=]\"?([^\"]*)\"?$')
@@ -2257,6 +2270,12 @@ class TestSuite:
         for ti in ti_list:
             self.instances[ti.name] = ti
 
+    def add_tasks_to_queue(self):
+        for instance in self.instances.values():
+            pipeline.put({"op": "build", "test": instance})
+
+        return "DONE FEEDING"
+
     def execute(self, cb, cb_context):
 
         def calc_one_elf_size(instance):
@@ -2283,9 +2302,43 @@ class TestSuite:
         total_done = 0
         total_failed = 0
 
-        pipeline = queue.Queue()
-        event = threading.Event()
 
+
+        # We can use a with statement to ensure threads are cleaned up promptly
+        with concurrent.futures.ThreadPoolExecutor(max_workers=JOBS) as executor:
+
+            # start a future for a thread which sends work in through the queue
+            future_to_test = {
+                    executor.submit(self.add_tasks_to_queue): 'FEEDER DONE'}
+
+            while future_to_test:
+                # check for status of the futures which are currently working
+                done, not_done = concurrent.futures.wait(
+                        future_to_test, timeout=0.25,
+                        return_when=concurrent.futures.FIRST_COMPLETED)
+
+                # if there is incoming work, start a new future
+                while not pipeline.empty():
+                    # fetch a url from the queue
+                    message = pipeline.get()
+                    test = message['test']
+                    op = message['op']
+
+                    # Start the load operation and mark the future with its URL
+                    pb = ProjectBuilder(test, generator)
+                    future_to_test[executor.submit(pb.process, message)] = test.name
+
+                # process any completed futures
+                for future in done:
+                    test = future_to_test[future]
+                    try:
+                        data = future.result()
+                    except Exception as exc:
+                        print('%r generated an exception: %s' % (test, exc))
+
+                    # remove the now completed future
+                    del future_to_test[future]
+        """
         with concurrent.futures.ThreadPoolExecutor(max_workers=JOBS) as executor:
             futures = []
 
@@ -2339,6 +2392,8 @@ class TestSuite:
                              COLOR_RED if total_failed > 0 else COLOR_NORMAL, total_failed,
                              COLOR_NORMAL))
                 sys.stdout.flush()
+
+        """
 
         if options.enable_size_report and not options.cmake_only:
             # Parallelize size calculation
