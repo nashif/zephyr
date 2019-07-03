@@ -1593,7 +1593,7 @@ class CMake():
 
             results = {'msg': msg, "returncode": p.returncode, "instance": self.instance}
 
-            self.instance.status = "pass"
+            self.instance.status = "passed"
             self.instance.reason = ""
 
             if out:
@@ -1612,7 +1612,7 @@ class CMake():
                     log.write(log_msg)
 
 
-            self.instance.status = "fail"
+            self.instance.status = "failed"
             self.instance.reason = "Build failure"
             results = {
                     "returncode": p.returncode,
@@ -1743,6 +1743,12 @@ class FilterBuilder(CMake):
             return {os.path.join(self.platform.name, self.testcase.name): False}
 
 
+class TestReport:
+    def __init__(self):
+        pass
+
+
+
 
 class ProjectBuilder(CMake):
 
@@ -1758,7 +1764,7 @@ class ProjectBuilder(CMake):
         result = message.get('result', None)
 
         if op == "build":
-            print("build test: %s" %self.instance.name)
+            verbose("build test: %s" %self.instance.name)
             self.build()
             if not self.instance.build_only:
                 pipeline.put({"op": "run", "test": self.instance, "status": "built"})
@@ -1766,21 +1772,68 @@ class ProjectBuilder(CMake):
                 pipeline.put({"op": "report", "test": self.instance, "status": "built"})
 
         elif op == "run":
-            print("run test: %s" %self.instance.name)
-            pipeline.put({"op": "report", "test": self.instance, "status": "complete", "result": "PASS"})
+            verbose("run test: %s" %self.instance.name)
+            state = self.run()
+            self.instance.status, self.instance.metrics = self.instance.handler.get_state()
+            pipeline.put({"op": "report", "test": self.instance, "state": "executed", "status": self.instance.status, "reason": None})
+
         elif op == "report":
             self.report()
-            print("test %s: %s" %(self.instance.name, result))
 
     def report(self):
-        verbose("reporting back")
+        total_done = 0
+        total_failed = 0
+        total_tests = 0
+        total_tests_width = len(str(total_tests))
+
+        total_done += 1
+        instance = self.instance
+        print(instance.status)
+        if instance.status in ["failed", "timeout"]:
+            total_failed += 1
+            if VERBOSE or not TERMINAL:
+                status = COLOR_RED + "FAILED" + COLOR_NORMAL + ": " + instance.reason
+            else:
+                info(
+                    "\n\n{:<25} {:<50} {}FAILED{}: {}".format(
+                        instance.platform.name,
+                        instance.testcase.name,
+                        COLOR_RED,
+                        COLOR_NORMAL,
+                        instance.reason), False)
+
+        else:
+            status = COLOR_GREEN + "PASSED" + COLOR_NORMAL
+
+        if VERBOSE or not TERMINAL:
+            if instance.handler:
+                handler_type = instance.handler.type_str
+                htime = instance.metrics.get("handler_time", None)
+                if htime:
+                    handler_type += " {:.3f}s".format(htime)
+            else:
+                handler_type = "build"
+
+            info("{:>{}}/{} {:<25} {:<50} {} ({})".format(
+                total_done, total_tests_width, total_tests, instance.platform.name,
+                instance.testcase.name, status, handler_type))
+        else:
+                sys.stdout.write(
+                    "\rtotal complete: %s%4d/%4d%s  %2d%%  failed: %s%4d%s" %
+                    (COLOR_GREEN, total_done, total_tests, COLOR_NORMAL,
+                     int((float(total_done) / total_tests) * 100),
+                     COLOR_RED if total_failed > 0 else COLOR_NORMAL, total_failed,
+                     COLOR_NORMAL))
+        sys.stdout.flush()
 
     def build(self):
         self.run_cmake(self.testcase.extra_args)
         results = self.run_build(['--build', self.build_dir])
         instance = self.instance
 
+    def run(self):
 
+        instance = self.instance
         do_build_only = instance.build_only or options.build_only
         do_run = not do_build_only and not options.cmake_only
         skip_slow = instance.testcase.slow and not options.enable_slow
@@ -1819,13 +1872,9 @@ class ProjectBuilder(CMake):
             handler = DeviceHandler(instance, "device")
 
         instance.handler = handler
+        verbose("Running %s (%s)" %(instance.name, instance.handler.type_str))
 
-
-
-    def run(self, message):
-        verbose("Running %s (%s)" %(self.instance.name, self.instance.handler.type_str))
-        self.instance.handler.handle()
-        state = self.instance.handler.get_state()
+        instance.handler.handle()
 
 pipeline = queue.LifoQueue()
 
@@ -2295,13 +2344,6 @@ class TestSuite:
             generator = "Ninja"
         else:
             generator = "Unix Makefiles"
-
-        total_tests = len(self.instances)
-        total_tests_width = len(str(total_tests))
-
-        total_done = 0
-        total_failed = 0
-
 
 
         # We can use a with statement to ensure threads are cleaned up promptly
