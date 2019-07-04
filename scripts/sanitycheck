@@ -579,7 +579,7 @@ class BinaryHandler(Handler):
                 " ".join(shlex.quote(word) for word in command) + os.linesep +
                 "Spawning process in directory: " + self.outdir)
 
-        start_time = time.time();
+        start_time = time.time()
 
         with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.outdir) as proc:
             verbose("Spawning BinaryHandler Thread for %s" % self.name)
@@ -2599,7 +2599,7 @@ class TestSuite:
                     eleTestcase,
                     'failure',
                     type="failure",
-                    message=goal.reason)
+                    message=instance.reason)
                 p = ("%s/%s/%s" % (options.outdir, instance.platform.name, instance.testcase.name))
                 bl = os.path.join(p, "build.log")
                 hl = os.path.join(p, "handler.log")
@@ -3173,9 +3173,9 @@ def generate_coverage(outdir, ignores):
                              "--output-file", ztestfile,
                              "--rc", "lcov_branch_coverage=1"],
                              stdout=coveragelog)
-            files = [coveragefile, ztestfile];
+            files = [coveragefile, ztestfile]
         else:
-            files = [coveragefile];
+            files = [coveragefile]
 
         for i in ignores:
             subprocess.call(
@@ -3193,7 +3193,7 @@ def generate_coverage(outdir, ignores):
                                stdout=coveragelog)
         if ret==0:
             info("HTML report generated: %s"%
-                 os.path.join(outdir, "coverage","index.html"));
+                 os.path.join(outdir, "coverage","index.html"))
 
 
 def main():
@@ -3246,7 +3246,7 @@ def main():
     if options.ninja and not options.jobs:
         JOBS = int(JOBS * 0.75)
 
-    info("JOBS: %d" % JOBS);
+    info("JOBS: %d" % JOBS)
 
     if options.subset:
         subset, sets = options.subset.split("/")
