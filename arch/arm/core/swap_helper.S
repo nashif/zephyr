@@ -16,7 +16,7 @@
 #include <offsets_short.h>
 #include <toolchain.h>
 #include <arch/cpu.h>
-#include <syscall.h>
+#include <userspace/syscall.h>
 
 _ASM_FILE_PROLOGUE
 

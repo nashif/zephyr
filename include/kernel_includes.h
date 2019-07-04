@@ -29,7 +29,7 @@
 #include <kernel_version.h>
 #include <random/rand32.h>
 #include <kernel_arch_thread.h>
-#include <syscall.h>
+#include <userspace/syscall.h>
 #include <sys/printk.h>
 #include <arch/cpu.h>
 #include <sys/rb.h>

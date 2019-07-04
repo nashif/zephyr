@@ -16,7 +16,7 @@
 #include <linker/sections.h>
 #include <arch/cpu.h>
 #include <swap_macros.h>
-#include <syscall.h>
+#include <userspace/syscall.h>
 
 GTEXT(_Fault)
 GTEXT(z_do_kernel_oops)

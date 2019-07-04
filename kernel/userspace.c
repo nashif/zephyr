@@ -13,7 +13,7 @@
 #include <kernel_structs.h>
 #include <sys/sys_io.h>
 #include <ksched.h>
-#include <syscall.h>
+#include <userspace/syscall.h>
 #include <syscall_handler.h>
 #include <device.h>
 #include <init.h>

@@ -9,7 +9,7 @@
 #include <linker/sections.h>
 #include <kernel_structs.h>
 #include <arch/cpu.h>
-#include <syscall.h>
+#include <userspace/syscall.h>
 #include <swap_macros.h>
 #include <v2/irq.h>
 

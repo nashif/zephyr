@@ -12,7 +12,7 @@
 #include <linker/sections.h>
 #include <kernel_structs.h>
 #include <arch/cpu.h>
-#include <syscall.h>
+#include <userspace/syscall.h>
 
 _ASM_FILE_PROLOGUE
 
