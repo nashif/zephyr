@@ -3,15 +3,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+#ifndef ZEPHYR_INCLUDE_APP_MEMORY_PARTITIONS_H_
+#define ZEPHYR_INCLUDE_APP_MEMORY_PARTITIONS_H_
 
-#ifndef ZEPHYR_APP_MEMORY_PARTITIONS_H
-#define ZEPHYR_APP_MEMORY_PARTITIONS_H
+#ifndef CONFIG_COMPAT_INCLUDES
+#warning "This header file has moved, include <userspace/app_memory/partitions.h> instead."
+#endif
 
-#ifdef CONFIG_USERSPACE
-#include <kernel.h> /* For struct k_mem_partition */
+#include <userspace/app_memory/partitions.h>
 
-#if defined(CONFIG_MBEDTLS)
-extern struct k_mem_partition k_mbedtls_partition;
-#endif /* CONFIG_MBEDTLS */
-#endif /* CONFIG_USERSPACE */
-#endif /* ZEPHYR_APP_MEMORY_PARTITIONS_H */
+#endif /* ZEPHYR_INCLUDE_APP_MEMORY_PARTITIONS_H_ */
