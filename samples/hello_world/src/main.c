@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-x
 #include <zephyr.h>
 #include <sys/printk.h>
 
