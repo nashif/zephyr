@@ -1553,6 +1553,7 @@ class CMake():
         self.cmake_cache = {}
         self.devicetree = {}
 
+        self.instance = None
         self.testcase = testcase
         self.platform = platform
         self.source_dir = source_dir
@@ -1766,8 +1767,6 @@ class ProjectBuilder(CMake):
 
     def process(self, message):
         op = message.get('op')
-        status = message.get('status', None)
-        result = message.get('result', None)
 
         if op == "build":
             verbose("build test: %s" %self.instance.name)
@@ -1783,7 +1782,6 @@ class ProjectBuilder(CMake):
 
         elif op == "run":
             verbose("run test: %s" %self.instance.name)
-            state = self.run()
             self.instance.status, self.instance.metrics = self.instance.handler.get_state()
             pipeline.put({"op": "report", "test": self.instance, "state": "executed", "status": self.instance.status, "reason": None})
 
@@ -1833,59 +1831,63 @@ class ProjectBuilder(CMake):
         sys.stdout.flush()
 
     def build(self):
-        self.run_cmake(self.testcase.extra_args)
-        results = self.run_build(['--build', self.build_dir])
+
         instance = self.instance
+        args = self.testcase.extra_args[:]
+
+        do_build_only = instance.build_only or options.build_only
+        do_run = not do_build_only and not options.cmake_only
+        skip_slow = instance.testcase.slow and not options.enable_slow
+
+        # merge overlay files into one variable
+        overlays = ""
+        idx = 0
+        for arg in args:
+            match = re.search('OVERLAY_CONFIG="(.*)"', arg)
+            if match:
+                overlays += match.group(1)
+                del args[idx]
+                idx += 1
+
+        if instance.platform.qemu_support and do_run:
+            instance.handler = QEMUHandler(instance, "qemu")
+            args.append("QEMU_PIPE=%s" % instance.handler.get_fifo())
+        elif instance.testcase.type == "unit":
+            instance.handler = BinaryHandler(instance, "unit")
+            instance.handler.binary = os.path.join(instance.build_dir, "testbinary")
+            if options.enable_coverage:
+                args += ["EXTRA_LDFLAGS=--coverage"]
+        elif instance.platform.type == "native" and do_run:
+            instance.handler = BinaryHandler(instance, "native")
+            instance.handler.binary = os.path.join(instance.build_dir, "zephyr", "zephyr.exe")
+            if options.enable_coverage:
+                args += ["EXTRA_LDFLAGS=--coverage"]
+        elif instance.platform.simulation == "nsim" and do_run:
+            if find_executable("nsimdrv"):
+                instance.handler = BinaryHandler(instance, "nsim")
+                instance.handler.call_make_run = True
+        elif instance.platform.simulation == "renode" and do_run:
+            if find_executable("renode"):
+                instance.handler = BinaryHandler(instance, "renode")
+                instance.handler.pid_fn = os.path.join(instance.build_dir, "renode.pid")
+                instance.handler.call_make_run = True
+        elif options.device_testing and (not instance.build_only) and (not options.build_only):
+            instance.handler = DeviceHandler(instance, "device")
+
+
+        self.run_cmake(args)
+        results = self.run_build(['--build', self.build_dir])
+        
         return results
 
     def run(self):
 
         instance = self.instance
-        do_build_only = instance.build_only or options.build_only
-        do_run = not do_build_only and not options.cmake_only
-        skip_slow = instance.testcase.slow and not options.enable_slow
-
-        handler = None
-        type = None
-
-        if instance.platform.qemu_support and do_run:
-            type = "qemu"
-            handler = QEMUHandler(instance, "qemu")
-        elif instance.testcase.type == "unit":
-            type = "unit"
-            handler = BinaryHandler(instance, "unit")
-            handler.binary = os.path.join(outdir, "testbinary")
-            if options.enable_coverage:
-                args += ["EXTRA_LDFLAGS=--coverage"]
-        elif instance.platform.type == "native" and do_run:
-            type = "native"
-            handler = BinaryHandler(instance, "native")
-            handler.binary = os.path.join(instance.build_dir, "zephyr", "zephyr.exe")
-            if options.enable_coverage:
-                args += ["EXTRA_LDFLAGS=--coverage"]
-        elif instance.platform.simulation == "nsim" and do_run:
-            if find_executable("nsimdrv"):
-                type = "nsim"
-            handler = BinaryHandler(instance, "nsim")
-            handler.call_make_run = True
-        elif instance.platform.simulation == "renode" and do_run:
-            if find_executable("renode"):
-                type = "renode"
-            handler = BinaryHandler(instance, "renode")
-            handler.pid_fn = os.path.join(instance.build_dir, "renode.pid")
-            handler.call_make_run = True
-        elif options.device_testing and (not instance.build_only) and (not options.build_only):
-            type = "device"
-            handler = DeviceHandler(instance, "device")
-
-        instance.handler = handler
         verbose("Running %s (%s)" %(instance.name, instance.handler.type_str))
 
         instance.handler.handle()
 
 pipeline = queue.LifoQueue()
-
-
 
 class BoundedExecutor(concurrent.futures.ThreadPoolExecutor):
     """BoundedExecutor behaves as a ThreadPoolExecutor which will block on
@@ -2225,8 +2227,9 @@ class TestSuite:
 
             for future in concurrent.futures.as_completed(futures):
                 result = future.result()
-                filter_results.update(result['filter'])
-                verbose("%s" %(result['msg']))
+                if result:
+                    filter_results.update(result.get('filter', ""))
+                    verbose("%s" %(result.get('msg', "")))
 
         info("Filtering test cases...")
 
