@@ -14,7 +14,7 @@
 #include <sys/errno_private.h>
 #include <sys/libc-hooks.h>
 #include <syscall_handler.h>
-#include <app_memory/app_memdomain.h>
+#include <userspace/app_memory/app_memdomain.h>
 #include <init.h>
 
 #define LIBC_BSS	K_APP_BMEM(z_libc_partition)

@@ -6,7 +6,7 @@
 
 #include <ztest.h>
 #include <stdio.h>
-#include <app_memory/app_memdomain.h>
+#include <userspace/app_memory/app_memdomain.h>
 #ifdef CONFIG_USERSPACE
 #include <sys/libc-hooks.h>
 #endif

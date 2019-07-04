@@ -11,7 +11,7 @@
 #include <sys/math_extras.h>
 #include <sys/mempool.h>
 #include <string.h>
-#include <app_memory/app_memdomain.h>
+#include <userspace/app_memory/app_memdomain.h>
 
 #define LOG_LEVEL CONFIG_KERNEL_LOG_LEVEL
 #include <logging/log.h>

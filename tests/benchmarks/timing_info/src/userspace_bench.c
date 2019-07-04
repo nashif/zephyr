@@ -14,7 +14,7 @@
 #include <tc_util.h>
 #include <ksched.h>
 #include "timing_info.h"
-#include <app_memory/app_memdomain.h>
+#include <userspace/app_memory/app_memdomain.h>
 
 K_APPMEM_PARTITION_DEFINE(bench_ptn);
 struct k_mem_domain bench_domain;

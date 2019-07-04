@@ -13,7 +13,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <app_memory/app_memdomain.h>
+#include <userspace/app_memory/app_memdomain.h>
 #include <sys/util.h>
 
 #if defined(CONFIG_ARC)

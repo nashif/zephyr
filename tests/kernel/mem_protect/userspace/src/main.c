@@ -12,7 +12,7 @@
 #include <kernel_structs.h>
 #include <string.h>
 #include <stdlib.h>
-#include <app_memory/app_memdomain.h>
+#include <userspace/app_memory/app_memdomain.h>
 #include <sys/util.h>
 #include <debug/stack.h>
 #include <syscall_handler.h>

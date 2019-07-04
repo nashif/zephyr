@@ -18,7 +18,7 @@
 #include <device.h>
 #include <init.h>
 #include <stdbool.h>
-#include <app_memory/app_memdomain.h>
+#include <userspace/app_memory/app_memdomain.h>
 #include <sys/libc-hooks.h>
 #include <sys/mutex.h>
 

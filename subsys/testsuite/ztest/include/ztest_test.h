@@ -13,7 +13,7 @@
 #ifndef __ZTEST_TEST_H__
 #define __ZTEST_TEST_H__
 
-#include <app_memory/app_memdomain.h>
+#include <userspace/app_memory/app_memdomain.h>
 
 struct unit_test {
 	const char *name;
