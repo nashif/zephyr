@@ -184,6 +184,7 @@ import shlex
 import signal
 import threading
 import concurrent.futures
+from threading import BoundedSemaphore
 import queue
 import time
 import datetime
@@ -1884,6 +1885,37 @@ class ProjectBuilder(CMake):
 
 pipeline = queue.LifoQueue()
 
+
+
+class BoundedExecutor(concurrent.futures.ThreadPoolExecutor):
+    """BoundedExecutor behaves as a ThreadPoolExecutor which will block on
+    calls to submit() once the limit given as "bound" work items are queued for
+    execution.
+    :param bound: Integer - the maximum number of items in the work queue
+    :param max_workers: Integer - the size of the thread pool
+    """
+    def __init__(self, bound, max_workers):
+        super().__init__(max_workers)
+        #self.executor = ThreadPoolExecutor(max_workers=max_workers)
+        self.semaphore = BoundedSemaphore(bound + max_workers)
+
+    """See concurrent.futures.Executor#submit"""
+    def submit(self, fn, *args, **kwargs):
+        self.semaphore.acquire()
+        try:
+            future = super().submit(fn, *args, **kwargs)
+        except:
+            self.semaphore.release()
+            raise
+        else:
+            future.add_done_callback(lambda x: self.semaphore.release())
+            return future
+
+    """See concurrent.futures.Executor#shutdown"""
+    def shutdown(self, wait=True):
+        super().shutdown(wait)
+
+
 class TestSuite:
     config_re = re.compile('(CONFIG_[A-Za-z0-9_]+)[=]\"?([^\"]*)\"?$')
     dt_re = re.compile('([A-Za-z0-9_]+)[=]\"?([^\"]*)\"?$')
@@ -2354,7 +2386,7 @@ class TestSuite:
         report = TestReport(self.testcases, self.instances)
 
         # We can use a with statement to ensure threads are cleaned up promptly
-        with concurrent.futures.ThreadPoolExecutor(max_workers=JOBS) as executor:
+        with BoundedExecutor(bound=JOBS, max_workers=JOBS*2) as executor:
 
             # start a future for a thread which sends work in through the queue
             future_to_test = {
