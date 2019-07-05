@@ -563,11 +563,7 @@ class BinaryHandler(Handler):
         harness.configure(self.instance)
 
         if self.call_make_run:
-            if options.ninja:
-                generator_cmd = "ninja"
-            else:
-                generator_cmd = "make"
-            command = [generator_cmd, "run"]
+            command = [get_generator()[0], "run"]
         else:
             command = [self.binary]
 
@@ -686,12 +682,7 @@ class DeviceHandler(Handler):
                 command.append('--')
                 command.append(options.west_flash)
         else:
-            if options.ninja:
-                generator_cmd = "ninja"
-            else:
-                generator_cmd = "make"
-
-            command = [generator_cmd, "-C", self.build_dir, "flash"]
+            command = [get_generator()[0], "-C", self.build_dir, "flash"]
 
         device = options.device_serial
         ser = serial.Serial(
@@ -1499,6 +1490,18 @@ class TestInstance:
         if skip_slow:
             return True
 
+        runnable = False
+
+        if self.platform.qemu_support or \
+            self.testcase.type == "unit" or \
+            self.platform.type == "native" or \
+            self.platform.simulation in ["nsim", "renode"] or \
+            options.device_testing:
+
+            runnable = True
+        else:
+            runnable = False
+          
         # console harness allows us to run the test and capture data.
         if self.testcase.harness == 'console':
 
@@ -1512,19 +1515,14 @@ class TestInstance:
                     build_only = True
             else:
                 build_only = False
-        else:
+        elif self.testcase.harness:
             build_only = True
-
-        if self.platform.qemu_support or \
-            self.testcase.type == "unit" or \
-            self.platform.type == "native" or \
-            self.platform.simulation in ["nsim", "renode"] or \
-            options.device_testing:
-
+        else:
             build_only = False
-          
 
-        return build_only
+        verbose("{} is {} on {}".format(self.name, "runnable" if  (not build_only and runnable) else "not runnable", self.platform))
+        return not (not build_only and runnable) 
+
 
     def create_overlay(self, platform):
         # Create this in a "sanitycheck/" subdirectory otherwise this
@@ -1571,7 +1569,7 @@ class CMake():
     config_re = re.compile('(CONFIG_[A-Za-z0-9_]+)[=]\"?([^\"]*)\"?$')
     dt_re = re.compile('([A-Za-z0-9_]+)[=]\"?([^\"]*)\"?$')
 
-    def __init__(self, testcase, platform, source_dir, build_dir, generator):
+    def __init__(self, testcase, platform, source_dir, build_dir):
 
         self.cwd = None
         self.capture_output = True
@@ -1585,7 +1583,6 @@ class CMake():
         self.platform = platform
         self.source_dir = source_dir
         self.build_dir = build_dir
-        self.generator = generator
         self.log = "build.log"
         return
 
@@ -1656,7 +1653,7 @@ class CMake():
 
         cmake_args = ['-B{}'.format(self.build_dir),
                       '-S{}'.format(self.source_dir),
-                      '-G{}'.format(self.generator)]
+                      '-G{}'.format(get_generator()[1])]
 
         args = ["-D{}".format(a.replace('"', '')) for a in args]
         cmake_args.extend(args)
@@ -1699,8 +1696,8 @@ class CMake():
 
 class FilterBuilder(CMake):
 
-    def __init__(self, testcase, platform, source_dir, build_dir, generator):
-        super().__init__(testcase, platform, source_dir, build_dir, generator)
+    def __init__(self, testcase, platform, source_dir, build_dir):
+        super().__init__(testcase, platform, source_dir, build_dir)
 
         self.log = "config-sanitycheck.log"
 
@@ -1778,8 +1775,10 @@ class TestReport:
         self.instances = []
 
         self.total_tests = 0
+        self.total_cases = 0
         self.total_done = 0
         self.total_failed = 0
+        self.total_platforms = 0
         self.start_time = 0
         self.duration = 0
         self.warnings = 0
@@ -1796,6 +1795,7 @@ class TestReport:
         self.testcases = testcases
         self.instances = instances
         self.total_tests = len(self.instances)
+        self.total_cases = len(self.testcases)
 
 
     def compare_metrics(self, filename):
@@ -1875,10 +1875,20 @@ class TestReport:
         self.total_tests, COLOR_NORMAL, COLOR_YELLOW if self.warnings else COLOR_NORMAL,
         self.warnings, COLOR_NORMAL, self.duration))
 
+        platforms = set(p.platform for p in self.instances.values())
+        info("In total {} test cases were executed on {} out of total {} platforms ({:02.2f}%)".format(
+            self.total_cases,
+            len(platforms),
+            self.total_platforms,
+            (100 * len(platforms) / self.total_platforms)
+
+
+        ))
+
 class ProjectBuilder(CMake):
 
-    def __init__(self, report, instance, generator):
-        super().__init__(instance.testcase, instance.platform, instance.testcase.source_dir, instance.build_dir, generator)
+    def __init__(self, report, instance):
+        super().__init__(instance.testcase, instance.platform, instance.testcase.source_dir, instance.build_dir)
 
         self.log = "build.log"
         self.instance = instance
@@ -2019,8 +2029,6 @@ class ProjectBuilder(CMake):
         return results
 
     def run(self):
-
-
         instance = self.instance
         
         instance.handler.handle()  
@@ -2029,7 +2037,7 @@ class ProjectBuilder(CMake):
     
 
             start_time = time.time()
-            command = ["make"]
+            command = [get_generator()[0]]
             command += ["-C", self.build_dir, "run"]
     
             with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.build_dir) as proc:
@@ -2356,22 +2364,19 @@ class TestSuite:
                     jobs.append({
                         'build_dir': build_dir,
                         'source_dir': source_dir,
-                        'generator': 'Ninja',
+                        'generator': get_generator()[1],
                         'platform': plat,
                         'testcase': tc
                     })
 
         info("Building testcase defconfigs...")
         filter_results = dict()
-        if options.ninja:
-            generator = "Ninja"
-        else:
-            generator = "Unix Makefiles"
+
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=JOBS) as executor:
             futures = []
             for job in jobs:
-                fb = FilterBuilder(job['testcase'], job['platform'], job['source_dir'], job['build_dir'], generator)
+                fb = FilterBuilder(job['testcase'], job['platform'], job['source_dir'], job['build_dir'])
                 futures.append(executor.submit(fb.run_cmake))
 
             for future in concurrent.futures.as_completed(futures):
@@ -2530,13 +2535,6 @@ class TestSuite:
                     instance.metrics["unrecognized"] = []
 
 
-        if options.ninja:
-            generator = "Ninja"
-        else:
-            generator = "Unix Makefiles"
-
-
-
         # We can use a with statement to ensure threads are cleaned up promptly
         with BoundedExecutor(bound=JOBS, max_workers=JOBS) as executor:
 
@@ -2558,7 +2556,7 @@ class TestSuite:
 
 
                     # Start the load operation and mark the future with its URL
-                    pb = ProjectBuilder(self.report, test, generator)
+                    pb = ProjectBuilder(self.report, test)
                     future_to_test[executor.submit(pb.process, message)] = test.name
 
                 # process any completed futures
@@ -2569,7 +2567,8 @@ class TestSuite:
                     except Exception as exc:
                         print('%r generated an exception: %s' % (test, exc))
                     else:
-                        verbose(data)
+                        if data:
+                            verbose(data)
 
                     # remove the now completed future
                     del future_to_test[future]
@@ -3275,6 +3274,14 @@ def generate_coverage(outdir, ignores):
             info("HTML report generated: %s"%
                  os.path.join(outdir, "coverage","index.html"))
 
+def get_generator():
+    if options.ninja:
+        generator_cmd = "ninja"
+        generator = "Ninja"
+    else:
+        generator_cmd = "make"
+        generator = "Unix Makefiles"
+    return generator_cmd, generator
 
 def main():
     start_time = time.time()
@@ -3515,6 +3522,7 @@ def main():
 
 
     suite.report.populate(suite.testcases, suite.instances)
+    suite.report.total_platforms = len(suite.platforms)
     suite.report.start_time = start_time
 
     if VERBOSE or not TERMINAL:
@@ -3554,7 +3562,7 @@ def main():
         info("Generating coverage files...")
         generate_coverage(options.outdir, ["*generated*", "tests/*", "samples/*"])
 
-    suite.duration = time.time() - start_time
+    suite.report.duration = time.time() - start_time
     suite.report.summary()
 
     if 0:
