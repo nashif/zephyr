@@ -1795,10 +1795,7 @@ class TestReport:
     def populate(self, testcases, instances):
         self.testcases = testcases
         self.instances = instances
-        self.total_tests = len(self.testcases)
-
-
-
+        self.total_tests = len(self.instances)
 
 
     def compare_metrics(self, filename):
