@@ -3283,6 +3283,55 @@ def get_generator():
         generator = "Unix Makefiles"
     return generator_cmd, generator
 
+
+def export_tests(filename, tests):
+    with open(filename, "wt") as csvfile:
+        fieldnames = ['section', 'subsection', 'title', 'reference']
+        cw = csv.DictWriter(csvfile, fieldnames, lineterminator=os.linesep)
+        for test in tests:
+            data = test.split(".")
+            subsec = " ".join(data[1].split("_")).title()
+            rowdict = {
+                    "section": data[0].capitalize(),
+                    "subsection": subsec,
+                    "title": test,
+                    "reference": test
+                    }
+            cw.writerow(rowdict)
+
+
+
+def get_unique_tests(ts):
+    unq = []
+    run_individual_tests = []
+    for n, tc in suite.testcases.items():
+        for c in tc.cases:
+            if options.sub_test and c in options.sub_test:
+                if tc.name not in run_individual_tests:
+                    run_individual_tests.append(tc.name)
+            unq.append(c)
+
+    return unq
+
+
+
+def native_and_unit_first(a, b):
+    if a[0].startswith('unit_testing'):
+        return -1
+    if b[0].startswith('unit_testing'):
+        return 1
+    if a[0].startswith('native_posix'):
+        return -1
+    if b[0].startswith('native_posix'):
+        return 1
+    if a[0].split("/",1)[0].endswith("_bsim"):
+        return -1
+    if b[0].split("/",1)[0].endswith("_bsim"):
+        return 1
+
+    return (a > b) - (a < b)
+
+
 def main():
     start_time = time.time()
     global VERBOSE, INLINE_LOGS, JOBS, log_file
@@ -3370,21 +3419,6 @@ def main():
         return
 
 
-    def export_tests(filename, tests):
-        with open(filename, "wt") as csvfile:
-            fieldnames = ['section', 'subsection', 'title', 'reference']
-            cw = csv.DictWriter(csvfile, fieldnames, lineterminator=os.linesep)
-            for test in tests:
-                data = test.split(".")
-                subsec = " ".join(data[1].split("_")).title()
-                rowdict = {
-                        "section": data[0].capitalize(),
-                        "subsection": subsec,
-                        "title": test,
-                        "reference": test
-                        }
-                cw.writerow(rowdict)
-
     if options.export_tests:
         cnt = 0
         unq = []
@@ -3401,18 +3435,6 @@ def main():
     if options.test:
         run_individual_tests = options.test
 
-
-    def get_unique_tests(ts):
-        unq = []
-        run_individual_tests = []
-        for n, tc in suite.testcases.items():
-            for c in tc.cases:
-                if options.sub_test and c in options.sub_test:
-                    if tc.name not in run_individual_tests:
-                        run_individual_tests.append(tc.name)
-                unq.append(c)
-
-        return unq
 
     if options.list_tests or options.sub_test:
         cnt = 0
@@ -3462,22 +3484,6 @@ def main():
                     COLOR_NORMAL,
                     reason))
 
-
-    def native_and_unit_first(a, b):
-        if a[0].startswith('unit_testing'):
-            return -1
-        if b[0].startswith('unit_testing'):
-            return 1
-        if a[0].startswith('native_posix'):
-            return -1
-        if b[0].startswith('native_posix'):
-            return 1
-        if a[0].split("/",1)[0].endswith("_bsim"):
-            return -1
-        if b[0].split("/",1)[0].endswith("_bsim"):
-            return 1
-
-        return (a > b) - (a < b)
 
     suite.instances = OrderedDict(sorted(suite.instances.items(),
                                key=cmp_to_key(native_and_unit_first)))
