@@ -1769,136 +1769,6 @@ class FilterBuilder(CMake):
             return {os.path.join(self.platform.name, self.testcase.name): False}
 
 
-class TestReport:
-    def __init__(self):
-        self.testcases = []
-        self.instances = []
-
-        self.total_tests = 0
-        self.total_cases = 0
-        self.total_done = 0
-        self.total_failed = 0
-        self.total_platforms = 0
-        self.start_time = 0
-        self.duration = 0
-        self.warnings = 0
-
-        # figure out which report to use for size comparison
-        if options.compare_report:
-            self.report_to_use = options.compare_report
-        elif options.last_metrics:
-            self.report_to_use = LAST_SANITY
-        else:
-            self.report_to_use = RELEASE_DATA
-
-    def populate(self, testcases, instances):
-        self.testcases = testcases
-        self.instances = instances
-        self.total_tests = len(self.instances)
-        self.total_cases = len(self.testcases)
-
-
-    def compare_metrics(self, filename):
-        # name, datatype, lower results better
-        interesting_metrics = [("ram_size", int, True),
-                               ("rom_size", int, True)]
-
-
-        if not os.path.exists(filename):
-            info("Cannot compare metrics, %s not found" % filename)
-            return []
-
-        results = []
-        saved_metrics = {}
-        with open(filename) as fp:
-            cr = csv.DictReader(fp)
-            for row in cr:
-                d = {}
-                for m, _, _ in interesting_metrics:
-                    d[m] = row[m]
-                saved_metrics[(row["test"], row["platform"])] = d
-
-        for instance in self.instances.values():
-            mkey = (instance.testcase.name, instance.platform.name)
-            if mkey not in saved_metrics:
-                continue
-            sm = saved_metrics[mkey]
-            for metric, mtype, lower_better in interesting_metrics:
-                if metric not in instance.metrics:
-                    continue
-                if sm[metric] == "":
-                    continue
-                delta = instance.metrics[metric] - mtype(sm[metric])
-                if delta == 0:
-                    continue
-                results.append((instance, metric, instance.metrics[metric], delta,
-                                lower_better))
-        return results
-
-    def misc_reports(self):
-        deltas = self.compare_metrics(self.report_to_use)
-        self.warnings = 0
-        if deltas and options.show_footprint:
-            for i, metric, value, delta, lower_better in deltas:
-                if not options.all_deltas and ((delta < 0 and lower_better) or
-                                            (delta > 0 and not lower_better)):
-                    continue
-
-                percentage = (float(delta) / float(value - delta))
-                if not options.all_deltas and (percentage <
-                                            (options.footprint_threshold / 100.0)):
-                    continue
-
-                info("{:<25} {:<60} {}{}{}: {} {:<+4}, is now {:6} {:+.2%}".format(
-                     i.platform.name, i.testcase.name, COLOR_YELLOW,
-                     "INFO" if options.all_deltas else "WARNING", COLOR_NORMAL,
-                     metric, delta, value, percentage))
-                warnings += 1
-
-        if self.warnings:
-            info("Deltas based on metrics from last %s" %
-                 ("release" if not options.last_metrics else "run"))
-
-    def summary(self):
-        failed = 0
-        for instance in self.instances.values():
-            if instance.status == "fail":
-                failed += 1
-            elif instance.metrics.get("unrecognized") and not options.disable_unrecognized_section_test:
-                info("%sFAILED%s: %s has unrecognized binary sections: %s" %
-                     (COLOR_RED, COLOR_NORMAL, instance.name,
-                      str(instance.metrics["unrecognized"])))
-                failed += 1
-
-        info("%s%d of %d%s tests passed with %s%d%s warnings in %d seconds" %
-        (COLOR_RED if failed else COLOR_GREEN, self.total_tests - self.total_failed,
-        self.total_tests, COLOR_NORMAL, COLOR_YELLOW if self.warnings else COLOR_NORMAL,
-        self.warnings, COLOR_NORMAL, self.duration))
-
-        platforms = set(p.platform for p in self.instances.values())
-        info("In total {} test cases were executed on {} out of total {} platforms ({:02.2f}%)".format(
-            self.total_cases,
-            len(platforms),
-            self.total_platforms,
-            (100 * len(platforms) / self.total_platforms)
-
-
-        ))
-
-
-    def save_reports(self):
-        if options.testcase_report:
-            self.testcase_report(options.testcase_report)
-        if not options.no_update:
-            self.testcase_xunit_report(LAST_SANITY_XUNIT, duration)
-            suite.testcase_report(LAST_SANITY)
-        if options.release:
-            self.testcase_report(RELEASE_DATA)
-        if log_file:
-            log_file.close()
-        if self.total_failed or (self.warnings and options.warnings_as_errors):
-            sys.exit(1)
-
 class ProjectBuilder(CMake):
 
     def __init__(self, suite, instance):
@@ -1922,13 +1792,9 @@ class ProjectBuilder(CMake):
             elif instance.testcase.type == "unit":
                 instance.handler = BinaryHandler(instance, "unit")
                 instance.handler.binary = os.path.join(instance.build_dir, "testbinary")
-                if options.enable_coverage:
-                    args += ["EXTRA_LDFLAGS=--coverage"]
             elif instance.platform.type == "native":
                 instance.handler = BinaryHandler(instance, "native")
                 instance.handler.binary = os.path.join(instance.build_dir, "zephyr", "zephyr.exe")
-                if options.enable_coverage:
-                    args += ["EXTRA_LDFLAGS=--coverage"]
             elif instance.platform.simulation == "nsim":
                 if find_executable("nsimdrv"):
                     instance.handler = BinaryHandler(instance, "nsim")
@@ -1941,6 +1807,8 @@ class ProjectBuilder(CMake):
             elif options.device_testing:
                 instance.handler = DeviceHandler(instance, "device")
 
+        if options.enable_coverage:
+            args += ["EXTRA_LDFLAGS=--coverage"]
 
         if instance.handler:
             instance.handler.args = args
@@ -2099,8 +1967,6 @@ class TestSuite:
         os.path.join(ZEPHYR_BASE,
                      "scripts", "sanity_chk", "testcase-schema.yaml"))
 
-
-
     def __init__(self, board_root_list, testcase_roots, outdir):
 
 
@@ -2131,6 +1997,15 @@ class TestSuite:
             self.report_to_use = LAST_SANITY
         else:
             self.report_to_use = RELEASE_DATA
+
+        if options.jobs:
+            self.jobs = options.jobs
+        elif options.build_only:
+            self.jobs = multiprocessing.cpu_count() * 2
+        else:
+            self.jobs = multiprocessing.cpu_count()
+
+        info("JOBS: %d" % self.jobs)
 
     def update(self):
         self.total_tests = len(self.instances)
@@ -2504,7 +2379,7 @@ class TestSuite:
         filter_results = dict()
 
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=JOBS) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.jobs) as executor:
             futures = []
             for job in jobs:
                 fb = FilterBuilder(job['testcase'], job['platform'], job['source_dir'], job['build_dir'])
@@ -2667,7 +2542,7 @@ class TestSuite:
 
 
         # We can use a with statement to ensure threads are cleaned up promptly
-        with BoundedExecutor(bound=JOBS, max_workers=JOBS) as executor:
+        with BoundedExecutor(bound=self.jobs, max_workers=self.jobs) as executor:
 
             # start a future for a thread which sends work in through the queue
             future_to_test = {
@@ -2706,7 +2581,7 @@ class TestSuite:
 
         if options.enable_size_report and not options.cmake_only:
             # Parallelize size calculation
-            executor = concurrent.futures.ThreadPoolExecutor(JOBS)
+            executor = concurrent.futures.ThreadPoolExecutor(self.jobs)
             futures = [executor.submit(calc_one_elf_size, instance)
                        for instance in self.instances.values()]
             concurrent.futures.wait(futures)
@@ -3272,7 +3147,7 @@ Artificially long but functional example:
 
 def log_info(filename):
     filename = os.path.relpath(os.path.realpath(filename))
-    if INLINE_LOGS:
+    if options.inline_logs:
         info("{:-^100}".format(filename))
 
         try:
@@ -3465,9 +3340,12 @@ def native_and_unit_first(a, b):
     return (a > b) - (a < b)
 
 
+run_individual_tests = None
+options = None
+
 def main():
     start_time = time.time()
-    global VERBOSE, INLINE_LOGS, JOBS, log_file
+    global VERBOSE, JOBS, log_file
     global options
     global run_individual_tests
 
@@ -3500,22 +3378,10 @@ def main():
             sys.exit(1)
 
     VERBOSE += options.verbose
-    INLINE_LOGS = options.inline_logs
     if options.log_file:
         log_file = open(options.log_file, "w")
 
-    if options.jobs:
-        JOBS = options.jobs
-    elif options.build_only:
-        JOBS = multiprocessing.cpu_count() * 2
-    else:
-        JOBS = multiprocessing.cpu_count()
 
-    # Decrease JOBS for Ninja, if jobs weren't explicitly set
-    if options.ninja and not options.jobs:
-        JOBS = int(JOBS * 0.75)
-
-    info("JOBS: %d" % JOBS)
 
     if options.subset:
         subset, sets = options.subset.split("/")
@@ -3659,7 +3525,6 @@ def main():
         info("Completed in %d seconds" % (duration))
         return
 
-
     suite.update()
     suite.start_time = start_time
 
@@ -3701,17 +3566,13 @@ def main():
         generate_coverage(options.outdir, ["*generated*", "tests/*", "samples/*"])
 
     suite.duration = time.time() - start_time
-    suite.summary(options.)
-    suite.save_reports()
+    suite.summary(options.disable_unrecognized_section_test)
+    suite.save_reports(options.release, options.no_update,
+                       options.testcase_report)
 
     if suite.total_failed or (suite.warnings and options.warnings_as_errors):
         sys.exit(1)
 
 
-
-<<<<<<< HEAD
-=======
-
->>>>>>> reports
 if __name__ == "__main__":
     main()
