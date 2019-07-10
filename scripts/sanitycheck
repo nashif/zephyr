@@ -1465,7 +1465,7 @@ class TestInstance:
         self.name = os.path.join(platform.name, testcase.name)
         self.build_dir = os.path.join(base_outdir, platform.name, testcase.name)
 
-        self.build_only = self.check_build_or_run() 
+        self.build_only = self.check_build_or_run()
         self.run = not self.build_only
 
         self.results = {}
@@ -1501,12 +1501,12 @@ class TestInstance:
             runnable = True
         else:
             runnable = False
-          
+
         # console harness allows us to run the test and capture data.
         if self.testcase.harness == 'console':
 
-            # if we have a fixture that is also being supplied on the 
-            # command-line, then we need to run the test, not just build it. 
+            # if we have a fixture that is also being supplied on the
+            # command-line, then we need to run the test, not just build it.
             if "fixture" in self.testcase.harness_config:
                 fixture = self.testcase.harness_config['fixture']
                 if fixture in options.fixture:
@@ -1521,7 +1521,7 @@ class TestInstance:
             build_only = False
 
         verbose("{} is {} on {}".format(self.name, "runnable" if  (not build_only and runnable) else "not runnable", self.platform))
-        return not (not build_only and runnable) 
+        return not (not build_only and runnable)
 
 
     def create_overlay(self, platform):
@@ -1885,16 +1885,28 @@ class TestReport:
 
         ))
 
+
+    def save_reports(self):
+        if options.testcase_report:
+            self.testcase_report(options.testcase_report)
+        if not options.no_update:
+            self.testcase_xunit_report(LAST_SANITY_XUNIT, duration)
+            suite.testcase_report(LAST_SANITY)
+        if options.release:
+            self.testcase_report(RELEASE_DATA)
+        if log_file:
+            log_file.close()
+        if self.total_failed or (self.warnings and options.warnings_as_errors):
+            sys.exit(1)
+
 class ProjectBuilder(CMake):
 
-    def __init__(self, report, instance):
+    def __init__(self, suite, instance):
         super().__init__(instance.testcase, instance.platform, instance.testcase.source_dir, instance.build_dir)
 
         self.log = "build.log"
         self.instance = instance
-        self.report = report
-        
-
+        self.suite = suite
 
     def setup_handler(self):
 
@@ -1929,7 +1941,7 @@ class ProjectBuilder(CMake):
             elif options.device_testing:
                 instance.handler = DeviceHandler(instance, "device")
 
-        
+
         if instance.handler:
             instance.handler.args = args
 
@@ -1943,7 +1955,7 @@ class ProjectBuilder(CMake):
         if op == "build":
             verbose("build test: %s" %self.instance.name)
             results = self.build()
- 
+
             if results.get('returncode', 1) > 0:
                 pipeline.put({"op": "report", "test": self.instance, "status": "failure"})
             else:
@@ -1959,17 +1971,17 @@ class ProjectBuilder(CMake):
             pipeline.put({"op": "report", "test": self.instance, "state": "executed", "status": self.instance.status, "reason": None})
         # Report results and output progress to screen
         elif op == "report":
-            self.report_out(self.report)
+            self.report_out(self.suite)
 
 
 
     def report_out(self, report):
-        total_tests_width = len(str(report.total_tests))
+        total_tests_width = len(str(self.suite.total_tests))
 
-        report.total_done += 1
+        self.suite.total_done += 1
         instance = self.instance
         if instance.status in ["failed", "timeout"]:
-            report.total_failed += 1
+            self.suite.total_failed += 1
             if VERBOSE or not TERMINAL:
                 status = COLOR_RED + "FAILED" + COLOR_NORMAL + ": " + instance.reason
             else:
@@ -1994,14 +2006,14 @@ class ProjectBuilder(CMake):
                 handler_type = "build"
 
             info("{:>{}}/{} {:<25} {:<50} {} ({})".format(
-                report.total_done, total_tests_width, report.total_tests, instance.platform.name,
+                self.suite.total_done, total_tests_width, self.suite.total_tests, instance.platform.name,
                 instance.testcase.name, status, handler_type))
         else:
                 sys.stdout.write(
                     "\rtotal complete: %s%4d/%4d%s  %2d%%  failed: %s%4d%s" %
-                    (COLOR_GREEN, report.total_done, report.total_tests, COLOR_NORMAL,
-                     int((float(report.total_done) / report.total_tests) * 100),
-                     COLOR_RED if report.total_failed > 0 else COLOR_NORMAL, report.total_failed,
+                    (COLOR_GREEN, suite.total_done, suite.total_tests, COLOR_NORMAL,
+                     int((float(suite.total_done) / suite.total_tests) * 100),
+                     COLOR_RED if suite.total_failed > 0 else COLOR_NORMAL, self.suite.total_failed,
                      COLOR_NORMAL))
         sys.stdout.flush()
 
@@ -2025,27 +2037,27 @@ class ProjectBuilder(CMake):
 
         self.run_cmake(args)
         results = self.run_build(['--build', self.build_dir])
-        
+
         return results
 
     def run(self):
         instance = self.instance
-        
-        instance.handler.handle()  
+
+        instance.handler.handle()
         if instance.handler.type_str == "qemu":
             verbose("Running %s (%s)" %(instance.name, instance.handler.type_str))
-    
+
 
             start_time = time.time()
             command = [get_generator()[0]]
             command += ["-C", self.build_dir, "run"]
-    
+
             with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.build_dir) as proc:
                 verbose("Spawning QEMUHandler Thread for %s" % instance.name)
                 proc.wait()
                 self.returncode = proc.returncode
 
-            instance.metrics["handler_time"] = time.time() - start_time     
+            instance.metrics["handler_time"] = time.time() - start_time
 
 
 pipeline = queue.LifoQueue()
@@ -2098,13 +2110,131 @@ class TestSuite:
         # Keep track of which test cases we've filtered out and why
         self.testcases = {}
         self.platforms = []
-
         self.outdir = os.path.abspath(outdir)
-        self.instances = {}
         self.discards = None
         self.load_errors = 0
         self.instances = OrderedDict()
-        self.report = TestReport()
+
+        self.total_tests = 0
+        self.total_cases = 0
+        self.total_done = 0
+        self.total_failed = 0
+        self.total_platforms = 0
+        self.start_time = 0
+        self.duration = 0
+        self.warnings = 0
+
+        # figure out which report to use for size comparison
+        if options.compare_report:
+            self.report_to_use = options.compare_report
+        elif options.last_metrics:
+            self.report_to_use = LAST_SANITY
+        else:
+            self.report_to_use = RELEASE_DATA
+
+    def update(self):
+        self.total_tests = len(self.instances)
+        self.total_cases = len(self.testcases)
+
+
+    def compare_metrics(self, filename):
+        # name, datatype, lower results better
+        interesting_metrics = [("ram_size", int, True),
+                               ("rom_size", int, True)]
+
+
+        if not os.path.exists(filename):
+            info("Cannot compare metrics, %s not found" % filename)
+            return []
+
+        results = []
+        saved_metrics = {}
+        with open(filename) as fp:
+            cr = csv.DictReader(fp)
+            for row in cr:
+                d = {}
+                for m, _, _ in interesting_metrics:
+                    d[m] = row[m]
+                saved_metrics[(row["test"], row["platform"])] = d
+
+        for instance in self.instances.values():
+            mkey = (instance.testcase.name, instance.platform.name)
+            if mkey not in saved_metrics:
+                continue
+            sm = saved_metrics[mkey]
+            for metric, mtype, lower_better in interesting_metrics:
+                if metric not in instance.metrics:
+                    continue
+                if sm[metric] == "":
+                    continue
+                delta = instance.metrics[metric] - mtype(sm[metric])
+                if delta == 0:
+                    continue
+                results.append((instance, metric, instance.metrics[metric], delta,
+                                lower_better))
+        return results
+
+    def misc_reports(self, report, show_footprint, all_deltas,
+                     footprint_threshold, last_metrics):
+        deltas = self.compare_metrics(report)
+        self.warnings = 0
+        if deltas and show_footprint:
+            for i, metric, value, delta, lower_better in deltas:
+                if not all_deltas and ((delta < 0 and lower_better) or
+                                            (delta > 0 and not lower_better)):
+                    continue
+
+                percentage = (float(delta) / float(value - delta))
+                if not all_deltas and (percentage <
+                                            (footprint_threshold / 100.0)):
+                    continue
+
+                info("{:<25} {:<60} {}{}{}: {} {:<+4}, is now {:6} {:+.2%}".format(
+                     i.platform.name, i.testcase.name, COLOR_YELLOW,
+                     "INFO" if all_deltas else "WARNING", COLOR_NORMAL,
+                     metric, delta, value, percentage))
+                warnings += 1
+
+        if self.warnings:
+            info("Deltas based on metrics from last %s" %
+                 ("release" if not last_metrics else "run"))
+
+    def summary(self, unrecognized_sections):
+        failed = 0
+        for instance in self.instances.values():
+            if instance.status == "fail":
+                failed += 1
+            elif instance.metrics.get("unrecognized") and not unrecognized_sections:
+                info("%sFAILED%s: %s has unrecognized binary sections: %s" %
+                     (COLOR_RED, COLOR_NORMAL, instance.name,
+                      str(instance.metrics["unrecognized"])))
+                failed += 1
+
+        info("%s%d of %d%s tests passed with %s%d%s warnings in %d seconds" %
+        (COLOR_RED if failed else COLOR_GREEN, self.total_tests - self.total_failed,
+        self.total_tests, COLOR_NORMAL, COLOR_YELLOW if self.warnings else COLOR_NORMAL,
+        self.warnings, COLOR_NORMAL, self.duration))
+
+        platforms = set(p.platform for p in self.instances.values())
+        info("In total {} test cases were executed on {} out of total {} platforms ({:02.2f}%)".format(
+            self.total_cases,
+            len(platforms),
+            self.total_platforms,
+            (100 * len(platforms) / len(self.platforms))
+        ))
+
+
+    def save_reports(self, release, no_update, report_name):
+        if report_name:
+            self.testcase_report(report_name)
+        if not no_update:
+            self.testcase_xunit_report(LAST_SANITY_XUNIT, self.duration)
+            self.testcase_report(LAST_SANITY)
+        if release:
+            self.testcase_report(RELEASE_DATA)
+        if log_file:
+            log_file.close()
+
 
     def add_configurations(self):
 
@@ -2220,6 +2350,7 @@ class TestSuite:
             cr = csv.DictReader(fp)
             instance_list = []
             for row in cr:
+
                 if row["passed"] == "True":
                     continue
                 test = row["test"]
@@ -2556,7 +2687,7 @@ class TestSuite:
 
 
                     # Start the load operation and mark the future with its URL
-                    pb = ProjectBuilder(self.report, test)
+                    pb = ProjectBuilder(self, test)
                     future_to_test[executor.submit(pb.process, message)] = test.name
 
                 # process any completed futures
@@ -2626,7 +2757,7 @@ class TestSuite:
 
         run = "Sanitycheck"
         eleTestsuite = None
-        
+
         errors = 0
         passes = 0
         fails = 0
@@ -2785,7 +2916,9 @@ class TestSuite:
                            "platform": instance.platform.name,
                            "extra_args": " ".join(instance.testcase.extra_args),
                            "qemu": instance.platform.qemu_support}
-                if instance.status == "fail":
+
+                if instance.status == "failed":
+
                     rowdict["passed"] = False
                     rowdict["status"] = instance.reason
                 else:
@@ -3527,9 +3660,8 @@ def main():
         return
 
 
-    suite.report.populate(suite.testcases, suite.instances)
-    suite.report.total_platforms = len(suite.platforms)
-    suite.report.start_time = start_time
+    suite.update()
+    suite.start_time = start_time
 
     if VERBOSE or not TERMINAL:
         suite.execute()
@@ -3541,7 +3673,7 @@ def main():
         suite.testcase_target_report(options.detailed_report)
 
         for instance in suite.instances.values():
-            if instance.status == "fail":
+            if instance.status == "failed":
                 failed += 1
             elif instance.metrics.get("unrecognized") and not options.disable_unrecognized_section_test:
                 info("%sFAILED%s: %s has unrecognized binary sections: %s" %
@@ -3568,21 +3700,14 @@ def main():
         info("Generating coverage files...")
         generate_coverage(options.outdir, ["*generated*", "tests/*", "samples/*"])
 
-    suite.report.duration = time.time() - start_time
-    suite.report.summary()
+    suite.duration = time.time() - start_time
+    suite.summary(options.)
+    suite.save_reports()
 
-    if 0:
-        if options.testcase_report:
-            suite.testcase_report(options.testcase_report)
-        if not options.no_update:
-            suite.testcase_xunit_report(LAST_SANITY_XUNIT, duration)
-            suite.testcase_report(LAST_SANITY)
-        if options.release:
-            suite.testcase_report(RELEASE_DATA)
-        if log_file:
-            log_file.close()
-        if failed or (self.warnings and options.warnings_as_errors):
-            sys.exit(1)
+    if suite.total_failed or (suite.warnings and options.warnings_as_errors):
+        sys.exit(1)
+
+
 
 <<<<<<< HEAD
 =======

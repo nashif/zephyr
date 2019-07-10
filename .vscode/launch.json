@@ -22,7 +22,7 @@
                 "-p",
                 "frdm_k64f",
                 "-T",
-                "samples/hello_world",
+                "samples/synchronization",
                 "-v"
             ]
         },
