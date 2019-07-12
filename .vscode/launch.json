@@ -30,7 +30,7 @@
                 "frdm_k64f",
                 "-T",
                 "samples/synchronization",
-                "-v"
+                //"-v"
             ]
         },
         {

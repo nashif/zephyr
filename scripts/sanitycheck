@@ -1879,9 +1879,9 @@ class ProjectBuilder(CMake):
         else:
                 sys.stdout.write(
                     "\rtotal complete: %s%4d/%4d%s  %2d%%  failed: %s%4d%s" %
-                    (COLOR_GREEN, suite.total_done, suite.total_tests, COLOR_NORMAL,
-                     int((float(suite.total_done) / suite.total_tests) * 100),
-                     COLOR_RED if suite.total_failed > 0 else COLOR_NORMAL, self.suite.total_failed,
+                    (COLOR_GREEN, self.suite.total_done, self.suite.total_tests, COLOR_NORMAL,
+                     int((float(self.suite.total_done) / self.suite.total_tests) * 100),
+                     COLOR_RED if self.suite.total_failed > 0 else COLOR_NORMAL, self.suite.total_failed,
                      COLOR_NORMAL))
         sys.stdout.flush()
 
@@ -3307,9 +3307,7 @@ def export_tests(filename, tests):
                     }
             cw.writerow(rowdict)
 
-
-
-def get_unique_tests(ts):
+def get_unique_tests(suite):
     unq = []
     run_individual_tests = []
     for n, tc in suite.testcases.items():
@@ -3345,12 +3343,10 @@ options = None
 
 def main():
     start_time = time.time()
-    global VERBOSE, JOBS, log_file
+    global VERBOSE, log_file
     global options
     global run_individual_tests
 
-    # XXX: Workaround for #17239
-    resource.setrlimit(resource.RLIMIT_NOFILE, (4096, 4096))
     options = parse_arguments()
 
     if options.west_runner and not options.west_flash:
@@ -3372,16 +3368,14 @@ def main():
             size_report(SizeCalculator(fn, []))
         sys.exit(0)
 
-
     if options.device_testing:
         if options.device_serial is None or len(options.platform) != 1:
             sys.exit(1)
 
     VERBOSE += options.verbose
+
     if options.log_file:
         log_file = open(options.log_file, "w")
-
-
 
     if options.subset:
         subset, sets = options.subset.split("/")
@@ -3393,7 +3387,8 @@ def main():
 
     if os.path.exists(options.outdir) and not options.no_clean:
         info("Cleaning output directory " + options.outdir)
-        shutil.rmtree(options.outdir)
+        shutil.move(options.outdir, "%s.old" %(options.outdir))
+        shutil.rmtree("%s.old" %options.outdir)
 
     if not options.testcase_root:
         options.testcase_root = [os.path.join(ZEPHYR_BASE, "tests"),
@@ -3416,7 +3411,6 @@ def main():
             print("- {}".format(t))
 
         return
-
 
     if options.export_tests:
         cnt = 0
@@ -3572,7 +3566,6 @@ def main():
 
     if suite.total_failed or (suite.warnings and options.warnings_as_errors):
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()
