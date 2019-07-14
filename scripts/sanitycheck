@@ -1529,7 +1529,7 @@ class TestInstance:
         # will pass this overlay to kconfig.py *twice* and kconfig.cmake
         # will silently give that second time precedence over any
         # --extra-args=CONFIG_*
-        subdir = os.path.join(self.outdir, "sanitycheck")
+        subdir = os.path.join(self.build_dir, "sanitycheck")
         os.makedirs(subdir, exist_ok=True)
         file = os.path.join(subdir, "testcase_extra.conf")
         with open(file, "w") as f:
