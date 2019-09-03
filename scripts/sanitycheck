@@ -228,11 +228,6 @@ from sanity_chk import expr_parser
 
 
 VERBOSE = 0
-LAST_SANITY = os.path.join(ZEPHYR_BASE, "scripts", "sanity_chk",
-                           "last_sanity.csv")
-
-LAST_SANITY_XUNIT = os.path.join(ZEPHYR_BASE, "scripts", "sanity_chk",
-                                 "last_sanity.xml")
 
 RELEASE_DATA = os.path.join(ZEPHYR_BASE, "scripts", "sanity_chk",
                             "sanity_last_release.csv")
@@ -672,9 +667,9 @@ class DeviceHandler(Handler):
     def handle(self):
         out_state = "failed"
 
-        if options.west_flash is not None:
+        if options.west_flash:
             command = ["west", "flash", "--skip-rebuild", "-d", self.outdir]
-            if options.west_runner is not None:
+            if options.west_runner:
                 command.append("--runner")
                 command.append(options.west_runner)
             # There are two ways this option is used.
@@ -704,10 +699,10 @@ class DeviceHandler(Handler):
         harness_import = HarnessImporter(harness_name)
         harness = harness_import.instance
         harness.configure(self.instance)
-        rpipe, wpipe = os.pipe()
+        read_pipe, write_pipe = os.pipe()
 
         t = threading.Thread(target=self.monitor_serial, daemon=True,
-                             args=(ser, rpipe, harness))
+                             args=(ser, read_pipe, harness))
         t.start()
 
         logging.debug('Flash command: %s', command)
@@ -717,7 +712,7 @@ class DeviceHandler(Handler):
             else:
                 subprocess.check_output(command, stderr=subprocess.PIPE)
         except subprocess.CalledProcessError:
-            os.write(wpipe, b'x')    # halt the thread
+            os.write(write_pipe, b'x')    # halt the thread
 
         t.join(self.timeout)
         if t.is_alive():
@@ -2072,14 +2067,6 @@ class TestSuite:
         self.start_time = 0
         self.duration = 0
         self.warnings = 0
-
-        # figure out which report to use for size comparison
-        if options.compare_report:
-            self.report_to_use = options.compare_report
-        elif options.last_metrics:
-            self.report_to_use = LAST_SANITY
-        else:
-            self.report_to_use = RELEASE_DATA
 
         if options.jobs:
             self.jobs = options.jobs
