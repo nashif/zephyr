@@ -477,6 +477,7 @@ class Handler:
 
         """
         self.lock = threading.Lock()
+
         self.state = "waiting"
         self.run = False
         self.metrics = {}
@@ -623,6 +624,8 @@ class DeviceHandler(Handler):
         """
         super().__init__(instance, type_str)
 
+        self._device_lock = None
+
     def monitor_serial(self, ser, halt_fileno, harness):
         log_out_fp = open(self.log, "wt")
 
@@ -684,53 +687,55 @@ class DeviceHandler(Handler):
             command = [get_generator()[0], "-C", self.build_dir, "flash"]
 
         device = options.device_serial
-        ser = serial.Serial(
-                device,
-                baudrate=115200,
-                parity=serial.PARITY_NONE,
-                stopbits=serial.STOPBITS_ONE,
-                bytesize=serial.EIGHTBITS,
-                timeout=self.timeout
-                )
 
-        ser.flush()
+        with self._device_lock:
+            ser = serial.Serial(
+                    device,
+                    baudrate=115200,
+                    parity=serial.PARITY_NONE,
+                    stopbits=serial.STOPBITS_ONE,
+                    bytesize=serial.EIGHTBITS,
+                    timeout=self.timeout
+                    )
 
-        harness_name = self.instance.testcase.harness.capitalize()
-        harness_import = HarnessImporter(harness_name)
-        harness = harness_import.instance
-        harness.configure(self.instance)
-        read_pipe, write_pipe = os.pipe()
+            ser.flush()
 
-        t = threading.Thread(target=self.monitor_serial, daemon=True,
-                             args=(ser, read_pipe, harness))
-        t.start()
+            harness_name = self.instance.testcase.harness.capitalize()
+            harness_import = HarnessImporter(harness_name)
+            harness = harness_import.instance
+            harness.configure(self.instance)
+            read_pipe, write_pipe = os.pipe()
 
-        logging.debug('Flash command: %s', command)
-        try:
-            if VERBOSE:
-                subprocess.check_call(command)
+            t = threading.Thread(target=self.monitor_serial, daemon=True,
+                                args=(ser, read_pipe, harness))
+            t.start()
+
+            logging.debug('Flash command: %s', command)
+            try:
+                if VERBOSE:
+                    subprocess.check_call(command)
+                else:
+                    subprocess.check_output(command, stderr=subprocess.PIPE)
+            except subprocess.CalledProcessError:
+                os.write(write_pipe, b'x')    # halt the thread
+
+            t.join(self.timeout)
+            if t.is_alive():
+                out_state = "timeout"
+
+            if ser.isOpen():
+                ser.close()
+
+            if out_state == "timeout":
+                for c in self.instance.testcase.cases:
+                    if c not in harness.tests:
+                        harness.tests[c] = "BLOCK"
+
+            self.instance.results = harness.tests
+            if harness.state:
+                self.set_state(harness.state, {})
             else:
-                subprocess.check_output(command, stderr=subprocess.PIPE)
-        except subprocess.CalledProcessError:
-            os.write(write_pipe, b'x')    # halt the thread
-
-        t.join(self.timeout)
-        if t.is_alive():
-            out_state = "timeout"
-
-        if ser.isOpen():
-            ser.close()
-
-        if out_state == "timeout":
-            for c in self.instance.testcase.cases:
-                if c not in harness.tests:
-                    harness.tests[c] = "BLOCK"
-
-        self.instance.results = harness.tests
-        if harness.state:
-            self.set_state(harness.state, {})
-        else:
-            self.set_state(out_state, {})
+                self.set_state(out_state, {})
 
 
 class QEMUHandler(Handler):
@@ -1990,7 +1995,11 @@ class ProjectBuilder(CMake):
     def run(self):
         instance = self.instance
 
+        if instance.handler.type_str == "device":
+            instance.handler._device_lock = self.suite._device_lock
+
         instance.handler.handle()
+
         if instance.handler.type_str == "qemu":
             verbose("Running %s (%s)" %(instance.name, instance.handler.type_str))
 
@@ -2067,6 +2076,14 @@ class TestSuite:
         self.start_time = 0
         self.duration = 0
         self.warnings = 0
+        self._device_lock = threading.Lock()
+
+        self.connected_hardware = [
+            {
+                "board": "nrf52840_pca10056",
+                "serial": "/dev/cu.usbmodem0006837593581"
+            }
+        ]
 
         if options.jobs:
             self.jobs = options.jobs
