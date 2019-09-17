@@ -1974,6 +1974,7 @@ class ProjectBuilder(FilterBuilder):
                     log_info("{}".format(b_log))
 
         elif instance.status == "skipped":
+            self.suite.total_skipped += 1
             status = COLOR_YELLOW + "SKIPPED" + COLOR_NORMAL
 
         else:
@@ -1998,9 +1999,10 @@ class ProjectBuilder(FilterBuilder):
                 instance.testcase.name, status, handler_type))
         else:
             sys.stdout.write(
-                "\rtotal complete: %s%4d/%4d%s  %2d%%  failed: %s%4d%s" %
+                    "\rtotal complete: %s%4d/%4d%s  %2d%%  skipped: %s%4d%s failed: %s%4d%s" %
                 (COLOR_GREEN, self.suite.total_done, self.suite.total_tests, COLOR_NORMAL,
                     int((float(self.suite.total_done) / self.suite.total_tests) * 100),
+                    COLOR_YELLOW if self.suite.total_skipped > 0 else COLOR_NORMAL, self.suite.total_skipped, COLOR_NORMAL, 
                     COLOR_RED if self.suite.total_failed > 0 else COLOR_NORMAL, self.suite.total_failed,
                     COLOR_NORMAL))
         sys.stdout.flush()
@@ -2117,6 +2119,7 @@ class TestSuite:
         self.total_cases = 0
         self.total_done = 0
         self.total_failed = 0
+        self.total_skipped = 0
         self.total_platforms = 0
         self.start_time = 0
         self.duration = 0
@@ -2214,10 +2217,18 @@ class TestSuite:
                       str(instance.metrics["unrecognized"])))
                 failed += 1
 
-        info("%s%d of %d%s tests passed with %s%d%s warnings in %d seconds" %
-        (COLOR_RED if failed else COLOR_GREEN, self.total_tests - self.total_failed,
-        self.total_tests, COLOR_NORMAL, COLOR_YELLOW if self.warnings else COLOR_NORMAL,
-        self.warnings, COLOR_NORMAL, self.duration))
+        pass_rate = (float(self.total_tests - self.total_failed - self.total_skipped)/ float(self.total_tests - self.total_skipped))
+        info("{}{} of {}{} tests passed ({:.2%}), {} skipped with {}{}{} warnings in {:.2f} seconds".format(
+            COLOR_RED if failed else COLOR_GREEN,
+            self.total_tests - self.total_failed - self.total_skipped,
+            self.total_tests,
+            COLOR_NORMAL,
+            pass_rate,
+            self.total_skipped,
+            COLOR_YELLOW if self.warnings else COLOR_NORMAL,
+            self.warnings,
+            COLOR_NORMAL,
+            self.duration))
 
         platforms = set(p.platform for p in self.instances.values())
         self.total_platforms = len(self.platforms)
