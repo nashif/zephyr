@@ -2217,7 +2217,11 @@ class TestSuite:
                       str(instance.metrics["unrecognized"])))
                 failed += 1
 
-        pass_rate = (float(self.total_tests - self.total_failed - self.total_skipped)/ float(self.total_tests - self.total_skipped))
+        if self.total_tests:
+            pass_rate = (float(self.total_tests - self.total_failed - self.total_skipped)/ float(self.total_tests - self.total_skipped))
+        else:
+            pass_rate = 0
+
         info("{}{} of {}{} tests passed ({:.2%}), {} skipped with {}{}{} warnings in {:.2f} seconds".format(
             COLOR_RED if failed else COLOR_GREEN,
             self.total_tests - self.total_failed - self.total_skipped,
@@ -2240,6 +2244,9 @@ class TestSuite:
         ))
 
     def save_reports(self):
+        if not self.instances:
+            return
+
         report_name = "sanitycheck"
         if options.report_name:
             report_name = options.report_name
@@ -2835,10 +2842,8 @@ class TestSuite:
                         f.close()
 
         result = ET.tostring(eleTestsuites)
-        f = open(filename, 'wb')
-        f.write(result)
-        f.close()
-
+        with open(filename, 'wb') as report:
+            report.write(result)
 
 
     def csv_report(self, filename):
@@ -3646,7 +3651,6 @@ def main():
             break
 
     suite.save_reports()
-
 
     if options.coverage:
         if options.gcov_tool is None:
