@@ -3146,6 +3146,7 @@ Artificially long but functional example:
     test_or_build.add_argument(
         "-b", "--build-only", action="store_true",
         help="Only build the code, do not execute any of it in QEMU")
+
     test_or_build.add_argument(
         "--test-only", action="store_true",
         help="""Only run device tests with current artifacts, do not build
@@ -3187,7 +3188,7 @@ Artificially long but functional example:
         "--footprint-threshold=0")
     parser.add_argument(
         "-O", "--outdir",
-        default="%s/sanity-out" % os.getcwd(),
+        default=os.path.join(os.getcwd(),"sanity-out"),
         help="Output directory for logs and binaries. "
         "Default is 'sanity-out' in the current directory. "
         "This directory will be deleted unless '--no-clean' is set.")
@@ -3568,10 +3569,18 @@ def main():
             return
 
     # Cleanup
-    if os.path.exists(options.outdir) and not options.no_clean and not options.only_failed and not options.test_only:
-        info("Cleaning output directory " + options.outdir)
-        shutil.move(options.outdir, "%s.old" %(options.outdir))
-        shutil.rmtree("%s.old" %options.outdir)
+
+    if options.no_clean or options.only_failed or options.test_only:
+        if os.path.exists(options.outdir):
+            info("Keeping artifacts untouched")
+    elif os.path.exists(options.outdir):
+        for i in range(1,100):
+            new_out = options.outdir + ".{}".format(i)
+            if not os.path.exists(new_out):
+                info("Renaming output directory to {}".format(new_out))
+                shutil.move(options.outdir, new_out)
+                break
+                #shutil.rmtree("%s.old" %options.outdir)
 
     if not options.testcase_root:
         options.testcase_root = [os.path.join(ZEPHYR_BASE, "tests"),
