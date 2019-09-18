@@ -1603,7 +1603,6 @@ class TestInstance:
         else:
             build_only = False
 
-        verbose("{} is {} on {}".format(self.name, "runnable" if  (not build_only and runnable) else "not runnable", self.platform))
         return not (not build_only and runnable)
 
 
