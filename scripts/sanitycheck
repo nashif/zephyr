@@ -2183,7 +2183,7 @@ class TestSuite:
     def misc_reports(self, report, show_footprint, all_deltas,
                      footprint_threshold, last_metrics):
         deltas = self.compare_metrics(report)
-        self.warnings = 0
+        warnings = 0
         if deltas and show_footprint:
             for i, metric, value, delta, lower_better in deltas:
                 if not all_deltas and ((delta < 0 and lower_better) or
@@ -2201,7 +2201,7 @@ class TestSuite:
                      metric, delta, value, percentage))
                 warnings += 1
 
-        if self.warnings:
+        if warnings:
             info("Deltas based on metrics from last %s" %
                  ("release" if not last_metrics else "run"))
 
@@ -3652,6 +3652,9 @@ def main():
         retries = retries - 1
         if retries == 0 or suite.total_failed == 0:
             break
+
+    suite.misc_reports(options.compare_report, options.show_footprint,
+            options.all_deltas, options.footprint_threshold, options.last_metrics)
 
     suite.save_reports()
 
