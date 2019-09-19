@@ -1,0 +1,4 @@
+tests:
+  misc.atomic:
+    timeout: 5
+    type: unit
