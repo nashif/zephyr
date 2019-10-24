@@ -223,9 +223,10 @@ TAB_SIZE               = 8
 ALIASES                = "rst=\verbatim embed:rst:leading-asterisk" \
                          "endrst=\endverbatim"
 
-ALIASES += req{1}="\ref SRTX_\1 \"SRTX-\1\" "
+ALIASES += req{1}="\ref ZEP\1 \"ZEP\1\" "
 ALIASES += satisfy{1}="\xrefitem satisfy \"Satisfies requirement\" \"Requirement Implementation\" \1"
 ALIASES += verify{1}="\xrefitem verify \"Verifies requirement\" \"Requirement Verification\" \1"
+
 
 # This tag can be used to specify a number of word-keyword mappings (TCL only).
 # A mapping has the form "name=value". For example adding "class=itcl::class"

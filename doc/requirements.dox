@@ -1,0 +1,164 @@
+
+/**
+@page Requirements
+@tableofcontents
+@section Requirements
+
+
+@section Semaphores
+
+@subsection ZEP008 ZEP008: Semaphores may be taken by a thread
+A semaphore may be taken by a thread. Taking the semaphore shall decrement its
+count, unless the semaphore count is zero
+
+
+@subsection ZEP009 ZEP009: Defining number of semaphores
+An application shall be able to define any number of semaphores
+
+
+@subsection ZEP010 ZEP010: Thread waiting on a semaphore
+Any number of threads may wait on a semaphore simultaneously.
+
+
+@subsection ZEP011 ZEP011: Semaphore thread priority
+When the semaphore is given, it is taken by the highest priority thread that
+has waited longest.
+
+
+@subsection ZEP012 ZEP012: Zero count semaphore
+When a semaphore count is zero, a thread will wait for it to be incremented by
+another thread
+
+
+@subsection ZEP013 ZEP013: Defining and initializing semaphore at compile time
+A semaphore can be defined and initialized at compile time with an
+application-specified count and a maximum permitted semaphore count
+
+@subsection ZEP913 ZEP913: Defining and initializing semaphore at runtime time
+A semaphore can be defined and initialized at run time with an
+application-specified count and a maximum permitted semaphore count
+
+
+@subsection ZEP014 ZEP014: Accepting timeout arguments
+The kernel shall accept a timeout argument with a take operation that specifies
+the maximum amount of time the thread will wait
+
+
+@subsection ZEP114 ZEP114: Getting Semaphore count
+
+An application shall be able to get the numnber of remaining tokens from a semaphore.
+
+@subsection ZEP015 ZEP015: Semaphore given by thread or ISR
+A semaphore may be given by a thread or an ISR.
+
+
+@subsection ZEP016 ZEP016: Semaphore properties
+A semaphore shall have the following properties: a count that indicated the
+number of times the semaphore can be taken and a limit that indicates the max.
+value the semaphore count can reach.
+
+
+@subsection ZEP116 ZEP116: Semaphore reset
+An application shall be able to reset the semaphore count. After reset, the
+count shall be zero.
+
+@section Threads
+
+@subsection ZEP018 ZEP018: Statically initializing thread stacks
+The kernel shall supply a mechanism for statically initializing thread stacks
+in memory
+
+
+@subsection ZEP019 ZEP019: Thread ID
+Each thread shall have a thread ID used to reference the thread in question
+
+
+@subsection ZEP020 ZEP020: Floating point context on thread context switch
+The kernel shall preserve floating point context on thread context switch
+
+
+@subsection ZEP021 ZEP021: Raising fatal errors
+The kernel shall raise a fatal system error if the idle thread aborts
+
+
+@subsection ZEP022 ZEP022: Human-readable name thread association
+The kernel shall supply a mechanism for associating human-readable names with
+threads
+
+
+@subsection ZEP023 ZEP023: Floating point register thread poilicy
+The kernel should not incur floating point register save overhead for threads
+not using floating point
+
+
+@subsection ZEP024 ZEP024: Thread synchronous end
+A thread may synchronously end its execution by returning from its entry point
+function.
+
+
+@subsection ZEP025 ZEP025: Thread abortion
+A thread can be aborted by another thread.
+
+
+@subsection ZEP026 ZEP026: Custom data per thread
+The kernel shall support providing custom data per thread. The data will be
+thread specific and can be used by an application for any purpose.
+
+
+@subsection ZEP027 ZEP027: Asynchronous thread end
+A thread may asynchronously end its execution by aborting.
+
+
+@subsection ZEP028 ZEP028: Application thread definition
+An application shall be able to define any number of threads
+
+
+@subsection ZEP029 ZEP029: Configuring a thread at compile time
+The kernel shall be able to configure a thread at compile time
+
+
+@subsection ZEP030 ZEP030: Thread definition options
+A thread shall be defined with options to either start execution immediately or
+with a delay by specifying a timeout value
+
+
+@subsection ZEP031 ZEP031: Preventing accidental access between threads
+The kernel shall prevent accidental access from one thread to the floating
+point registers of another
+
+
+@subsection ZEP032 ZEP032: Cancelling delayed start before thread execution
+The kernel shall allow delayed start to be cancelled before the thread starts
+execution
+
+
+
+@section Mutexes
+
+@subsection ZEP002 ZEP002: Recursive mutexes
+The kernel shall support recursive mutexes.  A lock of a mutex already locked
+will succeed, and waiters will be unblocked only when the number of locks
+reaches zero.
+
+
+@subsection ZEP003 ZEP003: Mutex priority inheritance
+The thread that has locked a mutex shall be eligible for priority inheritance.
+This means the kernel will temporarily elevate the thread's priority if a
+higher priority thread begins waiting on the mutex.
+
+
+@subsection ZEP004 ZEP004: Defining and initializing mutexes
+A mutex can be defined and initialized at compile time or run time
+
+
+@subsection ZEP005 ZEP005: Mutex lock operations
+The mutex lock operation shall accept a timeout parameter indicating the
+maximum amount of time the thread will wait
+
+
+@subsection ZEP006 ZEP006: Application definition of mutexes
+An application shall be able to define any number of mutexes
+
+
+
+*/
