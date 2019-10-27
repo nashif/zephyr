@@ -138,9 +138,13 @@ void sem_take_multiple_high_prio_helper(void *p1, void *p2, void *p3)
 	k_sem_give(&high_prio_sem);
 }
 
-
-/**
- * @ingroup kernel_semaphore_tests
+ /**
+ * @brief Test Semaphore tests
+ *
+ * @defgroup kernel_semaphore_tests Semaphore Tests
+ *
+ * @ingroup all_tests
+ *
  * @{
  */
 
@@ -218,7 +222,8 @@ void test_sema_count_get(void)
 
 /**
  * @brief Test semaphore count when given by an ISR
- * @see k_sem_give()
+ * @ingroup kernel_semaphore_tests
+ * @verify{@req{015}}
  */
 void test_simple_sem_from_isr(void)
 {
@@ -242,7 +247,8 @@ void test_simple_sem_from_isr(void)
 
 /**
  * @brief Test semaphore count when given by thread
- * @see k_sem_give()
+ * @ingroup kernel_semaphore_tests
+ * @verify{@req{015}}
  */
 void test_simple_sem_from_task(void)
 {
@@ -268,7 +274,8 @@ void test_simple_sem_from_task(void)
 
 /**
  * @brief Test if k_sem_take() decreases semaphore count
- * @see k_sem_take()
+ * @ingroup kernel_semaphore_tests
+ * @verify{@req{008}}
  */
 void test_sem_take_no_wait(void)
 {
@@ -301,7 +308,8 @@ void test_sem_take_no_wait(void)
 
 /**
  * @brief Test k_sem_take() when there is no semaphore to take
- * @see k_sem_take()
+ * @ingroup kernel_semaphore_tests
+ * @verify{@req{008}}
  */
 void test_sem_take_no_wait_fails(void)
 {
@@ -330,7 +338,8 @@ void test_sem_take_no_wait_fails(void)
 
 /**
  * @brief Test k_sem_take() with timeout expiry
- * @see k_sem_take()
+ * @verify{@req{008}}
+ * @verify{@req{014}}
  */
 void test_sem_take_timeout_fails(void)
 {
@@ -352,7 +361,8 @@ void test_sem_take_timeout_fails(void)
 
 /**
  * @brief Test k_sem_take() with timeout
- * @see k_sem_take()
+ * @verify{@req{008}}
+ * @verify{@req{014}}
  */
 void test_sem_take_timeout(void)
 {
@@ -378,7 +388,8 @@ void test_sem_take_timeout(void)
 
 /**
  * @brief Test k_sem_take() with forever timeout
- * @see k_sem_take()
+ * @verify{@req{008}}
+ * @verify{@req{014}}
  */
 void test_sem_take_timeout_forever(void)
 {
@@ -404,7 +415,8 @@ void test_sem_take_timeout_forever(void)
 
 /**
  * @brief Test k_sem_take() with timeout in ISR context
- * @see k_sem_take()
+ * @verify{@req{008}}
+ * @verify{@req{014}}
  */
 void test_sem_take_timeout_isr(void)
 {
@@ -428,7 +440,7 @@ void test_sem_take_timeout_isr(void)
 
 /**
  * @brief Test multiple semaphore take
- * @see k_sem_take()
+ * @verify{@req{010}}
  */
 void test_sem_take_multiple(void)
 {
@@ -521,7 +533,7 @@ void test_sem_take_multiple(void)
 
 /**
  * @brief Test semaphore give and take and its count from ISR
- * @see k_sem_give()
+ * @verify{@req{015}}
  */
 void test_sem_give_take_from_isr(void)
 {
@@ -567,7 +579,8 @@ void sem_multiple_threads_wait_helper(void *p1, void *p2, void *p3)
 /**
  * @brief Test multiple semaphore take and give with wait
  * @ingroup kernel_semaphore_tests
- * @see k_sem_take(), k_sem_give()
+ * @verify{@req{014}}
+ * @verify{@req{010}}
  */
 void test_sem_multiple_threads_wait(void)
 {
@@ -628,7 +641,7 @@ void test_sem_multiple_threads_wait(void)
 /**
  * @brief Test semaphore timeout period
  * @ingroup kernel_semaphore_tests
- * @see k_sem_take(), k_sem_give(), k_sem_reset()
+ * @verify{@req{014}}
  */
 void test_sem_measure_timeouts(void)
 {
@@ -679,7 +692,7 @@ void sem_measure_timeout_from_thread_helper(void *p1, void *p2, void *p3)
 /**
  * @brief Test timeout of semaphore from thread
  * @ingroup kernel_semaphore_tests
- * @see k_sem_give(), k_sem_reset(), k_sem_take()
+ * @verify{@req{014}}
  */
 void test_sem_measure_timeout_from_thread(void)
 {
@@ -739,7 +752,8 @@ void sem_multiple_take_and_timeouts_helper(void *p1, void *p2, void *p3)
 /**
  * @brief Test multiple semaphore take with timeouts
  * @ingroup kernel_semaphore_tests
- * @see k_sem_take(), k_sem_reset()
+ * @verify{@req{014}}
+ * @verify{@req{010}}
  */
 void test_sem_multiple_take_and_timeouts(void)
 {
@@ -804,7 +818,8 @@ void sem_multi_take_timeout_diff_sem_helper(void *p1, void *p2, void *p3)
 /**
  * @brief Test sequence of multiple semaphore timeouts
  * @ingroup kernel_semaphore_tests
- * @see k_sem_take(), k_sem_reset()
+ * @verify{@req{014}}
+ * @verify{@req{014}}
  */
 void test_sem_multi_take_timeout_diff_sem(void)
 {
@@ -850,6 +865,99 @@ void test_sem_multi_take_timeout_diff_sem(void)
 
 }
 
+/**
+ * @brief Test k_sem_reset() API
+ * @ingroup kernel_semaphore_tests
+ * @verify{@req{116}}
+ */
+void test_sema_reset(void)
+{
+	k_sem_init(&sema, SEM_INIT_VAL, SEM_MAX_VAL);
+	k_sem_give(&sema);
+	k_sem_reset(&sema);
+	zassert_false(k_sem_count_get(&sema), NULL);
+	/**TESTPOINT: sem take return -EBUSY*/
+	zassert_equal(k_sem_take(&sema, K_NO_WAIT), -EBUSY, NULL);
+	/**TESTPOINT: sem take return -EAGAIN*/
+	zassert_equal(k_sem_take(&sema, SEM_TIMEOUT), -EAGAIN, NULL);
+	k_sem_give(&sema);
+	zassert_false(k_sem_take(&sema, K_FOREVER), NULL);
+}
+
+/**
+ * @brief Test k_sem_count_get() API
+ * @ingroup kernel_semaphore_tests
+ * @verify{@req{114}}
+ */
+void test_sema_count_get(void)
+{
+	k_sem_init(&sema, SEM_INIT_VAL, SEM_MAX_VAL);
+	/**TESTPOINT: sem count get upon init*/
+	zassert_equal(k_sem_count_get(&sema), SEM_INIT_VAL, NULL);
+	k_sem_give(&sema);
+	/**TESTPOINT: sem count get after give*/
+	zassert_equal(k_sem_count_get(&sema), SEM_INIT_VAL + 1, NULL);
+	k_sem_take(&sema, K_FOREVER);
+	/**TESTPOINT: sem count get after take*/
+	for (int i = 0; i < SEM_MAX_VAL; i++) {
+		zassert_equal(k_sem_count_get(&sema), SEM_INIT_VAL + i, NULL);
+		k_sem_give(&sema);
+	}
+	/**TESTPOINT: sem give above limit*/
+	k_sem_give(&sema);
+	zassert_equal(k_sem_count_get(&sema), SEM_MAX_VAL, NULL);
+}
+
+
+/**
+ * @brief Test k_sem_init() and initial properties
+ * @ingroup kernel_semaphore_tests
+ * @verify{@req{913}}
+ * @verify{@req{016}}
+ */
+void test_k_sem_init(void)
+{
+	int ret;
+
+	ret = k_sem_init(&sema, SEM_INIT_VAL, SEM_MAX_VAL);
+	zassert_equal(ret, 0, NULL);
+	zassert_equal(k_sem_count_get(&sema), 0, NULL);
+	k_sem_give(&sema);
+	zassert_equal(k_sem_count_get(&sema), 1, NULL);
+
+	ret = k_sem_init(&sema, SEM_INIT_VAL, 0);
+	zassert_equal(ret, -EINVAL, NULL);
+	k_sem_give(&sema);
+	k_sem_take(&sema, K_NO_WAIT);
+}
+
+
+/**
+ * @brief Test k_sem_init()
+ * @ingroup kernel_semaphore_tests
+ * @verify{@req{013}}
+ */
+void test_k_sem_init_static(void)
+{
+	int ret;
+	zassert_equal(k_sem_count_get(&ksema), SEM_INIT_VAL, NULL);
+	ret = k_sem_take(&sema, K_NO_WAIT);
+
+
+	zassert_equal(ret , 0, NULL);
+	zassert_equal(k_sem_count_get(&ksema), 0, NULL);
+
+	k_sem_give(&ksema);
+	zassert_equal(k_sem_count_get(&ksema), 1, NULL);
+}
+
+
+
+/**
+ * @}
+ */
+
+
 /* ztest main entry*/
 void test_main(void)
 {
@@ -882,4 +990,3 @@ void test_main(void)
 			 ztest_unit_test(test_sem_multi_take_timeout_diff_sem));
 	ztest_run_test_suite(test_semaphore);
 }
-/******************************************************************************/

@@ -3384,7 +3384,8 @@ __syscall void k_sem_init(struct k_sem *sem, unsigned int initial_count,
  * @retval 0 Semaphore taken.
  * @retval -EBUSY Returned without waiting.
  * @retval -EAGAIN Waiting period timed out.
- * @req K-SEM-001
+ * @satisfy{@req{008}}
+ * @satisfy{@req{014}}
  */
 __syscall int k_sem_take(struct k_sem *sem, s32_t timeout);
 
@@ -3399,7 +3400,7 @@ __syscall int k_sem_take(struct k_sem *sem, s32_t timeout);
  * @param sem Address of the semaphore.
  *
  * @return N/A
- * @req K-SEM-001
+ * @satisfy{@req{015}}
  */
 __syscall void k_sem_give(struct k_sem *sem);
 
@@ -3411,12 +3412,13 @@ __syscall void k_sem_give(struct k_sem *sem);
  * @param sem Address of the semaphore.
  *
  * @return N/A
- * @req K-SEM-001
+ * @satisfy{@req{116}}
  */
 __syscall void k_sem_reset(struct k_sem *sem);
 
 /**
  * @internal
+ * @satisfy{@req{116}}
  */
 static inline void z_impl_k_sem_reset(struct k_sem *sem)
 {
@@ -3431,12 +3433,13 @@ static inline void z_impl_k_sem_reset(struct k_sem *sem)
  * @param sem Address of the semaphore.
  *
  * @return Current semaphore count.
- * @req K-SEM-001
+ * @satisfy{@req{114}}
  */
 __syscall unsigned int k_sem_count_get(struct k_sem *sem);
 
 /**
  * @internal
+ * @satisfy{@req{114}}
  */
 static inline unsigned int z_impl_k_sem_count_get(struct k_sem *sem)
 {
@@ -3453,7 +3456,7 @@ static inline unsigned int z_impl_k_sem_count_get(struct k_sem *sem)
  * @param name Name of the semaphore.
  * @param initial_count Initial semaphore count.
  * @param count_limit Maximum permitted semaphore count.
- * @req K-SEM-002
+ * @satisfy{@req{013}}
  */
 #define K_SEM_DEFINE(name, initial_count, count_limit) \
 	Z_STRUCT_SECTION_ITERABLE(k_sem, name) = \
