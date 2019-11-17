@@ -320,7 +320,7 @@ if(NOT CMAKE_C_COMPILER_ID STREQUAL "Clang")
   endif()
 endif()
 
-zephyr_cc_option_ifdef(CONFIG_STACK_USAGE            -fstack-usage)
+zephyr_cc_option_ifdef(CONFIG_STACK_USAGE            -fdump-rtl-expand -fstack-usage)
 
 # If the compiler supports it, strip the ${ZEPHYR_BASE} prefix from the
 # __FILE__ macro used in __ASSERT*, in the
