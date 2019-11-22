@@ -612,6 +612,9 @@ char *z_setup_new_thread(struct k_thread *new_thread,
 	new_thread->base.prio_deadline = 0;
 #endif
 	new_thread->resource_pool = _current->resource_pool;
+
+	sys_dlist_init(&new_thread->event_groups);
+
 	sys_trace_thread_create(new_thread);
 
 	return stack_ptr;

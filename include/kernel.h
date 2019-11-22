@@ -110,6 +110,7 @@ struct k_mem_domain;
 struct k_mem_partition;
 struct k_futex;
 struct z_futex_data;
+struct k_evgroup;
 
 /**
  * @brief Kernel Object Types
@@ -639,6 +640,9 @@ struct k_thread {
 #endif
 	/** resource pool */
 	struct k_mem_pool *resource_pool;
+
+	/** event flag list */
+	sys_dlist_t event_groups;
 
 	/** arch-specifics: must always be at the end */
 	struct _thread_arch arch;
@@ -3696,6 +3700,111 @@ __syscall int k_mutex_unlock(struct k_mutex *mutex);
 /**
  * @}
  */
+
+
+/**
+ * @cond INTERNAL_HIDDEN
+ */
+
+struct k_evgroup {
+	_wait_q_t wait_q;
+	uint32_t flags;
+
+	_OBJECT_TRACING_NEXT_PTR(k_evgroup)
+	_OBJECT_TRACING_LINKED_FLAG
+};
+
+#define Z_EVGROUP_INITIALIZER(obj) \
+	{ \
+	.wait_q = Z_WAIT_Q_INIT(&obj.wait_q), \
+	.flags = 0U, \
+	_OBJECT_TRACING_INIT \
+	}
+
+enum {
+	K_EVGROUP_NONE = 0,
+	K_EVGROUP_ALL,
+	K_EVGROUP_CLEAR
+};
+
+/**
+ * INTERNAL_HIDDEN @endcond
+ */
+
+/**
+ * @defgroup evgroup_apis Event Group APIs
+ * @ingroup kernel_apis
+ * @{
+ */
+
+/**
+ * @brief Initialize an event group.
+ *
+ * This routine initializes a semaphore object, prior to its first use.
+ *
+ * @param ev_flag Address of the event flag.
+ *
+ * @return N/A
+ */
+__syscall void k_evgroup_init(struct k_evgroup *evgroup);
+
+/**
+ * @brief Set flags of an event group
+ *
+ *  This function sets the specified flags in the event group based on
+ *  the set option specified.  All threads suspended on the group whose
+ *  get request can now be satisfied are resumed.
+ *
+ * @param ev_flag Pointer to an event group
+ * @param flags Flags to be set
+ */
+__syscall void k_evgroup_set(struct k_evgroup *evgroup, uint32_t flags);
+
+/**
+ * @brief Get the event
+ *
+ * @param ev_flag
+ * @return flags
+ */
+__syscall uint32_t k_evgroup_get(struct k_evgroup *evgroup);
+
+/**
+ * @brief
+ *
+ * @param ev_flag
+ * @param flags
+ *
+ */
+__syscall void k_evgroup_clear(struct k_evgroup *evgroup, uint32_t flags);
+
+/**
+ * @brief
+ *
+ * @param ev_flag
+ * @param flags
+ * @param options
+ * @param timeout
+ */
+__syscall uint32_t k_evgroup_wait(struct k_evgroup *evgroup,
+		uint32_t flags, uint8_t options, k_timeout_t timeout);
+
+/**
+ * @brief Statically define and initialize an event flag group.
+ *
+ * The event group can be accessed outside the module where it is
+ * defined using:
+ *
+ * @code extern struct k_evgroup <name>; @endcode
+ *
+ * @param name Name of the semaphore.
+ */
+#define K_EVGROUP_DEFINE(name) \
+	Z_STRUCT_SECTION_ITERABLE(k_evgroup, name) = \
+		Z_EVGROUP_INITIALIZER(name);
+
+
+/** @} */
+
 
 /**
  * @cond INTERNAL_HIDDEN
