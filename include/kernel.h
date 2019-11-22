@@ -135,6 +135,7 @@ struct k_poll_signal;
 struct k_mem_domain;
 struct k_mem_partition;
 struct k_futex;
+struct k_eventflag;
 
 /* This enumeration needs to be kept in sync with the lists of kernel objects
  * and subsystems in scripts/gen_kobject_list.py, as well as the otype_to_str()
@@ -3312,6 +3313,73 @@ __syscall void k_mutex_unlock(struct k_mutex *mutex);
 /**
  * @}
  */
+
+
+/**
+ * @cond INTERNAL_HIDDEN
+ */
+
+struct k_eventflag {
+	_wait_q_t wait_q;
+	u32_t flags;
+
+	_OBJECT_TRACING_NEXT_PTR(k_eventflag)
+	_OBJECT_TRACING_LINKED_FLAG
+};
+
+#define Z_EVENTFLAG_INITIALIZER(obj) \
+	{ \
+	.wait_q = Z_WAIT_Q_INIT(&obj.wait_q), \
+	.flags = 0U, \
+	_OBJECT_TRACING_INIT \
+	}
+
+/**
+ * INTERNAL_HIDDEN @endcond
+ */
+
+/**
+ * @defgroup eventflags_apis Event Flag APIs
+ * @ingroup kernel_apis
+ * @{
+ */
+
+/**
+ * @brief Initialize an event flag.
+ *
+ * This routine initializes a semaphore object, prior to its first use.
+ *
+ * @param ev_flag Address of the event flag.
+ *
+ * @return N/A
+ */
+__syscall void k_eventflag_init(struct k_eventflag *ev_flag);
+
+__syscall void k_eventflag_set(struct k_eventflag *ev_flag, u32_t flags);
+
+__syscall u32_t k_eventflag_get(struct k_eventflag *ev_flag);
+
+__syscall void k_eventflag_clear(struct k_eventflag *ev_flag, u32_t flags);
+
+/**
+ * @brief Statically define and initialize a semaphore.
+ *
+ * The semaphore can be accessed outside the module where it is defined using:
+ *
+ * @code extern struct k_sem <name>; @endcode
+ *
+ * @param name Name of the semaphore.
+ * @param initial_count Initial semaphore count.
+ * @param count_limit Maximum permitted semaphore count.
+ * @req K-SEM-002
+ */
+#define K_EVENTFLAG_DEFINE(name) \
+	Z_STRUCT_SECTION_ITERABLE(k_eventflag, name) = \
+		Z_EVENTFLAG_INITIALIZER(name);
+
+
+/** @} */
+
 
 /**
  * @cond INTERNAL_HIDDEN
