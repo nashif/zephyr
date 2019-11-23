@@ -7,7 +7,9 @@
 #include <kernel.h>
 #include <wait_q.h>
 #include <ksched.h>
-#include <sys/printk.h>
+#include <logging/log.h>
+
+LOG_MODULE_DECLARE(os);
 
 static struct k_spinlock lock;
 
@@ -51,35 +53,35 @@ void z_impl_k_eventflag_clear(struct k_eventflag *ev_flag, u32_t flags)
 u32_t z_impl_k_eventflag_wait(struct k_eventflag *ev_flag, u32_t flags,
 			      u8_t options, s32_t timeout)
 {
-	int ret;
+	int ret = 0;
 
 	k_spinlock_key_t key = k_spin_lock(&lock);
 
 	if (options == K_EVENTFLAGS_OR || options == K_EVENTFLAGS_OR_CLEAR) {
 
 		if ((ev_flag->flags & flags) != 0 ) {
-			//printk("one bit only\n");
 			if (options == K_EVENTFLAGS_OR_CLEAR) {
 				ev_flag->flags &= ~(flags);
 			}
+			ret = ev_flag->flags;
+			LOG_INF("event match");
 			k_spin_unlock(&lock, key);
-			return ev_flag->flags;
+		} else {
+			LOG_INF("pend thread");
+			ret = z_pend_curr(&lock, key, &ev_flag->wait_q, timeout);
 		}
 	} else if (options == K_EVENTFLAGS_AND || options == K_EVENTFLAGS_AND_CLEAR) {
-		// printk("flags requested: 0x%x\n", flags);
-		//printk("flags available: 0x%x\n", ev_flag->flags);
 		if ((ev_flag->flags & flags) == flags ) {
-			//printk("here\n");
 			if (options == K_EVENTFLAGS_AND_CLEAR) {
 				ev_flag->flags &= ~(flags);
 			}
+			ret = ev_flag->flags;
 			k_spin_unlock(&lock, key);
-			return ev_flag->flags;
 		} else {
-			//printk("no match, sorry\n");
+			LOG_INF("pend thread");
+			ret = z_pend_curr(&lock, key, &ev_flag->wait_q, timeout);
 		}
 	}
-	//printk("blocking\n");
-	ret = z_pend_curr(&lock, key, &ev_flag->wait_q, timeout);
+	LOG_INF("ret: 0x%x", ret);
 	return ret;
 }

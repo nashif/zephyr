@@ -96,9 +96,9 @@ void led_off(void *dummy1, void *dummy2, void *dummy3)
 {
 	int ret;
 	while(1) {
-		k_sleep(1500);
 		ret = k_eventflag_wait(&evflag, ON_BIT, K_EVENTFLAGS_OR_CLEAR, K_FOREVER);
 		LOG_INF("LED off (0x%x)", ret);
+		k_sleep(50);
 	}
 }
 
