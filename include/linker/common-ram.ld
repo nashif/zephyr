@@ -84,6 +84,13 @@
 		_k_sem_list_end = .;
 	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
 
+	SECTION_DATA_PROLOGUE(_k_eventflag_area,,SUBALIGN(4))
+	{
+		_k_eventflag_list_start = .;
+		KEEP(*("._k_eventflag.static.*"))
+		_k_eventflag_list_end = .;
+	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
+
 	SECTION_DATA_PROLOGUE(_k_mutex_area,,SUBALIGN(4))
 	{
 		_k_mutex_list_start = .;

@@ -3334,6 +3334,14 @@ struct k_eventflag {
 	_OBJECT_TRACING_INIT \
 	}
 
+
+enum {
+	K_EVENTFLAGS_OR,
+	K_EVENTFLAGS_OR_CLEAR,
+	K_EVENTFLAGS_AND,
+	K_EVENTFLAGS_AND_CLEAR
+};
+
 /**
  * INTERNAL_HIDDEN @endcond
  */
@@ -3353,6 +3361,7 @@ struct k_eventflag {
  *
  * @return N/A
  */
+
 __syscall void k_eventflag_init(struct k_eventflag *ev_flag);
 
 __syscall void k_eventflag_set(struct k_eventflag *ev_flag, u32_t flags);
@@ -3360,6 +3369,8 @@ __syscall void k_eventflag_set(struct k_eventflag *ev_flag, u32_t flags);
 __syscall u32_t k_eventflag_get(struct k_eventflag *ev_flag);
 
 __syscall void k_eventflag_clear(struct k_eventflag *ev_flag, u32_t flags);
+
+__syscall u32_t k_eventflag_wait(struct k_eventflag *ev_flag, u32_t flags, u8_t options, s32_t timeout);
 
 /**
  * @brief Statically define and initialize a semaphore.
