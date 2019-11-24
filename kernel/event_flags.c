@@ -67,7 +67,7 @@ u32_t z_impl_k_eventflag_wait(struct k_eventflag *ev_flag, u32_t flags,
 			LOG_INF("event match");
 			k_spin_unlock(&lock, key);
 		} else {
-			LOG_INF("pend thread");
+			LOG_INF("OR: pend thread");
 			ret = z_pend_curr(&lock, key, &ev_flag->wait_q, timeout);
 		}
 	} else if (options == K_EVENTFLAGS_AND || options == K_EVENTFLAGS_AND_CLEAR) {
@@ -78,10 +78,11 @@ u32_t z_impl_k_eventflag_wait(struct k_eventflag *ev_flag, u32_t flags,
 			ret = ev_flag->flags;
 			k_spin_unlock(&lock, key);
 		} else {
-			LOG_INF("pend thread");
+			LOG_INF("AND: pend thread");
 			ret = z_pend_curr(&lock, key, &ev_flag->wait_q, timeout);
 		}
 	}
+
 	LOG_INF("ret: 0x%x", ret);
 	return ret;
 }
