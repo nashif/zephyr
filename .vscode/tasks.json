@@ -1,0 +1,11 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "debugserver",
+            "type": "shell",
+            "command": "west  build -b mps2_an385 samples/hello_world/ -t debugserver",
+            "group": "debug"
+        }
+}
+
