@@ -79,28 +79,34 @@ typedef struct {
 } ctf_bounded_string_t;
 
 
-static inline void ctf_top_thread_switched_out(u32_t thread_id)
+static inline void ctf_top_thread_switched_out(u32_t thread_id,
+					       ctf_bounded_string_t name)
 {
 	CTF_EVENT(
 		CTF_LITERAL(u8_t, CTF_EVENT_THREAD_SWITCHED_OUT),
-		thread_id
+		thread_id,
+		name
 		);
 }
 
-static inline void ctf_top_thread_switched_in(u32_t thread_id)
+static inline void ctf_top_thread_switched_in(u32_t thread_id,
+					      ctf_bounded_string_t name)
 {
 	CTF_EVENT(
 		CTF_LITERAL(u8_t, CTF_EVENT_THREAD_SWITCHED_IN),
-		thread_id
+		thread_id,
+		name
 		);
 }
 
-static inline void ctf_top_thread_priority_set(u32_t thread_id, s8_t prio)
+static inline void ctf_top_thread_priority_set(u32_t thread_id, s8_t prio,
+					       ctf_bounded_string_t name)
 {
 	CTF_EVENT(
 		CTF_LITERAL(u8_t, CTF_EVENT_THREAD_PRIORITY_SET),
 		thread_id,
-		prio
+		prio,
+		name
 		);
 }
 
@@ -117,57 +123,69 @@ static inline void ctf_top_thread_create(
 		);
 }
 
-static inline void ctf_top_thread_abort(u32_t thread_id)
+static inline void ctf_top_thread_abort(u32_t thread_id,
+					ctf_bounded_string_t name)
 {
 	CTF_EVENT(
 		CTF_LITERAL(u8_t, CTF_EVENT_THREAD_ABORT),
-		thread_id
+		thread_id,
+		name
 		);
 }
 
-static inline void ctf_top_thread_suspend(u32_t thread_id)
+static inline void ctf_top_thread_suspend(u32_t thread_id,
+					  ctf_bounded_string_t name)
 {
 	CTF_EVENT(
 		CTF_LITERAL(u8_t, CTF_EVENT_THREAD_SUSPEND),
-		thread_id
+		thread_id,
+		name
 		);
 }
 
-static inline void ctf_top_thread_resume(u32_t thread_id)
+static inline void ctf_top_thread_resume(u32_t thread_id,
+					 ctf_bounded_string_t name)
 {
 	CTF_EVENT(
 		CTF_LITERAL(u8_t, CTF_EVENT_THREAD_RESUME),
-		thread_id
+		thread_id,
+		name
 		);
 }
 
-static inline void ctf_top_thread_ready(u32_t thread_id)
+static inline void ctf_top_thread_ready(u32_t thread_id,
+					ctf_bounded_string_t name)
 {
 	CTF_EVENT(
 		CTF_LITERAL(u8_t, CTF_EVENT_THREAD_READY),
-		thread_id
+		thread_id,
+		name
 		);
 }
 
-static inline void ctf_top_thread_pend(u32_t thread_id)
+static inline void ctf_top_thread_pend(u32_t thread_id,
+				       ctf_bounded_string_t name)
 {
 	CTF_EVENT(
 		CTF_LITERAL(u8_t, CTF_EVENT_THREAD_PENDING),
-		thread_id
+		thread_id,
+		name
 		);
 }
 
 static inline void ctf_top_thread_info(
 	u32_t thread_id,
 	u32_t stack_base,
-	u32_t stack_size
+	u32_t stack_size,
+	ctf_bounded_string_t name
 	)
 {
 	CTF_EVENT(
 		CTF_LITERAL(u8_t, CTF_EVENT_THREAD_INFO),
 		thread_id,
 		stack_base,
-		stack_size
+		stack_size,
+		name
 		);
 }
 
