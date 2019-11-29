@@ -48,5 +48,9 @@ def main():
 
     ser.close()
 
-if __name__=="__main__":
-    main()
+if __name__ == '__main__':
+    try:
+        main()
+    except KeyboardInterrupt:
+        print('Data capture interrupted, data saved into {}'.format(args.output))
+        sys.exit(0)
