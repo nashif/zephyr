@@ -1,0 +1,8 @@
+# Copyright (c) 2019 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+config USB_DEVICE_PID
+	hex
+	default 0x0004
+
+source "Kconfig.zephyr"

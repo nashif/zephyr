@@ -1,0 +1,7 @@
+sample:
+  name: generic tracing framework
+tests:
+  sample.subsys.debug.tracing:
+    platform_whitelist: reel_board sam_e70_xplained
+    depends_on: usb_device usb_cdc
+    tags: tracing
