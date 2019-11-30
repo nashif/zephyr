@@ -215,11 +215,14 @@ static void start_threads(void)
 	 */
 	for (int i = 0; i < NUM_PHIL; i++) {
 		int prio = new_prio(i);
+		char buf[20];
 
 		k_thread_create(&threads[i], &stacks[i][0], STACK_SIZE,
 				philosopher, INT_TO_POINTER(i), NULL, NULL,
 				prio, K_USER, K_FOREVER);
 
+		snprintk(buf, sizeof(buf), "Philosopher %d", i);
+		k_thread_name_set(&threads[i], buf);
 		k_object_access_grant(fork(i), &threads[i]);
 		k_object_access_grant(fork((i + 1) % NUM_PHIL), &threads[i]);
 
