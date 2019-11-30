@@ -61,4 +61,12 @@ static inline void sys_trace_thread_info(struct k_thread *thread)
 
 #define sys_trace_end_call(id) SEGGER_SYSVIEW_RecordEndCall(id)
 
+#define sys_trace_u32(id, object) SEGGER_SYSVIEW_RecordU32(id, \
+		SEGGER_SYSVIEW_ShrinkId((u32_t)object))
+
+#define sys_trace_u32x2(id, object, data) SEGGER_SYSVIEW_RecordU32(id, \
+		SEGGER_SYSVIEW_ShrinkId((u32_t)object) \
+		SEGGER_SYSVIEW_ShrinkId((u32_t)data) \
+		)
+
 #endif /* _TRACE_SYSVIEW_H */

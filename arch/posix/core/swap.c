@@ -81,11 +81,7 @@ void arch_switch_to_main_thread(struct k_thread *main_thread,
 			(posix_thread_status_t *)
 			_kernel.ready_q.cache->callee_saved.thread_status;
 
-	sys_trace_thread_switched_out();
-
 	_kernel.current = _kernel.ready_q.cache;
-
-	sys_trace_thread_switched_in();
 
 	posix_main_thread_start(ready_thread_ptr->thread_idx);
 } /* LCOV_EXCL_LINE */
