@@ -691,8 +691,6 @@ void z_impl_k_thread_suspend(struct k_thread *thread)
 
 	z_thread_single_suspend(thread);
 
-	sys_trace_thread_suspend(thread);
-
 	if (thread == _current) {
 		z_reschedule(&lock, key);
 	} else {
@@ -721,7 +719,6 @@ void z_impl_k_thread_resume(struct k_thread *thread)
 
 	z_thread_single_resume(thread);
 
-	sys_trace_thread_resume(thread);
 	z_reschedule(&lock, key);
 }
 
