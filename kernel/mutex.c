@@ -72,7 +72,7 @@ void z_impl_k_mutex_init(struct k_mutex *mutex)
 	mutex->owner = NULL;
 	mutex->lock_count = 0U;
 
-	sys_trace_void(SYS_TRACE_ID_MUTEX_INIT);
+	sys_trace_u32(SYS_TRACE_ID_MUTEX_INIT, mutex);
 
 	z_waitq_init(&mutex->wait_q);
 
@@ -119,7 +119,8 @@ int z_impl_k_mutex_lock(struct k_mutex *mutex, s32_t timeout)
 	k_spinlock_key_t key;
 	bool resched = false;
 
-	sys_trace_void(SYS_TRACE_ID_MUTEX_LOCK);
+	sys_trace_u32x2(SYS_TRACE_ID_MUTEX_LOCK, mutex,
+				    (void *)mutex->lock_count);
 	key = k_spin_lock(&lock);
 
 	if (likely((mutex->lock_count == 0U) || (mutex->owner == _current))) {
@@ -211,7 +212,8 @@ void z_impl_k_mutex_unlock(struct k_mutex *mutex)
 	__ASSERT(mutex->lock_count > 0U, "");
 	__ASSERT(mutex->owner == _current, "");
 
-	sys_trace_void(SYS_TRACE_ID_MUTEX_UNLOCK);
+	sys_trace_u32x2(SYS_TRACE_ID_MUTEX_UNLOCK, mutex,
+				    (void *)mutex->lock_count);
 	z_sched_lock();
 
 	K_DEBUG("mutex %p lock_count: %d\n", mutex, mutex->lock_count);

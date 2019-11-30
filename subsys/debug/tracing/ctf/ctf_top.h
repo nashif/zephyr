@@ -70,7 +70,9 @@ typedef enum {
 	CTF_EVENT_ISR_EXIT_TO_SCHEDULER =  0x22,
 	CTF_EVENT_IDLE                  =  0x30,
 	CTF_EVENT_ID_START_CALL         =  0x41,
-	CTF_EVENT_ID_END_CALL           =  0x42
+	CTF_EVENT_ID_END_CALL           =  0x42,
+	CTF_EVENT_ID_START_CALL_U32     =  0x43,
+	CTF_EVENT_ID_START_CALL_U32X2   =  0x44
 } ctf_event_t;
 
 
@@ -234,6 +236,25 @@ static inline void ctf_top_void(u32_t id)
 	CTF_EVENT(
 		CTF_LITERAL(u8_t, CTF_EVENT_ID_START_CALL),
 		id
+		);
+}
+
+static inline void ctf_top_u32(u32_t id, u32_t object_id)
+{
+	CTF_EVENT(
+		CTF_LITERAL(u8_t, CTF_EVENT_ID_START_CALL_U32),
+		id,
+		object_id
+		);
+}
+
+static inline void ctf_top_u32x2(u32_t id, u32_t object_id, u32_t data)
+{
+	CTF_EVENT(
+		CTF_LITERAL(u8_t, CTF_EVENT_ID_START_CALL_U32X2),
+		id,
+		object_id,
+		data
 		);
 }
 

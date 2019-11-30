@@ -169,6 +169,16 @@ void sys_trace_void(unsigned int id)
 	ctf_top_void(id);
 }
 
+void sys_trace_u32(unsigned int id, void *object)
+{
+	ctf_top_u32(id, (u32_t)object);
+}
+
+void sys_trace_u32x2(unsigned int id, void *object, void *data)
+{
+	ctf_top_u32x2(id, (u32_t)object, (u32_t)data);
+}
+
 void sys_trace_end_call(unsigned int id)
 {
 	ctf_top_end_call(id);

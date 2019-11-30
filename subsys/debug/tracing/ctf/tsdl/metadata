@@ -34,6 +34,7 @@ event {
 	id = 0x10;
 	fields := struct {
 		uint32_t thread_id;
+		ctf_bounded_string_t name[20];
 	};
 };
 
@@ -42,6 +43,7 @@ event {
 	id = 0x11;
 	fields := struct {
 		uint32_t thread_id;
+		ctf_bounded_string_t name[20];
 	};
 };
 
@@ -51,6 +53,7 @@ event {
 	fields := struct {
 		uint32_t thread_id;
 		int8_t prio;
+		ctf_bounded_string_t name[20];
 	};
 
 };
@@ -69,6 +72,7 @@ event {
 	id = 0x14;
 	fields := struct {
 		uint32_t thread_id;
+		ctf_bounded_string_t name[20];
 	};
 };
 
@@ -77,6 +81,7 @@ event {
 	id = 0x15;
 	fields := struct {
 		uint32_t thread_id;
+		ctf_bounded_string_t name[20];
 	};
 };
 
@@ -85,6 +90,7 @@ event {
 	id = 0x16;
 	fields := struct {
 		uint32_t thread_id;
+		ctf_bounded_string_t name[20];
 	};
 };
 event {
@@ -92,6 +98,7 @@ event {
         id = 0x17;
         fields := struct {
                 uint32_t thread_id;
+		ctf_bounded_string_t name[20];
         };
 };
 
@@ -100,6 +107,7 @@ event {
 	id = 0x18;
 	fields := struct {
 		uint32_t thread_id;
+		ctf_bounded_string_t name[20];
 	};
 };
 
@@ -110,6 +118,7 @@ event {
 		uint32_t thread_id;
 		uint32_t stack_base;
 		uint32_t stack_size;
+		ctf_bounded_string_t name[20];
 	};
 };
 
@@ -150,10 +159,30 @@ event {
 	};
 };
 
+
 event {
 	name = end_call;
 	id = 0x42;
 	fields := struct {
 		call_id id;
+	};
+};
+
+event {
+	name = start_call_u32;
+	id = 0x43;
+	fields := struct {
+		call_id id;
+		uint32_t object_id;
+	};
+};
+
+event {
+	name = start_call_u32x2;
+	id = 0x44;
+	fields := struct {
+		call_id id;
+		uint32_t object_id;
+		uint32_t data;
 	};
 };

@@ -32,6 +32,8 @@ void sys_trace_isr_exit_to_scheduler(void);
 void sys_trace_idle(void);
 void sys_trace_void(unsigned int id);
 void sys_trace_end_call(unsigned int id);
+void sys_trace_u32(unsigned int id, void *object);
+void sys_trace_u32x2(unsigned int id, void *object, void *data);
 
 #ifdef __cplusplus
 }

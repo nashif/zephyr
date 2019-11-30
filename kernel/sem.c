@@ -121,7 +121,7 @@ void z_impl_k_sem_give(struct k_sem *sem)
 {
 	k_spinlock_key_t key = k_spin_lock(&lock);
 
-	sys_trace_void(SYS_TRACE_ID_SEMA_GIVE);
+	sys_trace_u32(SYS_TRACE_ID_SEMA_GIVE, sem);
 	do_sem_give(sem);
 	sys_trace_end_call(SYS_TRACE_ID_SEMA_GIVE);
 	z_reschedule(&lock, key);
@@ -140,7 +140,7 @@ int z_impl_k_sem_take(struct k_sem *sem, s32_t timeout)
 {
 	__ASSERT(((arch_is_in_isr() == false) || (timeout == K_NO_WAIT)), "");
 
-	sys_trace_void(SYS_TRACE_ID_SEMA_TAKE);
+	sys_trace_u32(SYS_TRACE_ID_SEMA_TAKE, sem);
 	k_spinlock_key_t key = k_spin_lock(&lock);
 
 	if (likely(sem->count > 0U)) {
