@@ -10,7 +10,7 @@
 
 /**TESTPOINT: init via K_MUTEX_DEFINE*/
 K_MUTEX_DEFINE(kmutex);
-static struct k_mutex mutex;
+static struct k_mutex mutex, mutex_nested;
 
 static K_THREAD_STACK_DEFINE(tstack, STACK_SIZE);
 static struct k_thread tdata;
@@ -173,10 +173,59 @@ void test_mutex_timeout(void)
 	zassert_true(k_mutex_reset(&mutex) == 0, NULL);
 }
 
-
-void test_mutex_recursive(void)
+static void recursive_lock(u32_t depth, u32_t control)
 {
+	static u32_t acq;
+	int ret;
 
+	ret = k_mutex_lock(&mutex_nested, K_FOREVER);
+	zassert_equal(ret, 0, NULL);
+
+	if (control == depth) {
+		zassert_equal(acq, 0, NULL);
+	}
+	acq++;
+	if (depth) {
+		recursive_lock(depth - 1, control);
+
+	}
+	acq--;
+
+	ret = k_mutex_unlock(&mutex_nested);
+	zassert_equal(ret, 0, NULL);
+}
+
+static void thread_mutex_nested(void *p1, void *p2, void *p3)
+{
+	recursive_lock(3, 3);
+}
+
+
+void test_mutex_nested(void)
+{
+	int ret;
+
+	ret = k_mutex_init(&mutex_nested);
+	zassert_equal(ret, 0, NULL);
+
+	ret = k_mutex_lock(&mutex_nested, K_NO_WAIT);
+	zassert_equal(ret, 0, NULL);
+
+
+	k_thread_create(&tdata, tstack, STACK_SIZE,
+		thread_mutex_nested, NULL, NULL, NULL,
+		K_PRIO_PREEMPT(10),
+		K_USER | K_INHERIT_PERMS, K_NO_WAIT);
+
+	recursive_lock(5, 5);
+
+	ret = k_mutex_unlock(&mutex_nested);
+	zassert_equal(ret, 0, "returned %d", ret);
+
+	k_sleep(K_MSEC(100));
+
+	ret = k_mutex_unlock(&mutex_nested);
+	zassert_equal(ret, -EINVAL, "returned %d", ret);
 }
 
 
@@ -220,15 +269,21 @@ void test_mutex_ownership(void)
 /*test case main entry*/
 void test_main(void)
 {
-	k_thread_access_grant(k_current_get(), &tdata, &tstack, &kmutex,
-			      &threads[0], stacks[0], &threads[1], stacks[1],
-			      &mutex);
+	k_thread_access_grant(k_current_get(),
+			      &tdata,
+			      &tstack,
+			      &kmutex,
+			      &threads[0], &stacks[0],
+			      &threads[1], &stacks[1],
+			      &mutex,
+			      &mutex_nested);
 
 	ztest_test_suite(mutex_api,
 			 ztest_1cpu_user_unit_test(test_k_mutex_init),
 			 ztest_1cpu_user_unit_test(test_k_mutex_reset),
 			 ztest_1cpu_user_unit_test(test_k_mutex_unlock),
 			 ztest_1cpu_user_unit_test(test_mutex_basic),
+			 ztest_1cpu_user_unit_test(test_mutex_nested),
 			 ztest_1cpu_user_unit_test(test_mutex_timeout),
 			 ztest_1cpu_user_unit_test(test_mutex_ownership)
 			 );
