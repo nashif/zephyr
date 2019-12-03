@@ -5140,7 +5140,7 @@ struct k_mem_domain {
  *              if num_parts is zero.
  * @req K-MD-001
  */
-extern void k_mem_domain_init(struct k_mem_domain *domain, u8_t num_parts,
+extern int k_mem_domain_init(struct k_mem_domain *domain, u8_t num_parts,
 			      struct k_mem_partition *parts[]);
 /**
  * @brief Destroy a memory domain.

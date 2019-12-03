@@ -11,6 +11,7 @@
 #include <sys/__assert.h>
 #include <stdbool.h>
 #include <spinlock.h>
+#include <sys/check.h>
 
 static struct k_spinlock lock;
 static u8_t max_partitions;
@@ -85,9 +86,17 @@ void k_mem_domain_init(struct k_mem_domain *domain, u8_t num_parts,
 {
 	k_spinlock_key_t key;
 
-	__ASSERT(domain != NULL, "");
-	__ASSERT(num_parts == 0U || parts != NULL, "");
-	__ASSERT(num_parts <= max_partitions, "");
+	CHECK(domain == NULL) {
+		return -EINVAL;
+	}
+
+	CHECK(num_parts != 0 || parts == NULL) {
+		return -EINVAL;
+	}
+
+	CHECK(num_parts > max_partitions) {
+		return -EINVAL;
+	}
 
 	key = k_spin_lock(&lock);
 
