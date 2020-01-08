@@ -138,6 +138,7 @@
 /drivers/gpio/*stm32*                     @rsalveti @idlethread
 /drivers/hwinfo/                          @alexanderwachter
 /drivers/i2c/*litex*                      @mateusz-holenko @kgugala @pgielda
+/drivers/i2c/i2c_shell.c                  @nashif
 /drivers/i2s/i2s_ll_stm32*                @avisconti
 /drivers/ieee802154/                      @jukkar @tbursztyka
 /drivers/ieee802154/ieee802154_rf2xx*     @jukkar @tbursztyka @nandojve
