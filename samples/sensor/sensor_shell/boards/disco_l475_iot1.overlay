@@ -1,0 +1,21 @@
+/*
+ * Copyright (c) 2019, Linaro Ltd.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+&i2c1 {
+	tmp007@40 {
+		compatible = "ti,tmp007";
+		reg = <0x40>;
+		int-gpios = <&gpiod 7 0>;
+		label = "TMP007";
+	};
+
+	mcp9808@18 {
+		compatible = "microchip,mcp9808";
+		reg = <0x18>;
+		int-gpios = <&gpiod 7 0>;
+		label = "MCP9808";
+	};
+};
