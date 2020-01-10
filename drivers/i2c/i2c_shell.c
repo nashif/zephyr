@@ -9,6 +9,7 @@
 #include <drivers/i2c.h>
 #include <string.h>
 #include <sys/util.h>
+#include <stdlib.h>
 
 #include <logging/log.h>
 LOG_MODULE_REGISTER(i2c_shell, CONFIG_LOG_DEFAULT_LEVEL);
@@ -66,6 +67,58 @@ static int cmd_i2c_scan(const struct shell *shell,
 	return 0;
 }
 
+static int cmd_i2c_write_byte(const struct shell *shell,
+			      size_t argc, char **argv)
+{
+	struct device *dev;
+	u8_t out;
+
+	dev = device_get_binding(argv[1]);
+
+	if (!dev) {
+		shell_error(shell, "I2C: Device driver %s not found.",
+			    argv[1]);
+		return -ENODEV;
+	}
+
+	if (i2c_reg_write_byte(dev,
+			      (uint8_t)strtol(argv[2], NULL, 16),
+			      (uint8_t)strtol(argv[3], NULL, 16),
+			      (uint8_t)strtol(argv[4], NULL, 16)) < 0) {
+		shell_error(shell, "Failed to write to device: %s", argv[1]);
+		return -EIO;
+	}
+
+	return 0;
+}
+
+static int cmd_i2c_read_byte(const struct shell *shell,
+			size_t argc, char **argv)
+{
+	struct device *dev;
+	u8_t out;
+
+	dev = device_get_binding(argv[1]);
+
+	if (!dev) {
+		shell_error(shell, "I2C: Device driver %s not found.",
+			    argv[1]);
+		return -ENODEV;
+	}
+
+	if (i2c_reg_read_byte(dev,
+			      (uint8_t)strtol(argv[2], NULL, 16),
+			      (uint8_t)strtol(argv[3], NULL, 16),
+			      &out) < 0) {
+		shell_error(shell, "Failed to read from device: %s", argv[1]);
+		return -EIO;
+	}
+
+	shell_print(shell, "Output: 0x%x", out);
+
+	return 0;
+}
+
 static void device_name_get(size_t idx, struct shell_static_entry *entry);
 
 SHELL_DYNAMIC_CMD_CREATE(dsub_device_name, device_name_get);
@@ -95,7 +148,12 @@ static void device_name_get(size_t idx, struct shell_static_entry *entry)
 
 SHELL_STATIC_SUBCMD_SET_CREATE(sub_i2c_cmds,
 			       SHELL_CMD(scan, &dsub_device_name,
-					 "Scan I2C devices", cmd_i2c_scan),
+			       "Scan I2C devices", cmd_i2c_scan),
+			       SHELL_CMD_ARG(read_byte, &dsub_device_name,
+			       "Read from I2C devices",
+			       cmd_i2c_read_byte, 2, 255),
+			       "Write tp I2C devices",
+			       cmd_i2c_write_byte, 3, 255),
 			       SHELL_SUBCMD_SET_END     /* Array terminated. */
 			       );
 
