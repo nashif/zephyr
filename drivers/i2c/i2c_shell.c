@@ -82,9 +82,9 @@ static int cmd_i2c_write_byte(const struct shell *shell,
 	}
 
 	if (i2c_reg_write_byte(dev,
-			      (uint8_t)strtol(argv[2], NULL, 16),
-			      (uint8_t)strtol(argv[3], NULL, 16),
-			      (uint8_t)strtol(argv[4], NULL, 16)) < 0) {
+			       (uint8_t)strtol(argv[2], NULL, 16),
+			       (uint8_t)strtol(argv[3], NULL, 16),
+			       (uint8_t)strtol(argv[4], NULL, 16)) < 0) {
 		shell_error(shell, "Failed to write to device: %s", argv[1]);
 		return -EIO;
 	}
@@ -93,7 +93,7 @@ static int cmd_i2c_write_byte(const struct shell *shell,
 }
 
 static int cmd_i2c_read_byte(const struct shell *shell,
-			size_t argc, char **argv)
+			     size_t argc, char **argv)
 {
 	struct device *dev;
 	u8_t out;
@@ -130,13 +130,14 @@ static void device_name_get(size_t idx, struct shell_static_entry *entry)
 
 	entry->syntax = NULL;
 	entry->handler = NULL;
-	entry->help  = NULL;
+	entry->help = NULL;
 	entry->subcmd = &dsub_device_name;
 
 	for (dev = __device_init_start; dev != __device_init_end; dev++) {
 		if ((dev->driver_api != NULL) &&
-		strstr(dev->config->name, I2C_DEVICE_PREFIX) != NULL &&
-		strcmp(dev->config->name, "") && (dev->config->name != NULL)) {
+		    strstr(dev->config->name, I2C_DEVICE_PREFIX) != NULL &&
+		    strcmp(dev->config->name, "") &&
+		    (dev->config->name != NULL)) {
 			if (idx == device_idx) {
 				entry->syntax = dev->config->name;
 				break;
@@ -148,12 +149,13 @@ static void device_name_get(size_t idx, struct shell_static_entry *entry)
 
 SHELL_STATIC_SUBCMD_SET_CREATE(sub_i2c_cmds,
 			       SHELL_CMD(scan, &dsub_device_name,
-			       "Scan I2C devices", cmd_i2c_scan),
+					 "Scan I2C devices", cmd_i2c_scan),
 			       SHELL_CMD_ARG(read_byte, &dsub_device_name,
-			       "Read from I2C devices",
-			       cmd_i2c_read_byte, 2, 255),
-			       "Write tp I2C devices",
-			       cmd_i2c_write_byte, 3, 255),
+					     "Read from I2C devices",
+					     cmd_i2c_read_byte, 2, 255),
+			       SHELL_CMD_ARG(write_byte, &dsub_device_name,
+					     "Write tp I2C devices",
+					     cmd_i2c_write_byte, 3, 255),
 			       SHELL_SUBCMD_SET_END     /* Array terminated. */
 			       );
 
