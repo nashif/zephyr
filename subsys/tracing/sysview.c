@@ -22,7 +22,18 @@ u32_t sysview_get_timestamp(void)
 
 u32_t sysview_get_interrupt(void)
 {
+
+/* On Cortex-M devices the active vector can be read from the ICSR. */
+#if defined(CONFIG_CPU_CORTEX_M3) || \
+	defined(CONFIG_CPU_CORTEX_M4) || \
+	defined(CONFIG_CPU_CORTEX_M7)
+	interrupt = ((*(U32 *)(0xE000ED04)) & 0x1FF);
+#elif defined(CONFIG_CPU_CORTEX_M0PLUS)
+	interrupt = ((*(U32 *)(0xE000ED04)) & 0x3F);
+#endif
+
 	return interrupt;
+
 }
 
 void sys_trace_thread_switched_in(void)
