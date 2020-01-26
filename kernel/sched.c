@@ -710,12 +710,6 @@ struct k_thread *z_get_next_ready_thread(void)
 }
 #endif
 
-/* Just a wrapper around _current = xxx with tracing */
-static inline void set_current(struct k_thread *new_thread)
-{
-	_current = new_thread;
-}
-
 #ifdef CONFIG_USE_SWITCH
 void *z_get_next_switch_handle(void *interrupted)
 {
@@ -734,7 +728,7 @@ void *z_get_next_switch_handle(void *interrupted)
 			z_reset_time_slice();
 #endif
 			_current_cpu->swap_ok = 0;
-			set_current(thread);
+			_current = thread;
 #ifdef CONFIG_SPIN_VALIDATE
 			/* Changed _current!  Update the spinlock
 			 * bookeeping so the validation doesn't get
@@ -746,7 +740,7 @@ void *z_get_next_switch_handle(void *interrupted)
 		}
 	}
 #else
-	set_current(z_get_next_ready_thread());
+	_current = z_get_next_ready_thread();
 #endif
 
 	/* Some architectures don't have a working IPI, so the best we
