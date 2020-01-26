@@ -49,5 +49,4 @@ config TRACING_CTF_BOTTOM_POSIX
 	  Enable POSIX backend for CTF tracing. It will output the CTF stream to a
 	  file using fwrite.
 
-
-source "subsys/tracing/Kconfig.segger"
+source "subsys/tracing/Kconfig.systemview"

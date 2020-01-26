@@ -11,8 +11,7 @@
 static void cbSendSystemDesc(void)
 {
 	SEGGER_SYSVIEW_SendSysDesc("N=ZephyrSysView");
-	SEGGER_SYSVIEW_SendSysDesc("D=" CONFIG_BOARD " "
-				   CONFIG_SOC_SERIES " " CONFIG_ARCH);
+	SEGGER_SYSVIEW_SendSysDesc("D=" CONFIG_BOARD " " CONFIG_ARCH);
 	SEGGER_SYSVIEW_SendSysDesc("O=Zephyr");
 }
 

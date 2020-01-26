@@ -281,3 +281,7 @@ config OPENOCD_SUPPORT
 	  selects CONFIG_THREAD_MONITOR, so all of its caveats are implied.)
 
 endmenu
+
+
+
+source "subsys/debug/Kconfig.rtt"

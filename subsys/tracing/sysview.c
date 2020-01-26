@@ -8,9 +8,10 @@
 #include <init.h>
 #include <ksched.h>
 
+#include "SEGGER_SYSVIEW_Zephyr.h"
 #include <SEGGER_SYSVIEW.h>
 #include <Global.h>
-#include "SEGGER_SYSVIEW_Zephyr.h"
+
 
 static u32_t interrupt;
 

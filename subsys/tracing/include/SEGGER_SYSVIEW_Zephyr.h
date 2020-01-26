@@ -12,4 +12,6 @@
 /* Services provided to SYSVIEW by Zephyr */
 extern const SEGGER_SYSVIEW_OS_API SYSVIEW_X_OS_TraceAPI;
 
+#define SEGGER_SYSVIEW_RTT_CHANNEL            0
+
 #endif
