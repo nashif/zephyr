@@ -50,7 +50,7 @@ GDATA(_kernel)
 
 SECTION_FUNC(TEXT, z_arm_pendsv)
 
-#ifdef CONFIG_TRACING
+#ifdef CONFIG_TRACING1
     /* Register the context switch */
     push {r0, lr}
     bl sys_trace_thread_switched_out
@@ -352,7 +352,7 @@ _thread_irq_disabled:
 
 #endif /* CONFIG_EXECUTION_BENCHMARKING */
 
-#ifdef CONFIG_TRACING
+#ifdef CONFIG_TRACING1
     /* Register the context switch */
     push {r0, lr}
     bl sys_trace_thread_switched_in

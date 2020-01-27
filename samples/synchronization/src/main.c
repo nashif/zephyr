@@ -37,18 +37,22 @@ void helloLoop(const char *my_name,
 {
 	const char *tname;
 
+
 	while (1) {
 		/* take my semaphore */
 		k_sem_take(my_sem, K_FOREVER);
 
 		/* say "hello" */
 		tname = k_thread_name_get(k_current_get());
+		printk("%s: %s\n", tname, k_thread_state_str(k_current_get()));
 		if (tname == NULL) {
 			printk("%s: Hello World from %s!\n",
 				my_name, CONFIG_BOARD);
+			k_busy_wait(1000000);
 		} else {
 			printk("%s: Hello World from %s!\n",
 				tname, CONFIG_BOARD);
+			k_busy_wait(1000000);
 		}
 
 		/* wait a while, then let other thread have a turn */

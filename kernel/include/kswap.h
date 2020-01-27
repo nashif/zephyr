@@ -155,14 +155,15 @@ extern int arch_swap(unsigned int key);
 static inline int z_swap_irqlock(unsigned int key)
 {
 	int ret;
+
 	z_check_stack_sentinel();
-#ifndef CONFIG_ARM
-	sys_trace_thread_switched_out();
-#endif
+
 	ret = arch_swap(key);
-#ifndef CONFIG_ARM
-	sys_trace_thread_switched_in();
-#endif
+
+	if (ret != -EAGAIN) {
+		sys_trace_thread_switched_out();
+		sys_trace_thread_switched_in();
+	}
 	return ret;
 }
 
