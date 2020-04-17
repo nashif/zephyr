@@ -47,6 +47,8 @@ if(NOT "${ARCH}" STREQUAL "posix")
     list(APPEND isystem_include_flags -isystem ${isystem_include_dir})
   endforeach()
 
+  list(APPEND TOOLCHAIN_C_FLAGS -rtlib=compiler-rt)
+
   # This libgcc code is partially duplicated in compiler/*/target.cmake
   execute_process(
     COMMAND ${CMAKE_C_COMPILER} ${TOOLCHAIN_C_FLAGS} --print-libgcc-file-name
