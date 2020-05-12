@@ -196,7 +196,7 @@ static void setup_mgmt_events(void)
 	}
 }
 
-static void mld_setup(void)
+static void test_mld_setup(void)
 {
 	struct net_if_addr *ifaddr;
 
@@ -212,7 +212,7 @@ static void mld_setup(void)
 	zassert_not_null(ifaddr, "Cannot add IPv6 address");
 }
 
-static void join_group(void)
+static void test_join_group(void)
 {
 	int ret;
 
@@ -231,7 +231,7 @@ static void join_group(void)
 	k_yield();
 }
 
-static void leave_group(void)
+static void test_leave_group(void)
 {
 	int ret;
 
@@ -244,7 +244,7 @@ static void leave_group(void)
 	k_yield();
 }
 
-static void catch_join_group(void)
+static void test_catch_join_group(void)
 {
 	is_group_joined = false;
 
@@ -263,7 +263,7 @@ static void catch_join_group(void)
 	is_group_joined = false;
 }
 
-static void catch_leave_group(void)
+static void test_catch_leave_group(void)
 {
 	is_group_joined = false;
 
@@ -280,7 +280,7 @@ static void catch_leave_group(void)
 	is_group_left = false;
 }
 
-static void verify_join_group(void)
+static void test_verify_join_group(void)
 {
 	is_join_msg_ok = false;
 
@@ -299,7 +299,7 @@ static void verify_join_group(void)
 	is_join_msg_ok = false;
 }
 
-static void verify_leave_group(void)
+static void test_verify_leave_group(void)
 {
 	is_leave_msg_ok = false;
 
@@ -316,7 +316,7 @@ static void verify_leave_group(void)
 	is_leave_msg_ok = false;
 }
 
-static void send_query(struct net_if *iface)
+static void test_send_query(struct net_if *iface)
 {
 	struct net_pkt *pkt;
 	struct in6_addr dst;
@@ -403,7 +403,7 @@ static struct net_icmpv6_handler mld_query_input_handler = {
 	.handler = handle_mld_query,
 };
 
-static void catch_query(void)
+static void test_catch_query(void)
 {
 	is_query_received = false;
 
@@ -426,7 +426,7 @@ static void catch_query(void)
 	net_icmpv6_unregister_handler(&mld_query_input_handler);
 }
 
-static void verify_send_report(void)
+static void test_verify_send_report(void)
 {
 	is_query_received = false;
 	is_report_sent = false;
@@ -486,15 +486,15 @@ static void test_solicit_node(void)
 void test_main(void)
 {
 	ztest_test_suite(net_mld_test,
-			 ztest_unit_test(mld_setup),
-			 ztest_unit_test(join_group),
-			 ztest_unit_test(leave_group),
-			 ztest_unit_test(catch_join_group),
-			 ztest_unit_test(catch_leave_group),
-			 ztest_unit_test(verify_join_group),
-			 ztest_unit_test(verify_leave_group),
-			 ztest_unit_test(catch_query),
-			 ztest_unit_test(verify_send_report),
+			 ztest_unit_test(test_mld_setup),
+			 ztest_unit_test(test_join_group),
+			 ztest_unit_test(test_leave_group),
+			 ztest_unit_test(test_catch_join_group),
+			 ztest_unit_test(test_catch_leave_group),
+			 ztest_unit_test(test_verify_join_group),
+			 ztest_unit_test(test_verify_leave_group),
+			 ztest_unit_test(test_catch_query),
+			 ztest_unit_test(test_verify_send_report),
 			 ztest_unit_test(test_allnodes),
 			 ztest_unit_test(test_solicit_node)
 			 );

@@ -396,7 +396,7 @@ static void setup_net_context(struct net_context **ctx)
 		      "Context bind failure test failed (%d)\n", ret);
 }
 
-static void traffic_class_general_setup(void)
+static void test_traffic_class_general_setup(void)
 {
 	address_setup();
 	priority_setup();
@@ -453,7 +453,7 @@ static void traffic_class_cleanup_rx(void)
 	traffic_class_cleanup(NET_TC_RX_COUNT);
 }
 
-static void traffic_class_send_packets_with_prio(enum net_priority prio,
+static void test_traffic_class_send_packets_with_prio(enum net_priority prio,
 						 int pkt_count)
 {
 	/* Start to send data to each queue and verify that the data
@@ -483,7 +483,7 @@ static void traffic_class_send_packets_with_prio(enum net_priority prio,
 	zassert_true(ret > 0, "Send UDP pkt failed");
 }
 
-static void traffic_class_send_priority(enum net_priority prio,
+static void test_traffic_class_send_priority(enum net_priority prio,
 					int num_packets,
 					bool wait_for_packets)
 {
@@ -510,7 +510,7 @@ static void traffic_class_send_priority(enum net_priority prio,
 	}
 }
 
-static void traffic_class_send_data_prio_bk(void)
+static void test_traffic_class_send_data_prio_bk(void)
 {
 	/* Send number of packets with each priority and make sure
 	 * they are sent properly.
@@ -518,42 +518,42 @@ static void traffic_class_send_data_prio_bk(void)
 	traffic_class_send_priority(NET_PRIORITY_BK, MAX_PKT_TO_SEND, true);
 }
 
-static void traffic_class_send_data_prio_be(void)
+static void test_traffic_class_send_data_prio_be(void)
 {
 	traffic_class_send_priority(NET_PRIORITY_BE, MAX_PKT_TO_SEND, true);
 }
 
-static void traffic_class_send_data_prio_ee(void)
+static void test_traffic_class_send_data_prio_ee(void)
 {
 	traffic_class_send_priority(NET_PRIORITY_EE, MAX_PKT_TO_SEND, true);
 }
 
-static void traffic_class_send_data_prio_ca(void)
+static void test_traffic_class_send_data_prio_ca(void)
 {
 	traffic_class_send_priority(NET_PRIORITY_CA, MAX_PKT_TO_SEND, true);
 }
 
-static void traffic_class_send_data_prio_vi(void)
+static void test_traffic_class_send_data_prio_vi(void)
 {
 	traffic_class_send_priority(NET_PRIORITY_VI, MAX_PKT_TO_SEND, true);
 }
 
-static void traffic_class_send_data_prio_vo(void)
+static void test_traffic_class_send_data_prio_vo(void)
 {
 	traffic_class_send_priority(NET_PRIORITY_VO, MAX_PKT_TO_SEND, true);
 }
 
-static void traffic_class_send_data_prio_ic(void)
+static void test_traffic_class_send_data_prio_ic(void)
 {
 	traffic_class_send_priority(NET_PRIORITY_IC, MAX_PKT_TO_SEND, true);
 }
 
-static void traffic_class_send_data_prio_nc(void)
+static void test_traffic_class_send_data_prio_nc(void)
 {
 	traffic_class_send_priority(NET_PRIORITY_NC, MAX_PKT_TO_SEND, true);
 }
 
-static void traffic_class_send_data_mix(void)
+static void test_traffic_class_send_data_mix(void)
 {
 	/* Start to send data to each queue and verify that the data
 	 * is received in correct order.
@@ -579,7 +579,7 @@ static void traffic_class_send_data_mix(void)
 	zassert_false(test_failed, "Traffic class verification failed.");
 }
 
-static void traffic_class_send_data_mix_all_1(void)
+static void test_traffic_class_send_data_mix_all_1(void)
 {
 	int total_packets = 0;
 
@@ -620,7 +620,7 @@ static void traffic_class_send_data_mix_all_1(void)
 	zassert_false(test_failed, "Traffic class verification failed.");
 }
 
-static void traffic_class_send_data_mix_all_2(void)
+static void test_traffic_class_send_data_mix_all_2(void)
 {
 	/* Start to send data to each queue and verify that the data
 	 * is received in correct order.
@@ -716,7 +716,7 @@ fail:
 	net_pkt_unref(pkt);
 }
 
-static void traffic_class_setup_recv(void)
+static void test_traffic_class_setup_recv(void)
 {
 	int ret, i;
 
@@ -970,42 +970,42 @@ static void traffic_class_recv_data_mix_all_2(void)
 void test_main(void)
 {
 	ztest_test_suite(net_traffic_class_test,
-			 ztest_unit_test(traffic_class_general_setup),
-			 ztest_unit_test(traffic_class_setup_tx),
+			 ztest_unit_test(test_traffic_class_general_setup),
+			 ztest_unit_test(test_traffic_class_setup_tx),
 			 /* Send only same priority packets and verify that
 			  * all are sent with proper traffic class.
 			  */
-			 ztest_unit_test(traffic_class_send_data_prio_bk),
-			 ztest_unit_test(traffic_class_send_data_prio_be),
-			 ztest_unit_test(traffic_class_send_data_prio_ee),
-			 ztest_unit_test(traffic_class_send_data_prio_ca),
-			 ztest_unit_test(traffic_class_send_data_prio_vi),
-			 ztest_unit_test(traffic_class_send_data_prio_vo),
-			 ztest_unit_test(traffic_class_send_data_prio_ic),
-			 ztest_unit_test(traffic_class_send_data_prio_nc),
+			 ztest_unit_test(test_traffic_class_send_data_prio_bk),
+			 ztest_unit_test(test_traffic_class_send_data_prio_be),
+			 ztest_unit_test(test_traffic_class_send_data_prio_ee),
+			 ztest_unit_test(test_traffic_class_send_data_prio_ca),
+			 ztest_unit_test(test_traffic_class_send_data_prio_vi),
+			 ztest_unit_test(test_traffic_class_send_data_prio_vo),
+			 ztest_unit_test(test_traffic_class_send_data_prio_ic),
+			 ztest_unit_test(test_traffic_class_send_data_prio_nc),
 			 /* Then mix traffic classes and verify that higher
 			  * class packets are sent first.
 			  */
-			 ztest_unit_test(traffic_class_send_data_mix),
-			 ztest_unit_test(traffic_class_send_data_mix_all_1),
-			 ztest_unit_test(traffic_class_send_data_mix_all_2),
-			 ztest_unit_test(traffic_class_cleanup_tx),
+			 ztest_unit_test(test_traffic_class_send_data_mix),
+			 ztest_unit_test(test_traffic_class_send_data_mix_all_1),
+			 ztest_unit_test(test_traffic_class_send_data_mix_all_2),
+			 ztest_unit_test(test_traffic_class_cleanup_tx),
 
 			 /* Same tests for received packets */
-			 ztest_unit_test(traffic_class_setup_rx),
-			 ztest_unit_test(traffic_class_setup_recv),
-			 ztest_unit_test(traffic_class_recv_data_prio_bk),
-			 ztest_unit_test(traffic_class_recv_data_prio_be),
-			 ztest_unit_test(traffic_class_recv_data_prio_ee),
-			 ztest_unit_test(traffic_class_recv_data_prio_ca),
-			 ztest_unit_test(traffic_class_recv_data_prio_vi),
-			 ztest_unit_test(traffic_class_recv_data_prio_vo),
-			 ztest_unit_test(traffic_class_recv_data_prio_ic),
-			 ztest_unit_test(traffic_class_recv_data_prio_nc),
-			 ztest_unit_test(traffic_class_recv_data_mix),
-			 ztest_unit_test(traffic_class_recv_data_mix_all_1),
-			 ztest_unit_test(traffic_class_recv_data_mix_all_2),
-			 ztest_unit_test(traffic_class_cleanup_rx)
+			 ztest_unit_test(test_traffic_class_setup_rx),
+			 ztest_unit_test(test_traffic_class_setup_recv),
+			 ztest_unit_test(test_traffic_class_recv_data_prio_bk),
+			 ztest_unit_test(test_traffic_class_recv_data_prio_be),
+			 ztest_unit_test(test_traffic_class_recv_data_prio_ee),
+			 ztest_unit_test(test_traffic_class_recv_data_prio_ca),
+			 ztest_unit_test(test_traffic_class_recv_data_prio_vi),
+			 ztest_unit_test(test_traffic_class_recv_data_prio_vo),
+			 ztest_unit_test(test_traffic_class_recv_data_prio_ic),
+			 ztest_unit_test(test_traffic_class_recv_data_prio_nc),
+			 ztest_unit_test(test_traffic_class_recv_data_mix),
+			 ztest_unit_test(test_traffic_class_recv_data_mix_all_1),
+			 ztest_unit_test(test_traffic_class_recv_data_mix_all_2),
+			 ztest_unit_test(test_traffic_class_cleanup_rx)
 			 );
 
 	ztest_run_test_suite(net_traffic_class_test);
