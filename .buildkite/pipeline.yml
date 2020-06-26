@@ -28,3 +28,4 @@ steps:
   - plugins:
       - junit-annotate#v1.7.0:
           artifacts: sanitycheck-*.xml
+          fail-build-on-error: true
