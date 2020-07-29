@@ -123,16 +123,21 @@ void msg_passing_bench(void)
 	uint32_t msg_status =  k_msgq_get(&benchmark_q, &received_data,
 				       K_MSEC(300));
 
+	msg_q_put_w_cxt_end_time = (uint32_t)arch_timing_value_swap_common;
+
+	ARG_UNUSED(msg_status);
+
+	k_thread_abort(producer_w_cxt_switch_tid);
+	k_thread_join(producer_w_cxt_switch_tid, K_FOREVER);
+
 	producer_wo_cxt_switch_tid =
 		k_thread_create(&my_thread_0, my_stack_area_0, STACK_SIZE,
 				thread_producer_msgq_wo_cxt_switch,
 				NULL, NULL, NULL, -2 /*priority*/, 0,
 				K_NO_WAIT);
 
-	k_thread_abort(producer_w_cxt_switch_tid);
 	k_thread_abort(producer_wo_cxt_switch_tid);
-	msg_q_put_w_cxt_end_time = (uint32_t)arch_timing_value_swap_common;
-	ARG_UNUSED(msg_status);
+	k_thread_join(producer_wo_cxt_switch_tid, K_FOREVER);
 
 	/*******************************************************************/
 
@@ -150,8 +155,13 @@ void msg_passing_bench(void)
 				NULL, NULL, NULL,
 				2 /*priority*/, 0, K_MSEC(50));
 	k_sleep(K_MSEC(2000));  /* make the main thread sleep */
-	k_thread_abort(producer_get_w_cxt_switch_tid);
+
 	msg_q_get_w_cxt_end_time = (arch_timing_value_swap_common);
+
+	k_thread_abort(producer_get_w_cxt_switch_tid);
+	k_thread_abort(consumer_get_w_cxt_switch_tid);
+	k_thread_join(producer_get_w_cxt_switch_tid, K_FOREVER);
+	k_thread_join(consumer_get_w_cxt_switch_tid, K_FOREVER);
 
 	/*******************************************************************/
 
@@ -167,7 +177,6 @@ void msg_passing_bench(void)
 	TIMING_INFO_PRE_READ();
 	msg_q_get_wo_cxt_end_time = TIMING_INFO_OS_GET_TIME();
 
-
 	/*******************************************************************/
 
 	/* Msg box to benchmark sync put */
@@ -178,14 +187,23 @@ void msg_passing_bench(void)
 				thread_mbox_sync_put_send,
 				NULL, NULL, NULL,
 				2 /*priority*/, 0, K_NO_WAIT);
+
 	thread_mbox_sync_put_receive_tid =
 		k_thread_create(&my_thread_0, my_stack_area_0,
 				STACK_SIZE,
 				thread_mbox_sync_put_receive,
 				NULL, NULL, NULL,
 				1 /*priority*/, 0, K_NO_WAIT);
+
 	k_sleep(K_MSEC(1000));  /* make the main thread sleep */
+
 	mbox_sync_put_end_time = (arch_timing_value_swap_common);
+
+	k_thread_abort(thread_mbox_sync_put_send_tid);
+	k_thread_join(thread_mbox_sync_put_send_tid, K_FOREVER);
+
+	k_thread_abort(thread_mbox_sync_put_receive_tid);
+	k_thread_join(thread_mbox_sync_put_receive_tid, K_FOREVER);
 
 	/*******************************************************************/
 
@@ -197,13 +215,22 @@ void msg_passing_bench(void)
 				thread_mbox_sync_get_send,
 				NULL, NULL, NULL,
 				1 /*prio*/, 0, K_NO_WAIT);
+
 	thread_mbox_sync_get_receive_tid =
 		k_thread_create(&my_thread_0, my_stack_area_0,
 				STACK_SIZE,
 				thread_mbox_sync_get_receive, NULL,
 				NULL, NULL, 2 /*priority*/, 0, K_NO_WAIT);
+
 	k_sleep(K_MSEC(1000)); /* make the main thread sleep */
+
 	mbox_sync_get_end_time = (arch_timing_value_swap_common);
+
+	k_thread_abort(thread_mbox_sync_get_send_tid);
+	k_thread_join(thread_mbox_sync_get_send_tid, K_FOREVER);
+
+	k_thread_abort(thread_mbox_sync_get_receive_tid);
+	k_thread_join(thread_mbox_sync_get_receive_tid, K_FOREVER);
 
 	/*******************************************************************/
 
@@ -215,13 +242,21 @@ void msg_passing_bench(void)
 				thread_mbox_async_put_send,
 				NULL, NULL, NULL,
 				2 /*prio*/, 0, K_NO_WAIT);
+
 	thread_mbox_async_put_receive_tid =
 		k_thread_create(&my_thread_0, my_stack_area_0,
 				STACK_SIZE,
 				thread_mbox_async_put_receive,
 				NULL, NULL, NULL,
 				3 /*priority*/, 0, K_NO_WAIT);
+
 	k_sleep(K_MSEC(1000)); /* make the main thread sleep */
+
+	k_thread_abort(thread_mbox_async_put_send_tid);
+	k_thread_join(thread_mbox_async_put_send_tid, K_FOREVER);
+
+	k_thread_abort(thread_mbox_async_put_receive_tid);
+	k_thread_join(thread_mbox_async_put_receive_tid, K_FOREVER);
 
 	/*******************************************************************/
 	int single_element_buffer = 0, status;

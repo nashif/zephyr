@@ -65,6 +65,13 @@ void semaphore_bench(void)
 
 	sem_take_end_time = (arch_timing_value_swap_common);
 
+	k_thread_abort(sem0_tid);
+	k_thread_abort(sem1_tid);
+
+	k_thread_join(sem0_tid, K_FOREVER);
+	k_thread_join(sem1_tid, K_FOREVER);
+
+
 	sem0_tid = k_thread_create(&my_thread, my_stack_area,
 				   STACK_SIZE, thread_sem0_give_test,
 				   NULL, NULL, NULL,
@@ -94,6 +101,12 @@ void semaphore_bench(void)
 
 	TIMING_INFO_PRE_READ();
 	uint32_t sem_take_wo_cxt_end_time = TIMING_INFO_OS_GET_TIME();
+
+	k_thread_abort(sem0_tid);
+	k_thread_abort(sem1_tid);
+
+	k_thread_join(sem0_tid, K_FOREVER);
+	k_thread_join(sem1_tid, K_FOREVER);
 
 	total_cycles = CALCULATE_CYCLES(sem, take);
 	PRINT_STATS("Semaphore take with context switch", total_cycles);

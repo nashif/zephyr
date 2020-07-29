@@ -96,16 +96,21 @@ void drop_to_user_mode(void)
 
 	/* Test time to drop to usermode from SU */
 
-	k_thread_create(&my_thread_user, my_stack_area_0, STACK_SIZE,
-			drop_to_user_mode_thread,
-			NULL, NULL, NULL,
-			-1 /*priority*/, K_INHERIT_PERMS, K_NO_WAIT);
+	k_tid_t tid = k_thread_create(&my_thread_user, my_stack_area_0,
+				      STACK_SIZE,
+				      drop_to_user_mode_thread,
+				      NULL, NULL, NULL,
+				      -1 /*priority*/, K_INHERIT_PERMS,
+				      K_NO_WAIT);
 
 	k_yield();
 
 	uint32_t total_cycles =
 		SUBTRACT_CLOCK_CYCLES(arch_timing_enter_user_mode_end) -
 		SUBTRACT_CLOCK_CYCLES(drop_to_user_mode_start_time);
+
+	k_thread_abort(tid);
+	k_thread_join(tid, K_FOREVER);
 
 	PRINT_STATS("Drop to user mode", total_cycles);
 }
@@ -118,10 +123,12 @@ void user_thread_creation(void)
 	TIMING_INFO_PRE_READ();
 	user_thread_creation_start_time = TIMING_INFO_GET_TIMER_VALUE();
 
-	k_thread_create(&my_thread_user, my_stack_area, STACK_SIZE,
-			test_drop_to_user_mode_1,
-			NULL, NULL, NULL,
-			0 /*priority*/, K_INHERIT_PERMS | K_USER, K_FOREVER);
+	k_tid_t tid = k_thread_create(&my_thread_user, my_stack_area,
+				      STACK_SIZE,
+				      test_drop_to_user_mode_1,
+				      NULL, NULL, NULL,
+				      0 /*priority*/, K_INHERIT_PERMS | K_USER,
+				      K_FOREVER);
 
 	TIMING_INFO_PRE_READ();
 	user_thread_creation_end_time = TIMING_INFO_GET_TIMER_VALUE();
@@ -130,6 +137,9 @@ void user_thread_creation(void)
 	uint32_t total_cycles =
 		SUBTRACT_CLOCK_CYCLES(user_thread_creation_end_time) -
 		SUBTRACT_CLOCK_CYCLES(user_thread_creation_start_time);
+
+	k_thread_abort(tid);
+	k_thread_join(tid, K_FOREVER);
 
 	PRINT_STATS("User thread creation", total_cycles);
 }
@@ -164,14 +174,19 @@ void syscall_overhead_user_thread(void *p1, void *p2, void *p3)
 
 void syscall_overhead(void)
 {
-	k_thread_create(&my_thread_user, my_stack_area_0, STACK_SIZE,
-			syscall_overhead_user_thread,
-			NULL, NULL, NULL,
-			-1 /*priority*/, K_INHERIT_PERMS | K_USER, K_NO_WAIT);
+	k_tid_t tid = k_thread_create(&my_thread_user, my_stack_area_0,
+				      STACK_SIZE,
+				      syscall_overhead_user_thread,
+				      NULL, NULL, NULL,
+				      -1 /*priority*/,
+				      K_INHERIT_PERMS | K_USER, K_NO_WAIT);
 
 	uint32_t total_cycles =
 		SUBTRACT_CLOCK_CYCLES(syscall_overhead_end_time) -
 		SUBTRACT_CLOCK_CYCLES(syscall_overhead_start_time);
+
+	k_thread_abort(tid);
+	k_thread_join(tid, K_FOREVER);
 
 	PRINT_STATS("Syscall overhead", total_cycles);
 }
@@ -220,10 +235,12 @@ void validation_overhead(void)
 {
 	k_thread_access_grant(k_current_get(), &test_sema);
 
-	k_thread_create(&my_thread_user, my_stack_area, STACK_SIZE,
-			validation_overhead_user_thread,
-			NULL, NULL, NULL,
-			-1 /*priority*/, K_INHERIT_PERMS | K_USER, K_NO_WAIT);
+	k_tid_t tid = k_thread_create(&my_thread_user, my_stack_area,
+				      STACK_SIZE,
+				      validation_overhead_user_thread,
+				      NULL, NULL, NULL,
+				      -1 /*priority*/,
+				      K_INHERIT_PERMS | K_USER, K_NO_WAIT);
 
 
 	uint32_t total_cycles_obj_init =
@@ -233,6 +250,9 @@ void validation_overhead(void)
 	uint32_t total_cycles_obj =
 		SUBTRACT_CLOCK_CYCLES(validation_overhead_obj_end_time) -
 		SUBTRACT_CLOCK_CYCLES(validation_overhead_obj_start_time);
+
+	k_thread_abort(tid);
+	k_thread_join(tid, K_FOREVER);
 
 	PRINT_STATS("Validation overhead k_object init",
 		    total_cycles_obj_init);

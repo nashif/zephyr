@@ -48,6 +48,14 @@ void yield_bench(void)
 				     NULL, NULL, NULL,
 				     0 /*priority*/, 0, K_NO_WAIT);
 
+	k_sleep(K_MSEC(1000));
+
+	k_thread_abort(yield0_tid);
+	k_thread_abort(yield1_tid);
+
+	k_thread_join(yield0_tid, K_FOREVER);
+	k_thread_join(yield1_tid, K_FOREVER);
+
 	/* read the time of start of the sleep till the swap happens */
 	arch_timing_value_swap_end = 1U;
 

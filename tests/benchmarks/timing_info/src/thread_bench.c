@@ -105,12 +105,16 @@ void thread_swap_test(void *p1, void *p2, void *p3)
 	k_thread_abort(_current);
 }
 
-void thread_suspend_test(void *p1, void *p2, void *p3);
-void yield_bench(void);
-void heap_malloc_free_bench(void);
-void main_sem_bench(void);
-void main_mutex_bench(void);
-void main_msg_bench(void);
+void thread_suspend_test(void *p1, void *p2, void *p3)
+{
+	TIMING_INFO_PRE_READ();
+	thread_suspend_start_time = TIMING_INFO_OS_GET_TIME();
+	k_thread_suspend(_current);
+
+	/* comes to this line once its resumed*/
+	TIMING_INFO_PRE_READ();
+	thread_resume_end_time = TIMING_INFO_OS_GET_TIME();
+}
 
 void system_thread_bench(void)
 {
@@ -125,10 +129,10 @@ void system_thread_bench(void)
 	uint64_t thread_abort_nonrun_end_time;
 
 	/* to measure context switch time */
-	k_thread_create(&my_thread_0, my_stack_area_0, STACK_SIZE,
-			thread_swap_test,
-			NULL, NULL, NULL,
-			-1 /*priority*/, 0, K_NO_WAIT);
+	k_tid_t ctx_tid = k_thread_create(&my_thread_0, my_stack_area_0,
+					  STACK_SIZE, thread_swap_test,
+					  NULL, NULL, NULL,
+					  -1 /*priority*/, 0, K_NO_WAIT);
 
 	k_sleep(K_MSEC(1));
 	thread_abort_current_end_time = (arch_timing_value_swap_common);
@@ -148,6 +152,9 @@ void system_thread_bench(void)
 	uint64_t local_end_intr_time = arch_timing_irq_end;
 	uint64_t local_start_intr_time = arch_timing_irq_start;
 
+	k_thread_abort(ctx_tid);
+	k_thread_join(ctx_tid, K_FOREVER);
+
 	/*******************************************************************/
 
 	/* thread create */
@@ -159,6 +166,7 @@ void system_thread_bench(void)
 					 thread_swap_test,
 					 NULL, NULL, NULL,
 					 5 /*priority*/, 0, K_FOREVER);
+
 	TIMING_INFO_PRE_READ();
 	thread_create_end_time = TIMING_INFO_OS_GET_TIME();
 
@@ -170,6 +178,8 @@ void system_thread_bench(void)
 	TIMING_INFO_PRE_READ();
 	thread_abort_nonrun_end_time = TIMING_INFO_OS_GET_TIME();
 
+	k_thread_join(my_tid, K_FOREVER);
+
 	/* Thread suspend */
 	k_tid_t sus_res_tid = k_thread_create(&my_thread, my_stack_area,
 					      STACK_SIZE,
@@ -179,11 +189,15 @@ void system_thread_bench(void)
 
 	TIMING_INFO_PRE_READ();
 	thread_suspend_end_time = TIMING_INFO_OS_GET_TIME();
+
 	/* At this point test for resume*/
 	k_thread_resume(sus_res_tid);
 
 	/* calculation for resume */
 	thread_resume_start_time = thread_suspend_end_time;
+
+	k_thread_abort(sus_res_tid);
+	k_thread_join(sus_res_tid, K_FOREVER);
 
 	/*******************************************************************/
 
@@ -222,15 +236,4 @@ void system_thread_bench(void)
 	/* thread resume */
 	total_cycles = CALCULATE_CYCLES(thread, resume);
 	PRINT_STATS("Thread resume", total_cycles);
-}
-
-void thread_suspend_test(void *p1, void *p2, void *p3)
-{
-	TIMING_INFO_PRE_READ();
-	thread_suspend_start_time = TIMING_INFO_OS_GET_TIME();
-	k_thread_suspend(_current);
-
-	/* comes to this line once its resumed*/
-	TIMING_INFO_PRE_READ();
-	thread_resume_end_time = TIMING_INFO_OS_GET_TIME();
 }
