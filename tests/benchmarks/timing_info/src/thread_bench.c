@@ -48,46 +48,9 @@ K_THREAD_STACK_DEFINE(my_stack_area_0, STACK_SIZE);
 struct k_thread my_thread;
 struct k_thread my_thread_0;
 
-uint32_t arch_timing_value_swap_end_test = 1U;
 uint64_t dummy_time;
 uint64_t start_time;
 uint64_t test_end_time;
-
-/* Disable the overhead calculations, this is needed to calculate
- * the overhead created by the benchmarking code itself.
- */
-#define DISABLE_OVERHEAD_MEASUREMENT
-
-#if defined(CONFIG_X86) && !defined(DISABLE_OVERHEAD_MEASUREMENT)
-uint32_t benchmarking_overhead_swap(void)
-{
-
-	__asm__ __volatile__ (
-		"pushl %eax\n\t"
-		"pushl %edx\n\t"
-		"rdtsc\n\t"
-		"mov %eax,start_time\n\t"
-		"mov %edx,start_time+4\n\t"
-		"cmp $0x1,arch_timing_value_swap_end_test\n\t"
-		"jne time_read_not_needed_test\n\t"
-		"movw $0x2,arch_timing_value_swap_end\n\t"
-		"pushl %eax\n\t"
-		"pushl %edx\n\t"
-		"rdtsc\n\t"
-		"mov %eax,dummy_time\n\t"
-		"mov %edx,dummy_time+4\n\t"
-		"pop %edx\n\t"
-		"pop %eax\n\t"
-		"time_read_not_needed_test:\n\t"
-		"rdtsc\n\t"
-		"mov %eax,test_end_time\n\t"
-		"mov %edx,test_end_time+4\n\t"
-		"pop %edx\n\t"
-		"pop %eax\n\t");
-
-	return(test_end_time - start_time);
-}
-#endif
 
 void test_thread_entry(void *p, void *p1, void *p2)
 {
