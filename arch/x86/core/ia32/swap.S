@@ -29,6 +29,10 @@
 #endif
 	GDATA(_k_neg_eagain)
 
+#ifdef CONFIG_EXECUTION_BENCHMARKING
+	GTEXT(read_timer_start_of_swap)
+	GTEXT(read_timer_end_of_swap)
+#endif
 /*
  * Given that arch_swap() is called to effect a cooperative context switch,
  * only the non-volatile integer registers need to be saved in the TCS of the
@@ -65,27 +69,15 @@
  * unsigned int arch_swap (unsigned int eflags);
  */
 
-.macro read_tsc var_name
-	push %eax
-	push %edx
-	rdtsc
-	mov %eax,\var_name
-	mov %edx,\var_name+4
-	pop %edx
-	pop %eax
-.endm
 SECTION_FUNC(TEXT, arch_swap)
 #ifdef CONFIG_EXECUTION_BENCHMARKING
-	/* Save the eax and edx registers before reading the time stamp
-	* once done pop the values.
-	*/
-	push %eax
-	push %edx
-	rdtsc
-	mov %eax,arch_timing_swap_start
-	mov %edx,arch_timing_swap_start+4
-	pop %edx
-	pop %eax
+	push	%eax
+	push	%edx
+
+	call	read_timer_start_of_swap
+
+	pop	%edx
+	pop	%eax
 #endif
 	/*
 	 * Push all non-volatile registers onto the stack; do not copy
@@ -356,13 +348,13 @@ CROHandlingDone:
 	popfl
 
 #ifdef CONFIG_EXECUTION_BENCHMARKING
-	cmp $0x1,arch_timing_value_swap_end
-	jne time_read_not_needed
-	movw $0x2,arch_timing_value_swap_end
-	read_tsc arch_timing_value_swap_common
-	pushl arch_timing_swap_start
-	popl arch_timing_value_swap_temp
-time_read_not_needed:
+	push	%eax
+	push	%edx
+
+	call	read_timer_end_of_swap
+
+	pop	%edx
+	pop	%eax
 #endif
 	ret
 

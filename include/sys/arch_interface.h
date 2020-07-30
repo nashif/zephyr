@@ -687,7 +687,6 @@ extern uint64_t arch_timing_tick_end;
 extern uint64_t arch_timing_user_mode_end;
 extern uint32_t arch_timing_value_swap_end;
 extern uint64_t arch_timing_value_swap_common;
-extern uint64_t arch_timing_value_swap_temp;
 #endif /* CONFIG_EXECUTION_BENCHMARKING */
 
 /** @} */

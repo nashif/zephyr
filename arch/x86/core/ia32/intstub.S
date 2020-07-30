@@ -35,6 +35,10 @@
 	GTEXT(z_sys_power_save_idle_exit)
 #endif
 
+#ifdef CONFIG_EXECUTION_BENCHMARKING
+	GTEXT(read_timer_start_of_isr)
+	GTEXT(read_timer_end_of_isr)
+#endif
 
 /**
  *
@@ -80,13 +84,13 @@ SECTION_FUNC(TEXT, _interrupt_enter)
 	 */
 
 #ifdef CONFIG_EXECUTION_BENCHMARKING
-	pushl %eax
-	pushl %edx
-	rdtsc
-	mov %eax, arch_timing_irq_start
-	mov %edx, arch_timing_irq_start+4
-	pop %edx
-	pop %eax
+	push	%eax
+	push	%edx
+
+	call	read_timer_start_of_isr
+
+	pop	%edx
+	pop	%eax
 #endif
 	/*
 	 * The gen_idt tool creates an interrupt-gate descriptor for
@@ -180,16 +184,13 @@ alreadyOnIntStack:
 	push	%eax	/* interrupt handler argument */
 
 #ifdef CONFIG_EXECUTION_BENCHMARKING
-	/* Save the eax and edx registers before reading the time stamp
-	* once done pop the values
-	*/
-	pushl %eax
-	pushl %edx
-	rdtsc
-	mov %eax,arch_timing_irq_end
-	mov %edx,arch_timing_irq_end+4
-	pop %edx
-	pop %eax
+	push	%eax
+	push	%edx
+
+	call	read_timer_end_of_isr
+
+	pop	%edx
+	pop	%eax
 #endif
 
 #ifdef CONFIG_NESTED_INTERRUPTS

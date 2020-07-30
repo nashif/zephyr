@@ -20,7 +20,6 @@ char sline[256];
 
 /* location of the time stamps*/
 extern uint32_t arch_timing_value_swap_end;
-extern uint64_t arch_timing_value_swap_temp;
 extern uint64_t arch_timing_value_swap_common;
 
 volatile uint64_t thread_abort_current_end_time;
@@ -100,13 +99,7 @@ void system_thread_bench(void)
 	k_sleep(K_MSEC(1));
 	thread_abort_current_end_time = (arch_timing_value_swap_common);
 	arch_timing_swap_end = arch_timing_value_swap_common;
-#if defined(CONFIG_X86)
-	arch_timing_swap_start = arch_timing_value_swap_temp;
-	/* In the rest of ARCHes read_timer_start_of_swap() has already
-	 * registered the time-stamp of the start of context-switch in
-	 * arch_timing_swap_start.
-	 */
-#endif
+
 	uint32_t total_swap_cycles =
 		arch_timing_swap_end -
 		arch_timing_swap_start;

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <toolchain.h>
 #include <arch/x86/multiboot.h>
 #include <sys/util.h>
 #include <arch/x86/msr.h>
@@ -11,15 +12,12 @@
 #include <drivers/interrupt_controller/loapic.h>
 #include <arch/cpu.h>
 
-.macro read_tsc var_name
-	push %rax
-	push %rdx
-	rdtsc
-	mov %eax,\var_name
-	mov %edx,\var_name+4
-	pop %rdx
-	pop %rax
-.endm
+#ifdef CONFIG_EXECUTION_BENCHMARKING
+GTEXT(read_timer_start_of_swap)
+GTEXT(read_timer_end_of_swap)
+GTEXT(read_timer_start_of_isr)
+GTEXT(read_timer_end_of_isr)
+#endif
 
 .section .locore,"ax"
 .code32
@@ -261,7 +259,13 @@ mxcsr:	.long X86_MXCSR_SANE
 .globl z_x86_switch
 z_x86_switch:
 #ifdef CONFIG_EXECUTION_BENCHMARKING
-	read_tsc arch_timing_swap_start
+	push	%rax
+	push	%rdx
+
+	call	read_timer_start_of_swap
+
+	pop	%rdx
+	pop	%rax
 #endif
 
 	/* RSI contains the switch_handle field to which we are
@@ -389,13 +393,13 @@ __resume:
 #endif /* CONFIG_X86_BOUNDS_CHECK_BYPASS_MITIGATION */
 
 #ifdef CONFIG_EXECUTION_BENCHMARKING
-	cmp $0x1,arch_timing_value_swap_end
-	jne time_read_not_needed
-	movw $0x2,arch_timing_value_swap_end
-	read_tsc arch_timing_value_swap_common
-	pushq arch_timing_swap_start
-	popq arch_timing_value_swap_temp
-time_read_not_needed:
+	push	%rax
+	push	%rdx
+
+	call	read_timer_end_of_swap
+
+	pop	%rdx
+	pop	%rax
 #endif
 
 	iretq
@@ -566,7 +570,13 @@ EXCEPT(Z_X86_OOPS_VECTOR);
 
 irq:
 #ifdef CONFIG_EXECUTION_BENCHMARKING
-	read_tsc arch_timing_irq_start
+	push	%rax
+	push	%rdx
+
+	call	read_timer_start_of_isr
+
+	pop	%rdx
+	pop	%rax
 #endif
 
 	pushq %rsi
@@ -685,7 +695,15 @@ irq_enter_unnested: /* Not nested: dump state to thread struct for __resume */
 
 irq_dispatch:
 #ifdef CONFIG_EXECUTION_BENCHMARKING
-	read_tsc arch_timing_irq_end
+	push	%rax
+	push	%rcx
+	push	%rdx
+
+	call	read_timer_end_of_isr
+
+	pop	%rdx
+	pop	%rcx
+	pop	%rax
 #endif
 
 	movq x86_irq_funcs(,%rcx,8), %rbx

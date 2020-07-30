@@ -20,6 +20,10 @@ GTEXT(z_x86_user_string_nlen_fixup)
 /* Imports */
 GDATA(_k_syscall_table)
 
+#ifdef CONFIG_EXECUTION_BENCHMARKING
+GTEXT(read_timer_end_of_userspace_enter)
+#endif
+
 #ifdef CONFIG_X86_KPTI
 /* Switch from the shadow to the kernel page table, switch to the interrupted
  * thread's kernel stack, and copy all context from the trampoline stack.
@@ -371,16 +375,13 @@ SECTION_FUNC(TEXT, z_x86_userspace_enter)
 	push	$z_thread_entry	/* EIP */
 
 #ifdef CONFIG_EXECUTION_BENCHMARKING
-	/* Save the eax and edx registers before reading the time stamp
-	* once done pop the values.
-	*/
-	push %eax
-	push %edx
-	rdtsc
-	mov %eax,arch_timing_enter_user_mode_end
-	mov %edx,arch_timing_enter_user_mode_end+4
-	pop %edx
-	pop %eax
+	push	%eax
+	push	%edx
+
+	call	read_timer_end_of_userspace_enter
+
+	pop	%edx
+	pop	%eax
 #endif
 
 	/* We will land in z_thread_entry() in user mode after this */

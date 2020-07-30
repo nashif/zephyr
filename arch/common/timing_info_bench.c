@@ -17,7 +17,6 @@ uint64_t  arch_timing_enter_user_mode_end;
 /* location of the time stamps*/
 uint32_t arch_timing_value_swap_end;
 uint64_t arch_timing_value_swap_common;
-uint64_t arch_timing_value_swap_temp;
 
 #if defined(CONFIG_NRF_RTC_TIMER)
 #include <nrfx.h>
