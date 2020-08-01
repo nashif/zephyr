@@ -589,6 +589,11 @@ char *z_setup_new_thread(struct k_thread *new_thread,
 		new_thread->name[0] = '\0';
 	}
 #endif
+
+#ifdef CONFIG_THREAD_RUNTIME_STATS
+	new_thread->runtime_counter = 0UL;
+#endif
+
 #ifdef CONFIG_SCHED_CPU_MASK
 	new_thread->base.cpu_mask = -1;
 #endif

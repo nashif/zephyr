@@ -322,6 +322,12 @@ config EXECUTION_BENCHMARKING
 	  All timing measurements are enabled for X86 and ARM based architectures.
 	  In other architectures only a subset is enabled.
 
+config THREAD_RUNTIME_STATS
+	bool "Thread runtime statistics"
+	default y
+	help
+	  Thread runtime statistics
+
 config THREAD_MONITOR
 	bool "Thread monitoring [EXPERIMENTAL]"
 	help

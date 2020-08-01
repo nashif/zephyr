@@ -589,6 +589,10 @@ struct k_thread {
 	struct k_thread *next_thread;
 #endif
 
+#if defined(CONFIG_THREAD_RUNTIME_STATS)
+	uint32_t runtime_counter;
+#endif
+
 #if defined(CONFIG_THREAD_NAME)
 	/** Thread name */
 	char name[CONFIG_THREAD_MAX_NAME_LEN];
