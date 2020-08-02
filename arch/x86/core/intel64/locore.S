@@ -260,9 +260,6 @@ mxcsr:	.long X86_MXCSR_SANE
 
 .globl z_x86_switch
 z_x86_switch:
-#ifdef CONFIG_EXECUTION_BENCHMARKING
-	read_tsc arch_timing_swap_start
-#endif
 
 	/* RSI contains the switch_handle field to which we are
 	 * notionally supposed to store.  Offset it to get back to the
@@ -387,20 +384,7 @@ __resume:
 	/* swapgs variant of Spectre V1. Disable speculation past this point */
 	lfence
 #endif /* CONFIG_X86_BOUNDS_CHECK_BYPASS_MITIGATION */
-
-#ifdef CONFIG_EXECUTION_BENCHMARKING
-	cmp $0x1,arch_timing_value_swap_end
-	jne time_read_not_needed
-	movw $0x2,arch_timing_value_swap_end
-	read_tsc arch_timing_value_swap_common
-	pushq arch_timing_swap_start
-	popq arch_timing_value_swap_temp
-time_read_not_needed:
-#endif
-
 	iretq
-
-
 
 
 #define EXCEPT_CODE(nr) vector_ ## nr: pushq $nr; jmp except
