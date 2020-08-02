@@ -89,8 +89,8 @@
 #endif
 
 /******************************************************************************/
-/* NRF RTC TIMER runs ar very slow rate (32KHz), So in order to measure
- * Kernel starts a dedicated timer to measure kernel stats.
+/* NRF RTC TIMER runs at very slow rate (32KHz), So in order to make
+ * measurements we start a dedicated timer to produce statistics.
  */
 #if defined(CONFIG_NRF_RTC_TIMER)
 #define NANOSECS_PER_SEC (1000000000)
