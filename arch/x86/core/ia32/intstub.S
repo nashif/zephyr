@@ -191,6 +191,17 @@ alreadyOnIntStack:
 	pop %edx
 	pop %eax
 #endif
+#if defined(CONFIG_TRACING_ISR)
+
+	/* Save these as we are using to keep track of isr and isr_param */
+	pushl	%eax
+	pushl	%edx
+
+	call	sys_trace_isr_exit
+
+	popl	%edx
+	popl	%eax
+#endif
 
 #ifdef CONFIG_NESTED_INTERRUPTS
 	sti			/* re-enable interrupts */
