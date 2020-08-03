@@ -37,9 +37,15 @@ void sys_trace_thread_create(struct k_thread *thread)
 	printk(">> thread created (%p): %s\n", thread,
 	       k_thread_name_get(thread));
 }
+
 void sys_trace_thread_abort(struct k_thread *thread)
 {
 	printk(">> thread abort: %s\n", k_thread_name_get(thread));
+}
+
+void sys_trace_thread_running(struct k_thread *thread)
+{
+	printk(">> thread running: %s\n", k_thread_name_get(thread));
 }
 
 void sys_trace_thread_suspend(struct k_thread *thread)
@@ -115,6 +121,12 @@ void sys_trace_end_call(unsigned int id)
 	case SYS_TRACE_ID_SEMA_TAKE:
 		printk(">> end call to k_sem_take\n");
 		break;
+	case SYS_TRACE_ID_MUTEX_UNLOCK:
+		printk(">> end call to k_mutex_unlock\n");
+		break;
+	case SYS_TRACE_ID_MUTEX_LOCK:
+		printk(">> end call to k_mutex_lock\n");
+		break;
 	case SYS_TRACE_ID_SLEEP:
 		printk(">> end call to k_sleep\n");
 		break;
@@ -127,8 +139,20 @@ void sys_trace_end_call(unsigned int id)
 void sys_trace_arg1(unsigned int id, void *arg)
 {
 	struct k_sem *sem;
+	struct k_mutex *mutex;
 
 	switch (id) {
+	case SYS_TRACE_ID_MUTEX_INIT:
+		printk(">> mutex inatilized: %p\n", (struct k_mutex *)arg);
+		break;
+	case SYS_TRACE_ID_MUTEX_LOCK:
+		mutex = (struct k_mutex *)arg;
+		printk(">> lock mutex: %p (count: %d)\n", arg, mutex->lock_count);
+		break;
+	case SYS_TRACE_ID_MUTEX_UNLOCK:
+		mutex = (struct k_mutex *)arg;
+		printk(">> unlock mutex: %p (count: %d)\n", arg, mutex->lock_count);
+		break;
 	case SYS_TRACE_ID_SEMA_INIT:
 		printk(">> semaphore inatilized: %p\n", (struct k_sem *)arg);
 		break;
