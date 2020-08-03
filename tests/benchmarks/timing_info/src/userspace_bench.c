@@ -87,13 +87,6 @@ void drop_to_user_mode_thread(void *p1, void *p2, void *p3)
 
 void drop_to_user_mode(void)
 {
-#ifdef SysTick
-	/* Reset the counter so that a interrupt doesn't happen between
-	 * the benchmark test
-	 */
-	SysTick->VAL = 0;
-#endif
-
 	/* Test time to drop to usermode from SU */
 
 	k_tid_t tid = k_thread_create(&my_thread_user, my_stack_area_0,

@@ -50,12 +50,6 @@
 #define TIMING_INFO_GET_TIMER_VALUE()  (TIMING_INFO_OS_GET_TIME())
 #define SUBTRACT_CLOCK_CYCLES(val)     (val)
 
-#elif defined(CONFIG_CPU_CORTEX_M)
-#define TIMING_INFO_PRE_READ()
-#define TIMING_INFO_OS_GET_TIME()      (k_cycle_get_32())
-#define TIMING_INFO_GET_TIMER_VALUE()  (SysTick->VAL)
-#define SUBTRACT_CLOCK_CYCLES(val)     (SysTick->LOAD - (uint32_t)val)
-
 #elif defined(CONFIG_ARC)
 #define TIMING_INFO_PRE_READ()
 #define TIMING_INFO_OS_GET_TIME()     (k_cycle_get_32())
