@@ -132,6 +132,17 @@ _switch_return_from_coop:
 
 	pop_s blink
 #endif /* CONFIG_EXECUTION_BENCHMARKING */
+#ifdef CONFIG_TRACING
+	push_s r0
+	push_s r1
+	push_s blink
+
+	bl sys_trace_thread_switched_in
+
+	pop_s blink
+	pop_s r1
+	pop_s r0
+#endif
 	j_s [blink]
 
 

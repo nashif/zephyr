@@ -21,6 +21,7 @@ void sys_trace_thread_create(struct k_thread *thread);
 void sys_trace_thread_abort(struct k_thread *thread);
 void sys_trace_thread_suspend(struct k_thread *thread);
 void sys_trace_thread_resume(struct k_thread *thread);
+void sys_trace_thread_running(struct k_thread *thread);
 void sys_trace_thread_ready(struct k_thread *thread);
 void sys_trace_thread_pend(struct k_thread *thread);
 void sys_trace_thread_info(struct k_thread *thread);

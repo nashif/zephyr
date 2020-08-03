@@ -87,6 +87,19 @@ SECTION_FUNC(TEXT, arch_swap)
 	pop %edx
 	pop %eax
 #endif
+
+
+#if defined(CONFIG_TRACING)
+
+	/* Save these as we are using to keep track of isr and isr_param */
+	pushl	%eax
+	pushl	%edx
+
+	call	sys_trace_thread_switched_out
+
+	popl	%edx
+	popl	%eax
+#endif
 	/*
 	 * Push all non-volatile registers onto the stack; do not copy
 	 * any of these registers into the k_thread.  Only the 'esp' register
@@ -356,6 +369,17 @@ CROHandlingDone:
 	pushl arch_timing_swap_start
 	popl arch_timing_value_swap_temp
 time_read_not_needed:
+#endif
+#if defined(CONFIG_TRACING)
+
+	/* Save these as we are using to keep track of isr and isr_param */
+	pushl	%eax
+	pushl	%edx
+
+	call	sys_trace_thread_switched_in
+
+	popl	%edx
+	popl	%eax
 #endif
 	ret
 

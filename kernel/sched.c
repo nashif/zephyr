@@ -216,6 +216,7 @@ static ALWAYS_INLINE struct k_thread *next_up(void)
 	 * responsible for putting it back in z_swap and ISR return!),
 	 * which makes this choice simple.
 	 */
+
 	return thread ? thread : _current_cpu->idle_thread;
 #else
 	/* Under SMP, the "cache" mechanism for selecting the next
