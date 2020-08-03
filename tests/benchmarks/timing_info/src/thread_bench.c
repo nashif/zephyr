@@ -168,15 +168,16 @@ void system_thread_bench(void)
 	PRINT_STATS("Context switch", total_swap_cycles);
 
 	/* Interrupt latency */
-	uint32_t intr_latency_cycles = SUBTRACT_CLOCK_CYCLES(local_end_intr_time) -
-		SUBTRACT_CLOCK_CYCLES(local_start_intr_time);
+	uint32_t intr_latency_cycles =
+		local_end_intr_time -
+		local_start_intr_time;
 
 	PRINT_STATS("Interrupt latency", intr_latency_cycles);
 
 	/* tick overhead */
 	total_cycles =
-		SUBTRACT_CLOCK_CYCLES(arch_timing_tick_end) -
-		SUBTRACT_CLOCK_CYCLES(arch_timing_tick_start);
+		arch_timing_tick_end -
+		arch_timing_tick_start;
 
 	PRINT_STATS("Tick overhead", total_cycles);
 

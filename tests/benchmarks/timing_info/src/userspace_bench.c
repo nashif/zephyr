@@ -99,8 +99,8 @@ void drop_to_user_mode(void)
 	k_yield();
 
 	uint32_t total_cycles =
-		SUBTRACT_CLOCK_CYCLES(arch_timing_enter_user_mode_end) -
-		SUBTRACT_CLOCK_CYCLES(drop_to_user_mode_start_time);
+		arch_timing_enter_user_mode_end -
+		drop_to_user_mode_start_time;
 
 	k_thread_abort(tid);
 	k_thread_join(tid, K_FOREVER);
@@ -128,8 +128,8 @@ void user_thread_creation(void)
 	k_thread_abort(&my_thread_user);
 
 	uint32_t total_cycles =
-		SUBTRACT_CLOCK_CYCLES(user_thread_creation_end_time) -
-		SUBTRACT_CLOCK_CYCLES(user_thread_creation_start_time);
+		user_thread_creation_end_time -
+		user_thread_creation_start_time;
 
 	k_thread_abort(tid);
 	k_thread_join(tid, K_FOREVER);
@@ -175,8 +175,8 @@ void syscall_overhead(void)
 				      K_INHERIT_PERMS | K_USER, K_NO_WAIT);
 
 	uint32_t total_cycles =
-		SUBTRACT_CLOCK_CYCLES(syscall_overhead_end_time) -
-		SUBTRACT_CLOCK_CYCLES(syscall_overhead_start_time);
+		syscall_overhead_end_time -
+		syscall_overhead_start_time;
 
 	k_thread_abort(tid);
 	k_thread_join(tid, K_FOREVER);
@@ -237,12 +237,12 @@ void validation_overhead(void)
 
 
 	uint32_t total_cycles_obj_init =
-		SUBTRACT_CLOCK_CYCLES(validation_overhead_obj_init_end_time) -
-		SUBTRACT_CLOCK_CYCLES(validation_overhead_obj_init_start_time);
+		validation_overhead_obj_init_end_time -
+		validation_overhead_obj_init_start_time;
 
 	uint32_t total_cycles_obj =
-		SUBTRACT_CLOCK_CYCLES(validation_overhead_obj_end_time) -
-		SUBTRACT_CLOCK_CYCLES(validation_overhead_obj_start_time);
+		validation_overhead_obj_end_time -
+		validation_overhead_obj_start_time;
 
 	k_thread_abort(tid);
 	k_thread_join(tid, K_FOREVER);

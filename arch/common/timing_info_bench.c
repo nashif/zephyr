@@ -29,25 +29,21 @@ uint64_t arch_timing_value_swap_temp;
 #define TIMING_INFO_PRE_READ()        (NRF_TIMER2->TASKS_CAPTURE[0] = 1)
 #define TIMING_INFO_OS_GET_TIME()     (NRF_TIMER2->CC[0])
 #define TIMING_INFO_GET_TIMER_VALUE() (TIMING_INFO_OS_GET_TIME())
-#define SUBTRACT_CLOCK_CYCLES(val)    (val)
 
 #elif defined(CONFIG_SOC_SERIES_MEC1501X)
 #define TIMING_INFO_PRE_READ()
 #define TIMING_INFO_OS_GET_TIME()     (B32TMR1_REGS->CNT)
 #define TIMING_INFO_GET_TIMER_VALUE() (TIMING_INFO_OS_GET_TIME())
-#define SUBTRACT_CLOCK_CYCLES(val)    (val)
 
 #elif defined(CONFIG_X86)
 #define TIMING_INFO_PRE_READ()
 #define TIMING_INFO_OS_GET_TIME()      (z_tsc_read())
 #define TIMING_INFO_GET_TIMER_VALUE()  (TIMING_INFO_OS_GET_TIME())
-#define SUBTRACT_CLOCK_CYCLES(val)     (val)
 
 #elif defined(CONFIG_ARC)
 #define TIMING_INFO_PRE_READ()
 #define TIMING_INFO_OS_GET_TIME()     (k_cycle_get_32())
 #define TIMING_INFO_GET_TIMER_VALUE() (z_arc_v2_aux_reg_read(_ARC_V2_TMR0_COUNT))
-#define SUBTRACT_CLOCK_CYCLES(val)    ((uint32_t)val)
 
 #elif defined(CONFIG_NIOS2)
 #include "altera_avalon_timer_regs.h"
@@ -65,13 +61,11 @@ uint64_t arch_timing_value_swap_temp;
 	| ((uint32_t)IORD_ALTERA_AVALON_TIMER_SNAPL(TIMER_0_BASE))))
 
 #define TIMING_INFO_GET_TIMER_VALUE()  (TIMING_INFO_OS_GET_TIME())
-#define SUBTRACT_CLOCK_CYCLES(val)     (val)
 
 #else
 #define TIMING_INFO_PRE_READ()
 #define TIMING_INFO_OS_GET_TIME()      (k_cycle_get_32())
 #define TIMING_INFO_GET_TIMER_VALUE()  (k_cycle_get_32())
-#define SUBTRACT_CLOCK_CYCLES(val)     ((uint32_t)val)
 #endif	/* CONFIG_NRF_RTC_TIMER */
 
 

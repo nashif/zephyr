@@ -13,20 +13,6 @@
 /* Stack size for all the threads created in this benchmark */
 #define STACK_SIZE (512 + CONFIG_TEST_EXTRA_STACKSIZE)
 
-/******************************************************************************/
-/*
- * Note on: SUBTRACT_CLOCK_CYCLES
- * If we are using x86 based controller we tend to read the tsc value which is
- * always incrementing i.e count up counter.
- * If we are using the ARM based controllers the systick is a
- * count down counter.
- * If we are using nrf SOC, we are using external timer which always increments
- * ie count up counter.
- * Hence to calculate the cycles taken up by the code we need to adjust the
- * values accordingly.
- *
- * NOTE: Needed only when reading value from end of swap operation
- */
 #if defined(CONFIG_NRF_RTC_TIMER)
 
 /* To get current count of timer, first 1 need to be written into
@@ -36,25 +22,21 @@
 #define TIMING_INFO_PRE_READ()        (NRF_TIMER2->TASKS_CAPTURE[0] = 1)
 #define TIMING_INFO_OS_GET_TIME()     (NRF_TIMER2->CC[0])
 #define TIMING_INFO_GET_TIMER_VALUE() (TIMING_INFO_OS_GET_TIME())
-#define SUBTRACT_CLOCK_CYCLES(val)    (val)
 
 #elif defined(CONFIG_SOC_SERIES_MEC1501X)
 #define TIMING_INFO_PRE_READ()
 #define TIMING_INFO_OS_GET_TIME()     (B32TMR1_REGS->CNT)
 #define TIMING_INFO_GET_TIMER_VALUE() (TIMING_INFO_OS_GET_TIME())
-#define SUBTRACT_CLOCK_CYCLES(val)    (val)
 
 #elif defined(CONFIG_X86)
 #define TIMING_INFO_PRE_READ()
 #define TIMING_INFO_OS_GET_TIME()      (z_tsc_read())
 #define TIMING_INFO_GET_TIMER_VALUE()  (TIMING_INFO_OS_GET_TIME())
-#define SUBTRACT_CLOCK_CYCLES(val)     (val)
 
 #elif defined(CONFIG_ARC)
 #define TIMING_INFO_PRE_READ()
 #define TIMING_INFO_OS_GET_TIME()     (k_cycle_get_32())
 #define TIMING_INFO_GET_TIMER_VALUE() (z_arc_v2_aux_reg_read(_ARC_V2_TMR0_COUNT))
-#define SUBTRACT_CLOCK_CYCLES(val)    ((uint32_t)val)
 
 #elif defined(CONFIG_NIOS2)
 #include "altera_avalon_timer_regs.h"
@@ -72,13 +54,11 @@
 	| ((uint32_t)IORD_ALTERA_AVALON_TIMER_SNAPL(TIMER_0_BASE))))
 
 #define TIMING_INFO_GET_TIMER_VALUE()  (TIMING_INFO_OS_GET_TIME())
-#define SUBTRACT_CLOCK_CYCLES(val)     (val)
 
 #else
 #define TIMING_INFO_PRE_READ()
 #define TIMING_INFO_OS_GET_TIME()      (k_cycle_get_32())
 #define TIMING_INFO_GET_TIMER_VALUE()  (k_cycle_get_32())
-#define SUBTRACT_CLOCK_CYCLES(val)     ((uint32_t)val)
 #endif
 
 /******************************************************************************/
