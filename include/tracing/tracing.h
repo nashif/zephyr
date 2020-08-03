@@ -17,6 +17,7 @@
 #define SYS_TRACE_ID_SEMA_INIT               (4u + SYS_TRACE_ID_OFFSET)
 #define SYS_TRACE_ID_SEMA_GIVE               (5u + SYS_TRACE_ID_OFFSET)
 #define SYS_TRACE_ID_SEMA_TAKE               (6u + SYS_TRACE_ID_OFFSET)
+#define SYS_TRACE_ID_SLEEP                   (7u + SYS_TRACE_ID_OFFSET)
 
 #ifdef CONFIG_SEGGER_SYSTEMVIEW
 #include "tracing_sysview.h"
@@ -122,6 +123,13 @@
  * @param id ID of the operation that was started
  */
 #define sys_trace_void(id)
+
+/**
+ * @brief Can be called with any id signifying a new call and one argument
+ * @param id ID of the operation that was started
+ * @param arg Object
+ */
+#define sys_trace_arg1(id, arg)
 
 /**
  * @brief Can be called with any id signifying ending a call
