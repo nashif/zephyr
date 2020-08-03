@@ -5,6 +5,12 @@ zephyr_sources_ifdef(
   cpu_stats.c
   )
 
+
+zephyr_sources_ifdef(
+  CONFIG_TRACING_METRICS
+  metrics.c
+  )
+
 zephyr_sources_ifdef(
   CONFIG_TRACING_CORE
   tracing_buffer.c

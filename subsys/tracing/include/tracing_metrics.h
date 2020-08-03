@@ -30,6 +30,7 @@ void sys_trace_isr_exit(void);
 void sys_trace_isr_exit_to_scheduler(void);
 void sys_trace_idle(void);
 void sys_trace_void(unsigned int id);
+void sys_trace_arg1(unsigned int id, void *arg1);
 void sys_trace_end_call(unsigned int id);
 
 #ifdef __cplusplus

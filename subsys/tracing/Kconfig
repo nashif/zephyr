@@ -53,6 +53,12 @@ config TRACING_CPU_STATS
 	  and scheduler). Use provided API or enable automatic logging to
 	  get values.
 
+config TRACING_METRICS
+	bool "Gather Metrics"
+	select TRACING_CORE
+	help
+	  Gather matrics from trace points.
+
 config TRACING_TEST
 	bool "Tracing for test usage"
 	select TRACING_CORE
