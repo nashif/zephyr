@@ -23,7 +23,7 @@
 #define PRIORITY 7
 
 /* delay between greetings (in ms) */
-#define SLEEPTIME 500
+#define SLEEPTIME 2500
 
 
 /*
@@ -37,6 +37,14 @@ void helloLoop(const char *my_name,
 	const char *tname;
 
 	while (1) {
+#if 0
+
+		tname = k_thread_name_get(k_current_get());
+		if (tname != NULL) {
+			printk("%s running now!\n",
+				tname);
+		}
+#endif
 		/* take my semaphore */
 		k_sem_take(my_sem, K_FOREVER);
 
@@ -51,7 +59,7 @@ void helloLoop(const char *my_name,
 		}
 
 		/* wait a while, then let other thread have a turn */
-		k_msleep(SLEEPTIME);
+		k_sleep(K_MSEC(SLEEPTIME));
 		k_sem_give(other_sem);
 	}
 }
