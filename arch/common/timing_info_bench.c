@@ -73,7 +73,7 @@ void read_timer_start_of_swap(void)
 {
 	if (arch_timing_value_swap_end == 1U) {
 		TIMING_INFO_PRE_READ();
-		arch_timing_swap_start = (uint32_t) TIMING_INFO_OS_GET_TIME();
+		arch_timing_swap_start = TIMING_INFO_OS_GET_TIME();
 	}
 }
 
@@ -82,8 +82,7 @@ void read_timer_end_of_swap(void)
 	if (arch_timing_value_swap_end == 1U) {
 		TIMING_INFO_PRE_READ();
 		arch_timing_value_swap_end = 2U;
-		arch_timing_value_swap_common =
-			(uint64_t)TIMING_INFO_OS_GET_TIME();
+		arch_timing_value_swap_common = TIMING_INFO_OS_GET_TIME();
 	}
 }
 
@@ -93,29 +92,29 @@ void read_timer_end_of_swap(void)
 void read_timer_start_of_isr(void)
 {
 	TIMING_INFO_PRE_READ();
-	arch_timing_irq_start  = (uint32_t) TIMING_INFO_GET_TIMER_VALUE();
+	arch_timing_irq_start  = TIMING_INFO_GET_TIMER_VALUE();
 }
 
 void read_timer_end_of_isr(void)
 {
 	TIMING_INFO_PRE_READ();
-	arch_timing_irq_end  = (uint32_t) TIMING_INFO_GET_TIMER_VALUE();
+	arch_timing_irq_end  = TIMING_INFO_GET_TIMER_VALUE();
 }
 
 void read_timer_start_of_tick_handler(void)
 {
 	TIMING_INFO_PRE_READ();
-	arch_timing_tick_start  = (uint32_t)TIMING_INFO_GET_TIMER_VALUE();
+	arch_timing_tick_start  = TIMING_INFO_GET_TIMER_VALUE();
 }
 
 void read_timer_end_of_tick_handler(void)
 {
 	TIMING_INFO_PRE_READ();
-	 arch_timing_tick_end  = (uint32_t) TIMING_INFO_GET_TIMER_VALUE();
+	 arch_timing_tick_end  = TIMING_INFO_GET_TIMER_VALUE();
 }
 
 void read_timer_end_of_userspace_enter(void)
 {
 	TIMING_INFO_PRE_READ();
-	arch_timing_enter_user_mode_end = (uint32_t)TIMING_INFO_GET_TIMER_VALUE();
+	arch_timing_enter_user_mode_end = TIMING_INFO_GET_TIMER_VALUE();
 }
