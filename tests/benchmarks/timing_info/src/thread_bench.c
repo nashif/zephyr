@@ -15,41 +15,38 @@
 #include <tc_util.h>
 #include <ksched.h>
 #include "timing_info.h"
+
 char sline[256];
-/* FILE *output_file = stdout; */
 
-/* location of the time stamps*/
+/* location of architectural timestamps */
 extern uint32_t arch_timing_value_swap_end;
-extern uint64_t arch_timing_value_swap_common;
 
-volatile uint64_t thread_abort_current_end_time;
-volatile uint64_t thread_abort_current_start_time;
+/* Thread abort */
+volatile timing_t thread_abort_current_end_time;
+volatile timing_t thread_abort_current_start_time;
 
-/* Thread suspend*/
-volatile uint64_t thread_suspend_start_time;
-volatile uint64_t thread_suspend_end_time;
+/* Thread suspend */
+volatile timing_t thread_suspend_start_time;
+volatile timing_t thread_suspend_end_time;
 
-/* Thread resume*/
-volatile uint64_t thread_resume_start_time;
-volatile uint64_t thread_resume_end_time;
+/* Thread resume */
+volatile timing_t thread_resume_start_time;
+volatile timing_t thread_resume_end_time;
 
-/* Thread sleep*/
-volatile uint64_t thread_sleep_start_time;
-volatile uint64_t thread_sleep_end_time;
+/* Thread sleep */
+volatile timing_t thread_sleep_start_time;
+volatile timing_t thread_sleep_end_time;
 
-/*For benchmarking msg queues*/
+/* For benchmarking message queues */
 k_tid_t producer_tid;
 k_tid_t consumer_tid;
 
-/* To time thread creation*/
+/* To time thread creation */
 K_THREAD_STACK_DEFINE(my_stack_area, STACK_SIZE);
 K_THREAD_STACK_DEFINE(my_stack_area_0, STACK_SIZE);
 struct k_thread my_thread;
 struct k_thread my_thread_0;
 
-uint64_t dummy_time;
-uint64_t start_time;
-uint64_t test_end_time;
 
 void test_thread_entry(void *p, void *p1, void *p2)
 {
@@ -58,37 +55,45 @@ void test_thread_entry(void *p, void *p1, void *p2)
 	i++;
 }
 
-
 void thread_swap_test(void *p1, void *p2, void *p3)
 {
 	arch_timing_value_swap_end = 1U;
-	TIMING_INFO_PRE_READ();
-	thread_abort_current_start_time = TIMING_INFO_OS_GET_TIME();
+	thread_abort_current_start_time = timing_counter_get();
 	k_thread_abort(_current);
 }
 
 void thread_suspend_test(void *p1, void *p2, void *p3)
 {
-	TIMING_INFO_PRE_READ();
-	thread_suspend_start_time = TIMING_INFO_OS_GET_TIME();
+	thread_suspend_start_time = timing_counter_get();
 	k_thread_suspend(_current);
 
 	/* comes to this line once its resumed*/
-	TIMING_INFO_PRE_READ();
-	thread_resume_end_time = TIMING_INFO_OS_GET_TIME();
+	thread_resume_end_time = timing_counter_get();
 }
 
 void system_thread_bench(void)
 {
 	uint32_t total_cycles;
 
-	/*Thread create*/
-	uint64_t thread_create_start_time;
-	uint64_t thread_create_end_time;
+	/* Thread create */
+	timing_t thread_create_start_time;
+	timing_t thread_create_end_time;
 
-	/*Thread cancel*/
-	uint64_t thread_abort_nonrun_start_time;
-	uint64_t thread_abort_nonrun_end_time;
+	/* Thread abort */
+	timing_t thread_abort_nonrun_start_time;
+	timing_t thread_abort_nonrun_end_time;
+
+	/* Context switch */
+	timing_t ctx_swt_start_time;
+	timing_t ctx_swt_end_time;
+
+	/* Interrupt latency */
+	timing_t intr_latency_start_time;
+	timing_t intr_latency_end_time;
+
+	/* Timer overhead */
+	timing_t tick_overhead_start_time;
+	timing_t tick_overhead_end_time;
 
 	/* to measure context switch time */
 	k_tid_t ctx_tid = k_thread_create(&my_thread_0, my_stack_area_0,
@@ -97,16 +102,13 @@ void system_thread_bench(void)
 					  -1 /*priority*/, 0, K_NO_WAIT);
 
 	k_sleep(K_MSEC(1));
-	thread_abort_current_end_time = (arch_timing_value_swap_common);
-	arch_timing_swap_end = arch_timing_value_swap_common;
+	thread_abort_current_end_time = arch_timing_swap_end;
 
-	uint32_t total_swap_cycles =
-		arch_timing_swap_end -
-		arch_timing_swap_start;
+	ctx_swt_start_time = arch_timing_swap_start;
+	ctx_swt_end_time = arch_timing_swap_end;
 
-	/* Interrupt latency*/
-	uint64_t local_end_intr_time = arch_timing_irq_end;
-	uint64_t local_start_intr_time = arch_timing_irq_start;
+	intr_latency_start_time = arch_timing_irq_start;
+	intr_latency_end_time = arch_timing_irq_end;
 
 	k_thread_abort(ctx_tid);
 	k_thread_join(ctx_tid, K_FOREVER);
@@ -114,8 +116,7 @@ void system_thread_bench(void)
 	/*******************************************************************/
 
 	/* thread create */
-	TIMING_INFO_PRE_READ();
-	thread_create_start_time = TIMING_INFO_OS_GET_TIME();
+	thread_create_start_time = timing_counter_get();
 
 	k_tid_t my_tid = k_thread_create(&my_thread, my_stack_area,
 					 STACK_SIZE,
@@ -123,16 +124,13 @@ void system_thread_bench(void)
 					 NULL, NULL, NULL,
 					 5 /*priority*/, 0, K_FOREVER);
 
-	TIMING_INFO_PRE_READ();
-	thread_create_end_time = TIMING_INFO_OS_GET_TIME();
+	thread_create_end_time = timing_counter_get();
 
 	/* aborting a non-running thread */
-	TIMING_INFO_PRE_READ();
-	thread_abort_nonrun_start_time = TIMING_INFO_OS_GET_TIME();
+	thread_abort_nonrun_start_time = timing_counter_get();
 	k_thread_abort(my_tid);
 
-	TIMING_INFO_PRE_READ();
-	thread_abort_nonrun_end_time = TIMING_INFO_OS_GET_TIME();
+	thread_abort_nonrun_end_time = timing_counter_get();
 
 	k_thread_join(my_tid, K_FOREVER);
 
@@ -143,8 +141,7 @@ void system_thread_bench(void)
 					      NULL, NULL, NULL,
 					      -1 /*priority*/, 0, K_NO_WAIT);
 
-	TIMING_INFO_PRE_READ();
-	thread_suspend_end_time = TIMING_INFO_OS_GET_TIME();
+	thread_suspend_end_time = timing_counter_get();
 
 	/* At this point test for resume*/
 	k_thread_resume(sus_res_tid);
@@ -157,21 +154,19 @@ void system_thread_bench(void)
 
 	/*******************************************************************/
 
-	/* Only print lower 32bit of time result */
-	PRINT_STATS("Context switch", total_swap_cycles);
+	tick_overhead_start_time = arch_timing_tick_start;
+	tick_overhead_end_time = arch_timing_tick_end;
+
+	/* Context switch */
+	total_cycles = CALCULATE_CYCLES(ctx, swt);
+	PRINT_STATS("Context switch", total_cycles);
 
 	/* Interrupt latency */
-	uint32_t intr_latency_cycles =
-		local_end_intr_time -
-		local_start_intr_time;
-
-	PRINT_STATS("Interrupt latency", intr_latency_cycles);
+	total_cycles = CALCULATE_CYCLES(intr, latency);
+	PRINT_STATS("Interrupt latency", total_cycles);
 
 	/* tick overhead */
-	total_cycles =
-		arch_timing_tick_end -
-		arch_timing_tick_start;
-
+	total_cycles = CALCULATE_CYCLES(tick, overhead);
 	PRINT_STATS("Tick overhead", total_cycles);
 
 	/* thread creation */

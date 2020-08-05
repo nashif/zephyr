@@ -15,15 +15,15 @@ extern char sline[];
 
 void heap_malloc_free_bench(void)
 {
-	uint32_t total_cycles;
+	uint64_t total_cycles;
 
 	/* heap malloc*/
-	uint64_t heap_malloc_start_time = 0U;
-	uint64_t heap_malloc_end_time = 0U;
+	timing_t heap_malloc_start_time = 0U;
+	timing_t heap_malloc_end_time = 0U;
 
 	/* heap free*/
-	uint64_t heap_free_start_time = 0U;
-	uint64_t heap_free_end_time = 0U;
+	timing_t heap_free_start_time = 0U;
+	timing_t heap_free_end_time = 0U;
 
 	uint32_t count = 0;
 	uint32_t sum_malloc = 0U;
@@ -31,23 +31,23 @@ void heap_malloc_free_bench(void)
 
 	k_sleep(K_MSEC(10));
 	while (count++ != 100) {
-		TIMING_INFO_PRE_READ();
-		heap_malloc_start_time = TIMING_INFO_OS_GET_TIME();
+		heap_malloc_start_time = timing_counter_get();
+
 		void *allocated_mem = k_malloc(10);
 
-		TIMING_INFO_PRE_READ();
-		heap_malloc_end_time = TIMING_INFO_OS_GET_TIME();
+		heap_malloc_end_time = timing_counter_get();
+
 		if (allocated_mem == NULL) {
 			TC_PRINT("\n Malloc failed at count %d\n", count);
 			break;
 		}
-		TIMING_INFO_PRE_READ();
-		heap_free_start_time = TIMING_INFO_OS_GET_TIME();
+
+		heap_free_start_time = timing_counter_get();
 
 		k_free(allocated_mem);
 
-		TIMING_INFO_PRE_READ();
-		heap_free_end_time = TIMING_INFO_OS_GET_TIME();
+		heap_free_end_time = timing_counter_get();
+
 		sum_malloc += CALCULATE_CYCLES(heap, malloc);
 		sum_free += CALCULATE_CYCLES(heap, free);
 	}

@@ -20,9 +20,9 @@ K_APPMEM_PARTITION_DEFINE(bench_ptn);
 struct k_mem_domain bench_domain;
 
 extern char sline[256];
-extern uint64_t arch_timing_enter_user_mode_end;
+extern timing_t arch_timing_enter_user_mode_end;
 
-uint64_t drop_to_user_mode_start_time;
+timing_t drop_to_user_mode_start_time;
 
 struct k_thread my_thread_user;
 K_THREAD_STACK_EXTERN(my_stack_area);
@@ -33,14 +33,12 @@ K_THREAD_STACK_EXTERN(my_stack_area_0);
 /* syscall needed to read timer value when in user space */
 uint32_t z_impl_userspace_read_timer_value(void)
 {
-	TIMING_INFO_PRE_READ();
-	return TIMING_INFO_GET_TIMER_VALUE();
+	return timing_counter_get();
 }
 
 static inline uint32_t z_vrfy_userspace_read_timer_value(void)
 {
-	TIMING_INFO_PRE_READ();
-	return TIMING_INFO_GET_TIMER_VALUE();
+	return timing_counter_get();
 }
 #include <syscalls/userspace_read_timer_value_mrsh.c>
 
@@ -79,14 +77,15 @@ void test_drop_to_user_mode_1(void *p1, void *p2, void *p3)
 
 void drop_to_user_mode_thread(void *p1, void *p2, void *p3)
 {
-	TIMING_INFO_PRE_READ();
-	drop_to_user_mode_start_time = TIMING_INFO_GET_TIMER_VALUE();
+	drop_to_user_mode_start_time = timing_counter_get();
 	k_thread_user_mode_enter(test_drop_to_user_mode_1, NULL, NULL, NULL);
 }
 
 
 void drop_to_user_mode(void)
 {
+	timing_t drop_to_user_mode_end_time;
+
 	/* Test time to drop to usermode from SU */
 
 	k_tid_t tid = k_thread_create(&my_thread_user, my_stack_area_0,
@@ -98,9 +97,9 @@ void drop_to_user_mode(void)
 
 	k_yield();
 
-	uint32_t total_cycles =
-		arch_timing_enter_user_mode_end -
-		drop_to_user_mode_start_time;
+	drop_to_user_mode_end_time = arch_timing_enter_user_mode_end;
+
+	uint64_t total_cycles = CALCULATE_CYCLES(drop, to_user_mode);
 
 	k_thread_abort(tid);
 	k_thread_join(tid, K_FOREVER);
@@ -113,8 +112,7 @@ void user_thread_creation(void)
 {
 	uint64_t user_thread_creation_end_time, user_thread_creation_start_time;
 
-	TIMING_INFO_PRE_READ();
-	user_thread_creation_start_time = TIMING_INFO_GET_TIMER_VALUE();
+	user_thread_creation_start_time = timing_counter_get();
 
 	k_tid_t tid = k_thread_create(&my_thread_user, my_stack_area,
 				      STACK_SIZE,
@@ -123,13 +121,10 @@ void user_thread_creation(void)
 				      0 /*priority*/, K_INHERIT_PERMS | K_USER,
 				      K_FOREVER);
 
-	TIMING_INFO_PRE_READ();
-	user_thread_creation_end_time = TIMING_INFO_GET_TIMER_VALUE();
+	user_thread_creation_end_time = timing_counter_get();
 	k_thread_abort(&my_thread_user);
 
-	uint32_t total_cycles =
-		user_thread_creation_end_time -
-		user_thread_creation_start_time;
+	uint64_t total_cycles = CALCULATE_CYCLES(user_thread, creation);
 
 	k_thread_abort(tid);
 	k_thread_join(tid, K_FOREVER);
@@ -149,8 +144,7 @@ int z_impl_k_dummy_syscall(void)
 
 static inline int z_vrfy_k_dummy_syscall(void)
 {
-	TIMING_INFO_PRE_READ();
-	syscall_overhead_end_time = TIMING_INFO_GET_TIMER_VALUE();
+	syscall_overhead_end_time = timing_counter_get();
 	return 0;
 }
 #include <syscalls/k_dummy_syscall_mrsh.c>
@@ -174,9 +168,7 @@ void syscall_overhead(void)
 				      -1 /*priority*/,
 				      K_INHERIT_PERMS | K_USER, K_NO_WAIT);
 
-	uint32_t total_cycles =
-		syscall_overhead_end_time -
-		syscall_overhead_start_time;
+	uint64_t total_cycles = CALCULATE_CYCLES(syscall, overhead);
 
 	k_thread_abort(tid);
 	k_thread_join(tid, K_FOREVER);
@@ -186,10 +178,10 @@ void syscall_overhead(void)
 
 /******************************************************************************/
 K_SEM_DEFINE(test_sema, 1, 10);
-uint32_t validation_overhead_obj_init_start_time;
-uint32_t validation_overhead_obj_init_end_time;
-uint32_t validation_overhead_obj_start_time;
-uint32_t validation_overhead_obj_end_time;
+timing_t validation_overhead_obj_init_start_time;
+timing_t validation_overhead_obj_init_end_time;
+timing_t validation_overhead_obj_start_time;
+timing_t validation_overhead_obj_end_time;
 
 int z_impl_validation_overhead_syscall(void)
 {
@@ -198,22 +190,18 @@ int z_impl_validation_overhead_syscall(void)
 
 static inline int z_vrfy_validation_overhead_syscall(void)
 {
-	TIMING_INFO_PRE_READ();
-	validation_overhead_obj_init_start_time = TIMING_INFO_GET_TIMER_VALUE();
+	validation_overhead_obj_init_start_time = timing_counter_get();
 
 	bool status_0 = Z_SYSCALL_OBJ_INIT(&test_sema, K_OBJ_SEM);
 
-	TIMING_INFO_PRE_READ();
-	validation_overhead_obj_init_end_time = TIMING_INFO_GET_TIMER_VALUE();
+	validation_overhead_obj_init_end_time = timing_counter_get();
 
 
-	TIMING_INFO_PRE_READ();
-	validation_overhead_obj_start_time = TIMING_INFO_GET_TIMER_VALUE();
+	validation_overhead_obj_start_time = timing_counter_get();
 
 	bool status_1 = Z_SYSCALL_OBJ(&test_sema, K_OBJ_SEM);
 
-	TIMING_INFO_PRE_READ();
-	validation_overhead_obj_end_time = TIMING_INFO_GET_TIMER_VALUE();
+	validation_overhead_obj_end_time = timing_counter_get();
 	return status_0 || status_1;
 }
 #include <syscalls/validation_overhead_syscall_mrsh.c>
@@ -226,6 +214,8 @@ void validation_overhead_user_thread(void *p1, void *p2, void *p3)
 
 void validation_overhead(void)
 {
+	uint64_t total_cycles;
+
 	k_thread_access_grant(k_current_get(), &test_sema);
 
 	k_tid_t tid = k_thread_create(&my_thread_user, my_stack_area,
@@ -235,21 +225,12 @@ void validation_overhead(void)
 				      -1 /*priority*/,
 				      K_INHERIT_PERMS | K_USER, K_NO_WAIT);
 
-
-	uint32_t total_cycles_obj_init =
-		validation_overhead_obj_init_end_time -
-		validation_overhead_obj_init_start_time;
-
-	uint32_t total_cycles_obj =
-		validation_overhead_obj_end_time -
-		validation_overhead_obj_start_time;
-
 	k_thread_abort(tid);
 	k_thread_join(tid, K_FOREVER);
 
-	PRINT_STATS("Validation overhead k_object init",
-		    total_cycles_obj_init);
+	total_cycles = CALCULATE_CYCLES(validation_overhead, obj_init);
+	PRINT_STATS("Validation overhead k_object init", total_cycles);
 
-	PRINT_STATS("Validation overhead k_object permission",
-		    total_cycles_obj);
+	total_cycles = CALCULATE_CYCLES(validation_overhead, obj);
+	PRINT_STATS("Validation overhead k_object permission", total_cycles);
 }

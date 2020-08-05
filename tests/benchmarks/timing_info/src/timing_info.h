@@ -5,13 +5,17 @@
  */
 #include <timestamp.h>
 #include <kernel_internal.h>
+#include <timing/timing.h>
 
 #define CALCULATE_CYCLES(profile, name)					\
-	((profile##_##name##_end_time) -				\
-	 (profile##_##name##_start_time))
+	(timing_cycles_get(						\
+	 &(profile##_##name##_start_time),				\
+	 &(profile##_##name##_end_time)))
 
 /* Stack size for all the threads created in this benchmark */
 #define STACK_SIZE (512 + CONFIG_TEST_EXTRA_STACKSIZE)
+
+#if 0
 
 #if defined(CONFIG_NRF_RTC_TIMER)
 
@@ -27,11 +31,6 @@
 #define TIMING_INFO_PRE_READ()
 #define TIMING_INFO_OS_GET_TIME()     (B32TMR1_REGS->CNT)
 #define TIMING_INFO_GET_TIMER_VALUE() (TIMING_INFO_OS_GET_TIME())
-
-#elif defined(CONFIG_X86)
-#define TIMING_INFO_PRE_READ()
-#define TIMING_INFO_OS_GET_TIME()      (z_tsc_read())
-#define TIMING_INFO_GET_TIMER_VALUE()  (TIMING_INFO_OS_GET_TIME())
 
 #elif defined(CONFIG_ARC)
 #define TIMING_INFO_PRE_READ()
@@ -61,6 +60,9 @@
 #define TIMING_INFO_GET_TIMER_VALUE()  (k_cycle_get_32())
 #endif
 
+#endif
+
+#if 0
 /******************************************************************************/
 /* NRF RTC TIMER runs ar very slow rate (32KHz), So in order to measure
  * Kernel starts a dedicated timer to measure kernel stats.
@@ -142,24 +144,6 @@ static inline uint32_t get_core_freq_MHz(void)
 	return CYCLES_PER_SEC;
 }
 
-#elif defined(CONFIG_X86)
-
-static inline void benchmark_timer_init(void)  {       }
-static inline void benchmark_timer_stop(void)  {       }
-static inline void benchmark_timer_start(void) {       }
-
-extern uint32_t x86_cyc_to_ns_floor64(uint64_t cyc);
-extern uint32_t x86_get_timer_freq_MHz(void);
-
-#define CYCLES_TO_NS(x) x86_cyc_to_ns_floor64(x)
-
-static inline uint32_t get_core_freq_MHz(void)
-{
-	return x86_get_timer_freq_MHz();
-}
-
-#define PRINT_STATS(x, y)	PRINT_F(x, y, CYCLES_TO_NS(y))
-
 #else  /* All other architectures */
 /* Done because weak attribute doesn't work on static inline. */
 static inline void benchmark_timer_init(void)  {       }
@@ -177,6 +161,10 @@ static inline uint32_t get_core_freq_MHz(void)
 #define PRINT_STATS(x, y)	PRINT_F(x, y, CYCLES_TO_NS(y))
 #endif /* CONFIG_NRF_RTC_TIMER */
 
+#endif
+
+#define PRINT_STATS(x, y)	PRINT_F(x, (uint32_t)y, (uint32_t)timing_cycles_to_ns(y))
+
 /******************************************************************************/
 /* PRINT_F
  * Macro to print a formatted output string. fprintf is used when
@@ -187,42 +175,17 @@ static inline uint32_t get_core_freq_MHz(void)
 /* #define CSV_FORMAT_OUTPUT */
 /* printf format defines. */
 #ifdef CSV_FORMAT_OUTPUT
-#define FORMAT "%-45s,%4u,%5u\n"
+#define FORMAT "%-45s,%8u,%8u\n"
 #else
-#define FORMAT "%-45s:%4u cycles , %5u ns\n"
+#define FORMAT "%-45s:%8u cycles , %8u ns\n"
 #endif
 #include <stdio.h>
 
-#define GET_2ND_ARG(first, second, ...) (second)
-#define GET_3ND_ARG(first, second, third, ...) (third)
-
-/* Enable this macro to print all the measurements.
- * Note: Some measurements in few architectures are not valid
- */
-#define PRINT_ALL_MEASUREMENTS
-#ifndef PRINT_ALL_MEASUREMENTS
-/*If the measured cycles is greater than 10000 then one of the following is
- * possible.
- * 1. the selected measurement is not supported in the architecture
- * 2. The measurement went wrong somewhere.(less likely to happen)
- */
-#define PRINT_F(...)						     \
-	{							     \
-		if ((GET_2ND_ARG(__VA_ARGS__) <= 20000) &&	     \
-		    (GET_2ND_ARG(__VA_ARGS__) != 0)) {		     \
-			snprintf(sline, 254, FORMAT, ##__VA_ARGS__); \
-			TC_PRINT("%s", sline);			     \
-		}						     \
-	}
-#else
-/* Prints all outputs*/
 #define PRINT_F(...)						     \
 	{							     \
 		snprintf(sline, 254, FORMAT, ##__VA_ARGS__); \
 		TC_PRINT("%s", sline);			     \
 	}
-
-#endif
 
 /******************************************************************************/
 /* Function prototypes */

@@ -16,21 +16,15 @@
 #include <ksched.h>
 #include "timing_info.h"
 
-void __weak calibrate_timer(void)
-{
-}
-
 void main(void)
 {
 	uint32_t freq;
 
-	calibrate_timer();
+	timing_init();
 
-	freq = get_core_freq_MHz();
+	freq = timing_freq_get_mhz();
 
-	/* Configure and start timer */
-	benchmark_timer_init();
-	benchmark_timer_start();
+	timing_start();
 
 	TC_START("Time Measurement");
 	TC_PRINT("Timing results: Clock frequency: %u MHz\n", freq);
@@ -71,5 +65,6 @@ void main(void)
 	/* for sanity regression test utility. */
 	TC_END_RESULT(TC_PASS);
 	TC_END_REPORT(TC_PASS);
-	benchmark_timer_stop();
+
+	timing_stop();
 }
