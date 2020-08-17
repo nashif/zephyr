@@ -15,6 +15,7 @@
 #include <tc_util.h>
 #include <ksched.h>
 #include "timing_info.h"
+#include <timing/timing.h>
 
 char sline[256];
 
