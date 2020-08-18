@@ -1,5 +1,3 @@
-/* utils.h - utility functions used by latency measurement */
-
 /*
  * Copyright (c) 2012-2014 Wind River Systems, Inc.
  *
@@ -7,11 +5,11 @@
  */
 
 /*
- * DESCRIPTION
- * This file contains function declarations, macroses and inline functions
+ * @brief This file contains function declarations, macroses and inline functions
  * used in latency measurement.
  */
 
+#include <timing/timing.h>
 #include "timing_info.h"
 
 #define INT_IMM8_OFFSET   1
@@ -67,7 +65,7 @@ static inline void print_dash_line(void)
 #define PRINT_TIME_BANNER()						\
 	do {								\
 	PRINT_FORMAT("  tcs = timer clock cycles: 1 tcs is %u nsec",	\
-		     CYCLES_TO_NS(1));					\
+		     (uint32_t)(uint32_t)timing_cycles_to_ns(1));					\
 	print_dash_line();						\
 	} while (0)
 

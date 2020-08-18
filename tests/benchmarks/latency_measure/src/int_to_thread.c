@@ -14,6 +14,7 @@
  * handler back to the interrupted thread.
  */
 
+#include <kernel.h>
 #include "utils.h"
 #include "timing_info.h"
 
@@ -39,8 +40,8 @@ static void latency_test_isr(void *unused)
 
 	flag_var = 1;
 
-	TIMING_INFO_PRE_READ();
-	timestamp_start = TIMING_INFO_OS_GET_TIME();
+
+	timestamp_start = timing_counter_get();
 }
 
 /**
@@ -59,8 +60,8 @@ static void make_int(void)
 	if (flag_var != 1) {
 		PRINT_FORMAT(" Flag variable has not changed. FAILED\n");
 	} else {
-		TIMING_INFO_PRE_READ();
-		timestamp_end = TIMING_INFO_OS_GET_TIME();
+
+		timestamp_end = timing_counter_get();
 	}
 }
 
@@ -76,14 +77,14 @@ int int_to_thread(void)
 
 	PRINT_FORMAT(" 1 - Measure time to switch from ISR back to"
 		     " interrupted thread");
-	benchmark_timer_start();
+	timing_start();
 	TICK_SYNCH();
 	make_int();
 	if (flag_var == 1) {
 		diff = TIMING_INFO_GET_DELTA(timestamp_start, timestamp_end);
 		PRINT_FORMAT(" switching time is %u tcs = %u nsec",
-			     diff, CYCLES_TO_NS(diff));
+			     diff, (uint32_t)timing_cycles_to_ns(diff));
 	}
-	benchmark_timer_stop();
+	timing_stop();
 	return 0;
 }

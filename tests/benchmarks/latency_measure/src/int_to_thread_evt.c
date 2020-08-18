@@ -45,16 +45,16 @@ static void latency_test_isr(void *unused)
 
 	k_work_submit(&work);
 
-	TIMING_INFO_PRE_READ();
-	timestamp_start = TIMING_INFO_OS_GET_TIME();
+
+	timestamp_start = timing_counter_get();
 }
 
 static void worker(struct k_work *item)
 {
 	(void)item;
 
-	TIMING_INFO_PRE_READ();
-	timestamp_end = TIMING_INFO_OS_GET_TIME();
+
+	timestamp_end = timing_counter_get();
 
 	k_sem_give(&WORKSEMA);
 }
@@ -95,15 +95,15 @@ int int_to_thread_evt(void)
 		     " (rescheduled)");
 	k_work_init(&work, worker);
 
-	benchmark_timer_start();
+	timing_start();
 	TICK_SYNCH();
 	k_sem_give(&INTSEMA);
 	k_sem_take(&WORKSEMA, K_FOREVER);
-	benchmark_timer_stop();
+	timing_stop();
 
 	diff = TIMING_INFO_GET_DELTA(timestamp_start, timestamp_end);
 
 	PRINT_FORMAT(" switch time is %u tcs = %u nsec",
-		     diff, CYCLES_TO_NS(diff));
+		     diff, (uint32_t)timing_cycles_to_ns(diff));
 	return 0;
 }

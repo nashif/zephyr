@@ -16,11 +16,10 @@
  * forth by yielding the cpu. When counter reaches the maximal value, threads
  * stop and the average time of context switch is displayed.
  */
-
+#include <kernel.h>
+#include <timing/timing.h>
 #include "utils.h"
 #include "timing_info.h"
-
-#include <arch/cpu.h>
 
 /* number of context switches */
 #define NCTXSWITCH   10000
@@ -58,8 +57,7 @@ static void thread_one(void)
 {
 	k_sem_take(&sync_sema, K_FOREVER);
 
-	TIMING_INFO_PRE_READ();
-	timestamp_start = TIMING_INFO_OS_GET_TIME();
+	timestamp_start = timing_counter_get();
 
 	while (ctx_switch_counter < NCTXSWITCH) {
 		k_yield();
@@ -67,8 +65,7 @@ static void thread_one(void)
 		ctx_switch_balancer--;
 	}
 
-	TIMING_INFO_PRE_READ();
-	timestamp_end = TIMING_INFO_OS_GET_TIME();
+	timestamp_end = timing_counter_get();
 }
 
 /**
@@ -102,7 +99,7 @@ int coop_ctx_switch(void)
 	ctx_switch_counter = 0U;
 	ctx_switch_balancer = 0;
 
-	benchmark_timer_start();
+	timing_start();
 	bench_test_start();
 
 	k_thread_create(&thread_one_data, thread_one_stack, STACKSIZE,
@@ -125,10 +122,10 @@ int coop_ctx_switch(void)
 		PRINT_FORMAT(" Average context switch time is %u tcs = %u"
 			     " nsec",
 			     diff / ctx_switch_counter,
-			     CYCLES_TO_NS_AVG(diff, ctx_switch_counter));
+			     (uint32_t)timing_cycles_to_ns_avg(diff, ctx_switch_counter));
 	}
 
-	benchmark_timer_stop();
+	timing_stop();
 
 	return 0;
 }

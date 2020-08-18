@@ -32,7 +32,7 @@ void test_thread(void *arg1, void *arg2, void *arg3)
 	PRINT_TIME_BANNER();
 
 	bench_test_init();
-	benchmark_timer_init();
+	timing_init();
 
 	int_to_thread();
 	print_dash_line();
