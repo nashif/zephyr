@@ -7,6 +7,8 @@
 #ifndef ZEPHYR_INCLUDE_TIMING_TIMING_H_
 #define ZEPHYR_INCLUDE_TIMING_TIMING_H_
 
+#include <kernel.h>
+
 typedef uint64_t timing_t;
 
 /**
@@ -67,6 +69,7 @@ uint64_t timing_freq_get(void);
  */
 uint64_t timing_cycles_to_ns(uint64_t cycles);
 
+uint64_t timing_cycles_to_ns_avg(uint64_t cycles, uint32_t count);
 
 /**
  * @brief Get frequency of counter used (in MHz).

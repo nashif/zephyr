@@ -74,6 +74,11 @@ uint64_t __weak timing_cycles_to_ns(uint64_t cycles)
 	return (uint32_t)k_cyc_to_ns_floor64(cycles);
 }
 
+uint64_t __weak timing_cycles_to_ns_avg(uint64_t cycles, uint32_t count)
+{
+	return (uint32_t)timing_cycles_to_ns(cycles) / count;
+}
+
 uint32_t __weak timing_freq_get_mhz(void)
 {
 	return (uint32_t)(timing_freq_get() / 1000000);
