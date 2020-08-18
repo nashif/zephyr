@@ -35,7 +35,7 @@ uint64_t __weak timing_cycles_get(volatile timing_t *const start,
 
 uint64_t __weak timing_freq_get(void)
 {
-	return (sys_clock_hw_cycles_per_sec() / 1000000);
+	return sys_clock_hw_cycles_per_sec();
 }
 
 uint64_t __weak timing_cycles_to_ns(uint64_t cycles)

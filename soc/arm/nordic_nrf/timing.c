@@ -13,7 +13,8 @@
 #include <nrfx.h>
 
 #if defined(CONFIG_NRF_RTC_TIMER)
-#define NANOSECS_PER_SEC (1000000000)
+
+
 #define CYCLES_PER_SEC (16000000 / (1 << NRF_TIMER2->PRESCALER))
 
 void timing_init(void)
@@ -37,7 +38,7 @@ void timing_stop(void)
 timing_t timing_counter_get(void)
 {
 	NRF_TIMER2->TASKS_CAPTURE[0] = 1;
-	return NRF_TIMER2->CC[0];
+	return NRF_TIMER2->CC[0] * ((SystemCoreClock) / CYCLES_PER_SEC);
 }
 
 uint64_t timing_cycles_get(volatile timing_t *const start,
@@ -48,17 +49,17 @@ uint64_t timing_cycles_get(volatile timing_t *const start,
 
 uint64_t timing_freq_get(void)
 {
-	return SystemCoreClock / 1000000;
+	return SystemCoreClock;
 }
 
 uint64_t timing_cycles_to_ns(uint64_t cycles)
 {
-	return (cycles) * (NANOSECS_PER_SEC / CYCLES_PER_SEC);
+	return (cycles) * (NSEC_PER_SEC) / (SystemCoreClock);
 }
 
 uint32_t timing_freq_get_mhz(void)
 {
-	return (uint32_t)(timing_freq_get());
+	return (uint32_t)(timing_freq_get() / 1000000);
 }
 
 #endif
