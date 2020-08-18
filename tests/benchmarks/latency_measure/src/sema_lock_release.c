@@ -45,8 +45,8 @@ int sema_lock_unlock(void)
 	int i;
 	uint32_t diff;
 
-	PRINT_FORMAT(" 3 - Measure average time to signal a sema then test"
-		     " that sema");
+	PRINT_FORMAT(" 3 - Measure average time to signal a semaphore then test"
+		     " that semaphore");
 	bench_test_start();
 	timing_start();
 
