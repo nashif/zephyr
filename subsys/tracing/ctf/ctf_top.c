@@ -214,3 +214,18 @@ void sys_trace_end_call(unsigned int id)
 {
 	ctf_top_end_call(id);
 }
+
+void sys_trace_evflag_init(struct k_eventflag *evflag)
+{
+	ctf_top_void(SYS_TRACE_ID_EVFLAG_INIT);
+}
+
+void sys_trace_evflag_set(struct k_eventflag *evflag, uint32_t flags)
+{
+	ctf_top_void(SYS_TRACE_ID_EVFLAG_SET);
+}
+
+void sys_trace_evflag_wait(struct k_eventflag *evflag, uint32_t flags)
+{
+	ctf_top_void(SYS_TRACE_ID_EVFLAG_WAIT);
+}

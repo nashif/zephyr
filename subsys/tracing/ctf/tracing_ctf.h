@@ -38,6 +38,9 @@ void sys_trace_semaphore_give(struct k_sem *sem);
 void sys_trace_mutex_init(struct k_mutex *mutex);
 void sys_trace_mutex_lock(struct k_mutex *mutex);
 void sys_trace_mutex_unlock(struct k_mutex *mutex);
+void sys_trace_evflag_init(struct k_eventflag *evflag);
+void sys_trace_evflag_set(struct k_eventflag *evflag, uint32_t flags);
+void sys_trace_evflag_wait(struct k_eventflag *evflag, uint32_t flags);
 
 #ifdef __cplusplus
 }

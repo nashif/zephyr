@@ -18,6 +18,9 @@
 #define SYS_TRACE_ID_SEMA_GIVE               (5u + SYS_TRACE_ID_OFFSET)
 #define SYS_TRACE_ID_SEMA_TAKE               (6u + SYS_TRACE_ID_OFFSET)
 #define SYS_TRACE_ID_SLEEP                   (7u + SYS_TRACE_ID_OFFSET)
+#define SYS_TRACE_ID_EVFLAG_INIT             (8u + SYS_TRACE_ID_OFFSET)
+#define SYS_TRACE_ID_EVFLAG_SET              (9u + SYS_TRACE_ID_OFFSET)
+#define SYS_TRACE_ID_EVFLAG_WAIT             (10u + SYS_TRACE_ID_OFFSET)
 
 #ifdef CONFIG_SEGGER_SYSTEMVIEW
 #include "tracing_sysview.h"
@@ -170,6 +173,11 @@
  * @param mutex Mutex object
  */
 #define sys_trace_mutex_unlock(mutex)
+
+
+#define sys_trace_evflag_init(evflag)
+#define sys_trace_evflag_set(evflag, flags)
+#define sys_trace_evflag_wait(evflag, flags)
 /**
  * @}
  */

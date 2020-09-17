@@ -12,7 +12,10 @@ typealias enum : uint32_t {
 	SEMA_INIT = 36,
 	SEMA_GIVE = 37,
 	SEMA_TAKE = 38,
-	SLEEP = 39
+	SLEEP = 39,
+	EVFLAG_INIT = 40,
+	EVFLAG_SET = 41,
+	EVFLAG_WAIT = 42
 } := call_id;
 
 struct event_header {
@@ -95,12 +98,12 @@ event {
 	};
 };
 event {
-        name = thread_ready;
-        id = 0x17;
-        fields := struct {
-                uint32_t thread_id;
-				ctf_bounded_string_t name[20];
-        };
+	name = thread_ready;
+	id = 0x17;
+	fields := struct {
+			uint32_t thread_id;
+			ctf_bounded_string_t name[20];
+	};
 };
 
 event {
@@ -134,27 +137,27 @@ event {
 
 event {
 	name = isr_enter;
-	id = 0x20;
+	id = 0x1b;
 };
 
 event {
 	name = isr_exit;
-	id = 0x21;
+	id = 0x1c;
 };
 
 event {
 	name = isr_exit_to_scheduler;
-	id = 0x22;
+	id = 0x1d;
 };
 
 event {
 	name = idle;
-	id = 0x30;
+	id = 0x1e;
 };
 
 event {
 	name = start_call;
-	id = 0x41;
+	id = 0x1f;
 	fields := struct {
 		call_id id;
 	};
@@ -162,7 +165,7 @@ event {
 
 event {
 	name = end_call;
-	id = 0x42;
+	id = 0x20;
 	fields := struct {
 		call_id id;
 	};
@@ -170,7 +173,7 @@ event {
 
 event {
 	name = semaphore_init;
-	id = 0x43;
+	id = 0x21;
 	fields := struct {
 		uint32_t id;
 	};
@@ -178,7 +181,7 @@ event {
 
 event {
 	name = semaphore_take;
-	id = 0x45;
+	id = 0x22;
 	fields := struct {
 		uint32_t id;
 	};
@@ -186,7 +189,7 @@ event {
 
 event {
 	name = semaphore_give;
-	id = 0x44;
+	id = 0x23;
 	fields := struct {
 		uint32_t id;
 	};
@@ -194,7 +197,7 @@ event {
 
 event {
 	name = mutex_init;
-	id = 0x46;
+	id = 0x24;
 	fields := struct {
 		uint32_t id;
 	};
@@ -202,7 +205,7 @@ event {
 
 event {
 	name = mutex_lock;
-	id = 0x47;
+	id = 0x25;
 	fields := struct {
 		uint32_t id;
 	};
@@ -210,7 +213,7 @@ event {
 
 event {
 	name = mutex_unlock;
-	id = 0x48;
+	id = 0x26;
 	fields := struct {
 		uint32_t id;
 	};
