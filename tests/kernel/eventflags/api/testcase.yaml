@@ -1,0 +1,4 @@
+tests:
+  kernel.eventflags:
+    min_ram: 32
+    tags: kernel userspace
