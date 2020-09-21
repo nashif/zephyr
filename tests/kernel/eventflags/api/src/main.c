@@ -36,8 +36,8 @@ void thread_wait(void *t, void *dummy2, void *dummy3)
 	int tid = POINTER_TO_INT(t);
 
 	while (1) {
-		printk("waiting thread %s\n",
-		       k_thread_name_get(k_current_get()));
+		printk("waiting thread %s (%d)\n",
+		       k_thread_name_get(k_current_get()), tid);
 
 		res = k_evgroup_wait(&evgroup, 0x3,
 				       K_EVGROUP_ALL | K_EVGROUP_CLEAR,
