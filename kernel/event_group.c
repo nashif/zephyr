@@ -92,7 +92,7 @@ void z_impl_k_evgroup_set(struct k_evgroup *evgroup, uint32_t flags)
 			&thread->event_groups);
 		waited_for_flags = ev->flags;
 
-		LOG_INF("Flags we got from pending thread: 0x%x",
+		LOG_INF("Flags pending thread is waiting on: 0x%x",
 			waited_for_flags);
 
 		control_bits = ev->flags & EVENT_FLAGS_CONTROL_BITS;
@@ -114,16 +114,17 @@ void z_impl_k_evgroup_set(struct k_evgroup *evgroup, uint32_t flags)
 		}
 
 		if (match == true) {
+			LOG_INF("Found match in a pending thread, making it ready");
+
 			/* found a match, check if we need to clear */
 			if ((control_bits & EVENT_FLAGS_CLEAR_BITS) != 0U) {
 				LOG_INF("Clearing bits");
 				bits_to_clear |= waited_for_flags;
 			}
 			/* remove thread event */
-			LOG_INF("Remove node from thread event list");
+			LOG_INF("Remove event group from thread event list");
 			sys_dlist_get(&thread->event_groups);
 
-			LOG_INF("Found match in a pending thread, making it ready");
 			z_unpend_thread_no_timeout(thread);
 			arch_thread_return_value_set(thread, 0);
 			z_ready_thread(thread);
