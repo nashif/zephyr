@@ -84,10 +84,12 @@ void z_impl_k_evgroup_set(struct k_evgroup *evgroup, uint32_t flags)
 	LOG_INF("eventflag %p set to 0x%x", evgroup, evgroup->flags);
 	key = k_spin_lock(&lock);
 
+	sys_dnode_t *node = sys_dlist_peek_head(&evgroup->wait_q.waitq);
+
 	/* Check if the new bit value should unblock any threads. */
-	_WAIT_Q_FOR_EACH (&evgroup->wait_q, thread) {
-	//do {
-		//thread = z_find_first_thread_to_unpend(&evgroup->wait_q, NULL);
+	while(node != NULL) {
+		thread = (struct k_thread *)node;
+		node = sys_dlist_peek_next(&evgroup->wait_q.waitq, node);
 		LOG_INF("Pending thread found: %p", thread);
 		ev = (struct thread_event *)sys_dlist_peek_head_not_empty(
 			&thread->event_groups);
@@ -122,7 +124,8 @@ void z_impl_k_evgroup_set(struct k_evgroup *evgroup, uint32_t flags)
 			arch_thread_return_value_set(thread, 0);
 			z_ready_thread(thread);
 		}
-	} //while (thread);
+
+	}
 
 	if (bits_to_clear) {
 		evgroup->flags &= ~bits_to_clear;
