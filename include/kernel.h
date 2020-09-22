@@ -3766,7 +3766,7 @@ __syscall void k_evgroup_set(struct k_evgroup *evgroup, uint32_t flags);
  * @brief Retrieve flags of an event flag group
  *
  * @param evgroup Pointer to an event group
- * @return flags The event group flags
+ * @return flags The flags set in @a evgroup
  */
 __syscall uint32_t k_evgroup_get(struct k_evgroup *evgroup);
 
@@ -3783,7 +3783,6 @@ __syscall void k_evgroup_clear(struct k_evgroup *evgroup, uint32_t flags);
  * @brief Check if an event group has the requested flags.
  *
  * @note Can be called by ISRs, but @a timeout must be set to K_NO_WAIT.
- *
  *
  * @param evgroup Pointer to an event group
  * @param flags Flags we should wait for

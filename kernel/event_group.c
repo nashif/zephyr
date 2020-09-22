@@ -90,15 +90,17 @@ void z_impl_k_evgroup_set(struct k_evgroup *evgroup, uint32_t flags)
 	 * APIs to iterate on wait queues that work for both dumb and scalable
 	 * qait queues. This currently only works with dumb queue.
 	 */
-	sys_dnode_t *node = sys_dlist_peek_head(&evgroup->wait_q.waitq);
+	sys_dnode_t *node = z_waitq_head_node(&evgroup->wait_q);
 
 	/* Check if the new bit value should unblock any threads. */
 	while(node != NULL) {
 		thread = (struct k_thread *)node;
-		/* Get the next node in the wait queue before we do anything to
+		/*
+		 * Get the next node in the wait queue before we do anything to
 		 * the queue
 		 */
-		node = sys_dlist_peek_next(&evgroup->wait_q.waitq, node);
+		node = z_waitq_next_node(&evgroup->wait_q, node);
+
 		LOG_INF("Pending thread found: %p", thread);
 		ev = (struct thread_event *)sys_dlist_peek_head_not_empty(
 			&thread->event_groups);

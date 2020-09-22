@@ -54,6 +54,16 @@ static inline struct k_thread *z_waitq_head(_wait_q_t *w)
 	return (struct k_thread *)sys_dlist_peek_head(&w->waitq);
 }
 
+static inline sys_dnode_t *z_waitq_head_node(_wait_q_t *w)
+{
+	return sys_dlist_peek_head(&w->waitq);
+}
+
+static inline sys_dnode_t *z_waitq_next_node(_wait_q_t *w, sys_dnode_t *node)
+{
+	return sys_dlist_peek_next(&w->waitq, node);
+}
+
 #endif /* !CONFIG_WAITQ_SCALABLE */
 
 #ifdef __cplusplus
