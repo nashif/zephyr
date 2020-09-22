@@ -32,16 +32,23 @@ int flag_match = 0;
 void thread_wait(void *t, void *dummy2, void *dummy3)
 {
 	int res;
-
+	uint32_t bits;
+	uint32_t options;
 	int tid = POINTER_TO_INT(t);
+
+	if ( tid == 1) {
+		bits = 0x3;
+		options = K_EVGROUP_ALL; // | K_EVGROUP_CLEAR;
+	} else {
+		bits = 0x1;
+		options = K_EVGROUP_ALL; // | K_EVGROUP_CLEAR;
+	}
 
 	while (1) {
 		printk("waiting thread %s (%d)\n",
 		       k_thread_name_get(k_current_get()), tid);
 
-		res = k_evgroup_wait(&evgroup, 0x3,
-				       K_EVGROUP_ALL | K_EVGROUP_CLEAR,
-				       K_FOREVER);
+		res = k_evgroup_wait(&evgroup, bits, options, K_FOREVER);
 		if (res >= 0) {
 			printk("Both flags raised: 0x%x\n", evgroup.flags);
 			flag_match = 1;

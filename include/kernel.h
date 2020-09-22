@@ -3735,7 +3735,7 @@ enum {
 	K_EVGROUP_NONE = 0,
 	/** Match all flags. this is an AND operation */
 	K_EVGROUP_ALL,
-	/** Cleat flags */
+	/** Clear flags */
 	K_EVGROUP_CLEAR
 };
 
@@ -3755,7 +3755,7 @@ __syscall void k_evgroup_init(struct k_evgroup *evgroup);
  *
  *  This function sets the specified flags in the event group based on
  *  the set option specified.  All threads suspended on the group whose
- *  get request can now be satisfied are resumed.
+ *  wait request can now be satisfied are resumed.
  *
  * @param evgroup Pointer to an event group
  * @param flags Flags to be set
