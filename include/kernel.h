@@ -3721,12 +3721,6 @@ struct k_evgroup {
 	_OBJECT_TRACING_INIT \
 	}
 
-enum {
-	K_EVGROUP_NONE = 0,
-	K_EVGROUP_ALL,
-	K_EVGROUP_CLEAR
-};
-
 /**
  * INTERNAL_HIDDEN @endcond
  */
@@ -3737,12 +3731,20 @@ enum {
  * @{
  */
 
+enum {
+	K_EVGROUP_NONE = 0,
+	/** Match all flags. this is an AND operation */
+	K_EVGROUP_ALL,
+	/** Cleat flags */
+	K_EVGROUP_CLEAR
+};
+
 /**
  * @brief Initialize an event group.
  *
- * This routine initializes a semaphore object, prior to its first use.
+ * This routine initializes an event group object, prior to its first use.
  *
- * @param ev_flag Address of the event flag.
+ * @param ev_flag Address of the event group.
  *
  * @return N/A
  */
@@ -3755,35 +3757,41 @@ __syscall void k_evgroup_init(struct k_evgroup *evgroup);
  *  the set option specified.  All threads suspended on the group whose
  *  get request can now be satisfied are resumed.
  *
- * @param ev_flag Pointer to an event group
+ * @param evgroup Pointer to an event group
  * @param flags Flags to be set
  */
 __syscall void k_evgroup_set(struct k_evgroup *evgroup, uint32_t flags);
 
 /**
- * @brief Get the event
+ * @brief Retrieve flags of an event flag group
  *
- * @param ev_flag
- * @return flags
+ * @param evgroup Pointer to an event group
+ * @return flags The event group flags
  */
 __syscall uint32_t k_evgroup_get(struct k_evgroup *evgroup);
 
 /**
- * @brief
+ * @brief  Clear flags of an event flag group
  *
- * @param ev_flag
- * @param flags
+ * @param evgroup Pointer to an event group
+ * @param flags The flags to clear
  *
  */
 __syscall void k_evgroup_clear(struct k_evgroup *evgroup, uint32_t flags);
 
 /**
- * @brief
+ * @brief Check if an event group has the requested flags.
  *
- * @param ev_flag
- * @param flags
- * @param options
- * @param timeout
+ * @note Can be called by ISRs, but @a timeout must be set to K_NO_WAIT.
+ *
+ *
+ * @param evgroup Pointer to an event group
+ * @param flags Flags we should wait for
+ * @param options Possible options are K_EVGROUP_ALL and/or K_EVGROUP_CLEAR.
+ * @param timeout Non-negative waiting period to wait for operation to complete.
+ *        Use K_NO_WAIT to return without waiting,
+ *        or K_FOREVER to wait as long as necessary.
+ * @return
  */
 __syscall uint32_t k_evgroup_wait(struct k_evgroup *evgroup,
 		uint32_t flags, uint8_t options, k_timeout_t timeout);
