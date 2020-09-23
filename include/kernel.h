@@ -3790,7 +3790,8 @@ __syscall void k_evgroup_clear(struct k_evgroup *evgroup, uint32_t flags);
  * @param timeout Non-negative waiting period to wait for operation to complete.
  *        Use K_NO_WAIT to return without waiting,
  *        or K_FOREVER to wait as long as necessary.
- * @return
+ * @return The value of the event group at the time either the event bits
+ *         being waited for became set, or the block time expired.
  */
 __syscall uint32_t k_evgroup_wait(struct k_evgroup *evgroup,
 		uint32_t flags, uint8_t options, k_timeout_t timeout);

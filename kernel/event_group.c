@@ -173,11 +173,11 @@ uint32_t z_impl_k_evgroup_wait(struct k_evgroup *evgroup, uint32_t flags,
 	k_spinlock_key_t key = k_spin_lock(&lock);
 
 	if (check_event_flags(evgroup->flags, flags, options) != false) {
+		ret = evgroup->flags;
 		if (options & K_EVGROUP_CLEAR) {
 			evgroup->flags &= ~(flags);
 			LOG_INF("eventflag cleared: 0x%x", evgroup->flags);
 		}
-		ret = evgroup->flags;
 		k_spin_unlock(&lock, key);
 	} else if (K_TIMEOUT_EQ(timeout, K_NO_WAIT)) {
 		ret = evgroup->flags;
@@ -187,7 +187,7 @@ uint32_t z_impl_k_evgroup_wait(struct k_evgroup *evgroup, uint32_t flags,
 		thread_ev.flags = (flags | control_bits);
 		sys_dlist_append(&_current->event_groups, &thread_ev._node);
 		LOG_INF("pending %p on event flags: 0x%x", _current, flags);
-		ret = z_pend_curr(&lock, key, &evgroup->wait_q, timeout);
+		z_pend_curr(&lock, key, &evgroup->wait_q, timeout);
 	}
 	sys_trace_end_call(SYS_TRACE_ID_EVFLAG_WAIT);
 
