@@ -142,8 +142,6 @@ void z_impl_k_evgroup_set(struct k_evgroup *evgroup, uint32_t flags)
 		}
 	}
 
-
-
 	z_reschedule(&lock, key);
 
 	sys_trace_end_call(SYS_TRACE_ID_EVFLAG_SET);
@@ -172,15 +170,14 @@ uint32_t z_impl_k_evgroup_wait(struct k_evgroup *evgroup, uint32_t flags,
 	sys_trace_evflag_wait(evgroup, flags);
 	k_spinlock_key_t key = k_spin_lock(&lock);
 
+	ret = evgroup->flags;
 	if (check_event_flags(evgroup->flags, flags, options) != false) {
-		ret = evgroup->flags;
 		if (options & K_EVGROUP_CLEAR) {
 			evgroup->flags &= ~(flags);
 			LOG_INF("eventflag cleared: 0x%x", evgroup->flags);
 		}
 		k_spin_unlock(&lock, key);
 	} else if (K_TIMEOUT_EQ(timeout, K_NO_WAIT)) {
-		ret = evgroup->flags;
 		k_spin_unlock(&lock, key);
 	} else {
 		control_bits = set_control_bits(options);
