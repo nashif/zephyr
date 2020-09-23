@@ -38,10 +38,10 @@ void thread_wait(void *t, void *dummy2, void *dummy3)
 
 	if ( tid == 1) {
 		bits = 0x3;
-		options = K_EVGROUP_ALL; // | K_EVGROUP_CLEAR;
+		options = K_EVGROUP_ALL ;
 	} else {
-		bits = 0x1;
-		options = K_EVGROUP_ALL; // | K_EVGROUP_CLEAR;
+		bits = 0x3;
+		options = K_EVGROUP_ALL;
 	}
 
 	while (1) {
@@ -55,6 +55,7 @@ void thread_wait(void *t, void *dummy2, void *dummy3)
 		} else if (res == -EAGAIN) {
 			printk("Timeout\n");
 		}
+		k_msleep(1000);
 	}
 }
 
@@ -85,5 +86,6 @@ void main(void)
 		printk("second action\n");
 		k_evgroup_set(&evgroup, SECOND_BIT);
 		k_sleep(K_MSEC(500));
+		k_evgroup_clear(&evgroup, 0U);
 	}
 }

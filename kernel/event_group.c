@@ -135,13 +135,14 @@ void z_impl_k_evgroup_set(struct k_evgroup *evgroup, uint32_t flags)
 			arch_thread_return_value_set(thread, 0);
 			z_ready_thread(thread);
 		}
-
+		if (bits_to_clear) {
+			evgroup->flags &= ~bits_to_clear;
+			LOG_INF("Cleared flags: 0x%x", evgroup->flags);
+			break;
+		}
 	}
 
-	if (bits_to_clear) {
-		evgroup->flags &= ~bits_to_clear;
-		LOG_INF("Cleared flags: 0x%x", evgroup->flags);
-	}
+
 
 	z_reschedule(&lock, key);
 
