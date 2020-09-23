@@ -44,6 +44,14 @@ static struct k_work_q isotp_workq;
 
 static void receive_state_machine(struct isotp_recv_ctx *ctx);
 
+K_EVGROUP_DEFINE(evgrp)
+#define DATA_AVAILABLE ( 1 << 0 )
+
+static void fifo_put(struct k_fifo *fifo, struct net_buf *buf) {
+	net_buf_put(fifo, buf);
+	k_evgroup_set(&evgrp, DATA_AVAILABLE);
+}
+
 /*
  * Wake every context that is waiting for a buffer
  */
@@ -71,17 +79,6 @@ static void receive_ff_sf_pool_free(struct net_buf *buf)
 		ctx = CONTAINER_OF(ctx_node, struct isotp_recv_ctx, alloc_node);
 		k_work_submit(&ctx->work);
 	}
-}
-
-static inline int _k_fifo_wait_non_empty(struct k_fifo *fifo,
-					 k_timeout_t timeout)
-{
-	struct k_poll_event events[] = {
-		K_POLL_EVENT_INITIALIZER(K_POLL_TYPE_FIFO_DATA_AVAILABLE,
-					 K_POLL_MODE_NOTIFY_ONLY, fifo),
-	};
-
-	return k_poll(events, ARRAY_SIZE(events), timeout);
 }
 
 static inline void receive_report_error(struct isotp_recv_ctx *ctx, int err)
@@ -268,7 +265,7 @@ static void receive_state_machine(struct isotp_recv_ctx *ctx)
 		ud_rem_len = net_buf_user_data(ctx->buf);
 		*ud_rem_len = 0;
 		LOG_DBG("SM process SF of length %d", ctx->buf->len);
-		net_buf_put(&ctx->fifo, ctx->buf);
+		fifo_put(&ctx->fifo, ctx->buf);
 		ctx->state = ISOTP_RX_STATE_RECYCLE;
 		receive_state_machine(ctx);
 		break;
@@ -293,7 +290,7 @@ static void receive_state_machine(struct isotp_recv_ctx *ctx)
 			ctx->bs = ctx->opts.bs;
 			ud_rem_len = net_buf_user_data(ctx->buf);
 			*ud_rem_len = ctx->length;
-			net_buf_put(&ctx->fifo, ctx->buf);
+			fifo_put(&ctx->fifo, ctx->buf);
 		}
 
 		ctx->wft = ISOTP_WFT_FIRST;
@@ -483,7 +480,7 @@ static void process_cf(struct isotp_recv_ctx *ctx, struct zcan_frame *frame)
 	if (ctx->length == 0) {
 		ctx->state = ISOTP_RX_STATE_RECYCLE;
 		*ud_rem_len = 0;
-		net_buf_put(&ctx->fifo, ctx->buf);
+		fifo_put(&ctx->fifo, ctx->buf);
 		return;
 	}
 
@@ -491,7 +488,7 @@ static void process_cf(struct isotp_recv_ctx *ctx, struct zcan_frame *frame)
 		LOG_DBG("Block is complete. Allocate new buffer");
 		ctx->bs = ctx->opts.bs;
 		*ud_rem_len = ctx->length;
-		net_buf_put(&ctx->fifo, ctx->buf);
+		fifo_put(&ctx->fifo, ctx->buf);
 		ctx->state = ISOTP_RX_STATE_TRY_ALLOC;
 	}
 }
@@ -673,19 +670,17 @@ int isotp_recv(struct isotp_recv_ctx *ctx, uint8_t *data, size_t len,
 	struct net_buf *buf;
 	int ret;
 
-	ret = _k_fifo_wait_non_empty(&ctx->fifo, timeout);
-	if (ret) {
+	ret = k_evgroup_wait(&evgrp, DATA_AVAILABLE, K_EVGROUP_CLEAR, timeout);
+	if ( (ret & DATA_AVAILABLE) != 0) {
 		if (ctx->error_nr) {
 			ret = ctx->error_nr;
 			ctx->error_nr = 0;
 			return ret;
 		}
 
-		if (ret == -EAGAIN) {
-			return ISOTP_RECV_TIMEOUT;
-		}
-
 		return ISOTP_N_ERROR;
+	} else {
+		return ISOTP_RECV_TIMEOUT;
 	}
 
 	buf = k_fifo_peek_head(&ctx->fifo);
