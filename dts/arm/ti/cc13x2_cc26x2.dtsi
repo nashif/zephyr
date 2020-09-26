@@ -21,6 +21,25 @@
 			device_type = "cpu";
 			compatible = "arm,cortex-m4";
 			reg = <0>;
+			cpu-idle-states = <&CPU_SLEEP_0_0 &CPU_SLEEP_0_1>;
+		};
+
+		idle-states {
+		    CPU_SLEEP_0_0: cpu-sleep-0-0 {
+			compatible = "arm,idle-state";
+			local-timer-stop;
+			entry-latency-us = <250>;
+			exit-latency-us = <500>;
+			min-residency-us = <950>;
+		    };
+
+		    CPU_SLEEP_0_1: cpu-sleep-0-1 {
+			compatible = "arm,idle-state";
+			local-timer-stop;
+			entry-latency-us = <250>;
+			exit-latency-us = <500>;
+			min-residency-us = <950>;
+		    };
 		};
 	};
 

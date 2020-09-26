@@ -10,3 +10,9 @@ properties:
       type: int
       required: false
       description: Clock frequency in Hz
+    cpu-idle-states:
+      type: phandles
+      required: false
+      description: |
+        List of phandles to idle state nodes supported
+        by this cpu (see ./idle-states.yaml).

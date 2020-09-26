@@ -1,0 +1,55 @@
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+title: ARM idle states binding description
+
+description: |+
+  ==========================================
+  1 - Introduction
+  ==========================================
+
+compatible: "arm,idle-state"
+
+properties:
+  local-timer-stop:
+    required: false
+    description:
+      If present the CPU local timer control logic is
+         lost on state entry, otherwise it is retained.
+    type: boolean
+
+  entry-latency-us:
+    type: int
+    required: true
+    description:
+      Worst case latency in microseconds required to enter the idle state.
+
+  exit-latency-us:
+    type: int
+    required: true
+    description:
+      Worst case latency in microseconds required to exit the idle state.
+      The exit-latency-us duration may be guaranteed only after
+      entry-latency-us has passed.
+
+  min-residency-us:
+    type: int
+    required: true
+    description:
+      Minimum residency duration in microseconds, inclusive of preparation
+      and entry, for this idle state to be considered worthwhile energy wise
+      (refer to section 2 of this document for a complete description).
+
+  wakeup-latency-us:
+    type: int
+    required: false
+    description: |
+      Maximum delay between the signaling of a wake-up event and the CPU
+      being able to execute normal code again. If omitted, this is assumed
+      to be equal to:
+
+        entry-latency-us + exit-latency-us
+
+      It is important to supply this value on systems where the duration of
+      PREP phase (see diagram 1, section 2) is non-neglibigle. In such
+      systems entry-latency-us + exit-latency-us will exceed
+      wakeup-latency-us by this duration.
+...
