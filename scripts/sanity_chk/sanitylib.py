@@ -343,6 +343,7 @@ class BinaryHandler(Handler):
         self.asan = False
         self.ubsan = False
         self.coverage = False
+        self.suite = None
 
     def try_kill_process_by_pid(self):
         if self.pid_fn:
@@ -392,7 +393,19 @@ class BinaryHandler(Handler):
         harness = harness_import.instance
         harness.configure(self.instance)
 
-        if self.call_make_run:
+        flash = self.suite.west_flash
+        runner = self.suite.west_runner
+        if (flash is not None) or runner:
+            command = ["west", "flash", "--skip-rebuild", "-d", self.build_dir]
+            command_extra_args = []
+
+            if flash and flash != []:
+                command_extra_args.extend(flash.split(','))
+
+            if runner:
+                command.append("--runner")
+                command.append(runner)
+        elif self.call_make_run:
             command = [self.generator_cmd, "run"]
         else:
             command = [self.binary]
@@ -2316,7 +2329,7 @@ class ProjectBuilder(FilterBuilder):
         instance = self.instance
 
         if instance.handler:
-            if instance.handler.type_str == "device":
+            if instance.handler.type_str in ["device", "nsim"] :
                 instance.handler.suite = self.suite
 
             instance.handler.handle()
