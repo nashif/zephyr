@@ -26,6 +26,9 @@
 #define VALTYPE long
 #endif
 
+
+struct zero_padding { int predot, postdot, trail; };
+
 static void _uc(char *buf)
 {
 	do {
@@ -118,6 +121,7 @@ static int _to_dec(char *buf, VALTYPE value, bool fplus, bool fspace)
 	return (buf + _to_udec(buf, value)) - start;
 }
 
+#if defined(CONFIG_PRINTK_FLOAT)
 static	void _rlrshift(uint64_t *v)
 {
 	*v = (*v & 1) + (*v >> 1);
@@ -179,6 +183,12 @@ static	char _get_digit(uint64_t *fr, int *digit_count)
 	return rval;
 }
 
+
+
+#define	MAXFP1	0xFFFFFFFF	/* Largest # if first fp format */
+#define HIGHBIT64 (1ull<<63)
+
+
 /*
  *	_to_float
  *
@@ -201,12 +211,6 @@ static	char _get_digit(uint64_t *fr, int *digit_count)
  *	power of two becomes fraction times power of 10), and the second
  *	stage (pulling the resulting decimal digits outs).
  */
-
-#define	MAXFP1	0xFFFFFFFF	/* Largest # if first fp format */
-#define HIGHBIT64 (1ull<<63)
-
-struct zero_padding { int predot, postdot, trail; };
-
 static int _to_float(char *buf, uint64_t double_temp, char c,
 		     bool falt, bool fplus, bool fspace, int precision,
 		     struct zero_padding *zp)
@@ -421,6 +425,8 @@ static int _to_float(char *buf, uint64_t double_temp, char c,
 	return buf - start;
 }
 
+#endif
+
 static int _atoi(const char **sptr)
 {
 	const char *p = *sptr - 1;
@@ -433,7 +439,7 @@ static int _atoi(const char **sptr)
 	return i;
 }
 
-int z_prf(int (*func)(), void *dest, const char *format, va_list vargs)
+int stream_vprintk(int (*func)(), void *dest, const char *format, va_list vargs)
 {
 	/*
 	 * The work buffer has to accommodate for the largest data length.
@@ -583,6 +589,7 @@ int z_prf(int (*func)(), void *dest, const char *format, va_list vargs)
 			case 'f':
 			case 'F':
 			case 'g':
+#if defined(CONFIG_PRINTK_FLOAT)
 			case 'G':
 			{
 				uint64_t double_val;
@@ -610,7 +617,7 @@ int z_prf(int (*func)(), void *dest, const char *format, va_list vargs)
 				precision = -1;
 				break;
 			}
-
+#endif
 			case 'n':
 				switch (i) {
 				case 'h':

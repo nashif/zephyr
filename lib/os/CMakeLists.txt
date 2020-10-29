@@ -13,6 +13,7 @@ zephyr_sources(
   mempool.c
   notify.c
   printk.c
+  stream_vprintk.c
   onoff.c
   rb.c
   sem.c
@@ -22,9 +23,6 @@ zephyr_sources(
   heap.c
   heap-validate.c
   )
-
-zephyr_sources_ifdef(CONFIG_MINIMAL_LIBC prf.c)
-zephyr_sources_ifdef(CONFIG_SHELL prf.c)
 
 zephyr_sources_ifdef(CONFIG_JSON_LIBRARY json.c)
 

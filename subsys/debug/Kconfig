@@ -185,6 +185,11 @@ config PRINTK_BUFFER_SIZE
 	  not have to make a system call for every character emitted. Specify
 	  the size of this buffer.
 
+config PRINTK_FLOAT
+	bool "Enable printing floats with printk"
+	help
+	  Enable printing float with printk.
+
 config EARLY_CONSOLE
 	bool "Send stdout at the earliest stage possible"
 	help
