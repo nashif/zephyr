@@ -3207,7 +3207,7 @@ class TestSuite(DisablePyTestCollectionMixin):
         if self.enable_size_report and not self.cmake_only:
             # Parallelize size calculation
             executor = concurrent.futures.ThreadPoolExecutor(self.jobs)
-            futures = [executor.submit(calc_one_elf_size, instance)
+            futures = [executor.submit(self.calc_one_elf_size, instance)
                        for instance in self.instances.values()]
             concurrent.futures.wait(futures)
         else:
