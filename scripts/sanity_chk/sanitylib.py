@@ -2962,6 +2962,8 @@ class TestSuite(DisablePyTestCollectionMixin):
             platforms = list(filter(lambda p: p.name in platform_filter, self.platforms))
         elif emu_filter:
             platforms = list(filter(lambda p: p.simulation != 'na', self.platforms))
+        elif arch_filter:
+            platforms = list(filter(lambda p: p.arch in arch_filter, self.platforms))
         else:
             platforms = self.platforms
 
