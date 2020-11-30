@@ -21,6 +21,8 @@ manifest:
   remotes:
     - name: upstream
       url-base: https://github.com/zephyrproject-rtos
+    - name: thesofproject
+      url-base: https://github.com/thesofproject
 
   #
   # Please add items below based on alphabetical order
@@ -119,6 +121,10 @@ manifest:
     - name: sof
       revision: pull/2/head
       path: modules/audio/sof
+    - name: rimage
+      revision: 7b7c192e70c23a6024902e6781c32fc0f058c37a
+      remote: thesofproject
+      path: modules/audio/sof/rimage
     - name: tinycbor
       path: modules/lib/tinycbor
       revision: 40daca97b478989884bffb5226e9ab73ca54b8c4
