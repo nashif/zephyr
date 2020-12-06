@@ -88,7 +88,7 @@
       - boards/arm/stm32*_disco/
       - boards/arm/stm32*_eval/
       - drivers/*/*stm32*/
-      - drivers/*/*/*stm32*
+      - drivers/*/*stm32*
       - dts/arm/st/
       - dts/bindings/*/*stm32*
       - soc/arm/st_stm32/
@@ -119,6 +119,7 @@
       - drivers/i2c/
       - dts/bindings/i2c/
       - include/drivers/i2c.h
+      - include/dt-bindings/i2c/
   labels:
       - "area: I2C"
 
@@ -132,7 +133,7 @@
   files:
       - cmake/
   files-regex:
-      - CMadkeLists.txt$
+      - CMakeLists.txt$
       - \.cmake$
   labels:
       - "area: Build System"
@@ -148,6 +149,7 @@
       - scripts/dts/
       - dts/bindings/
       - dts/common/
+      - dts/*
   labels:
       - "area: Device Tree"
 
