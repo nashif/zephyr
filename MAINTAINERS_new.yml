@@ -132,7 +132,7 @@
   files:
       - cmake/
   files-regex:
-      - CMakeLists.txt$
+      - CMadkeLists.txt$
       - \.cmake$
   labels:
       - "area: Build System"
