@@ -179,9 +179,9 @@ class Maintainers:
             self.filename = pathlib.Path(filename)
 
         self.areas = {}
-        for area_name, area_dict in _load_maintainers(self.filename).items():
+        for area_dict in _load_maintainers(self.filename):
             area = Area()
-            area.name = area_name
+            area.name = area_dict.get("area")
             area.status = area_dict.get("status")
             area.maintainers = area_dict.get("maintainers", [])
             area.collaborators = area_dict.get("collaborators", [])
@@ -201,7 +201,7 @@ class Maintainers:
                 _get_match_fn(area_dict.get("files-exclude"),
                               area_dict.get("files-regex-exclude"))
 
-            self.areas[area_name] = area
+            self.areas[area.name] = area
 
     def path2areas(self, path):
         """
@@ -429,6 +429,7 @@ def _load_maintainers(path):
     with open(path, encoding="utf-8") as f:
         yaml = _load(f)
 
+        # FIXME: Get rid of that and rely on schema
         _check_maintainers(path, yaml)
         return yaml
 
@@ -442,43 +443,15 @@ def _check_maintainers(maints_path, yaml):
     def ferr(msg):
         _err("{}: {}".format(maints_path, msg))  # Prepend the filename
 
-    if not isinstance(yaml, dict):
+    if not isinstance(yaml, list):
         ferr("empty or malformed YAML (not a dict)")
 
-    ok_keys = {"status", "maintainers", "collaborators", "inform", "files",
-               "files-exclude", "files-regex", "files-regex-exclude",
-               "labels", "description"}
-
-    ok_status = {"maintained", "odd fixes", "orphaned", "obsolete"}
-    ok_status_s = ", ".join('"' + s + '"' for s in ok_status)  # For messages
-
-    for area_name, area_dict in yaml.items():
-        if not isinstance(area_dict, dict):
-            ferr("malformed entry for area '{}' (not a dict)"
-                 .format(area_name))
-
-        for key in area_dict:
-            if key not in ok_keys:
-                ferr("unknown key '{}' in area '{}'"
-                     .format(key, area_name))
-
-        if "status" in area_dict and \
-           area_dict["status"] not in ok_status:
-            ferr("bad 'status' key on area '{}', should be one of {}"
-                 .format(area_name, ok_status_s))
+    for area_dict in yaml:
+        area_name = area_dict.get("area")
 
         if not area_dict.keys() & {"files", "files-regex"}:
             ferr("either 'files' or 'files-regex' (or both) must be specified "
                  "for area '{}'".format(area_name))
-
-        for list_name in "maintainers", "collaborators", "inform", "files", \
-                         "files-regex", "labels":
-            if list_name in area_dict:
-                lst = area_dict[list_name]
-                if not (isinstance(lst, list) and
-                        all(isinstance(elm, str) for elm in lst)):
-                    ferr("malformed '{}' value for area '{}' -- should "
-                         "be a list of strings".format(list_name, area_name))
 
         for files_key in "files", "files-exclude":
             if files_key in area_dict:
@@ -509,11 +482,6 @@ def _check_maintainers(maints_path, yaml):
                         ferr("bad regular expression '{}' in '{}' in "
                              "'{}': {}".format(regex, files_regex_key,
                                                area_name, e.msg))
-
-        if "description" in area_dict and \
-           not isinstance(area_dict["description"], str):
-            ferr("malformed 'description' value for area '{}' -- should be a "
-                 "string".format(area_name))
 
 
 def _git(*args):
