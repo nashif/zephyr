@@ -30,14 +30,35 @@ import re
 import shlex
 import subprocess
 import sys
+import pykwalify.core
+import yaml
+_SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "maintainer-schema.yml")
 
-from yaml import load, YAMLError
-try:
-    # Use the speedier C LibYAML parser if available
-    from yaml import CLoader as Loader
-except ImportError:
-    from yaml import Loader
+class MalformedMaintainerFile(Exception):
+    '''Maintainer file parsing failed due to invalid data.
+    '''
 
+def _load(data):
+    try:
+        return yaml.safe_load(data)
+    except yaml.scanner.ScannerError as e:
+        raise MalformedMaintainerFile(data) from e
+
+def validate(data):
+    if isinstance(data, str):
+        as_str = data
+        data = _load(data)
+        if not isinstance(data, dict):
+            raise MalformedMaintainerFile(f'{as_str} is not a YAML dictionary')
+    elif not isinstance(data, dict):
+        raise TypeError(f'{data} has type {type(data)}, '
+                        'expected valid maintainer file data')
+
+    try:
+        pykwalify.core.Core(source_data=data,
+                            schema_files=[_SCHEMA_PATH]).validate()
+    except pykwalify.errors.SchemaError as se:
+        raise MalformedMaintainerFile(se.msg) from se
 
 def _main():
     # Entry point when run as an executable
@@ -399,12 +420,14 @@ def _load_maintainers(path):
     # Returns the parsed contents of the maintainers file 'filename', also
     # running checks on the contents. The returned format is plain Python
     # dicts/lists/etc., mirroring the structure of the file.
+    try:
+        pykwalify.core.Core(source_file=str(path),
+                            schema_files=[_SCHEMA_PATH]).validate()
+    except pykwalify.errors.SchemaError as se:
+        raise MalformedMaintainerFile(se.msg) from se
 
     with open(path, encoding="utf-8") as f:
-        try:
-            yaml = load(f, Loader=Loader)
-        except YAMLError as e:
-            raise MaintainersError("{}: YAML error: {}".format(path, e))
+        yaml = _load(f)
 
         _check_maintainers(path, yaml)
         return yaml

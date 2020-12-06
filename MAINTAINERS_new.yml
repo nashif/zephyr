@@ -1,0 +1,164 @@
+
+- area: ARC
+  type: architecture
+  status: maintained
+  maintainers:
+      - ruuddw
+  collaborators:
+      - abrodkin
+      - evgeniy-paltsev
+      - IRISZZW
+  files:
+      - arch/arc/
+      - include/arch/arc/
+  labels:
+      - "area: ARC"
+- area: ARM
+  type: architecture
+  status: maintained
+  maintainers:
+      - ioannisg
+  collaborators:
+      - carlocaione
+      - galak
+      - MaureenHelm
+      - stephanosio
+  files:
+      - arch/arm/
+      - include/arch/arm/
+      - tests/arch/arm/
+  labels:
+      - "area: ARM"
+- area: Bluetooth
+  type: subsystem
+  status: maintained
+  maintainers:
+      - jhedberg
+  collaborators:
+      - joerchan
+      - Vudentz
+  files:
+      - doc/reference/bluetooth/
+      - doc/guides/bluetooth/
+      - drivers/bluetooth/
+      - include/bluetooth/
+      - include/drivers/bluetooth/
+      - samples/bluetooth/
+      - subsys/bluetooth/
+      - tests/bluetooth/
+  labels:
+      - "area: Bluetooth"
+- area: Display
+  type: drivers
+  status: maintained
+  maintainers:
+      - vanwinkeljan
+  collaborators:
+      - jfischer-no
+  files:
+      - drivers/display/
+      - dts/bindings/display/
+      - include/drivers/display.h
+      - include/display/
+      - include/drivers/display.h
+      - lib/gui/
+      - subsys/fb/
+  labels:
+      - "area: Display"
+
+- area: ADC
+  type: drivers
+  status: maintained
+  maintainers:
+      - anangl
+  files:
+      - drivers/adc/
+      - include/drivers/adc.h
+      - tests/drivers/adc/
+  labels:
+      - "area: ADC"
+
+- area: STM32
+  type: platform
+  status: maintained
+  maintainers:
+      - erwango
+  files:
+      - boards/arm/nucleo_*/
+      - boards/arm/stm32*_disco/
+      - boards/arm/stm32*_eval/
+      - drivers/*/*stm32*/
+      - drivers/*/*/*stm32*
+      - dts/arm/st/
+      - dts/bindings/*/*stm32*
+      - soc/arm/st_stm32/
+  labels:
+      - "platform: STM32"
+  description: >-
+      STM32 SOCs, dts files and related drivers. ST nucleo, disco and eval
+      boards.
+
+- area: Storage
+  type: subsystem
+  status: maintained
+  maintainers:
+      - nvlsianpu
+  files:
+      - subsys/storage/
+      - include/storage/
+      - tests/subsys/storage/
+  labels:
+      - "area: Storage"
+
+- area: I2C
+  type: subsystem
+  status: maintained
+  maintainers:
+      - pabigot
+  files:
+      - drivers/i2c/
+      - dts/bindings/i2c/
+      - include/drivers/i2c.h
+  labels:
+      - "area: I2C"
+
+- area: Build system
+  type: infrastructure
+  status: maintained
+  maintainers:
+      - tejlmand
+  collaborators:
+      - nashif
+  files:
+      - cmake/
+  files-regex:
+      - CMakeLists.txt$
+      - \.cmake$
+  labels:
+      - "area: Build System"
+
+- area: Devicetree
+  type: infrastructure
+  status: maintained
+  maintainers:
+      - galak
+  collaborators:
+      - mbolivar-nordic
+  files:
+      - scripts/dts/
+      - dts/bindings/
+      - dts/common/
+  labels:
+      - "area: Device Tree"
+
+- area: Kconfig
+  type: infrastructure
+  status: orphaned
+  files:
+      - scripts/kconfig/
+      - doc/guides/kconfig/
+  labels:
+      - "area: Kconfig"
+  description: >-
+      See https://docs.zephyrproject.org/latest/guides/kconfig/index.html and
+      https://docs.zephyrproject.org/latest/guides/porting/board_porting.html#default-board-configuration
