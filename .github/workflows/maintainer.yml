@@ -1,0 +1,10 @@
+name: 'Pull Request Assigner'
+on:
+  - pull_request_target
+
+jobs:
+  assign:
+    runs-on: ubuntu-latest
+    steps:
+    - id: files
+      uses: jitterbit/get-changed-files@v1
