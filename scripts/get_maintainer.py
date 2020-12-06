@@ -182,10 +182,10 @@ class Maintainers:
         for area_dict in _load_maintainers(self.filename):
             area = Area()
             area.name = area_dict.get("area")
+            area.type = area_dict.get("type")
             area.status = area_dict.get("status")
             area.maintainers = area_dict.get("maintainers", [])
             area.collaborators = area_dict.get("collaborators", [])
-            area.inform = area_dict.get("inform", [])
             area.labels = area_dict.get("labels", [])
             area.description = area_dict.get("description")
 
@@ -278,9 +278,9 @@ class Maintainers:
         for area in self.areas.values():
             if args.maintainer:
                 if args.maintainer in area.maintainers:
-                    print("{:25}\t{}".format(area.name, ",".join(area.maintainers)))
+                    print("{:25}\t{}\t{}".format(area.name, area.type.capitalize(), ",".join(area.maintainers)))
             else:
-                print("{:25}\t{}".format(area.name, ",".join(area.maintainers)))
+                print("{:25}\t{:25}\t{}".format(area.name, area.type.capitalize(), ",".join(area.maintainers)))
 
     def _list_cmd(self, args):
         # 'list' subcommand implementation
@@ -327,15 +327,14 @@ class Area:
         The status of the area, as a string. None if the area has no 'status'
         key. See MAINTAINERS.yml.
 
+    type:
+        Type of this area
+
     maintainers:
         List of maintainers. Empty if the area has no 'maintainers' key.
 
     collaborators:
-        List of collaborators. Empty if the area has no 'collaborators' key.
-
-    inform:
-        List of people to inform on pull requests. Empty if the area has no
-        'inform' key.
+        List of collaborators. Empty if the area has no 'collaborators' key.s
 
     labels:
         List of GitHub labels for the area. Empty if the area has no 'labels'
@@ -367,13 +366,11 @@ def _print_areas(areas):
 \tstatus: {}
 \tmaintainers: {}
 \tcollaborators: {}
-\tinform: {}
 \tlabels: {}
 \tdescription: {}""".format(area.name,
                             area.status,
                             ", ".join(area.maintainers),
                             ", ".join(area.collaborators),
-                            ", ".join(area.inform),
                             ", ".join(area.labels),
                             area.description or ""))
 
