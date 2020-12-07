@@ -1,0 +1,20 @@
+name: 'Pull Request Assigner'
+on:
+  - pull_request
+
+
+jobs:
+  assign:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+    - id: running
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Install packages we need.
+        pip3 install wheel setuptools
+        pip3 install pykwalify pyGithub
+        python3 scripts/maintainers/action.py
+
