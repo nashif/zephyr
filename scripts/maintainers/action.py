@@ -78,7 +78,7 @@ def main():
         reviewers = []
         for c in collab:
             u = gh.get_user(c)
-            if gh_pr.user != u:
+            if gh_pr.user != u and gh_repo.has_in_collaborators(u):
                 reviewers.append(c)
 
         if reviewers:
