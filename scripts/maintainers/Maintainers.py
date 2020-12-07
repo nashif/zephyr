@@ -30,102 +30,35 @@ import re
 import shlex
 import subprocess
 import sys
+import pykwalify.core
+import yaml
+_SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "maintainer-schema.yml")
 
-from yaml import load, YAMLError
-try:
-    # Use the speedier C LibYAML parser if available
-    from yaml import CLoader as Loader
-except ImportError:
-    from yaml import Loader
+class MalformedMaintainerFile(Exception):
+    '''Maintainer file parsing failed due to invalid data.
+    '''
 
-
-def _main():
-    # Entry point when run as an executable
-
-    args = _parse_args()
+def _load(data):
     try:
-        args.cmd_fn(Maintainers(args.maintainers), args)
-    except (MaintainersError, GitError) as e:
-        _serr(e)
+        return yaml.safe_load(data)
+    except yaml.scanner.ScannerError as e:
+        raise MalformedMaintainerFile(data) from e
 
+def validate(data):
+    if isinstance(data, str):
+        as_str = data
+        data = _load(data)
+        if not isinstance(data, dict):
+            raise MalformedMaintainerFile(f'{as_str} is not a YAML dictionary')
+    elif not isinstance(data, dict):
+        raise TypeError(f'{data} has type {type(data)}, '
+                        'expected valid maintainer file data')
 
-def _parse_args():
-    # Parses arguments when run as an executable
-
-    parser = argparse.ArgumentParser(
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        description=__doc__)
-
-    parser.add_argument(
-        "-m", "--maintainers",
-        metavar="MAINTAINERS_FILE",
-        help="Maintainers file to load. If not specified, MAINTAINERS.yml in "
-             "the top-level repository directory is used, and must exist. "
-             "Paths in the maintainers file will always be taken as relative "
-             "to the top-level directory.")
-
-    subparsers = parser.add_subparsers(
-        help="Available commands (each has a separate --help text)")
-
-    id_parser = subparsers.add_parser(
-        "path",
-        help="List area(s) for paths")
-    id_parser.add_argument(
-        "paths",
-        metavar="PATH",
-        nargs="*",
-        help="Path to list areas for")
-    id_parser.set_defaults(cmd_fn=Maintainers._path_cmd)
-
-    commits_parser = subparsers.add_parser(
-        "commits",
-        help="List area(s) for commit range")
-    commits_parser.add_argument(
-        "commits",
-        metavar="COMMIT_RANGE",
-        nargs="*",
-        help="Commit range to list areas for (default: HEAD~..)")
-    commits_parser.set_defaults(cmd_fn=Maintainers._commits_cmd)
-
-    list_parser = subparsers.add_parser(
-        "list",
-        help="List files in areas")
-    list_parser.add_argument(
-        "area",
-        metavar="AREA",
-        nargs="?",
-        help="Name of area to list files in. If not specified, all "
-             "non-orphaned files are listed (all files that do not appear in "
-             "any area).")
-    list_parser.set_defaults(cmd_fn=Maintainers._list_cmd)
-
-    areas_parser = subparsers.add_parser(
-        "areas",
-        help="List areas and maintainers")
-    areas_parser.add_argument(
-        "maintainer",
-        metavar="MAINTAINER",
-        nargs="?",
-        help="List all areas maintained by maintaier.")
-
-    areas_parser.set_defaults(cmd_fn=Maintainers._areas_cmd)
-
-    orphaned_parser = subparsers.add_parser(
-        "orphaned",
-        help="List orphaned files (files that do not appear in any area)")
-    orphaned_parser.add_argument(
-        "path",
-        metavar="PATH",
-        nargs="?",
-        help="Limit to files under PATH")
-    orphaned_parser.set_defaults(cmd_fn=Maintainers._orphaned_cmd)
-
-    args = parser.parse_args()
-    if not hasattr(args, "cmd_fn"):
-        # Called without a subcommand
-        sys.exit(parser.format_usage().rstrip())
-
-    return args
+    try:
+        pykwalify.core.Core(source_data=data,
+                            schema_files=[_SCHEMA_PATH]).validate()
+    except pykwalify.errors.SchemaError as se:
+        raise MalformedMaintainerFile(se.msg) from se
 
 
 class Maintainers:
@@ -158,13 +91,13 @@ class Maintainers:
             self.filename = pathlib.Path(filename)
 
         self.areas = {}
-        for area_name, area_dict in _load_maintainers(self.filename).items():
+        for area_dict in _load_maintainers(self.filename):
             area = Area()
-            area.name = area_name
+            area.name = area_dict.get("area")
+            area.type = area_dict.get("type")
             area.status = area_dict.get("status")
             area.maintainers = area_dict.get("maintainers", [])
             area.collaborators = area_dict.get("collaborators", [])
-            area.inform = area_dict.get("inform", [])
             area.labels = area_dict.get("labels", [])
             area.description = area_dict.get("description")
 
@@ -180,7 +113,7 @@ class Maintainers:
                 _get_match_fn(area_dict.get("files-exclude"),
                               area_dict.get("files-regex-exclude"))
 
-            self.areas[area_name] = area
+            self.areas[area.name] = area
 
     def path2areas(self, path):
         """
@@ -257,9 +190,9 @@ class Maintainers:
         for area in self.areas.values():
             if args.maintainer:
                 if args.maintainer in area.maintainers:
-                    print("{:25}\t{}".format(area.name, ",".join(area.maintainers)))
+                    print("{:25}\t{}\t{}".format(area.name, area.type.capitalize(), ",".join(area.maintainers)))
             else:
-                print("{:25}\t{}".format(area.name, ",".join(area.maintainers)))
+                print("{:25}\t{:25}\t{}".format(area.name, area.type.capitalize(), ",".join(area.maintainers)))
 
     def _list_cmd(self, args):
         # 'list' subcommand implementation
@@ -306,15 +239,14 @@ class Area:
         The status of the area, as a string. None if the area has no 'status'
         key. See MAINTAINERS.yml.
 
+    type:
+        Type of this area
+
     maintainers:
         List of maintainers. Empty if the area has no 'maintainers' key.
 
     collaborators:
-        List of collaborators. Empty if the area has no 'collaborators' key.
-
-    inform:
-        List of people to inform on pull requests. Empty if the area has no
-        'inform' key.
+        List of collaborators. Empty if the area has no 'collaborators' key.s
 
     labels:
         List of GitHub labels for the area. Empty if the area has no 'labels'
@@ -346,13 +278,11 @@ def _print_areas(areas):
 \tstatus: {}
 \tmaintainers: {}
 \tcollaborators: {}
-\tinform: {}
 \tlabels: {}
 \tdescription: {}""".format(area.name,
                             area.status,
                             ", ".join(area.maintainers),
                             ", ".join(area.collaborators),
-                            ", ".join(area.inform),
                             ", ".join(area.labels),
                             area.description or ""))
 
@@ -399,13 +329,16 @@ def _load_maintainers(path):
     # Returns the parsed contents of the maintainers file 'filename', also
     # running checks on the contents. The returned format is plain Python
     # dicts/lists/etc., mirroring the structure of the file.
+    try:
+        pykwalify.core.Core(source_file=str(path),
+                            schema_files=[_SCHEMA_PATH]).validate()
+    except pykwalify.errors.SchemaError as se:
+        raise MalformedMaintainerFile(se.msg) from se
 
     with open(path, encoding="utf-8") as f:
-        try:
-            yaml = load(f, Loader=Loader)
-        except YAMLError as e:
-            raise MaintainersError("{}: YAML error: {}".format(path, e))
+        yaml = _load(f)
 
+        # FIXME: Get rid of that and rely on schema
         _check_maintainers(path, yaml)
         return yaml
 
@@ -413,49 +346,21 @@ def _load_maintainers(path):
 def _check_maintainers(maints_path, yaml):
     # Checks the maintainers data in 'yaml', which comes from the maintainers
     # file at maints_path, which is a pathlib.Path instance
-
+    return
     root = maints_path.parent
 
     def ferr(msg):
         _err("{}: {}".format(maints_path, msg))  # Prepend the filename
 
-    if not isinstance(yaml, dict):
+    if not isinstance(yaml, list):
         ferr("empty or malformed YAML (not a dict)")
 
-    ok_keys = {"status", "maintainers", "collaborators", "inform", "files",
-               "files-exclude", "files-regex", "files-regex-exclude",
-               "labels", "description"}
-
-    ok_status = {"maintained", "odd fixes", "orphaned", "obsolete"}
-    ok_status_s = ", ".join('"' + s + '"' for s in ok_status)  # For messages
-
-    for area_name, area_dict in yaml.items():
-        if not isinstance(area_dict, dict):
-            ferr("malformed entry for area '{}' (not a dict)"
-                 .format(area_name))
-
-        for key in area_dict:
-            if key not in ok_keys:
-                ferr("unknown key '{}' in area '{}'"
-                     .format(key, area_name))
-
-        if "status" in area_dict and \
-           area_dict["status"] not in ok_status:
-            ferr("bad 'status' key on area '{}', should be one of {}"
-                 .format(area_name, ok_status_s))
+    for area_dict in yaml:
+        area_name = area_dict.get("area")
 
         if not area_dict.keys() & {"files", "files-regex"}:
             ferr("either 'files' or 'files-regex' (or both) must be specified "
                  "for area '{}'".format(area_name))
-
-        for list_name in "maintainers", "collaborators", "inform", "files", \
-                         "files-regex", "labels":
-            if list_name in area_dict:
-                lst = area_dict[list_name]
-                if not (isinstance(lst, list) and
-                        all(isinstance(elm, str) for elm in lst)):
-                    ferr("malformed '{}' value for area '{}' -- should "
-                         "be a list of strings".format(list_name, area_name))
 
         for files_key in "files", "files-exclude":
             if files_key in area_dict:
@@ -486,11 +391,6 @@ def _check_maintainers(maints_path, yaml):
                         ferr("bad regular expression '{}' in '{}' in "
                              "'{}': {}".format(regex, files_regex_key,
                                                area_name, e.msg))
-
-        if "description" in area_dict and \
-           not isinstance(area_dict["description"], str):
-            ferr("malformed 'description' value for area '{}' -- should be a "
-                 "string".format(area_name))
 
 
 def _git(*args):
@@ -547,6 +447,3 @@ class MaintainersError(Exception):
 class GitError(Exception):
     "Exception raised for Git-related errors"
 
-
-if __name__ == "__main__":
-    _main()
