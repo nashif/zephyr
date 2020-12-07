@@ -138,6 +138,21 @@
   labels:
       - "area: Build System"
 
+- area: Continuous Integration
+  type: infrastructure
+  status: maintained
+  maintainers:
+    - nashif
+    - galak
+  collaborators:
+    - carlescufi
+  files:
+    - .github/
+    - scripts/ci/
+    - .buildkite/
+  labels:
+    - "area: CI"
+
 - area: Devicetree
   type: infrastructure
   status: maintained
