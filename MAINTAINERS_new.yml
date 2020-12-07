@@ -146,6 +146,7 @@
     - galak
   collaborators:
     - carlescufi
+    - nashifzephyr
   files:
     - .github/
     - scripts/ci/

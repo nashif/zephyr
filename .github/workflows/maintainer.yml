@@ -13,6 +13,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        pip3 install wheel setuptools pykwalify pyGithub
+        # Install packages we need.
+        pip3 install wheel setuptools
+        pip3 install pykwalify pyGithub
         python3 scripts/maintainers/action.py
 
