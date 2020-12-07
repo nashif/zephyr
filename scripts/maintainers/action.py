@@ -82,7 +82,11 @@ def main():
                 reviewers.append(c)
 
         if reviewers:
-            gh_pr.create_review_request(reviewers=reviewers)
+            try:
+                gh_pr.create_review_request(reviewers=reviewers)
+            except:
+                log("cant add reviewer")
+                pass
 
     ms = []
     if maintainers:
