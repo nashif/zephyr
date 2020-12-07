@@ -1,0 +1,48 @@
+type: seq
+sequence:
+  - type: map
+    mapping:
+      area:
+        type: str
+        required: true
+      type:
+        type: str
+        required: true
+        enum: ['subsystem', 'drivers', 'platform', 'architecture', 'infrastructure']
+      status:
+        type: str
+        required: true
+        enum: ['maintained', 'orphaned', 'obsolete']
+      maintainers:
+        type: seq
+        seq:
+          - type: str
+      collaborators:
+        type: seq
+        seq:
+          - type: str
+      files:
+        type: seq
+        required: true
+        seq:
+          - type: str
+      files-regex:
+        type: seq
+        seq:
+          - type: str
+      files-exclude:
+        type: seq
+        seq:
+          - type: str
+      files-regex-exclude:
+        type: seq
+        seq:
+          - type: str
+      labels:
+        type: seq
+        required: true
+        seq:
+          - type: str
+      description:
+        type: str
+
