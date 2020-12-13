@@ -6,7 +6,7 @@ on:
       - 'master'
 jobs:
   clang-build:
-    runs-on: ubuntu-20.04
+    runs-on: self-hosted
     strategy:
       fail-fast: false
       matrix:
