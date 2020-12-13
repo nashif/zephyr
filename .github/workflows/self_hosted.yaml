@@ -2,7 +2,7 @@ name: Self-hosted Build with Clang
 on:
   push:
     branches:
-      - 'master'
+      - 'masterx'
 jobs:
   clang-build:
     runs-on: self-hosted
