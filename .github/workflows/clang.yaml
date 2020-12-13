@@ -49,19 +49,19 @@ jobs:
           cmake --version
           clang --version
 
-      - name: Run Sanitycheck
+      - name: Run Tests with Twister
         run: |
           source zephyr-env.sh
           export CLANG_ROOT_DIR=/usr/lib/llvm-10
           export ZEPHYR_TOOLCHAIN_VARIANT=llvm
-          ./scripts/sanitycheck --inline-logs -N -v --integration -p native_posix  --subset ${{matrix.subset}}/10 --retry-failed 3
+          ./scripts/twister --inline-logs -N -v --integration -p native_posix  --subset ${{matrix.subset}}/10 --retry-failed 3
 
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v2
         with:
           name: Unit Test Results (Subset ${{ matrix.subset }})
-          path: sanity-out/sanitycheck.xml
+          path: twister-out/twister.xml
 
   publish-test-results:
     name: "Publish Unit Tests Results"
@@ -84,4 +84,4 @@ jobs:
         with:
           check_name: Unit Test Results
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          files: "**/sanitycheck.xml"
+          files: "**/twister.xml"
