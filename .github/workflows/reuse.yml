@@ -2,7 +2,6 @@ name: REUSE Compliance Check
 
 on:
   push:
-    # Sequence of patterns matched against refs/tags
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
@@ -11,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: REUSE Compliance Check
         uses: fsfe/reuse-action@v1
         with:
@@ -23,6 +24,14 @@ jobs:
           name: zephyr.spdx
           path: zephyr.spdx
 
+      - name: Get Diff
+        run: |
+          oldtag=$(git describe --abbrev=0 ${{ github.ref }}^)
+          echo "Changes since ${oldtag}:" > release-notes.txt
+          echo "" >> release-notes.txt
+          echo "" >> release-notes.txt
+          git shortlog ${oldtag}..${{ github.ref }} >> release-notes.txt
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -31,6 +40,7 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           release_name: Zephyr ${{ github.ref }}
+          body_path: release-notes.txt
           draft: true
           prerelease: true
 
