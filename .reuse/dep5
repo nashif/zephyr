@@ -8,3 +8,23 @@ Source: http://www.zephyrproject.org/
 # Files: src/*
 # Copyright: $YEAR $NAME <$CONTACT>
 # License: ...
+
+Files: **.rst
+Copyright: 2017 Jane Doe <jane@example.com>
+License: CC-BY-4.0
+
+Files: *CMakeLists.txt
+Copyright: 2017 Jane Doe <jane@example.com>
+License: Apache-2.0
+
+Files: *.cmake
+Copyright: 2017 Jane Doe <jane@example.com>
+License: Apache-2.0
+
+Files: *_defconfig
+Copyright: 2017 Jane Doe <jane@example.com>
+License: Apache-2.0
+
+Files: *html
+Copyright: 2017 Jane Doe <jane@example.com>
+License: CC-BY-4.0
