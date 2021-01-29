@@ -1,0 +1,10 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Zephyr Project
+Upstream-Contact: info@zephyrproject.org <info@zephyrproject.org>
+Source: http://www.zephyrproject.org/
+
+# Sample paragraph, commented out:
+#
+# Files: src/*
+# Copyright: $YEAR $NAME <$CONTACT>
+# License: ...
