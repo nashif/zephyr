@@ -1,4 +1,6 @@
-/* test_cbc_mode.c - TinyCrypt implementation of some AES-CBC tests */
+/* test_cbc_mode.c - TinyCrypt implementation of some AES-CBC tests
+ * SPDX-License-Identifier: BSD-3-Clause
+ **/
 
 /*
  *  Copyright (C) 2015 by Intel Corporation, All Rights Reserved.

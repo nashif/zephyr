@@ -1,4 +1,5 @@
 /* test_aes.c - TinyCrypt
+ * SPDX-License-Identifier: BSD-3-Clause
  * Implementation of some AES-128 tests (including NIST tests)
  */
 

@@ -1,4 +1,6 @@
-/* test_ccm_mode.c - TinyCrypt AES-CCM tests (RFC 3610 tests) */
+/* test_ccm_mode.c - TinyCrypt AES-CCM tests (RFC 3610 tests)
+ * SPDX-License-Identifier: BSD-3-Clause
+ **/
 
 /*
  *  Copyright (C) 2015 by Intel Corporation, All Rights Reserved.

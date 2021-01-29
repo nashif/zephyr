@@ -1,4 +1,6 @@
-/* test_cmac_mode.c - TinyCrypt AES-CMAC tests (including SP 800-38B tests) */
+/* test_cmac_mode.c - TinyCrypt AES-CMAC tests (including SP 800-38B tests)
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
 
 /*
  *  Copyright (C) 2015 by Intel Corporation, All Rights Reserved.
