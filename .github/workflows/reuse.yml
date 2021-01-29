@@ -30,8 +30,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
+          release_name: Zephyr ${{ github.ref }}
+          draft: true
           prerelease: true
 
       - name: Upload Release Asset
