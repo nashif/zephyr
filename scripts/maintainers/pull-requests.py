@@ -38,15 +38,15 @@ def main():
 
     for pr in pulls:
         delta = datetime.datetime.now() - pr.created_at
-        #if delta.days > 1:
-        #    continue
+        if delta.days > 2:
+            continue
         if pr.assignee and not dry_run:
             continue
         if pr.draft:
             continue
 
-        print("+++++++++++++++++++++++++")
-        print(f"https://github.com/zephyrproject-rtos/zephyr/pull/{pr.number} : {pr.title}")
+        log("+++++++++++++++++++++++++")
+        log(f"https://github.com/zephyrproject-rtos/zephyr/pull/{pr.number} : {pr.title}")
 
         labels = set()
         collab = set()
@@ -96,8 +96,9 @@ def main():
                         log(f"Set maintainer of area {aa}")
                         for a in all_areas:
                             if a.name == aa:
-                                maintainer = a.maintainers[0]
-                                break
+                                if a.maintainers:
+                                    maintainer = a.maintainers[0]
+                                    break
 
 
             # if the submitter is the same as the maintainer, check if we have
@@ -178,7 +179,7 @@ def main():
                 if not dry_run:
                     pr.add_to_assignees(mm)
 
-        time.sleep(10)
+        time.sleep(1)
 
 
 if __name__ == "__main__":
