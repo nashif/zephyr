@@ -31,14 +31,18 @@ def main():
     gh = Github(token)
     gh_repo = gh.get_repo("zephyrproject-rtos/zephyr")
 
+    pr_nr = None
     if len(sys.argv) > 1:
-        pulls = [gh_repo.get_pull(int(sys.argv[1]))]
+        pr_nr = int(sys.argv[1])
+
+    if pr_nr:
+        pulls = [gh_repo.get_pull(pr_nr)]
     else:
         pulls = gh_repo.get_pulls(state="open", base="master")
 
     for pr in pulls:
         delta = datetime.datetime.now() - pr.created_at
-        if delta.days > 2:
+        if delta.days > 1 and not pr_nr:
             continue
         if pr.assignee and not dry_run:
             continue
