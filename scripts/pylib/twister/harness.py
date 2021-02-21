@@ -28,9 +28,12 @@ class Harness:
         self.recording = []
         self.fieldnames = []
         self.ztest = False
+        self.instance = None
 
     def configure(self, instance):
         config = instance.scenario.harness_config
+        self.instance = instance
+
         self.id = instance.scenario.id
         if "ignore_faults" in instance.scenario.tags:
             self.fail_on_fault = False
@@ -129,7 +132,8 @@ class Test(Harness):
         match = result_re.match(line)
         if match and match.group(2):
             name = "{}.{}".format(self.id, match.group(3))
-            self.tests[name] = match.group(1)
+            case = self.instance.get_case(name)
+            case.result = match.group(1)
             self.ztest = True
 
         if self.RUN_PASSED in line:
@@ -146,10 +150,11 @@ class Test(Harness):
                 self.fault = True
 
         if not self.ztest and self.state:
+            case = self.instance.get_case(self.id)
             if self.state == "passed":
-                self.tests[self.id] = "PASS"
+                case.result = "PASS"
             else:
-                self.tests[self.id] = "FAIL"
+                case.result = "FAIL"
 
         if self.GCOV_START in line:
             self.capture_coverage = True
