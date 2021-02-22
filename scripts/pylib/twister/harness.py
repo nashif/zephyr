@@ -150,8 +150,12 @@ class Test(Harness):
             if self.FAULT in line:
                 self.fault = True
 
-        if not self.ztest and self.state:
-            case = self.instance.get_case(self.id)
+        #for c in self.instance.testcases:
+        #    print(c)
+
+        case = self.instance.get_case(self.id)
+
+        if not self.ztest and self.state and case:
             if self.state == "passed":
                 case.result = "PASS"
             else:
