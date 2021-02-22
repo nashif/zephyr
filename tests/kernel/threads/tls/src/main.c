@@ -195,6 +195,11 @@ void test_tls_userspace(void)
 	/* TLS test in supervisor mode */
 	start_tls_test(K_USER | K_INHERIT_PERMS);
 }
+#else
+void test_tls_userspace(void)
+{
+	ztest_test_skip();
+}
 #endif
 
 void test_main(void)
@@ -221,12 +226,8 @@ void test_main(void)
 #endif /* CONFIG_USERSPACE */
 
 	ztest_test_suite(thread_tls,
-			 ztest_unit_test(test_tls));
+			 ztest_unit_test(test_tls),
+			 ztest_user_unit_test(test_tls_userspace));
 	ztest_run_test_suite(thread_tls);
 
-#ifdef CONFIG_USERSPACE
-	ztest_test_suite(thread_tls_userspace,
-			 ztest_user_unit_test(test_tls_userspace));
-	ztest_run_test_suite(thread_tls_userspace);
-#endif /* CONFIG_USERSPACE */
 }
