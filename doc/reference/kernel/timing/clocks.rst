@@ -164,7 +164,7 @@ comparatively simple API.
   be correct over time and subject to minimal skew vs. other counters
   and real world time.
 
-* The driver is expected to provide a ``clock_set_timeout()`` call
+* The driver is expected to provide a :c:func:`clock_set_timeout` call
   to the kernel which indicates how many ticks may elapse before the
   kernel must receive an announce call to trigger registered timeouts.
   It is legal to announce new ticks before that moment (though they
@@ -175,7 +175,7 @@ comparatively simple API.
   implementations of this function are subject to bugs where the
   fractional tick gets "reset" incorrectly and causes clock skew.
 
-* The driver is expected to provide a ``clock_elapsed()`` call which
+* The driver is expected to provide a :c:func:`clock_elapsed` call which
   provides a current indication of how many ticks have elapsed (as
   compared to a real world clock) since the last call to
   ``clock_announce()``, which the kernel needs to test newly
@@ -191,12 +191,15 @@ counter driver can be trivially implemented also:
   the OS tick rate, calling z_clock_anounce() with an argument of one
   each time.
 
-* The driver can ignore calls to ``clock_set_timeout()``, as every
+* The driver can ignore calls to :c:func:`clock_set_timeout`, as every
   tick will be announced regardless of timeout status.
 
-* The driver can return zero for every call to ``clock_elapsed()``
+* The driver can return zero for every call to :c:func:`clock_elapsed`
   as no more than one tick can be detected as having elapsed (because
   otherwise an interrupt would have been received).
+
+
+
 
 SMP Details
 -----------
