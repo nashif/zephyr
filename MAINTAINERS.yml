@@ -1159,6 +1159,13 @@ Twister:
     status: maintained
     maintainers:
         - nashif
+    collaborators:
+        - galak
+        - PerMac
+        - enjiamai
+        - chen-png
+        - hakehuang
+
     files:
         - scripts/twister
         - scripts/pylib/twister/
