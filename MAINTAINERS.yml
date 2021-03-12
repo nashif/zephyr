@@ -1467,6 +1467,7 @@ West:
     files:
         - scripts/west-commands.yml
         - scripts/west_commands/
+        - doc/guides/west/
     labels:
         - "area: West"
 
