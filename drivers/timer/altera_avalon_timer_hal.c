@@ -49,7 +49,7 @@ int clock_driver_init(const struct device *device)
 	return 0;
 }
 
-uint32_t z_timer_cycle_get_32(void)
+uint32_t clock_cycle_get_32(void)
 {
 	/* Per the Altera Embedded IP Peripherals guide, you cannot
 	 * use a timer instance for both the system clock and timestamps
