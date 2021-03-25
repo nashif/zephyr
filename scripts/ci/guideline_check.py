@@ -82,10 +82,9 @@ def main():
                     if violation in violations:
                         v = {}
                         v['message'] =  "\t\n".join(violations[violation])
-                        v['path'] = violation.split(":")[0]
-                        v['line'] =  { "start": violation.split(":")[1], "end": violation.split(":")[1] }
-                        v['column'] = { "start": 0, "end": 0 }
-                        v['level'] = "warning"
+                        v['file'] = violation.split(":")[0]
+                        v['line'] =  violation.split(":")[1]
+                        v['annotation_level'] = "failure"
                         vlist.append(v)
                         numViolations += 1
                         if args.output:

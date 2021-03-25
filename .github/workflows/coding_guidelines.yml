@@ -1,6 +1,6 @@
 name: Coding Guidelines
 
-on: pull_request
+on: pull_request_target
 
 jobs:
   compliance_job:
@@ -45,7 +45,8 @@ jobs:
         ./scripts/ci/guideline_check.py --output output.txt -c origin/${BASE_REF}..
 
     - name: Annotate
-      uses: Attest/annotations-action@v1.0.3
+      uses: yuzutech/annotations-action@v0.3.0
       with:
-        path: './violations.json'
+        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        input: './violations.json'
         title: 'Violations'
