@@ -47,6 +47,5 @@ jobs:
     - name: Annotate
       uses: Attest/annotations-action@v1.0.3
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        input: './violations.json'
+        path: './violations.json'
         title: 'Violations'
