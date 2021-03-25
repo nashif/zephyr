@@ -90,7 +90,7 @@ def main():
                                     violation, "\t\n".join(
                                         violations[violation])))
 
-        return numViolations
+    return numViolations
 
 
 if __name__ == "__main__":
