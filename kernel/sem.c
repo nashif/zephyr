@@ -48,6 +48,7 @@ struct k_sem *_trace_list_k_sem;
 static int init_sem_module(const struct device *dev)
 {
 	ARG_UNUSED(dev);
+	int exp;
 
 	Z_STRUCT_SECTION_FOREACH(k_sem, sem) {
 		SYS_TRACING_OBJ_INIT(k_sem, sem);
