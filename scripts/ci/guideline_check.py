@@ -7,6 +7,7 @@ import sh
 import argparse
 import re
 from unidiff import PatchSet
+import json
 
 if "ZEPHYR_BASE" not in os.environ:
     exit("$ZEPHYR_BASE environment variable undefined.")
@@ -58,6 +59,7 @@ def main():
     zephyr_base = os.getenv("ZEPHYR_BASE")
     violations = {}
     numViolations = 0
+    vlist = []
 
     for f in patch_set:
         if not f.path.endswith(".c") and not f.path.endswith(".h") or not os.path.exists(zephyr_base + "/" + f.path):
@@ -78,6 +80,13 @@ def main():
                 if line.is_added:
                     violation = "{}:{}".format(f.path, line.target_line_no)
                     if violation in violations:
+                        v = {}
+                        v['message'] =  "\t\n".join(violations[violation])
+                        v['path'] = violation.split(":")[0]
+                        v['line'] =  { "start": violation.split(":")[1], "end": violation.split(":")[1] }
+                        v['column'] = { "start": 0, "end": 0 }
+                        v['level'] = "warning"
+                        vlist.append(v)
                         numViolations += 1
                         if args.output:
                             with open(args.output, "a+") as fp:
@@ -89,7 +98,8 @@ def main():
                                 "{}:{}".format(
                                     violation, "\t\n".join(
                                         violations[violation])))
-
+    with open('violations.json', 'w') as outfile:
+        json.dump(vlist, outfile)
     return numViolations
 
 

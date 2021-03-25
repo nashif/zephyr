@@ -47,13 +47,20 @@ jobs:
     - name: check-warns
       run: |
         if [[ -s "output.txt" ]]; then
-            errors=$(cat output.txt)
-            errors="${errors//'%'/'%25'}"
-            errors="${errors//$'\n'/'%0A'}"
-            errors="${errors//$'\r'/'%0D'}"
-            echo "::error file=output.txt::$errors"
-            exit=1
+          errors=$(cat output.txt)
+          errors="${errors//'%'/'%25'}"
+          errors="${errors//$'\n'/'%0A'}"
+          errors="${errors//$'\r'/'%0D'}"
+          echo "::error file=output.txt::$errors"
+          exit=1
         fi
         if [ ${exit} == 1 ]; then
           exit 1;
         fi
+
+    - name: Annotate
+      uses: Attest/annotations-action@v1.0.3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        input: './violations.json'
+        title: 'Violations'
