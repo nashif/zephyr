@@ -21,6 +21,7 @@ static void *chunk_mem(struct z_heap *h, chunkid_t c)
 static void free_list_remove_bidx(struct z_heap *h, chunkid_t c, int bidx)
 {
 	struct z_heap_bucket *b = &h->buckets[bidx];
+	int remove;
 
 	CHECK(!chunk_used(h, c));
 	CHECK(b->next != 0);

@@ -26,7 +26,7 @@ LOG_MODULE_REGISTER(i2c_imx);
 
 struct i2c_imx_config {
 	I2C_Type *base;
-	void (*irq_config_func)(const struct device *dev);
+	void (*irq_config_func)(const struct device *device);
 	uint32_t bitrate;
 };
 
