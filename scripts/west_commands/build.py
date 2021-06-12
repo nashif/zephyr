@@ -139,9 +139,6 @@ class Build(Forceable):
         # Store legacy -s option locally
         source_dir = self.args.source_dir
         self._parse_remainder(remainder)
-        # Parse testcase.yaml or sample.yaml files for additional options.
-        if self.args.test_item:
-            self._parse_test_item()
         if source_dir:
             if self.args.source_dir:
                 log.die("source directory specified twice:({} and {})".format(
@@ -180,6 +177,9 @@ class Build(Forceable):
         else:
             self.run_cmake = True
         self.source_dir = self._find_source_dir()
+        # Parse testcase.yaml or sample.yaml files for additional options.
+        if self.args.test_item:
+            self._parse_test_item()
         self._sanity_check()
 
         board, origin = self._find_board()
@@ -231,7 +231,7 @@ class Build(Forceable):
 
     def _parse_test_item(self):
         for yp in ['sample.yaml', 'testcase.yaml']:
-            yf = os.path.join(self.args.source_dir, yp)
+            yf = os.path.join(self.source_dir, yp)
             if not os.path.exists(yf):
                 continue
             with open(yf, 'r') as stream:
