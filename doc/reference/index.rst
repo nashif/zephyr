@@ -18,7 +18,6 @@ API Reference
    file_system/index.rst
    iterable_sections/index.rst
    misc/formatted_output.rst
-   kernel/index.rst
    libc/index.rst
    logging/index.rst
    memory_management/index.rst
