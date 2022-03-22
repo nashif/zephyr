@@ -3703,7 +3703,7 @@ class TestSuite(DisablePyTestCollectionMixin):
             if build_only:
                 instance.run = False
 
-            no_retry_statuses = ['passed', 'skipped']
+            no_retry_statuses = ['passed', 'skipped', 'filtered']
             if not retry_build_errors:
                 no_retry_statuses.append("error")
 
@@ -3784,10 +3784,14 @@ class TestSuite(DisablePyTestCollectionMixin):
     def xunit_testcase(self, eleTestsuite, name, classname, status, reason, duration, runnable, stats):
 
         fails, passes, errors, skips = stats
+
+        if status in ['skipped', 'filtered']:
+            duration = 0
         eleTestcase = ET.SubElement(
             eleTestsuite, "testcase",
             classname=classname,
-            name=f"{name}", time=f"{duration}")
+            name=f"{name}",
+            time=f"{duration}")
 
         if status in ['skipped', 'filtered']:
             skips += 1
@@ -3805,7 +3809,10 @@ class TestSuite(DisablePyTestCollectionMixin):
             else:
                 passes += 1
         else:
-            logger.error(f"Unknown status {status}")
+            if not status:
+                logger.error(f"{name}: No status")
+            else:
+                logger.error(f"{name}: Unknown status '{status}'")
 
         return (fails, passes, errors, skips)
 
@@ -3917,8 +3924,13 @@ class TestSuite(DisablePyTestCollectionMixin):
                 "arch": instance.platform.arch,
                 "platform": instance.platform.name,
             }
+            if instance.run_id:
+                suite['run_id'] = instance.run_id
 
-            suite["runnable"] = instance.run
+            suite["runnable"] = False
+            if instance.status != 'filtered':
+                suite["runnable"] = instance.run
+
             if ram_size:
                 suite["ram_size"] = ram_size
             if rom_size:
