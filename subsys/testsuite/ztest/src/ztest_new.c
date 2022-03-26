@@ -308,7 +308,7 @@ static void init_testing(void)
 	signal(SIGSEGV, handle_signal);
 
 	if (setjmp(stack_fail)) {
-		PRINT("Test suite crashed.");
+		PRINT("TESTSUITE crashed.");
 		exit(1);
 	}
 }
