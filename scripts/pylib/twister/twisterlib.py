@@ -1717,6 +1717,7 @@ class TestCase(DisablePyTestCollectionMixin):
         self.status = None
         self.reason = None
         self.testsuite = testsuite
+        self.output = ""
 
     def __lt__(self, other):
         return self.name < other.name
@@ -3914,7 +3915,8 @@ class TestPlan(DisablePyTestCollectionMixin):
                     for tc in ts.get("testcases", []):
                         status = tc.get('status', ts_status)
                         reason = tc.get('reason', ts.get('reason'))
-                        log = ts.get("log")
+                        log = tc.get("log", ts.get("log"))
+
                         tc_duration = tc.get('execution_time', handler_time)
                         name = tc.get("identifier")
                         classname = ".".join(name.split(".")[:2])
@@ -4006,6 +4008,9 @@ class TestPlan(DisablePyTestCollectionMixin):
                 testcase = {}
                 testcase['identifier'] = case.name
                 testcase['execution_time'] = case.duration
+                if case.output != "":
+                    testcase['log'] = case.output
+
                 if case.status == "skipped":
                     if instance.status != "filtered":
                         testcase["status"] = "skipped"
