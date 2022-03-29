@@ -2817,7 +2817,8 @@ class ProjectBuilder(FilterBuilder):
         if instance.status in ["error", "failed", "timeout", "flash_error"]:
             if instance.status == "error":
                 results.error += 1
-            results.failed += 1
+            else:
+                results.failed += 1
             if self.verbose:
                 status = Fore.RED + "FAILED " + Fore.RESET + instance.reason
             else:
@@ -3104,6 +3105,9 @@ class TestPlan(DisablePyTestCollectionMixin):
             elif instance.status == 'passed':
                 results.passed += 1
                 results.done += 1
+            elif instance.status == 'error':
+                results.error += 1
+                results.done += 1
 
     def compare_metrics(self, filename):
         # name, datatype, lower results better
@@ -3202,7 +3206,7 @@ class TestPlan(DisablePyTestCollectionMixin):
                 Fore.RESET,
                 pass_rate,
                 Fore.RED if results.failed else Fore.RESET,
-                results.failed,
+                results.failed + results.error,
                 Fore.RESET,
                 results.skipped_configs,
                 Fore.YELLOW if self.warnings else Fore.RESET,
