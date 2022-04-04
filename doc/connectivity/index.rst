@@ -8,3 +8,4 @@ Connectivity
 
 
 	bluetooth/index.rst
+   networking/index.rst
