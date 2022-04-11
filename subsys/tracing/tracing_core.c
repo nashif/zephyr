@@ -29,6 +29,8 @@
 #define TRACING_BACKEND_NAME "tracing_backend_posix"
 #elif defined CONFIG_TRACING_BACKEND_RAM
 #define TRACING_BACKEND_NAME "tracing_backend_ram"
+#elif defined CONFIG_TRACING_BACKEND_ADSP
+#define TRACING_BACKEND_NAME "tracing_backend_adsp"
 #else
 #define TRACING_BACKEND_NAME ""
 #endif
