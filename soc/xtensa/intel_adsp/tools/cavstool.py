@@ -496,7 +496,7 @@ def tracestream_read(last_seq):
             result += trace_read(16, behind - suffix)
         (wlen, start1, end, seq1) = trace_hdr()
         if start1 == start and seq1 == seq:
-            return (seq, result.decode("utf-8"))
+            return (seq, result)
 
 
 # Python implementation of the same algorithm in sys_winstream_read(),
@@ -631,6 +631,7 @@ async def main():
     hda_streams = dict()
     last_seq = 0
     trace_seq = 0
+    os.remove("channel0_0")
     while True:
         await asyncio.sleep(0.03)
         (last_seq, output) = winstream_read(last_seq)
@@ -639,8 +640,8 @@ async def main():
             sys.stdout.write(output)
             sys.stdout.flush()
         if trace_out:
-            sys.stderr.write(trace_out)
-            sys.stderr.flush()
+            with open("channel0_0", "ab") as f:
+                f.write(trace_out)
         if dsp.HIPCTDR & 0x80000000:
             ipc_command(dsp.HIPCTDR & ~0x80000000, dsp.HIPCTDD)
         if dsp.HIPCIDA & 0x80000000:
