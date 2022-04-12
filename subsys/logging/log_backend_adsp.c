@@ -23,11 +23,11 @@
 static struct k_spinlock lock;
 
 static uint32_t log_format_current = CONFIG_LOG_BACKEND_ADSP_OUTPUT_DEFAULT;
-void intel_adsp_trace_out(int8_t *str, size_t len);
+void intel_adsp_log_out(int8_t *str, size_t len);
 
 static int char_out(uint8_t *data, size_t length, void *ctx)
 {
-	intel_adsp_trace_out(data, length);
+	intel_adsp_log_out(data, length);
 
 	return length;
 }

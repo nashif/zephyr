@@ -28,6 +28,7 @@ HUGEPAGE_FILE = "/dev/hugepages/cavs-fw-dma.tmp."
 # Window 3 is winstream-formatted log output
 OUTBOX_OFFSET    = (512 + (0 * 128)) * 1024 + 4096
 INBOX_OFFSET     = (512 + (1 * 128)) * 1024
+TRACE_OFFSET     = (512 + (2 * 128)) * 1024
 WINSTREAM_OFFSET = (512 + (3 * 128)) * 1024
 
 class HDAStream:
@@ -442,6 +443,22 @@ def wait_fw_entered():
     if not alive:
         log.warning("Load failed?  FW_STATUS = 0x%x", dsp.SRAM_FW_STATUS)
 
+# This SHOULD be just "mem[start:start+length]", but slicing an mmap
+# array seems to be unreliable on one of my machines (python 3.6.9 on
+# Ubuntu 18.04).  Read out bytes individually.
+def trace_read(start, length):
+    try:
+        return b''.join(bar4_mmap[TRACE_OFFSET + x].to_bytes(1, 'little')
+                        for x in range(start, start + length))
+    except IndexError as ie:
+        # A FW in a bad state may cause winstream garbage
+        log.error("IndexError in bar4_mmap[%d + %d]", TRACE_OFFSET, start)
+        log.error("bar4_mmap.size()=%d", bar4_mmap.size())
+        raise ie
+
+def trace_hdr():
+    return struct.unpack("<IIII", trace_read(0, 16))
+
 
 # This SHOULD be just "mem[start:start+length]", but slicing an mmap
 # array seems to be unreliable on one of my machines (python 3.6.9 on
@@ -458,6 +475,28 @@ def win_read(start, length):
 
 def win_hdr():
     return struct.unpack("<IIII", win_read(0, 16))
+
+# Python implementation of the same algorithm in sys_winstream_read(),
+# see there for details.
+def tracestream_read(last_seq):
+    while True:
+        (wlen, start, end, seq) = trace_hdr()
+        if last_seq == 0:
+            last_seq = seq if args.no_history else (seq - ((end - start) % wlen))
+        if seq == last_seq or start == end:
+            return (seq, "")
+        behind = seq - last_seq
+        if behind > ((end - start) % wlen):
+            return (seq, "")
+        copy = (end - behind) % wlen
+        suffix = min(behind, wlen - copy)
+        result = trace_read(16 + copy, suffix)
+        if suffix < behind:
+            result += trace_read(16, behind - suffix)
+        (wlen, start1, end, seq1) = trace_hdr()
+        if start1 == start and seq1 == seq:
+            return (seq, result.decode("utf-8"))
+
 
 # Python implementation of the same algorithm in sys_winstream_read(),
 # see there for details.
@@ -590,12 +629,17 @@ async def main():
 
     hda_streams = dict()
     last_seq = 0
+    trace_seq = 0
     while True:
         await asyncio.sleep(0.03)
         (last_seq, output) = winstream_read(last_seq)
+        (trace_seq, trace_out) = trace_read(trace_seq)
         if output:
             sys.stdout.write(output)
             sys.stdout.flush()
+        if trace_out:
+            sys.stderr.write(trace_out)
+            sys.stderr.flush()
         if dsp.HIPCTDR & 0x80000000:
             ipc_command(dsp.HIPCTDR & ~0x80000000, dsp.HIPCTDD)
         if dsp.HIPCIDA & 0x80000000:
