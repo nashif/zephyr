@@ -42,6 +42,13 @@ config ADSP_WIN0_OFFSET
 	  "firmware status register" at boot) within the reserved
 	  region at the start of HP-SRAM.
 
+config ADSP_WIN2_OFFSET
+	int "Byte offset of host window zero"
+	default 32768
+	help
+	  Offset of the third host shared memory window within the
+	  reserved region at the start of HP-SRAM.
+
 config ADSP_WIN3_OFFSET
 	int "Byte offset of host window three"
 	default 40960

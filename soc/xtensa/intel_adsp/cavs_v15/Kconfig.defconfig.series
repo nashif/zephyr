@@ -24,6 +24,9 @@ config ADSP_WIN0_OFFSET
 config ADSP_WIN3_OFFSET
 	default 0
 
+config ADSP_WIN2_OFFSET
+	default 8192
+
 config IMR_MANIFEST_ADDR
 	default 0xb0004000
 

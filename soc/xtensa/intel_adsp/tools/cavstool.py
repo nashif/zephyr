@@ -24,12 +24,12 @@ HUGEPAGE_FILE = "/dev/hugepages/cavs-fw-dma.tmp."
 #
 # Window 0 is the FW_STATUS area, and 4k after that the IPC "outbox"
 # Window 1 is the IPC "inbox" (host-writable memory, just 384 bytes currently)
-# Window 2 is unused by this script
+# Window 2 is winstream-formatted trace output
 # Window 3 is winstream-formatted log output
 OUTBOX_OFFSET    = (512 + (0 * 128)) * 1024 + 4096
 INBOX_OFFSET     = (512 + (1 * 128)) * 1024
-TRACE_OFFSET     = (512 + (2 * 128)) * 1024
 WINSTREAM_OFFSET = (512 + (3 * 128)) * 1024
+TRACE_OFFSET     = (512 + (3 * 128)) * 1024 + 4096
 
 class HDAStream:
     # creates an hda stream with at 2 buffers of buf_len
@@ -481,6 +481,7 @@ def win_hdr():
 def tracestream_read(last_seq):
     while True:
         (wlen, start, end, seq) = trace_hdr()
+        #log.info(f"tracestream, wlen {wlen}, start {start}, end {end}, seq {seq}")
         if last_seq == 0:
             last_seq = seq if args.no_history else (seq - ((end - start) % wlen))
         if seq == last_seq or start == end:
@@ -633,7 +634,7 @@ async def main():
     while True:
         await asyncio.sleep(0.03)
         (last_seq, output) = winstream_read(last_seq)
-        (trace_seq, trace_out) = trace_read(trace_seq)
+        (trace_seq, trace_out) = tracestream_read(trace_seq)
         if output:
             sys.stdout.write(output)
             sys.stdout.flush()
