@@ -68,6 +68,17 @@ if(CONFIG_PERCEPIO_TRACERECORDER)
     )
   endif()
 
+  if(CONFIG_PERCEPIO_TRC_CFG_STREAM_PORT_IADSP)
+    zephyr_library_sources(
+      ${TRACERECORDER_DIR}/kernelports/Zephyr/streamports/IntelADSP/trcStreamPort.c
+    )
+
+    zephyr_include_directories(
+      ${TRACERECORDER_DIR}/kernelports/Zephyr/streamports/IntelADSP/config/
+      ${TRACERECORDER_DIR}/kernelports/Zephyr/streamports/IntelADSP/include/
+    )
+  endif()
+
   zephyr_include_directories(
     ${TRACERECORDER_DIR}/kernelports/Zephyr/include
     ${TRACERECORDER_DIR}/kernelports/Zephyr/config
