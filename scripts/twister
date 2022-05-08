@@ -549,7 +549,7 @@ structure in the main Zephyr tree: boards/<arch>/<board_name>/""")
              "faster compilation since builds will be incremental.")
 
     parser.add_argument(
-        "--no-skipped-report", action="store_true",
+        "--no-skipped-report", action="store_true", default=True,
         help="""Do not report skipped test cases in junit output. [Experimental]
         """)
 
