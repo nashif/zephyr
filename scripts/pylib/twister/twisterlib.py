@@ -2839,7 +2839,7 @@ class ProjectBuilder(FilterBuilder):
             else:
                 if instance.handler and instance.run:
                     more_info = instance.handler.type_str
-                    htime = instance.handler.duration
+                    htime = instance.execution_time
                     if htime:
                         more_info += " {:.3f}s".format(htime)
                 else:
@@ -2946,7 +2946,7 @@ class ProjectBuilder(FilterBuilder):
                 instance.metrics["rom_size"] = 0
                 instance.metrics["unrecognized"] = []
 
-            instance.metrics["handler_time"] = instance.handler.duration if instance.handler else 0
+            instance.metrics["handler_time"] = instance.execution_time
 
 class TestPlan(DisablePyTestCollectionMixin):
     config_re = re.compile('(CONFIG_[A-Za-z0-9_]+)[=]\"?([^\"]*)\"?$')
