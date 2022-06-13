@@ -1,0 +1,18 @@
+# Copyright (c) 2022 Intel Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+
+DT_COMPAT_ACE_RTC_COUNTER := intel,ace-rtc-counter
+DT_COMPAT_ACE_ART_COUNTER := intel,ace-art-counter
+
+config ACE_V1X_ART_COUNTER
+	bool "DSP ART Wall Clock for ACE V1X"
+	default $(dt_compat_enabled,$(DT_COMPAT_ACE_ART_COUNTER))
+	help
+	  DSP ART Wall Clock used by ACE V1X.
+
+config ACE_V1X_RTC_COUNTER
+	bool "DSP RTC Wall Clock for ACE V1X"
+	default $(dt_compat_enabled,$(DT_COMPAT_ACE_RTC_COUNTER))
+	help
+	  DSP RTC Wall Clock used by ACE V1X.V

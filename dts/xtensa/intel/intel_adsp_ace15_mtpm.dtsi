@@ -105,8 +105,19 @@
 			num-irqs = <28>;
 			interrupt-parent = <&core_intc>;
 			label = "ACE_0";
-		};
+			  };
 
+		ace_art_counter: ace_art_counter@72058 {
+			 compatible = "intel,ace-art-counter";
+			 reg = <0x72058 0x0064>;
+			 label = "ACE_ART_COUNTER";
+		 };
+
+		ace_rtc_counter: ace_rtc_counter@72008 {
+			 compatible = "intel,ace-rtc-counter";
+			 reg = <0x72008 0x0064>;
+			 label = "ACE_RTC_COUNTER";
+		 };
 		shim: shim@71f00 {
 			compatible = "intel,cavs-shim";
 			reg = <0x71f00 0x100>;
