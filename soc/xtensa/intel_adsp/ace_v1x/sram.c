@@ -17,7 +17,7 @@
 
 #define DELAY_COUNT			256
 
-__imr void hp_sram_init(void)
+__imr void hp_sram_init(uint32_t memory_size)
 {
 	uint32_t hpsram_ebb_quantity = mtl_hpsram_get_bank_count();
 	volatile uint32_t *l2hsbpmptr = (volatile uint32_t *)MTL_L2MM->l2hsbpmptr;
