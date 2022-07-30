@@ -1220,6 +1220,7 @@ Base OS:
     - tests/lib/cbprintf_*/
     - lib/os/cbprintf*
     - lib/os/Kconfig.cbprintf
+    - lib/os/json.c
   labels:
     - "area: Base OS"
 
