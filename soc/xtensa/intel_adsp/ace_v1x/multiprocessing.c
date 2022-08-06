@@ -73,6 +73,10 @@ void soc_start_core(int cpu_num)
 	}
 }
 
+
+
+#define ACE_INTC_IRQ DT_IRQN(DT_NODELABEL(ace_intc))
+
 void soc_mp_startup(uint32_t cpu)
 {
 	/* Must have this enabled always */
