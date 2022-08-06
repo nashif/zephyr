@@ -16,7 +16,7 @@
  *
  * mask     - Bit mask of interrupts to be enabled.
  */
-static inline void z_xt_ints_on(unsigned int mask)
+static inline void z_xtensa_ints_on(unsigned int mask)
 {
 	int val;
 
@@ -31,7 +31,7 @@ static inline void z_xt_ints_on(unsigned int mask)
  *
  * mask     - Bit mask of interrupts to be disabled.
  */
-static inline void z_xt_ints_off(unsigned int mask)
+static inline void z_xtensa_ints_off(unsigned int mask)
 {
 	int val;
 
@@ -43,7 +43,7 @@ static inline void z_xt_ints_off(unsigned int mask)
 /*
  * Call this function to set the specified (s/w) interrupt.
  */
-static inline void z_xt_set_intset(unsigned int arg)
+static inline void z_xtensa_set_intset(unsigned int arg)
 {
 #if XCHAL_HAVE_INTERRUPTS
 	__asm__ volatile("wsr.intset %0; rsync" : : "r"(arg));
@@ -101,12 +101,12 @@ extern int z_soc_irq_connect_dynamic(unsigned int irq, unsigned int priority,
 
 static ALWAYS_INLINE void z_xtensa_irq_enable(uint32_t irq)
 {
-	z_xt_ints_on(1 << irq);
+	z_xtensa_ints_on(1 << irq);
 }
 
 static ALWAYS_INLINE void z_xtensa_irq_disable(uint32_t irq)
 {
-	z_xt_ints_off(1 << irq);
+	z_xtensa_ints_off(1 << irq);
 }
 
 static ALWAYS_INLINE unsigned int arch_irq_lock(void)
