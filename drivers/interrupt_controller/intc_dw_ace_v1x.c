@@ -57,7 +57,7 @@
 
 #define IS_DW(irq) ((irq) >= XCHAL_NUM_INTERRUPTS)
 
-void dw_ace_v1x_irq_enable(const struct device *dev, uint32_t irq)
+void dw_ace_v1x_irq_enable(const struct device *dev, unsigned int irq)
 {
 	const struct dw_ictl_config *config = dev->config;
 	volatile struct dw_ictl_registers *const regs =
@@ -72,7 +72,7 @@ void dw_ace_v1x_irq_enable(const struct device *dev, uint32_t irq)
 	}
 }
 
-void dw_ace_v1x_irq_disable(const struct device *dev, uint32_t irq)
+void dw_ace_v1x_irq_disable(const struct device *dev, unsigned int irq)
 {
 	const struct dw_ictl_config *config = dev->config;
 	volatile struct dw_ictl_registers *const regs =
