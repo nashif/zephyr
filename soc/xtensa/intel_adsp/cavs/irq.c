@@ -21,7 +21,7 @@ LOG_MODULE_DECLARE(soc, CONFIG_SOC_LOG_LEVEL);
 
 #define CAVS_INTC_NODE(n) DT_INST(n, intel_cavs_intc)
 
-static const struct device *_get_ictl_dev(uint32_t irq)
+static const struct device *_get_ictl_dev(unsigned int irq)
 {
 	const struct device *dev;
 
@@ -52,7 +52,7 @@ static const struct device *_get_ictl_dev(uint32_t irq)
 	return dev;
 }
 
-void z_soc_irq_enable(uint32_t irq)
+void z_soc_irq_enable(unsigned int irq)
 {
 	const struct device *dev;
 
@@ -70,7 +70,7 @@ void z_soc_irq_enable(uint32_t irq)
 	irq_enable_next_level(dev, CAVS_IRQ_NUMBER(irq));
 }
 
-void z_soc_irq_disable(uint32_t irq)
+void z_soc_irq_disable(unsigned int irq)
 {
 	const struct device *dev;
 
