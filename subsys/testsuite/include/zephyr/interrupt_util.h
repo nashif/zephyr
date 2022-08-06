@@ -175,7 +175,7 @@ static inline void trigger_irq(int irq)
 #elif defined(CONFIG_XTENSA)
 static inline void trigger_irq(int irq)
 {
-	z_xt_set_intset(BIT((unsigned int)irq));
+	z_xtensa_set_intset(BIT((unsigned int)irq));
 }
 
 #elif defined(CONFIG_SPARC)
