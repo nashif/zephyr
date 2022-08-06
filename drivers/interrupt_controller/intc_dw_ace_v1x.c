@@ -3,6 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+#define DT_DRV_COMPAT intel_ace_intc
 
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
@@ -12,7 +13,7 @@
 #endif
 #include <zephyr/drivers/interrupt_controller/dw_ace_v1x.h>
 #include <soc.h>
-#include <ace_v1x-regs.h>
+#include "intc_dw.h"
 
 /* MTL device interrupts are all packed into a single line on Xtensa's
  * architectural IRQ 4 (see below), run by a Designware interrupt
@@ -58,11 +59,13 @@
 
 void dw_ace_v1x_irq_enable(const struct device *dev, uint32_t irq)
 {
-	ARG_UNUSED(dev);
+	const struct dw_ictl_config *config = dev->config;
+	volatile struct dw_ictl_registers * const regs =
+		(struct dw_ictl_registers *)config->base_addr;
 
 	if (IS_DW(irq)) {
 		for (int i = 0; i < CONFIG_MP_NUM_CPUS; i++) {
-			ACE_INTC[i].inten |= BIT(MTL_IRQ_FROM_ZEPHYR(irq));
+			regs[i].irq_inten_l |= BIT(MTL_IRQ_FROM_ZEPHYR(irq));
 		}
 	} else {
 		z_xtensa_irq_enable(irq);
@@ -71,11 +74,12 @@ void dw_ace_v1x_irq_enable(const struct device *dev, uint32_t irq)
 
 void dw_ace_v1x_irq_disable(const struct device *dev, uint32_t irq)
 {
-	ARG_UNUSED(dev);
-
+	const struct dw_ictl_config *config = dev->config;
+	volatile struct dw_ictl_registers * const regs =
+		(struct dw_ictl_registers *)config->base_addr;
 	if (IS_DW(irq)) {
 		for (int i = 0; i < CONFIG_MP_NUM_CPUS; i++) {
-			ACE_INTC[i].inten &= ~BIT(MTL_IRQ_FROM_ZEPHYR(irq));
+			regs[i].irq_inten_l &= ~BIT(MTL_IRQ_FROM_ZEPHYR(irq));
 		}
 	} else {
 		z_xtensa_irq_disable(irq);
@@ -84,10 +88,12 @@ void dw_ace_v1x_irq_disable(const struct device *dev, uint32_t irq)
 
 int dw_ace_v1x_irq_is_enabled(const struct device *dev, unsigned int irq)
 {
-	ARG_UNUSED(dev);
+	const struct dw_ictl_config *config = dev->config;
+	volatile struct dw_ictl_registers * const regs =
+		(struct dw_ictl_registers *)config->base_addr;
 
 	if (IS_DW(irq)) {
-		return ACE_INTC[0].inten & BIT(MTL_IRQ_FROM_ZEPHYR(irq));
+		return regs[0].irq_inten_l & BIT(MTL_IRQ_FROM_ZEPHYR(irq));
 	} else {
 		return z_xtensa_irq_is_enabled(irq);
 	}
@@ -110,9 +116,13 @@ int dw_ace_v1x_irq_connect_dynamic(const struct device *dev, unsigned int irq,
 }
 #endif
 
-static void dwint_isr(const void *arg)
+static void dw_ictl_isr(const struct device *dev)
 {
-	uint32_t fs = ACE_INTC[arch_proc_id()].finalstatus;
+	const struct dw_ictl_config *config = dev->config;
+	volatile struct dw_ictl_registers * const regs =
+			(struct dw_ictl_registers *)config->base_addr;
+
+	uint32_t fs = regs[arch_proc_id()].irq_finalstatus_l;
 
 	while (fs) {
 		uint32_t bit = find_lsb_set(fs) - 1;
@@ -123,12 +133,19 @@ static void dwint_isr(const void *arg)
 	}
 }
 
+static const struct dw_ictl_config dw_config = {
+	.base_addr = DT_INST_REG_ADDR(0),
+	.numirqs = DT_INST_PROP(0, num_irqs),
+	.isr_table_offset = 0,
+	.config_func = NULL,
+};
+
 static int dw_ace_v1x_init(const struct device *dev)
 {
 	ARG_UNUSED(dev);
 
-	IRQ_CONNECT(ACE_INTC_IRQ, 0, dwint_isr, 0, 0);
-	z_xtensa_irq_enable(ACE_INTC_IRQ);
+	IRQ_CONNECT(DT_INST_IRQN(0), 0, dw_ictl_isr, 0, 0);
+	z_xtensa_irq_enable(DT_INST_IRQN(0));
 
 	return 0;
 }
@@ -142,6 +159,7 @@ static const struct dw_ace_v1_ictl_driver_api dw_ictl_ace_v1x_apis = {
 #endif
 };
 
-DEVICE_DT_DEFINE(DT_NODELABEL(ace_intc), dw_ace_v1x_init, NULL, NULL, NULL,
+DEVICE_DT_INST_DEFINE(0, dw_ace_v1x_init, NULL,
+		 NULL, &dw_config,
 		 PRE_KERNEL_1, CONFIG_INTC_INIT_PRIORITY,
 		 &dw_ictl_ace_v1x_apis);

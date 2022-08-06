@@ -17,6 +17,10 @@
 #define XTENSA_IRQ_NUM_MASK			0xff
 #define CAVS_IRQ_NUM_MASK			0xff
 
+/* Convert between IRQ_CONNECT() numbers and MTL_INTL_* interrupts */
+#define MTL_IRQ_TO_ZEPHYR(n)   (XCHAL_NUM_INTERRUPTS + (n))
+#define MTL_IRQ_FROM_ZEPHYR(n) ((n) - XCHAL_NUM_INTERRUPTS)
+
 /*
  * IRQs are mapped on 2 levels. 3rd and 4th level are left as 0x00.
  *
