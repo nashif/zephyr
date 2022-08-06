@@ -86,9 +86,9 @@ int z_soc_irq_is_enabled(unsigned int irq);
 extern int z_soc_irq_connect_dynamic(unsigned int irq, unsigned int priority,
 				     void (*routine)(const void *parameter),
 				     const void *parameter, uint32_t flags);
-#endif
+#endif /* CONFIG_DYNAMIC_INTERRUPTS */
 
-#else
+#else /* CONFIG_MULTI_LEVEL_INTERRUPTS */
 
 #define CONFIG_NUM_IRQS XCHAL_NUM_INTERRUPTS
 
@@ -97,7 +97,7 @@ extern int z_soc_irq_connect_dynamic(unsigned int irq, unsigned int priority,
 
 #define arch_irq_is_enabled(irq)	z_xtensa_irq_is_enabled(irq)
 
-#endif
+#endif /* CONFIG_MULTI_LEVEL_INTERRUPTS */
 
 static ALWAYS_INLINE void z_xtensa_irq_enable(uint32_t irq)
 {
