@@ -56,6 +56,7 @@
  */
 
 #define IS_DW(irq) ((irq) >= XCHAL_NUM_INTERRUPTS)
+#define IRQ_FROM_ZEPHYR(n) ((n) - XCHAL_NUM_INTERRUPTS)
 
 void dw_ace_v1x_irq_enable(const struct device *dev, unsigned int irq)
 {
@@ -65,7 +66,7 @@ void dw_ace_v1x_irq_enable(const struct device *dev, unsigned int irq)
 
 	if (IS_DW(irq)) {
 		for (int i = 0; i < CONFIG_MP_NUM_CPUS; i++) {
-			regs[i].irq_inten_l |= BIT(MTL_IRQ_FROM_ZEPHYR(irq));
+			regs[i].irq_inten_l |= BIT(IRQ_FROM_ZEPHYR(irq));
 		}
 	} else {
 		z_xtensa_irq_enable(irq);
@@ -79,7 +80,7 @@ void dw_ace_v1x_irq_disable(const struct device *dev, unsigned int irq)
 		(struct dw_ictl_registers *)config->base_addr;
 	if (IS_DW(irq)) {
 		for (int i = 0; i < CONFIG_MP_NUM_CPUS; i++) {
-			regs[i].irq_inten_l &= ~BIT(MTL_IRQ_FROM_ZEPHYR(irq));
+			regs[i].irq_inten_l &= ~BIT(IRQ_FROM_ZEPHYR(irq));
 		}
 	} else {
 		z_xtensa_irq_disable(irq);
@@ -93,7 +94,7 @@ int dw_ace_v1x_irq_is_enabled(const struct device *dev, unsigned int irq)
 		(struct dw_ictl_registers *)config->base_addr;
 
 	if (IS_DW(irq)) {
-		return regs[0].irq_inten_l & BIT(MTL_IRQ_FROM_ZEPHYR(irq));
+		return regs[0].irq_inten_l & BIT(IRQ_FROM_ZEPHYR(irq));
 	} else {
 		return z_xtensa_irq_is_enabled(irq);
 	}
