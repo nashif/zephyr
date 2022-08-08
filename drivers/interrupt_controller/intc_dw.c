@@ -69,9 +69,9 @@ static inline void dw_ictl_intr_enable(const struct device *dev,
 		(struct dw_ictl_registers *)config->base_addr;
 
 	if (irq < 32) {
-		regs->irq_inten_l |= (1 << irq);
+		regs->irq_inten_l |= BIT(irq);
 	} else {
-		regs->irq_inten_h |= (1 << (irq - 32));
+		regs->irq_inten_h |= BIT(irq - 32);
 	}
 }
 
@@ -83,9 +83,9 @@ static inline void dw_ictl_intr_disable(const struct device *dev,
 		(struct dw_ictl_registers *)config->base_addr;
 
 	if (irq < 32) {
-		regs->irq_inten_l &= ~(1 << irq);
+		regs->irq_inten_l &= ~BIT(irq);
 	} else {
-		regs->irq_inten_h &= ~(1 << (irq - 32));
+		regs->irq_inten_h &= ~BIT(irq - 32);
 	}
 }
 
