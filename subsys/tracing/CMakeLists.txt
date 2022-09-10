@@ -23,6 +23,12 @@ zephyr_sources_ifdef(
   )
 
 zephyr_sources_ifdef(
+  CONFIG_TRACING_BACKEND_RTT
+  tracing_backend_rtt.c
+  )
+
+
+zephyr_sources_ifdef(
   CONFIG_TRACING_BACKEND_UART
   tracing_backend_uart.c
   )

@@ -140,6 +140,14 @@ config TRACING_BACKEND_UART
 	help
 	  Use UART to output tracing data.
 
+config TRACING_BACKEND_RTT
+	bool "RTT backend"
+	depends on USE_SEGGER_RTT
+	select SEGGER_RTT_CUSTOM_LOCKING
+
+	help
+	  Use UART to output tracing data.
+
 config TRACING_BACKEND_USB
 	bool "USB backend"
 	depends on USB_DEVICE_STACK
