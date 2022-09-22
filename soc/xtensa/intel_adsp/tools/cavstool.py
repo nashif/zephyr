@@ -27,9 +27,10 @@ HUGEPAGE_FILE = "/dev/hugepages/cavs-fw-dma.tmp."
 # Window 1 is the IPC "inbox" (host-writable memory, just 384 bytes currently)
 # Window 2 is unused by this script
 # Window 3 is winstream-formatted log output
-OUTBOX_OFFSET    = (512 + (0 * 128)) * 1024 + 4096
-INBOX_OFFSET     = (512 + (1 * 128)) * 1024
-WINSTREAM_OFFSET = (512 + (3 * 128)) * 1024
+OUTBOX_OFFSET   = (512 + (0 * 128)) * 1024 + 4096
+INBOX_OFFSET    = (512 + (1 * 128)) * 1024
+DEBUG_OFFSET    = (512 + (2 * 128)) * 1024
+TRACE_OFFSET    = (512 + (3 * 128)) * 1024
 
 # ADSPCS bits
 CRST   = 0
@@ -616,34 +617,38 @@ def runx(cmd):
     return subprocess.check_output(cmd, shell=True).decode().rstrip()
 
 
+class MemWin():
 
-class Winstream():
-
-    def __init__(self, bar4_mmap, args) -> None:
+    def __init__(self, bar4_mmap, window) -> None:
+        self.window = window
         self.bar4_mmap = bar4_mmap
-        self.no_history = args.no_history
-
     # This SHOULD be just "mem[start:start+length]", but slicing an mmap
     # array seems to be unreliable on one of my machines (python 3.6.9 on
     # Ubuntu 18.04).  Read out bytes individually.
-    def win_read(self, start, length):
+    def read(self, start, length):
         try:
-            return b''.join(self.bar4_mmap[WINSTREAM_OFFSET + x].to_bytes(1, 'little')
+            return b''.join(self.bar4_mmap[self.window + x].to_bytes(1, 'little')
                             for x in range(start, start + length))
         except IndexError as ie:
             # A FW in a bad state may cause winstream garbage
-            log.error("IndexError in bar4_mmap[%d + %d]", WINSTREAM_OFFSET, start)
+            log.error("IndexError in bar4_mmap[%d + %d]", self.window, start)
             log.error("bar4_mmap.size()=%d", self.bar4_mmap.size())
             raise ie
 
-    def win_hdr(self):
-        return struct.unpack("<IIII", self.win_read(0, 16))
+    def header(self):
+        return struct.unpack("<IIII", self.read(0, 16))
+
+class Mtrace():
+    def __init__(self, bar4_mmap, args) -> None:
+        self.no_history = args.no_history
+        self.win = MemWin(bar4_mmap, DEBUG_OFFSET)
 
     # Python implementation of the same algorithm in sys_winstream_read(),
     # see there for details.
-    def winstream_read(self, last_seq):
+    def read(self, last_seq):
+
         while True:
-            (wlen, start, end, seq) = self.win_hdr()
+            (wlen, start, end, seq) = self.win.header()
             if last_seq == 0:
                 last_seq = seq if self.no_history else (seq - ((end - start) % wlen))
             if seq == last_seq or start == end:
@@ -653,15 +658,44 @@ class Winstream():
                 return (seq, "")
             copy = (end - behind) % wlen
             suffix = min(behind, wlen - copy)
-            result = self.win_read(16 + copy, suffix)
+            result = self.win.read(16 + copy, suffix)
             if suffix < behind:
-                result += self.win_read(16, behind - suffix)
-            (wlen, start1, end, seq1) = self.win_hdr()
+                result += self.win.read(16, behind - suffix)
+            (wlen, start1, end, seq1) = self.win.header()
             if start1 == start and seq1 == seq:
                 # Best effort attempt at decoding, replacing unusable characters
                 # Found to be useful when it really goes wrong
                 return (seq, result.decode("utf-8", "replace"))
 
+
+class Winstream():
+
+    def __init__(self, bar4_mmap, args) -> None:
+        self.no_history = args.no_history
+        self.win = MemWin(bar4_mmap, TRACE_OFFSET)
+
+    # Python implementation of the same algorithm in sys_winstream_read(),
+    # see there for details.
+    def winstream_read(self, last_seq):
+        while True:
+            (wlen, start, end, seq) = self.win.header()
+            if last_seq == 0:
+                last_seq = seq if self.no_history else (seq - ((end - start) % wlen))
+            if seq == last_seq or start == end:
+                return (seq, "")
+            behind = seq - last_seq
+            if behind > ((end - start) % wlen):
+                return (seq, "")
+            copy = (end - behind) % wlen
+            suffix = min(behind, wlen - copy)
+            result = self.win.read(16 + copy, suffix)
+            if suffix < behind:
+                result += self.win.read(16, behind - suffix)
+            (wlen, start1, end, seq1) = self.win.header()
+            if start1 == start and seq1 == seq:
+                # Best effort attempt at decoding, replacing unusable characters
+                # Found to be useful when it really goes wrong
+                return (seq, result.decode("utf-8", "replace"))
 
 async def main(args):
     try:
@@ -699,6 +733,7 @@ async def main(args):
                 adsp.dsp.HIPCIDA = 1<<31 # must ACK any DONE interrupts that arrive!
             if adsp.dsp.HIPCTDR & 0x80000000:
                 adsp.ipc_command(adsp.dsp.HIPCTDR & ~0x80000000, adsp.dsp.HIPCTDD)
+                print("bleh")
 
 
 def parse_args():
