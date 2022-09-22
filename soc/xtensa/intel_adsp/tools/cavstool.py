@@ -39,12 +39,13 @@ CPA    = 24
 
 class HDAStream:
     # creates an hda stream with at 2 buffers of buf_len
-    def __init__(self, stream_id: int, hdamem):
+    def __init__(self, stream_id: int, adsp):
+        self.adsp = adsp
         self.stream_id = stream_id
-        self.base = hdamem + 0x0080 + (stream_id * 0x20)
+        self.base = self.adsp.hdamem + 0x0080 + (stream_id * 0x20)
         log.info(f"Mapping registers for hda stream {self.stream_id} at base {self.base:x}")
 
-        self.hda = Regs(hdamem)
+        self.hda = Regs(self.adsp.hdamem)
         self.hda.GCAP    = 0x0000
         self.hda.GCTL    = 0x0008
         self.hda.DPLBASE = 0x0070
@@ -71,7 +72,7 @@ class HDAStream:
         self.regs.BDPU = 0x1c
         self.regs.freeze()
 
-        self.dbg0 = Regs(hdamem + 0x0084 + (0x20*stream_id))
+        self.dbg0 = Regs(self.adsp.hdamem + 0x0084 + (0x20*stream_id))
         self.dbg0.DPIB = 0x00
         self.dbg0.EFIFOS = 0x10
         self.dbg0.freeze()
@@ -120,7 +121,7 @@ class HDAStream:
         log.info(f"Stopped stream {self.stream_id}, CTL {self.regs.CTL:x}")
 
     def setup_buf(self, buf_len: int):
-        (mem, phys_addr, hugef) = map_phys_mem(self.stream_id)
+        (mem, phys_addr, hugef) = self.adsp.map_phys_mem(self.stream_id)
 
         log.info(f"Mapped 2M huge page at 0x{phys_addr:x} for buf size ({buf_len})")
 
@@ -146,7 +147,7 @@ class HDAStream:
 
     def debug(self):
         log.debug("HDA %d: PPROC %d, CTL 0x%x, LPIB 0x%x, BDPU 0x%x, BDPL 0x%x, CBL 0x%x, LVI 0x%x",
-                 self.stream_id, (hda.PPCTL >> self.stream_id) & 1, self.regs.CTL, self.regs.LPIB, self.regs.BDPU,
+                 self.stream_id, (self.adsp.hda.PPCTL >> self.stream_id) & 1, self.regs.CTL, self.regs.LPIB, self.regs.BDPU,
                  self.regs.BDPL, self.regs.CBL, self.regs.LVI)
         log.debug("    FIFOW %d, FIFOS %d, FMT %x, FIFOL %d, DPIB %d, EFIFOS %d",
                  self.regs.FIFOW & 0x7, self.regs.FIFOS, self.regs.FMT, self.regs.FIFOL, self.dbg0.DPIB, self.dbg0.EFIFOS)
@@ -187,12 +188,13 @@ class HDAStream:
         log.info(f"Reset stream {self.stream_id}")
 
 class ADSPTool():
-    def __init__(self) -> None:
+    def __init__(self, args) -> None:
         self.cavs15 = False
         self.cavs18 = False
         self.cavs25 = False
         self.ipc_timestamp = 0
         self.hda_streams = dict()
+        self.log_only = args.log_only
 
     def mask(self, bit):
         if self.cavs25:
@@ -327,7 +329,7 @@ class ADSPTool():
         if os.path.exists(f"{pcidir}/driver"):
             mod = os.path.basename(os.readlink(f"{pcidir}/driver/module"))
             found_msg = f"Existing driver \"{mod}\" found"
-            if args.log_only:
+            if self.log_only:
                 log.info(found_msg)
             else:
                 log.warning(found_msg + ", unloading module")
@@ -420,7 +422,7 @@ class ADSPTool():
             if stream_id in self.hda_streams:
                 self.hda_streams[stream_id].reset()
             else:
-                hda_str = HDAStream(stream_id, self.hdamem)
+                hda_str = HDAStream(stream_id, self)
                 self.hda_streams[stream_id] = hda_str
         elif data == 7: # HDA CONFIG
             stream_id = ext_data & 0xFF
@@ -482,7 +484,7 @@ class ADSPTool():
         else:
             log.warning(f"cavstool: Unrecognized IPC command 0x{data:x} ext 0x{ext_data:x}")
             if not self.fw_is_alive():
-                if args.log_only:
+                if self.log_only:
                     log.info("DSP power seems off")
                     self.wait_fw_entered()
                 else:
@@ -617,8 +619,9 @@ def runx(cmd):
 
 class Winstream():
 
-    def __init__(self, bar4_mmap, ) -> None:
+    def __init__(self, bar4_mmap, args) -> None:
         self.bar4_mmap = bar4_mmap
+        self.no_history = args.no_history
 
     # This SHOULD be just "mem[start:start+length]", but slicing an mmap
     # array seems to be unreliable on one of my machines (python 3.6.9 on
@@ -642,7 +645,7 @@ class Winstream():
         while True:
             (wlen, start, end, seq) = self.win_hdr()
             if last_seq == 0:
-                last_seq = seq if args.no_history else (seq - ((end - start) % wlen))
+                last_seq = seq if self.no_history else (seq - ((end - start) % wlen))
             if seq == last_seq or start == end:
                 return (seq, "")
             behind = seq - last_seq
@@ -660,9 +663,9 @@ class Winstream():
                 return (seq, result.decode("utf-8", "replace"))
 
 
-async def main():
+async def main(args):
     try:
-        adsp  = ADSPTool()
+        adsp  = ADSPTool(args)
         adsp.map_regs()
     except Exception as e:
         log.error("Could not map device in sysfs; run as root?")
@@ -684,7 +687,7 @@ async def main():
             sys.stdout.write("--\n")
 
     last_seq = 0
-    ws = Winstream(adsp.bar4_mmap)
+    ws = Winstream(adsp.bar4_mmap, args)
     while start_output is True:
         await asyncio.sleep(0.03)
         (last_seq, output) = ws.winstream_read(last_seq)
@@ -698,26 +701,28 @@ async def main():
                 adsp.ipc_command(adsp.dsp.HIPCTDR & ~0x80000000, adsp.dsp.HIPCTDD)
 
 
-ap = argparse.ArgumentParser(description="DSP loader/logger tool")
-ap.add_argument("-q", "--quiet", action="store_true",
-                help="No loader output, just DSP logging")
-ap.add_argument("-v", "--verbose", action="store_true",
-                help="More loader output, DEBUG logging level")
-ap.add_argument("-l", "--log-only", action="store_true",
-                help="Don't load firmware, just show log output")
-ap.add_argument("-n", "--no-history", action="store_true",
-                help="No current log buffer at start, just new output")
-ap.add_argument("fw_file", nargs="?", help="Firmware file")
+def parse_args():
+    ap = argparse.ArgumentParser(description="DSP loader/logger tool")
+    ap.add_argument("-q", "--quiet", action="store_true",
+                    help="No loader output, just DSP logging")
+    ap.add_argument("-v", "--verbose", action="store_true",
+                    help="More loader output, DEBUG logging level")
+    ap.add_argument("-l", "--log-only", action="store_true",
+                    help="Don't load firmware, just show log output")
+    ap.add_argument("-n", "--no-history", action="store_true",
+                    help="No current log buffer at start, just new output")
+    ap.add_argument("fw_file", nargs="?", help="Firmware file")
 
-args = ap.parse_args()
-
-if args.quiet:
-    log.setLevel(logging.WARN)
-elif args.verbose:
-    log.setLevel(logging.DEBUG)
+    return ap.parse_args()
 
 if __name__ == "__main__":
+
+    args = parse_args()
+    if args.quiet:
+        log.setLevel(logging.WARN)
+    elif args.verbose:
+        log.setLevel(logging.DEBUG)
     try:
-        asyncio.get_event_loop().run_until_complete(main())
+        asyncio.get_event_loop().run_until_complete(main(args))
     except KeyboardInterrupt:
         start_output = False
