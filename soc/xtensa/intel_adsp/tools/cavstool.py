@@ -622,51 +622,44 @@ class MemWin():
     def __init__(self, bar4_mmap, window) -> None:
         self.window = window
         self.bar4_mmap = bar4_mmap
-    # This SHOULD be just "mem[start:start+length]", but slicing an mmap
-    # array seems to be unreliable on one of my machines (python 3.6.9 on
-    # Ubuntu 18.04).  Read out bytes individually.
+
     def read(self, start, length):
+        # This SHOULD be just "mem[start:start+length]", but slicing an mmap
+        # array seems to be unreliable on one of my machines (python 3.6.9 on
+        # Ubuntu 18.04).  Read out bytes individually.
         try:
-            return b''.join(self.bar4_mmap[self.window + x].to_bytes(1, 'little')
+            out = b''.join(self.bar4_mmap[self.window + x].to_bytes(1, 'little')
                             for x in range(start, start + length))
+
+            #v = memoryview(self.bar4_mmap)
+            #out = bytes(v[self.window + start:self.window + start + length])
+            return out
         except IndexError as ie:
             # A FW in a bad state may cause winstream garbage
             log.error("IndexError in bar4_mmap[%d + %d]", self.window, start)
             log.error("bar4_mmap.size()=%d", self.bar4_mmap.size())
             raise ie
 
-    def header(self):
-        return struct.unpack("<IIII", self.read(0, 16))
 
 class Mtrace():
     def __init__(self, bar4_mmap, args) -> None:
         self.no_history = args.no_history
         self.win = MemWin(bar4_mmap, DEBUG_OFFSET)
 
-    # Python implementation of the same algorithm in sys_winstream_read(),
-    # see there for details.
+    def header(self):
+        header = struct.unpack("<IIII", self.win.read(8192, 16))
+        return header
+
     def read(self, last_seq):
-
+        s = 0
+        bb = 0
         while True:
-            (wlen, start, end, seq) = self.win.header()
-            if last_seq == 0:
-                last_seq = seq if self.no_history else (seq - ((end - start) % wlen))
-            if seq == last_seq or start == end:
-                return (seq, "")
-            behind = seq - last_seq
-            if behind > ((end - start) % wlen):
-                return (seq, "")
-            copy = (end - behind) % wlen
-            suffix = min(behind, wlen - copy)
-            result = self.win.read(16 + copy, suffix)
-            if suffix < behind:
-                result += self.win.read(16, behind - suffix)
-            (wlen, start1, end, seq1) = self.win.header()
-            if start1 == start and seq1 == seq:
-                # Best effort attempt at decoding, replacing unusable characters
-                # Found to be useful when it really goes wrong
-                return (seq, result.decode("utf-8", "replace"))
-
+            (data_len, a, b, c) = self.header()
+            if bb == b:
+                os.write(sys.stdout.fileno(), b"")
+            data = self.win.read(8192 + 16 + bb, b)
+            bb = b
+            os.write(sys.stdout.fileno(), data)
 
 class Winstream():
 
@@ -674,11 +667,15 @@ class Winstream():
         self.no_history = args.no_history
         self.win = MemWin(bar4_mmap, TRACE_OFFSET)
 
+    def header(self):
+        header = struct.unpack("<IIII", self.win.read(0, 16))
+        return header
+
     # Python implementation of the same algorithm in sys_winstream_read(),
     # see there for details.
-    def winstream_read(self, last_seq):
+    def read(self, last_seq):
         while True:
-            (wlen, start, end, seq) = self.win.header()
+            (wlen, start, end, seq) = self.header()
             if last_seq == 0:
                 last_seq = seq if self.no_history else (seq - ((end - start) % wlen))
             if seq == last_seq or start == end:
@@ -691,7 +688,7 @@ class Winstream():
             result = self.win.read(16 + copy, suffix)
             if suffix < behind:
                 result += self.win.read(16, behind - suffix)
-            (wlen, start1, end, seq1) = self.win.header()
+            (wlen, start1, end, seq1) = self.header()
             if start1 == start and seq1 == seq:
                 # Best effort attempt at decoding, replacing unusable characters
                 # Found to be useful when it really goes wrong
@@ -721,10 +718,11 @@ async def main(args):
             sys.stdout.write("--\n")
 
     last_seq = 0
-    ws = Winstream(adsp.bar4_mmap, args)
+    #ws = Winstream(adsp.bar4_mmap, args)
+    win = Mtrace(adsp.bar4_mmap, args)
     while start_output is True:
         await asyncio.sleep(0.03)
-        (last_seq, output) = ws.winstream_read(last_seq)
+        output = win.read(0)
         if output:
             sys.stdout.write(output)
             sys.stdout.flush()
@@ -733,8 +731,6 @@ async def main(args):
                 adsp.dsp.HIPCIDA = 1<<31 # must ACK any DONE interrupts that arrive!
             if adsp.dsp.HIPCTDR & 0x80000000:
                 adsp.ipc_command(adsp.dsp.HIPCTDR & ~0x80000000, adsp.dsp.HIPCTDD)
-                print("bleh")
-
 
 def parse_args():
     ap = argparse.ArgumentParser(description="DSP loader/logger tool")
