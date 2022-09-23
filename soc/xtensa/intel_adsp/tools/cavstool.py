@@ -647,19 +647,21 @@ class Mtrace():
         self.win = MemWin(bar4_mmap, DEBUG_OFFSET)
 
     def header(self):
-        header = struct.unpack("<IIII", self.win.read(8192, 16))
+        header = struct.unpack("<IIII", self.win.read(16384, 16))
         return header
 
     def read(self, last_seq):
-        s = 0
         bb = 0
         while True:
             (data_len, a, b, c) = self.header()
+            print(data_len, a, b, c)
             if bb == b:
-                os.write(sys.stdout.fileno(), b"")
+                #os.write(sys.stdout.fileno(), b"")
+                continue
             data = self.win.read(8192 + 16 + bb, b)
             bb = b
             os.write(sys.stdout.fileno(), data)
+            #print(data)
 
 class Winstream():
 
