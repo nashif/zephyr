@@ -618,7 +618,6 @@ def runx(cmd):
 
 
 class MemWin():
-
     def __init__(self, bar4_mmap, window) -> None:
         self.window = window
         self.bar4_mmap = bar4_mmap
@@ -641,16 +640,16 @@ class MemWin():
             raise ie
 
 
-class Mtrace():
+class Mtrace(MemWin):
     def __init__(self, bar4_mmap, args) -> None:
         self.no_history = args.no_history
-        self.win = MemWin(bar4_mmap, DEBUG_OFFSET)
+        super().__init__(bar4_mmap, DEBUG_OFFSET)
 
     def header(self):
-        header = struct.unpack("<IIII", self.win.read(16384, 16))
+        header = struct.unpack("<IIII", self.read(16384, 16))
         return header
 
-    def read(self, last_seq):
+    def read_data(self, last_seq):
         bb = 0
         while True:
             (data_len, a, b, c) = self.header()
@@ -658,24 +657,24 @@ class Mtrace():
             if bb == b:
                 #os.write(sys.stdout.fileno(), b"")
                 continue
-            data = self.win.read(8192 + 16 + bb, b)
+            data = self.read(8192 + 16 + bb, b)
             bb = b
             os.write(sys.stdout.fileno(), data)
             #print(data)
 
-class Winstream():
+class Winstream(MemWin):
 
     def __init__(self, bar4_mmap, args) -> None:
         self.no_history = args.no_history
-        self.win = MemWin(bar4_mmap, TRACE_OFFSET)
+        super().__init__(bar4_mmap, TRACE_OFFSET)
 
     def header(self):
-        header = struct.unpack("<IIII", self.win.read(0, 16))
+        header = struct.unpack("<IIII", self.read(0, 16))
         return header
 
     # Python implementation of the same algorithm in sys_winstream_read(),
     # see there for details.
-    def read(self, last_seq):
+    def read_data(self, last_seq):
         while True:
             (wlen, start, end, seq) = self.header()
             if last_seq == 0:
@@ -687,9 +686,9 @@ class Winstream():
                 return (seq, "")
             copy = (end - behind) % wlen
             suffix = min(behind, wlen - copy)
-            result = self.win.read(16 + copy, suffix)
+            result = self.read(16 + copy, suffix)
             if suffix < behind:
-                result += self.win.read(16, behind - suffix)
+                result += self.read(16, behind - suffix)
             (wlen, start1, end, seq1) = self.header()
             if start1 == start and seq1 == seq:
                 # Best effort attempt at decoding, replacing unusable characters
@@ -720,11 +719,11 @@ async def main(args):
             sys.stdout.write("--\n")
 
     last_seq = 0
-    #ws = Winstream(adsp.bar4_mmap, args)
-    win = Mtrace(adsp.bar4_mmap, args)
+    win = Winstream(adsp.bar4_mmap, args)
+    #win = Mtrace(adsp.bar4_mmap, args)
     while start_output is True:
         await asyncio.sleep(0.03)
-        output = win.read(0)
+        (last_seq, output) = win.read_data(last_seq)
         if output:
             sys.stdout.write(output)
             sys.stdout.flush()
