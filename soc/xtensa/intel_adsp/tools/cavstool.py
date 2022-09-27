@@ -639,29 +639,6 @@ class MemWin():
             log.error("bar4_mmap.size()=%d", self.bar4_mmap.size())
             raise ie
 
-
-class Mtrace(MemWin):
-    def __init__(self, bar4_mmap, win, args) -> None:
-        self.no_history = args.no_history
-        super().__init__(bar4_mmap, win)
-
-    def header(self):
-        header = struct.unpack("<IIII", self.read(16384, 16))
-        return header
-
-    def read_data(self, last_seq):
-        bb = 0
-        while True:
-            (data_len, a, b, c) = self.header()
-            print(data_len, a, b, c)
-            if bb == b:
-                #os.write(sys.stdout.fileno(), b"")
-                continue
-            data = self.read(8192 + 16 + bb, b)
-            bb = b
-            os.write(sys.stdout.fileno(), data)
-            #print(data)
-
 class Winstream(MemWin):
 
     def __init__(self, bar4_mmap, win, args) -> None:
@@ -696,7 +673,29 @@ class Winstream(MemWin):
                 return (seq, result.decode("utf-8", "replace"))
 
 
-async def logger(args):
+class Mtrace(MemWin):
+    def __init__(self, bar4_mmap, win, args) -> None:
+        self.no_history = args.no_history
+        super().__init__(bar4_mmap, win)
+
+    def header(self):
+        header = struct.unpack("<IIII", self.read(8192, 16))
+        return header
+
+    def read_data(self, last_seq):
+        while True:
+            (data_len, a, seq, c) = self.header()
+            print(seq)
+            if last_seq == 0:
+                last_seq = seq
+            time.sleep(0.3)
+            if last_seq == seq:
+                return (seq, "")
+            result = self.read(8192 + 16 + last_seq, seq)
+            #os.write(sys.stdout.fileno(), data)
+            return (seq, result.decode("utf-8", "replace"))
+
+def logger(args):
     last_seq = 0
     win = None
     if args.window == '0':
@@ -708,25 +707,16 @@ async def logger(args):
         stream = Winstream(adsp.bar4_mmap, win, args)
     elif args.stream == 'mtrace':
         stream = Mtrace(adsp.bar4_mmap, win, args)
+
     while start_output is True:
-        await asyncio.sleep(0.03)
+        time.sleep(0.03)
         (last_seq, output) = stream.read_data(last_seq)
         if output:
             sys.stdout.write(output)
             sys.stdout.flush()
 
 
-async def load(args):
-    try:
-        adsp  = ADSPTool(readonly=False)
-        adsp.map_regs()
-    except Exception as e:
-        log.error("Could not map device in sysfs; run as root?")
-        log.error(e)
-        sys.exit(1)
-
-    log.info(f"Detected cAVS {'1.5' if adsp.cavs15 else '1.8+'} hardware")
-
+def load(args):
     if not args.fw_file:
         log.error("Firmware file argument missing")
         sys.exit(1)
@@ -736,12 +726,12 @@ async def load(args):
     if not args.quiet:
         sys.stdout.write("--\n")
 
-    while start_output is True:
-        await asyncio.sleep(0.03)
-        if adsp.dsp.HIPCIDA & 0x80000000:
-            adsp.dsp.HIPCIDA = 1<<31 # must ACK any DONE interrupts that arrive!
-        if adsp.dsp.HIPCTDR & 0x80000000:
-            adsp.ipc_command(adsp.dsp.HIPCTDR & ~0x80000000, adsp.dsp.HIPCTDD)
+
+    #await asyncio.sleep(0.03)
+    if adsp.dsp.HIPCIDA & 0x80000000:
+        adsp.dsp.HIPCIDA = 1<<31 # must ACK any DONE interrupts that arrive!
+    if adsp.dsp.HIPCTDR & 0x80000000:
+        adsp.ipc_command(adsp.dsp.HIPCTDR & ~0x80000000, adsp.dsp.HIPCTDD)
 
 def parse_args():
     ap = argparse.ArgumentParser(description="DSP loader/logger tool")
@@ -786,8 +776,8 @@ if __name__ == "__main__":
 
     try:
         if args.action == 'load':
-            asyncio.get_event_loop().run_until_complete(load(args))
+            load(args)
         elif args.action == 'log':
-            asyncio.get_event_loop().run_until_complete(logger(args))
+            logger(args)
     except KeyboardInterrupt:
         start_output = False
