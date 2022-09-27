@@ -128,6 +128,6 @@ if [ "$DO_LOAD" = "1" ]; then
     # load, it tends fairly reliably to hang the DSP.  Kill it.
     ssh ssh://$CAVS_HOST "sudo pkill -9 -f cavstool" ||:
 
-    #exec ssh ssh://$CAVS_HOST "sudo ./$(basename $CAVSTOOL) $(basename $IMAGE2)"
-    exec ssh ssh://$CAVS_HOST "sudo ./$(basename $CAVSTOOL) --log-only"
+    exec ssh ssh://$CAVS_HOST "sudo ./$(basename $CAVSTOOL) load $(basename $IMAGE2)"
+    #exec ssh ssh://$CAVS_HOST "sudo ./$(basename $CAVSTOOL) log --window 0 --stream winstream"
 fi

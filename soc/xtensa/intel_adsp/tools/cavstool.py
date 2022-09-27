@@ -189,13 +189,13 @@ class HDAStream:
         log.info(f"Reset stream {self.stream_id}")
 
 class ADSPTool():
-    def __init__(self, args) -> None:
+    def __init__(self, readonly) -> None:
         self.cavs15 = False
         self.cavs18 = False
         self.cavs25 = False
         self.ipc_timestamp = 0
         self.hda_streams = dict()
-        self.log_only = args.log_only
+        self.readonly = readonly
 
     def mask(self, bit):
         if self.cavs25:
@@ -330,7 +330,7 @@ class ADSPTool():
         if os.path.exists(f"{pcidir}/driver"):
             mod = os.path.basename(os.readlink(f"{pcidir}/driver/module"))
             found_msg = f"Existing driver \"{mod}\" found"
-            if self.log_only:
+            if self.readonly:
                 log.info(found_msg)
             else:
                 log.warning(found_msg + ", unloading module")
@@ -485,7 +485,7 @@ class ADSPTool():
         else:
             log.warning(f"cavstool: Unrecognized IPC command 0x{data:x} ext 0x{ext_data:x}")
             if not self.fw_is_alive():
-                if self.log_only:
+                if self.readonly:
                     log.info("DSP power seems off")
                     self.wait_fw_entered()
                 else:
@@ -641,9 +641,9 @@ class MemWin():
 
 
 class Mtrace(MemWin):
-    def __init__(self, bar4_mmap, args) -> None:
+    def __init__(self, bar4_mmap, win, args) -> None:
         self.no_history = args.no_history
-        super().__init__(bar4_mmap, DEBUG_OFFSET)
+        super().__init__(bar4_mmap, win)
 
     def header(self):
         header = struct.unpack("<IIII", self.read(16384, 16))
@@ -664,9 +664,9 @@ class Mtrace(MemWin):
 
 class Winstream(MemWin):
 
-    def __init__(self, bar4_mmap, args) -> None:
+    def __init__(self, bar4_mmap, win, args) -> None:
         self.no_history = args.no_history
-        super().__init__(bar4_mmap, TRACE_OFFSET)
+        super().__init__(bar4_mmap, win)
 
     def header(self):
         header = struct.unpack("<IIII", self.read(0, 16))
@@ -695,9 +695,30 @@ class Winstream(MemWin):
                 # Found to be useful when it really goes wrong
                 return (seq, result.decode("utf-8", "replace"))
 
-async def main(args):
+
+async def logger(args):
+    last_seq = 0
+    win = None
+    if args.window == '0':
+        win = TRACE_OFFSET
+    elif args.window == '2':
+        win = DEBUG_OFFSET
+
+    if args.stream == 'winstream':
+        stream = Winstream(adsp.bar4_mmap, win, args)
+    elif args.stream == 'mtrace':
+        stream = Mtrace(adsp.bar4_mmap, win, args)
+    while start_output is True:
+        await asyncio.sleep(0.03)
+        (last_seq, output) = stream.read_data(last_seq)
+        if output:
+            sys.stdout.write(output)
+            sys.stdout.flush()
+
+
+async def load(args):
     try:
-        adsp  = ADSPTool(args)
+        adsp  = ADSPTool(readonly=False)
         adsp.map_regs()
     except Exception as e:
         log.error("Could not map device in sysfs; run as root?")
@@ -706,44 +727,40 @@ async def main(args):
 
     log.info(f"Detected cAVS {'1.5' if adsp.cavs15 else '1.8+'} hardware")
 
-    if args.log_only:
-        adsp.wait_fw_entered()
-    else:
-        if not args.fw_file:
-            log.error("Firmware file argument missing")
-            sys.exit(1)
+    if not args.fw_file:
+        log.error("Firmware file argument missing")
+        sys.exit(1)
 
-        adsp.load_firmware(args.fw_file)
-        time.sleep(0.1)
-        if not args.quiet:
-            sys.stdout.write("--\n")
+    adsp.load_firmware(args.fw_file)
+    time.sleep(0.1)
+    if not args.quiet:
+        sys.stdout.write("--\n")
 
-    last_seq = 0
-    win = Winstream(adsp.bar4_mmap, args)
-    #win = Mtrace(adsp.bar4_mmap, args)
     while start_output is True:
         await asyncio.sleep(0.03)
-        (last_seq, output) = win.read_data(last_seq)
-        if output:
-            sys.stdout.write(output)
-            sys.stdout.flush()
-        if not args.log_only:
-            if adsp.dsp.HIPCIDA & 0x80000000:
-                adsp.dsp.HIPCIDA = 1<<31 # must ACK any DONE interrupts that arrive!
-            if adsp.dsp.HIPCTDR & 0x80000000:
-                adsp.ipc_command(adsp.dsp.HIPCTDR & ~0x80000000, adsp.dsp.HIPCTDD)
+        if adsp.dsp.HIPCIDA & 0x80000000:
+            adsp.dsp.HIPCIDA = 1<<31 # must ACK any DONE interrupts that arrive!
+        if adsp.dsp.HIPCTDR & 0x80000000:
+            adsp.ipc_command(adsp.dsp.HIPCTDR & ~0x80000000, adsp.dsp.HIPCTDD)
 
 def parse_args():
     ap = argparse.ArgumentParser(description="DSP loader/logger tool")
+
     ap.add_argument("-q", "--quiet", action="store_true",
                     help="No loader output, just DSP logging")
     ap.add_argument("-v", "--verbose", action="store_true",
                     help="More loader output, DEBUG logging level")
-    ap.add_argument("-l", "--log-only", action="store_true",
-                    help="Don't load firmware, just show log output")
-    ap.add_argument("-n", "--no-history", action="store_true",
+
+    sub_parsers = ap.add_subparsers(help='commands', dest='action')
+    parser_log = sub_parsers.add_parser('log', help='Show logging console')
+    parser_log.add_argument("-n", "--no-history", action="store_true",
                     help="No current log buffer at start, just new output")
-    ap.add_argument("fw_file", nargs="?", help="Firmware file")
+
+    parser_log.add_argument("-w", "--window")
+    parser_log.add_argument("-s", "--stream")
+
+    parser_load = sub_parsers.add_parser('load', help='Load firmware')
+    parser_load.add_argument("fw_file", nargs="?", help="Firmware file")
 
     return ap.parse_args()
 
@@ -754,7 +771,23 @@ if __name__ == "__main__":
         log.setLevel(logging.WARN)
     elif args.verbose:
         log.setLevel(logging.DEBUG)
+
     try:
-        asyncio.get_event_loop().run_until_complete(main(args))
+        adsp  = ADSPTool(args)
+        adsp.map_regs()
+    except Exception as e:
+        log.error("Could not map device in sysfs; run as root?")
+        log.error(e)
+        sys.exit(1)
+
+    log.info(f"Detected cAVS {'1.5' if adsp.cavs15 else '1.8+'} hardware")
+
+    adsp.wait_fw_entered()
+
+    try:
+        if args.action == 'load':
+            asyncio.get_event_loop().run_until_complete(load(args))
+        elif args.action == 'log':
+            asyncio.get_event_loop().run_until_complete(logger(args))
     except KeyboardInterrupt:
         start_output = False
