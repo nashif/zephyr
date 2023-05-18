@@ -168,7 +168,7 @@ def test_apply_filters_part1(class_testplan, all_testsuites_dict, platforms_list
         plan.apply_filters(exclude_platform=['demo_board_1'],
                                                  platform=['demo_board_2'])
 
-    filtered_instances = list(filter(lambda item:  item.status == "filtered", plan.instances.values()))
+    filtered_instances = list(filter(lambda item:  item.status == Status.FILTERED, plan.instances.values()))
     for d in filtered_instances:
         assert d.reason == expected_discards
 
@@ -202,7 +202,7 @@ def test_apply_filters_part2(class_testplan, all_testsuites_dict,
             ]
         }
     class_testplan.apply_filters(**kwargs)
-    filtered_instances = list(filter(lambda item:  item.status == "filtered", class_testplan.instances.values()))
+    filtered_instances = list(filter(lambda item:  item.status == Status.FILTERED, class_testplan.instances.values()))
     for d in filtered_instances:
         assert d.reason == expected_discards
 
@@ -233,7 +233,7 @@ def test_apply_filters_part3(class_testplan, all_testsuites_dict, platforms_list
     class_testplan.apply_filters(exclude_platform=['demo_board_1'],
                                              platform=['demo_board_2'])
 
-    filtered_instances = list(filter(lambda item:  item.status == "filtered", class_testplan.instances.values()))
+    filtered_instances = list(filter(lambda item:  item.status == Status.FILTERED, class_testplan.instances.values()))
     assert not filtered_instances
 
 def test_add_instances(test_data, class_env, all_testsuites_dict, platforms_list):
@@ -327,12 +327,12 @@ def test_quarantine(class_testplan, platforms_list, test_data,
             if testname in expected_val:
                 assert not instance.status
             else:
-                assert instance.status == 'filtered'
+                assert instance.status == Status.FILTERED
                 assert instance.reason == "Not under quarantine"
         else:
             print(testname)
             if testname in expected_val:
-                assert instance.status == 'filtered'
+                assert instance.status == Status.FILTERED
                 assert instance.reason == "Quarantine: " + expected_val[testname]
             else:
                 assert not instance.status

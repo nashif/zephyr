@@ -16,6 +16,8 @@ from twisterlib.environment import ZEPHYR_BASE, PYTEST_PLUGIN_INSTALLED
 from twisterlib.handlers import terminate_process
 
 
+from twisterlib.testsuite import Status
+
 logger = logging.getLogger('twister')
 logger.setLevel(logging.DEBUG)
 
@@ -36,10 +38,10 @@ class Harness:
 
 
     ztest_to_status = {
-        'PASS': 'passed',
-        'SKIP': 'skipped',
-        'BLOCK': 'blocked',
-        'FAIL': 'failed'
+        'PASS': Status.PASSED,
+        'SKIP': Status.SKIPPED,
+        'BLOCK': Status.BLOCKED,
+        'FAIL': Status.FAILED
         }
 
     def __init__(self):
@@ -93,12 +95,12 @@ class Harness:
 
         if self.RUN_PASSED in line:
             if self.fault:
-                self.state = "failed"
+                self.state = Status.FAILED
             else:
-                self.state = "passed"
+                self.state = Status.PASSED
 
         if self.RUN_FAILED in line:
-            self.state = "failed"
+            self.state = Status.FAILED
 
         if self.fail_on_fault:
             if self.FAULT == line:
@@ -144,16 +146,16 @@ class Robot(Harness):
             self.instance.execution_time = time.time() - start_time
 
             if cmake_proc.returncode == 0:
-                self.instance.status = "passed"
+                self.instance.status = Status.PASSED
             else:
                 logger.error("Robot test failure: %s for %s" %
                              (handler.sourcedir, self.instance.platform.name))
-                self.instance.status = "failed"
+                self.instance.status = Status.FAILED
 
             if out:
                 with open(os.path.join(self.instance.build_dir, handler.log), "wt") as log:
                     log_msg = out.decode(sys.getdefaultencoding())
-                    log.write(log_msg)
+                    logger.debug(log_msg)
 
 class Console(Harness):
 
@@ -169,20 +171,20 @@ class Console(Harness):
     def handle(self, line):
         if self.type == "one_line":
             if self.pattern.search(line):
-                self.state = "passed"
+                self.state = Status.PASSED
         elif self.type == "multi_line" and self.ordered:
             if (self.next_pattern < len(self.patterns) and
                 self.patterns[self.next_pattern].search(line)):
                 self.next_pattern += 1
                 if self.next_pattern >= len(self.patterns):
-                    self.state = "passed"
+                    self.state = Status.PASSED
         elif self.type == "multi_line" and not self.ordered:
             for i, pattern in enumerate(self.patterns):
                 r = self.regex[i]
                 if pattern.search(line) and not r in self.matches:
                     self.matches[r] = line
             if len(self.matches) == len(self.regex):
-                self.state = "passed"
+                self.state = Status.PASSED
         else:
             logger.error("Unknown harness_config type")
 
@@ -212,10 +214,10 @@ class Console(Harness):
         self.process_test(line)
 
         tc = self.instance.get_case_or_create(self.id)
-        if self.state == "passed":
-            tc.status = "passed"
+        if self.state == Status.PASSED:
+            tc.status = Status.PASSED
         else:
-            tc.status = "failed"
+            tc.status = Status.FAILED
 
 
 class PytestHarnessException(Exception):
@@ -329,42 +331,43 @@ class Pytest(Harness):
                 if reader_t.is_alive():
                     terminate_process(proc)
                     logger.warning('Timeout has occurred.')
-                    self.state = 'failed'
+                    self.state = Status.FAILED
                 proc.wait(timeout)
 
-                if self.state != 'failed':
+                if self.state != Status.FAILED:
                     tree = ET.parse(self.report_file)
                     root = tree.getroot()
                     for child in root:
                         if child.tag == 'testsuite':
                             if child.attrib['failures'] != '0':
-                                self.state = "failed"
+                                self.state = Status.Failed
                             elif child.attrib['skipped'] != '0':
-                                self.state = "skipped"
+                                self.state = Status.Skipped
                             elif child.attrib['errors'] != '0':
-                                self.state = "error"
+                                self.state = Status.ERROR
                             else:
-                                self.state = "passed"
+                                self.state = Status.PASSED
                             self.instance.execution_time = float(child.attrib['time'])
             except subprocess.TimeoutExpired:
                 proc.kill()
-                self.state = "failed"
+                self.state = Status.FAILED
             except ET.ParseError:
-                self.state = "failed"
+                self.state = Status.FAILED
             except IOError:
-                logger.warning("Can't access report.xml")
-                self.state = "failed"
+                logger.warning("Can't access report.xml\n")
+                self.state = Status.FAILED
 
         tc = self.instance.get_case_or_create(self.id)
-        if self.state == "passed":
-            tc.status = "passed"
-            logger.debug("Pytest cases passed")
-        elif self.state == "skipped":
-            tc.status = "skipped"
-            logger.debug("Pytest cases skipped.")
+        if self.state == Status.PASSED:
+            tc.status = Status.PASSED
+            logger.debug("Pytest cases passed\n")
+        elif self.state == Status.SKIPPED:
+            tc.status = Status.SKIPPED
+            logger.debug("Pytest cases skipped\n")
+            logger.debug("Please refer report.xml for detail")
         else:
-            tc.status = "failed"
-            logger.info("Pytest cases failed.")
+            tc.status = Status.FAILED
+            logger.debug("Pytest cases failed\n")
 
     @staticmethod
     def _update_command_with_env_dependencies(cmd):
@@ -400,12 +403,12 @@ class Pytest(Harness):
     def _apply_instance_status(self):
         if self.state:
             self.instance.status = self.state
-            if self.state in ["error", "failed"]:
+            if self.state in [Status.ERROR, Status.FAILED]:
                 self.instance.reason = "Pytest failed"
         else:
-            self.instance.status = "failed"
+            self.instance.status = Status.FAILED
             self.instance.reason = "Pytest timeout"
-        if self.instance.status in ["error", "failed"]:
+        if self.instance.status in [Status.ERROR, Status.FAILED]:
             self.instance.add_missing_case_status("blocked", self.instance.reason)
 
 
@@ -445,7 +448,7 @@ class Gtest(Harness):
             # Create the test instance and set the context
             tc = self.instance.get_case_or_create(name)
             self.tc = tc
-            self.tc.status = "started"
+            self.tc.status = Status.INPROGRESS
             self.testcase_output += line + "\n"
             self._match = True
 
@@ -454,11 +457,11 @@ class Gtest(Harness):
         if finished_match:
             tc = self.instance.get_case_or_create(self.id)
             if self.has_failures or self.tc is not None:
-                self.state = "failed"
-                tc.status = "failed"
+                self.state = Status.FAILED
+                tc.status = Status.FAILED
             else:
-                self.state = "passed"
-                tc.status = "passed"
+                self.state = Status.PASSED
+                tc.status = Status.PASSED
             return
 
         # Check if the individual test finished
@@ -478,7 +481,7 @@ class Gtest(Harness):
 
         # Update the status of the test
         tc.status = state
-        if tc.status == "failed":
+        if tc.status == Status.FAILED:
             self.has_failures = True
             tc.output = self.testcase_output
         self.testcase_output = ""
@@ -510,10 +513,10 @@ class Test(Harness):
         if testcase_match:
             name = "{}.{}".format(self.id, testcase_match.group(2))
             tc = self.instance.get_case_or_create(name)
-            # Mark the test as started, if something happens here, it is mostly
+            # Mark the test as in progress, if something happens here, it is mostly
             # due to this tests, for example timeout. This should in this case
             # be marked as failed and not blocked (not run).
-            tc.status = "started"
+            tc.status = Status.INPROGRESS
 
         if testcase_match or self._match:
             self.testcase_output += line + "\n"
@@ -526,10 +529,10 @@ class Test(Harness):
             name = "{}.{}".format(self.id, result_match.group(3))
             tc = self.instance.get_case_or_create(name)
             tc.status = self.ztest_to_status[matched_status]
-            if tc.status == "skipped":
+            if tc.status == Status.SKIPPED:
                 tc.reason = "ztest skip"
             tc.duration = float(result_match.group(4))
-            if tc.status == "failed":
+            if tc.status == Status.FAILED:
                 tc.output = self.testcase_output
             self.testcase_output = ""
             self._match = False
@@ -540,10 +543,10 @@ class Test(Harness):
         if not self.ztest and self.state:
             logger.debug(f"not a ztest and no state for  {self.id}")
             tc = self.instance.get_case_or_create(self.id)
-            if self.state == "passed":
-                tc.status = "passed"
+            if self.state == Status.PASSED:
+                tc.status = Status.PASSED
             else:
-                tc.status = "failed"
+                tc.status = Status.FAILED
 
 
 class Ztest(Test):

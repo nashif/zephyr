@@ -12,6 +12,8 @@ import xml.etree.ElementTree as ET
 import string
 from datetime import datetime
 
+from twisterlib.testsuite import Status
+
 logger = logging.getLogger('twister')
 logger.setLevel(logging.DEBUG)
 
@@ -42,7 +44,7 @@ class Reporting:
     def xunit_testcase(eleTestsuite, name, classname, status, ts_status, reason, duration, runnable, stats, log, build_only_as_skip):
         fails, passes, errors, skips = stats
 
-        if status in ['skipped', 'filtered']:
+        if status in [Status.SKIPPED, Status.FILTERED]:
             duration = 0
 
         eleTestcase = ET.SubElement(
@@ -51,32 +53,32 @@ class Reporting:
             name=f"{name}",
             time=f"{duration}")
 
-        if status in ['skipped', 'filtered']:
+        if status in [Status.SKIPPED, Status.FILTERED]:
             skips += 1
             # temporarily add build_only_as_skip to restore existing CI report behaviour
-            if ts_status == "passed" and not runnable:
+            if ts_status == Status.PASSED and not runnable:
                 tc_type = "build"
             else:
                 tc_type = status
             ET.SubElement(eleTestcase, 'skipped', type=f"{tc_type}", message=f"{reason}")
-        elif status in ["failed", "blocked"]:
+        elif status in [Status.FAILED, Status.BLOCKED]:
             fails += 1
             el = ET.SubElement(eleTestcase, 'failure', type="failure", message=f"{reason}")
             if log:
                 el.text = log
-        elif status == "error":
+        elif status == Status.ERROR:
             errors += 1
             el = ET.SubElement(eleTestcase, 'error', type="failure", message=f"{reason}")
             if log:
                 el.text = log
-        elif status == 'passed':
+        elif status == Status.PASSED:
             if not runnable and build_only_as_skip:
                 ET.SubElement(eleTestcase, 'skipped', type="build", message="built only")
                 skips += 1
             else:
                 passes += 1
         else:
-            if not status:
+            if status == Status.NOTRUN:
                 logger.debug(f"{name}: No status")
                 ET.SubElement(eleTestcase, 'skipped', type=f"untested", message="No results captured, testsuite misconfiguration?")
             else:
@@ -197,7 +199,7 @@ class Reporting:
 
                 ts_status = ts.get('status')
                 # Do not report filtered testcases
-                if ts_status == 'filtered' and not self.env.options.detailed_skipped_report:
+                if ts_status == Status.FILTERED and not self.env.options.detailed_skipped_report:
                     continue
                 if full_report:
                     for tc in ts.get("testcases", []):
@@ -244,6 +246,8 @@ class Reporting:
         suites = []
 
         for instance in self.instances.values():
+            if instance.status == Status.FILTERED:
+                continue
             suite = {}
             handler_log = os.path.join(instance.build_dir, "handler.log")
             build_log = os.path.join(instance.build_dir, "build.log")
@@ -263,7 +267,7 @@ class Reporting:
                 suite['run_id'] = instance.run_id
 
             suite["runnable"] = False
-            if instance.status != 'filtered':
+            if instance.status != Status.FILTERED:
                 suite["runnable"] = instance.run
 
             if used_ram:
@@ -277,7 +281,7 @@ class Reporting:
                 suite["available_ram"] = available_ram
             if available_rom:
                 suite["available_rom"] = available_rom
-            if instance.status in ["error", "failed"]:
+            if instance.status in [Status.ERROR, Status.FAILED]:
                 suite['status'] = instance.status
                 suite["reason"] = instance.reason
                 # FIXME
@@ -287,16 +291,16 @@ class Reporting:
                     suite["log"] = self.process_log(device_log)
                 else:
                     suite["log"] = self.process_log(build_log)
-            elif instance.status == 'filtered':
+            elif instance.status == Status.FILTERED:
                 suite["status"] = "filtered"
                 suite["reason"] = instance.reason
-            elif instance.status == 'passed':
+            elif instance.status == Status.PASSED:
                 suite["status"] = "passed"
-            elif instance.status == 'skipped':
+            elif instance.status == Status.SKIPPED:
                 suite["status"] = "skipped"
                 suite["reason"] = instance.reason
 
-            if instance.status is not None:
+            if instance.status is not Status.NOTRUN:
                 suite["execution_time"] =  f"{float(handler_time):.2f}"
 
             testcases = []
@@ -311,7 +315,7 @@ class Reporting:
                 # if we discover those at runtime, the fallback testcase wont be
                 # needed anymore and can be removed from the output, it does
                 # not have a status and would otherwise be reported as skipped.
-                if case.freeform and case.status is None and len(instance.testcases) > 1:
+                if case.freeform and case.status is Status.NOTRUN and len(instance.testcases) > 1:
                     continue
                 testcase = {}
                 testcase['identifier'] = case.name
@@ -324,8 +328,8 @@ class Reporting:
                 if case.output != "":
                     testcase['log'] = case.output
 
-                if case.status == "skipped":
-                    if instance.status == "filtered":
+                if case.status == Status.SKIPPED:
+                    if instance.status == Status.FILTERED:
                         testcase["status"] = "filtered"
                     else:
                         testcase["status"] = "skipped"
@@ -418,7 +422,7 @@ class Reporting:
         cnt = 0
         example_instance = None
         for instance in self.instances.values():
-            if instance.status not in ["passed", "filtered", "skipped"]:
+            if instance.status not in [Status.PASSED, Status.FILTERED, Status.SKIPPED, Status.NOTRUN]:
                 cnt = cnt + 1
                 if cnt == 1:
                     logger.info("-+" * 40)
@@ -443,7 +447,7 @@ class Reporting:
         failed = 0
         run = 0
         for instance in self.instances.values():
-            if instance.status == "failed":
+            if instance.status == Status.FAILED:
                 failed += 1
             elif instance.metrics.get("unrecognized") and not unrecognized_sections:
                 logger.error("%sFAILED%s: %s has unrecognized binary sections: %s" %

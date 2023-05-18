@@ -18,6 +18,17 @@ from twisterlib.error import TwisterException, TwisterRuntimeError
 logger = logging.getLogger('twister')
 logger.setLevel(logging.DEBUG)
 
+class Status:
+    PASSED = 'passed'
+    FAILED = 'failed'
+    ERROR = 'error'
+    SKIPPED = 'skipped'
+    RERUN = 'rerun'
+    NOTRUN = 'notrun'
+    BLOCKED = 'blocked'
+    INPROGRESS = 'inprogress'
+    FILTERED = 'filtered'
+
 class ScanPathResult:
     """Result of the scan_tesuite_path function call.
 
@@ -327,7 +338,7 @@ class TestCase(DisablePyTestCollectionMixin):
     def __init__(self, name=None, testsuite=None):
         self.duration = 0
         self.name = name
-        self.status = None
+        self.status = Status.NOTRUN
         self.reason = None
         self.testsuite = testsuite
         self.output = ""
