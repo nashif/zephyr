@@ -79,8 +79,7 @@ class Reporting:
                 passes += 1
         else:
             if status == Status.NOTRUN:
-                logger.debug(f"{name}: No status")
-                ET.SubElement(eleTestcase, 'skipped', type=f"untested", message="No results captured, testsuite misconfiguration?")
+                ET.SubElement(eleTestcase, 'norun', type=f"untested", message="test was not run.")
             else:
                 logger.error(f"{name}: Unknown status '{status}'")
 
@@ -291,13 +290,8 @@ class Reporting:
                     suite["log"] = self.process_log(device_log)
                 else:
                     suite["log"] = self.process_log(build_log)
-            elif instance.status == Status.FILTERED:
-                suite["status"] = "filtered"
-                suite["reason"] = instance.reason
-            elif instance.status == Status.PASSED:
-                suite["status"] = "passed"
-            elif instance.status == Status.SKIPPED:
-                suite["status"] = "skipped"
+            else:
+                suite["status"] = instance.status
                 suite["reason"] = instance.reason
 
             if instance.status is not Status.NOTRUN:
