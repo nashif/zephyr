@@ -467,7 +467,7 @@ structure in the main Zephyr tree: boards/<arch>/<board_name>/""")
         """)
 
     parser.add_argument("--overflow-as-errors", action="store_true",
-                        help="Treat RAM/SRAM overflows as errors.")
+                        help="Treat RAM/SRAM overflows as errors. (Deprecated)")
 
 
     parser.add_argument("-P", "--exclude-platform", action="append", default=[],

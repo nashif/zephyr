@@ -294,17 +294,12 @@ class CMake:
             if log_msg:
                 overflow_found = re.findall("region `(FLASH|ROM|RAM|ICCM|DCCM|SRAM|dram0_1_seg)' overflowed by", log_msg)
                 imgtool_overflow_found = re.findall(r"Error: Image size \(.*\) \+ trailer \(.*\) exceeds requested size", log_msg)
-                if overflow_found and not self.options.overflow_as_errors:
-                    logger.debug("Test skipped due to {} Overflow".format(overflow_found[0]))
-                    self.instance.status = Status.SKIPPED
-                    self.instance.reason = "{} overflow".format(overflow_found[0])
-                    change_skip_to_error_if_integration(self.options, self.instance)
-                elif imgtool_overflow_found and not self.options.overflow_as_errors:
-                    self.instance.status = Status.SKIPPED
-                    self.instance.reason = "imgtool overflow"
-                    change_skip_to_error_if_integration(self.options, self.instance)
+                self.instance.status = Status.ERROR
+                if imgtool_overflow_found:
+                    self.instance.reason = "Build failure (imgtool overflow)"
+                elif overflow_found:
+                    self.instance.reason = "Build failure ({} overflow)".format(overflow_found[0])
                 else:
-                    self.instance.status = Status.ERROR
                     self.instance.reason = "Build failure"
 
             results = {
