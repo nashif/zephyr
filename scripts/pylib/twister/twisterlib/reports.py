@@ -328,6 +328,12 @@ class Reporting:
                     else:
                         testcase["status"] = "skipped"
                         testcase["reason"] = case.reason or instance.reason
+                elif case.status == Status.INPROGRESS:
+                    # FIXME: A better status here would be 'incomplete'
+                    testcase["status"] = "failed"
+                elif case.status == Status.NOTRUN and instance.status == Status.FAILED:
+                    # FIXME: A better status here would be 'incomplete'
+                    testcase["status"] = "blocked"
                 else:
                     testcase["status"] = case.status
                     if case.reason:
@@ -451,6 +457,7 @@ class Reporting:
             elif instance.status == Status.NOTRUN:
                 built_only += 1
 
+        # FIXME
         if results.total and results.total != results.skipped_configs:
             pass_rate = (float(results.passed) / float(results.total - results.skipped_runtime))
         else:
@@ -476,6 +483,7 @@ class Reporting:
                 duration))
 
         total_platforms = len(self.platforms)
+        # FIXME
         pass_rate = (float(results.cases_passed) / float(results.cases))
         logger.info("{} of {} test cases passed ({:.2%}), {} failed, {} not run, {} blocked on {} out of total {} platforms ({:02.2f}%)".format(
             results.cases_passed,
