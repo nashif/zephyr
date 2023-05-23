@@ -10,7 +10,7 @@ import logging
 import contextlib
 import mmap
 import glob
-from typing import List
+from typing import List, Dict
 from twisterlib.mixins import DisablePyTestCollectionMixin
 from twisterlib.environment import canonical_zephyr_base
 from twisterlib.error import TwisterException, TwisterRuntimeError
@@ -52,13 +52,15 @@ class ScanPathResult:
                  has_registered_test_suites: bool = False,
                  has_run_registered_test_suites: bool = False,
                  has_test_main: bool = False,
-                 ztest_suite_names: List[str] = []):
+                 ztest_suite_names: List[str] = [],
+                 test_map: Dict[str, List[str]] = None):
         self.matches = matches
         self.warnings = warnings
         self.has_registered_test_suites = has_registered_test_suites
         self.has_run_registered_test_suites = has_run_registered_test_suites
         self.has_test_main = has_test_main
         self.ztest_suite_names = ztest_suite_names
+        self.test_map = test_map
 
     def __eq__(self, other):
         if not isinstance(other, ScanPathResult):
@@ -110,6 +112,7 @@ def scan_file(inf_name):
     has_run_registered_test_suites = False
     has_test_main = False
 
+    suites = {}
     with open(inf_name) as inf:
         if os.name == 'nt':
             mmap_args = {'fileno': inf.fileno(), 'length': 0, 'access': mmap.ACCESS_READ}
@@ -127,6 +130,7 @@ def scan_file(inf_name):
             new_suite_regex_matches = \
                 [m for m in new_suite_regex.finditer(main_c)]
 
+            tmap = {}
             if registered_suite_regex_matches:
                 has_registered_test_suites = True
             if registered_suite_run_regex.search(main_c):
@@ -145,13 +149,13 @@ def scan_file(inf_name):
                 testcase_names, warnings = \
                     _find_regular_ztest_testcases(main_c, registered_suite_regex_matches, has_registered_test_suites)
             elif new_suite_regex_matches or new_suite_testcase_regex_matches:
-                ztest_suite_names = \
-                    _extract_ztest_suite_names(new_suite_regex_matches)
                 tmap, testcase_names, warnings = \
                     _find_new_ztest_testcases(main_c)
-                for dd in tmap.values():
-                    if not dd:
-                        logger.error(f"suite without tests: {tmap}")
+                ztest_suite_names = \
+                    _extract_ztest_suite_names(new_suite_regex_matches)
+                for zt in ztest_suite_names:
+                    if not tmap.get(zt):
+                        tmap[zt] = []
 
             else:
                 # can't find ztest_test_suite, maybe a client, because
@@ -165,7 +169,8 @@ def scan_file(inf_name):
                 has_registered_test_suites=has_registered_test_suites,
                 has_run_registered_test_suites=has_run_registered_test_suites,
                 has_test_main=has_test_main,
-                ztest_suite_names=ztest_suite_names)
+                ztest_suite_names=ztest_suite_names,
+                test_map=tmap)
 
 def _extract_ztest_suite_names(suite_regex_matches):
     ztest_suite_names = \
@@ -269,7 +274,7 @@ def _find_ztest_testcases(search_area, testcase_regex):
         tc = m.group("testcase_name").decode("UTF-8").replace("test_", "", 1)
         tests = a.get(s, [])
         tests.append(tc)
-        a[s] = tests
+        a[s.decode("UTF-8")] = tests
 
     testcase_names = \
         [m.group("testcase_name") for m in testcase_regex_matches]
@@ -292,6 +297,8 @@ def scan_testsuite_path(testsuite_path):
     ztest_suite_names = []
 
     src_dir_path = _find_src_dir_path(testsuite_path)
+
+    testsuites = {}
     for filename in glob.glob(os.path.join(src_dir_path, "*.c*")):
         try:
             result: ScanPathResult = scan_file(filename)
@@ -309,6 +316,15 @@ def scan_testsuite_path(testsuite_path):
                 has_test_main = True
             if result.ztest_suite_names:
                 ztest_suite_names += result.ztest_suite_names
+
+
+            if result.test_map:
+                for k in result.test_map:
+                    if not testsuites.get(k):
+                        testsuites[k] = result.test_map.get(k)
+                    else:
+                        testsuites[k] += result.test_map.get(k)
+            #print(testsuites)
 
         except ValueError as e:
             logger.error("%s: can't find: %s" % (filename, e))
