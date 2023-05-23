@@ -147,8 +147,12 @@ def scan_file(inf_name):
             elif new_suite_regex_matches or new_suite_testcase_regex_matches:
                 ztest_suite_names = \
                     _extract_ztest_suite_names(new_suite_regex_matches)
-                testcase_names, warnings = \
+                tmap, testcase_names, warnings = \
                     _find_new_ztest_testcases(main_c)
+                for dd in tmap.values():
+                    if not dd:
+                        logger.error(f"suite without tests: {tmap}")
+
             else:
                 # can't find ztest_test_suite, maybe a client, because
                 # it includes ztest.h
@@ -201,7 +205,7 @@ def _find_regular_ztest_testcases(search_area, suite_regex_matches, is_registere
     search_start, search_end = \
         _get_search_area_boundary(search_area, suite_regex_matches, is_registered_test_suite)
     limited_search_area = search_area[search_start:search_end]
-    testcase_names, warnings = \
+    blah, testcase_names, warnings = \
         _find_ztest_testcases(limited_search_area, testcase_regex)
 
     achtung_matches = re.findall(achtung_regex, limited_search_area)
@@ -209,7 +213,7 @@ def _find_regular_ztest_testcases(search_area, suite_regex_matches, is_registere
         achtung = ", ".join(sorted({match.decode() for match in achtung_matches},reverse = True))
         warnings = f"found invalid {achtung} in ztest_test_suite()"
 
-    return testcase_names, warnings
+    return blah, testcase_names, warnings
 
 
 def _get_search_area_boundary(search_area, suite_regex_matches, is_registered_test_suite):
@@ -255,6 +259,18 @@ def _find_ztest_testcases(search_area, testcase_regex):
     """
     testcase_regex_matches = \
         [m for m in testcase_regex.finditer(search_area)]
+
+    a = {}
+    for m in testcase_regex_matches:
+        try:
+            s = m.group("suite_name")
+        except IndexError as e:
+            continue
+        tc = m.group("testcase_name").decode("UTF-8").replace("test_", "", 1)
+        tests = a.get(s, [])
+        tests.append(tc)
+        a[s] = tests
+
     testcase_names = \
         [m.group("testcase_name") for m in testcase_regex_matches]
     testcase_names = [name.decode("UTF-8") for name in testcase_names]
@@ -265,7 +281,7 @@ def _find_ztest_testcases(search_area, testcase_regex):
     testcase_names = \
         [tc_name.replace("test_", "", 1) for tc_name in testcase_names]
 
-    return testcase_names, warnings
+    return a, testcase_names, warnings
 
 
 def scan_testsuite_path(testsuite_path):
