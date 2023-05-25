@@ -486,7 +486,9 @@ class Reporting:
 
         total_platforms = len(self.platforms)
         # FIXME
-        pass_rate = (float(results.cases_passed) / float(results.cases))
+        pass_rate = 0
+        if results.cases:
+            pass_rate = (float(results.cases_passed) / float(results.cases))
         logger.info("{} of {} test cases passed ({:.2%}), {} failed, {} not run, {} blocked, {} skipped on {} out of total {} platforms ({:02.2f}%)".format(
             results.cases_passed,
             results.cases,
