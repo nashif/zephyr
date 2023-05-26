@@ -1262,6 +1262,7 @@ class TwisterRunner:
                 self.results.cases_filtered += len(instance.testsuite.testcases)
                 continue
             elif instance.status == Status.ERROR:
+                logger.error(f"{instance.name}: {instance.reason}")
                 self.results.error += 1
 
             self.results.total += 1
