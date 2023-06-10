@@ -460,7 +460,7 @@ class Reporting:
                 built_only += 1
 
         # FIXME
-        if results.total and results.total != results.skipped_configs:
+        if results.total and results.total != results.skipped_runtime:
             pass_rate = (float(results.passed) / float(results.total - results.skipped_runtime))
         else:
             pass_rate = 0
