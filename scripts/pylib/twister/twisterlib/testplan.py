@@ -615,6 +615,7 @@ class TestPlan:
 
         toolchain = self.env.toolchain
         platform_filter = self.options.platform
+        vendor_filter = self.options.vendor
         exclude_platform = self.options.exclude_platform
         testsuite_filter = self.run_individual_testsuite
         arch_filter = self.options.arch
@@ -628,6 +629,7 @@ class TestPlan:
         emu_filter = self.options.emulation_only
 
         logger.debug("platform filter: " + str(platform_filter))
+        logger.debug("  vendor filter: " + str(vendor_filter))
         logger.debug("    arch_filter: " + str(arch_filter))
         logger.debug("     tag_filter: " + str(tag_filter))
         logger.debug("    exclude_tag: " + str(exclude_tag))
@@ -639,18 +641,22 @@ class TestPlan:
             logger.info("Selecting all possible platforms per test case")
             # When --all used, any --platform arguments ignored
             platform_filter = []
-        elif not platform_filter and not emu_filter:
+        elif not platform_filter and not emu_filter and not vendor_filter:
             logger.info("Selecting default platforms per test case")
             default_platforms = True
         elif emu_filter:
             logger.info("Selecting emulation platforms per test case")
             emulation_platforms = True
+        elif vendor_filter:
+            vendor_platforms = True
 
         if platform_filter:
             self.verify_platforms_existence(platform_filter, f"platform_filter")
             platforms = list(filter(lambda p: p.name in platform_filter, self.platforms))
         elif emu_filter:
             platforms = list(filter(lambda p: p.simulation != 'na', self.platforms))
+        elif vendor_filter:
+            platforms = list(filter(lambda p: p.vendor in vendor_filter, self.platforms))
         elif arch_filter:
             platforms = list(filter(lambda p: p.arch in arch_filter, self.platforms))
         elif default_platforms:
@@ -697,8 +703,6 @@ class TestPlan:
                 if not c:
                     platform_scope = list(filter(lambda item: item.name in ts.platform_allow, \
                                              self.platforms))
-
-
             # list of instances per testsuite, aka configurations.
             instance_list = []
             for plat in platform_scope:
@@ -883,6 +887,10 @@ class TestPlan:
                 self.add_instances(instance_list)
                 for instance in list(filter(lambda inst: not inst.platform.simulation != 'na', instance_list)):
                     instance.add_filter("Not an emulated platform", Filters.PLATFORM)
+            elif vendor_platforms:
+                self.add_instances(instance_list)
+                for instance in list(filter(lambda inst: not inst.platform.vendor in vendor_filter, instance_list)):
+                    instance.add_filter("Not a selected vendor platform", Filters.PLATFORM)
             else:
                 self.add_instances(instance_list)
 
