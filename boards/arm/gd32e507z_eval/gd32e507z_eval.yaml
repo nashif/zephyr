@@ -5,6 +5,7 @@ identifier: gd32e507z_eval
 name: GigaDevice GD32E507Z-EVAL
 type: mcu
 arch: arm
+vendor: GigaDevice
 ram: 128
 flash: 512
 toolchain:

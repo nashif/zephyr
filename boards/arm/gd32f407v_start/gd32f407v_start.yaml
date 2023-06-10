@@ -5,6 +5,7 @@ identifier: gd32f407v_start
 name: GigaDevice GD32F407V-START
 type: mcu
 arch: arm
+vendor: GigaDevice
 ram: 192
 flash: 3072
 toolchain:

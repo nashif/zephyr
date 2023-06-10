@@ -5,6 +5,7 @@ identifier: gd32f450v_start
 name: GigaDevice GD32F450V-START
 type: mcu
 arch: arm
+vendor: GigaDevice
 ram: 112
 flash: 3072
 toolchain:

@@ -5,6 +5,7 @@ identifier: gd32e507v_start
 name: GigaDevice GD32E507V-START
 type: mcu
 arch: arm
+vendor: GigaDevice
 ram: 128
 flash: 512
 toolchain:

@@ -5,6 +5,7 @@ identifier: gd32f350r_eval
 name: GigaDevice GD32F350R Evaluation Kit
 type: mcu
 arch: arm
+vendor: GigaDevice
 ram: 16
 flash: 128
 toolchain:

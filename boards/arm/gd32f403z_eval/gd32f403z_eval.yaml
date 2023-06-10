@@ -5,6 +5,7 @@ identifier: gd32f403z_eval
 name: GigaDevice GD32F403Z Evaluation Kit
 type: mcu
 arch: arm
+vendor: GigaDevice
 ram: 96
 flash: 512
 toolchain:

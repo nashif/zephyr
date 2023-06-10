@@ -5,6 +5,7 @@ identifier: gd32e103v_eval
 name: GigaDevice GD32E103V Evaluation Kit
 type: mcu
 arch: arm
+vendor: GigaDevice
 ram: 32
 flash: 128
 toolchain:

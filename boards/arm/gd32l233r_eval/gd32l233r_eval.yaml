@@ -5,6 +5,7 @@ identifier: gd32l233r_eval
 name: GigaDevice GD32L233R Evaluation Kit
 type: mcu
 arch: arm
+vendor: GigaDevice
 ram: 32
 flash: 256
 toolchain:

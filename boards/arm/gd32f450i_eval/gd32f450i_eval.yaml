@@ -5,6 +5,7 @@ identifier: gd32f450i_eval
 name: GigaDevice GD32F450I-EVAL
 type: mcu
 arch: arm
+vendor: GigaDevice
 ram: 112
 flash: 3072
 toolchain:
