@@ -636,30 +636,28 @@ class TestPlan:
 
         default_platforms = False
         emulation_platforms = False
+        vendor_platforms = False
 
         if all_filter:
             logger.info("Selecting all possible platforms per test case")
             # When --all used, any --platform arguments ignored
             platform_filter = []
-        elif not platform_filter and not emu_filter and not vendor_filter:
-            logger.info("Selecting default platforms per test case")
-            default_platforms = True
+            platforms = self.platforms
         elif emu_filter:
             logger.info("Selecting emulation platforms per test case")
             emulation_platforms = True
-        elif vendor_filter:
-            vendor_platforms = True
-
-        if platform_filter:
-            self.verify_platforms_existence(platform_filter, f"platform_filter")
-            platforms = list(filter(lambda p: p.name in platform_filter, self.platforms))
-        elif emu_filter:
             platforms = list(filter(lambda p: p.simulation != 'na', self.platforms))
         elif vendor_filter:
+            vendor_platforms = True
             platforms = list(filter(lambda p: p.vendor in vendor_filter, self.platforms))
+        elif platform_filter:
+            self.verify_platforms_existence(platform_filter, f"platform_filter")
+            platforms = list(filter(lambda p: p.name in platform_filter, self.platforms))
         elif arch_filter:
             platforms = list(filter(lambda p: p.arch in arch_filter, self.platforms))
-        elif default_platforms:
+        else:
+            logger.info("Selecting default platforms per test case")
+            default_platforms = True
             _platforms = list(filter(lambda p: p.name in self.default_platforms, self.platforms))
             platforms = []
             # default platforms that can't be run are dropped from the list of
@@ -671,8 +669,6 @@ class TestPlan:
                         platforms.append(p)
                 else:
                     platforms.append(p)
-        else:
-            platforms = self.platforms
 
         platform_config = self.test_config.get('platforms', {})
         logger.info("Building initial testsuite list...")
