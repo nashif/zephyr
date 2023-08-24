@@ -353,11 +353,12 @@ def parse_args():
     return parser.parse_args()
 
 
-if __name__ == "__main__":
 
+def _main():
     args = parse_args()
     files = []
     errors = 0
+
     if args.commits:
         repo = Repo(repository_path)
         commit = repo.git.diff("--name-only", args.commits)
@@ -365,21 +366,24 @@ if __name__ == "__main__":
     elif args.modified_files:
         with open(args.modified_files, "r") as fp:
             files = json.load(fp)
+    else:
+        sys.exit(1)
 
     if files:
-        print("Changed files:\n=========")
-        print("\n".join(files))
-        print("=========")
+        logging.info("Changed files:")
+        for file in files:
+            logging.info(file)
+        logging.info("--------------")
 
 
-    f = Filters(files, args.pull_request, args.platform)
-    f.process()
+    filter = Filters(files, args.pull_request, args.platform)
+    filter.process()
 
     # remove dupes and filtered cases
     dup_free = []
     dup_free_set = set()
-    logging.info(f'Total tests gathered: {len(f.all_tests)}')
-    for ts in f.all_tests:
+    logging.info(f'Total tests gathered: {len(filter.all_tests)}')
+    for ts in filter.all_tests:
         if ts.get('status') == 'filtered':
             continue
         n = ts.get("name")
@@ -416,3 +420,6 @@ if __name__ == "__main__":
             json.dump(data, json_file, indent=4, separators=(',',':'))
 
     sys.exit(errors)
+
+if __name__ == "__main__":
+    _main()
