@@ -378,17 +378,16 @@ def _main():
     files = []
     errors = 0
 
-    filter = Filters(args.commits, args.pull_request, args.platform)
-    filter.init()
-    filter.process()
+    suite_filter = Filters(args.commits, args.pull_request, args.platform)
+    suite_filter.init()
+    suite_filter.process()
 
     # remove dupes and filtered cases
     dup_free = []
     dup_free_set = set()
-    logging.info(f'Total tests gathered: {len(filter.all_tests)}')
-    for ts in filter.all_tests:
-        if ts.get('status') == 'filtered':
-            continue
+    unfiltered_suites = list(filter(lambda t: t.get('status', None) is  None, suite_filter.all_tests))
+    logging.info(f'Total tests gathered: {len(unfiltered_suites)}')
+    for ts in unfiltered_suites:
         n = ts.get("name")
         a = ts.get("arch")
         p = ts.get("platform")
@@ -399,7 +398,7 @@ def _main():
             dup_free.append(ts)
             dup_free_set.add((n, a, p,))
 
-    logging.info(f'Total tests to be run: {len(dup_free)}')
+    logging.info(f'Total tests to be run (after removing duplicates): {len(dup_free)}')
     with open(".testplan", "w") as tp:
         total_tests = len(dup_free)
         if total_tests and total_tests < args.tests_per_builder:
@@ -409,7 +408,7 @@ def _main():
 
         tp.write(f"TWISTER_TESTS={total_tests}\n")
         tp.write(f"TWISTER_NODES={nodes}\n")
-        tp.write(f"TWISTER_FULL={filter.full_twister}\n")
+        tp.write(f"TWISTER_FULL={suite_filter.full_twister}\n")
         logging.info(f'Total nodes to launch: {nodes}')
 
     header = ['test', 'arch', 'platform', 'status', 'extra_args', 'handler',
