@@ -135,6 +135,8 @@ class Filters:
         with open(fname, newline='') as jsonfile:
             json_data = json.load(jsonfile)
             suites = json_data.get("testsuites", [])
+            unfiltered_suites = list(filter(lambda t: t.get('status', None) is  None, suites))
+            logging.info(f"Added {len(unfiltered_suites)} suites to plan.")
             self.all_tests.extend(suites)
         if os.path.exists(fname):
             os.remove(fname)
@@ -375,7 +377,6 @@ def _main():
     args = parse_args()
     files = []
     errors = 0
-
 
     filter = Filters(args.commits, args.pull_request, args.platform)
     filter.init()
