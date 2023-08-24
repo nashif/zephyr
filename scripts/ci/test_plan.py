@@ -86,8 +86,8 @@ class Tag:
         return "<Tag {}>".format(self.name)
 
 class Filters:
-    def __init__(self, modified_files, pull_request=False, platforms=[]):
-        self.modified_files = modified_files
+    def __init__(self, commits=None, pull_request=False, platforms=[]):
+        self.modified_files = []
         self.twister_options = []
         self.full_twister = False
         self.all_tests = []
@@ -95,6 +95,21 @@ class Filters:
         self.pull_request = pull_request
         self.platforms = platforms
         self.default_run = False
+        self.commits = commits
+
+    def init(self):
+        if self.commits:
+            self.repo = Repo(repository_path)
+            commit = self.repo.git.diff("--name-only", self.commits)
+            self.modified_files = commit.split("\n")
+        else:
+            sys.exit(1)
+
+        if self.modified_files:
+            logging.info("Changed files:")
+            for file in self.modified_files:
+                logging.info(file)
+            logging.info("--------------")
 
     def process(self):
         self.find_modules()
@@ -126,9 +141,8 @@ class Filters:
 
     def find_modules(self):
         if 'west.yml' in self.modified_files:
-            print(f"Manifest file 'west.yml' changed")
-            print("=========")
-            old_manifest_content = repo.git.show(f"{args.commits[:-2]}:west.yml")
+            logging.info("Manifest file 'west.yml' changed")
+            old_manifest_content = self.repo.git.show(f"{self.commits[:-2]}:west.yml")
             with open("west_old.yml", "w") as manifest:
                 manifest.write(old_manifest_content)
             old_manifest = Manifest.from_file("west_old.yml")
@@ -156,6 +170,10 @@ class Filters:
             logging.info(f'project: {projs_names}')
 
             _options = []
+            if self.platforms:
+                for platform in self.platforms:
+                    _options.extend(["-p", platform])
+
             for p in projs_names:
                 _options.extend(["-t", p ])
 
@@ -353,30 +371,14 @@ def parse_args():
     return parser.parse_args()
 
 
-
 def _main():
     args = parse_args()
     files = []
     errors = 0
 
-    if args.commits:
-        repo = Repo(repository_path)
-        commit = repo.git.diff("--name-only", args.commits)
-        files = commit.split("\n")
-    elif args.modified_files:
-        with open(args.modified_files, "r") as fp:
-            files = json.load(fp)
-    else:
-        sys.exit(1)
 
-    if files:
-        logging.info("Changed files:")
-        for file in files:
-            logging.info(file)
-        logging.info("--------------")
-
-
-    filter = Filters(files, args.pull_request, args.platform)
+    filter = Filters(args.commits, args.pull_request, args.platform)
+    filter.init()
     filter.process()
 
     # remove dupes and filtered cases
@@ -406,7 +408,7 @@ def _main():
 
         tp.write(f"TWISTER_TESTS={total_tests}\n")
         tp.write(f"TWISTER_NODES={nodes}\n")
-        tp.write(f"TWISTER_FULL={f.full_twister}\n")
+        tp.write(f"TWISTER_FULL={filter.full_twister}\n")
         logging.info(f'Total nodes to launch: {nodes}')
 
     header = ['test', 'arch', 'platform', 'status', 'extra_args', 'handler',
