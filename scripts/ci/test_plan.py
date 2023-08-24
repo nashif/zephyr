@@ -23,10 +23,6 @@ if "ZEPHYR_BASE" not in os.environ:
 # These are globaly used variables. They are assigned in __main__ and are visible in further methods
 # however, pylint complains that it doesn't recognized them when used (used-before-assignment).
 zephyr_base = Path(os.environ['ZEPHYR_BASE'])
-repository_path = zephyr_base
-repo_to_scan = zephyr_base
-args = None
-
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 
@@ -94,7 +90,7 @@ class Tag:
         return "<Tag {}>".format(self.name)
 
 class Filters:
-    def __init__(self, modified_files, ignore_path, alt_tags, testsuite_root,
+    def __init__(self, repository_path, modified_files, commits, ignore_path, alt_tags, testsuite_root,
                  pull_request=False, platforms=[], detailed_test_id=True):
         self.modified_files = modified_files
         self.testsuite_root = testsuite_root
@@ -108,6 +104,23 @@ class Filters:
         self.detailed_test_id = detailed_test_id
         self.ignore_path = ignore_path
         self.tag_cfg_file = alt_tags
+        self.commits = commits
+        self.repository_path = repository_path
+        self.git_repo = None
+
+    def init(self):
+        if self.commits:
+            self.git_repo = Repo(self.repository_path)
+            commit = self.git_repo.git.diff("--name-only", self.commits)
+            self.modified_files = commit.split("\n")
+        else:
+            sys.exit(1)
+
+        if self.modified_files:
+            logging.info("Changed files:")
+            for file in self.modified_files:
+                logging.info(file)
+            logging.info("--------------")
 
     def process(self):
         self.find_modules()
@@ -134,15 +147,16 @@ class Filters:
         with open(fname, newline='') as jsonfile:
             json_data = json.load(jsonfile)
             suites = json_data.get("testsuites", [])
+            unfiltered_suites = list(filter(lambda t: t.get('status', None) is  None, suites))
+            logging.info(f"Added {len(unfiltered_suites)} suites to plan.")
             self.all_tests.extend(suites)
         if os.path.exists(fname):
             os.remove(fname)
 
     def find_modules(self):
         if 'west.yml' in self.modified_files:
-            print(f"Manifest file 'west.yml' changed")
-            print("=========")
-            old_manifest_content = repo_to_scan.git.show(f"{args.commits[:-2]}:west.yml")
+            logging.info("Manifest file 'west.yml' changed")
+            old_manifest_content = self.git_repo.git.show(f"{self.commits[:-2]}:west.yml")
             with open("west_old.yml", "w") as manifest:
                 manifest.write(old_manifest_content)
             old_manifest = Manifest.from_file("west_old.yml")
@@ -170,6 +184,10 @@ class Filters:
             logging.info(f'project: {projs_names}')
 
             _options = []
+            if self.platforms:
+                for platform in self.platforms:
+                    _options.extend(["-p", platform])
+
             for p in projs_names:
                 _options.extend(["-t", p ])
 
@@ -185,20 +203,26 @@ class Filters:
         # Some architectures like riscv require special handling, i.e. riscv
         # directory covers 2 architectures known to twister: riscv32 and riscv64.
         archs = set()
-
+        _global_change = False
         for f in self.modified_files:
-            p = re.match(r"^arch\/([^/]+)\/", f)
-            if not p:
-                p = re.match(r"^include\/zephyr\/arch\/([^/]+)\/", f)
-            if p:
-                if p.group(1) != 'common':
-                    if p.group(1) == 'riscv':
+            _match = re.match(r"^arch\/([^/]+)\/", f)
+            if not _match:
+                _match = re.match(r"^include\/zephyr\/arch\/([^/]+)\/", f)
+            if _match:
+                if _match.group(1) != 'common':
+                    if _match.group(1) == 'riscv':
                         archs.add('riscv32')
                         archs.add('riscv64')
                     else:
-                        archs.add(p.group(1))
+                        archs.add(_match.group(1))
                     # Modified file is treated as resolved, since a matching scope was found
                     self.resolved_files.append(f)
+            else:
+                _global_change = True
+                logging.info("non-arch files matched")
+
+        if _global_change:
+            return
 
         _options = []
         for arch in archs:
@@ -228,8 +252,8 @@ class Filters:
                 resolved.append(f)
 
         roots = [zephyr_base]
-        if repository_path != zephyr_base:
-            roots.append(repository_path)
+        if self.repository_path != zephyr_base:
+            roots.append(self.repository_path)
 
         # Look for boards in monitored repositories
         lb_args = argparse.Namespace(**{ 'arch_roots': roots, 'board_roots': roots})
@@ -420,37 +444,26 @@ def parse_args():
     return parser.parse_args()
 
 
-if __name__ == "__main__":
-
+def _main():
     args = parse_args()
     files = []
     errors = 0
     if args.repo_to_scan:
         repository_path = Path(args.repo_to_scan)
-    if args.commits:
-        repo_to_scan = Repo(repository_path)
-        commit = repo_to_scan.git.diff("--name-only", args.commits)
-        files = commit.split("\n")
-    elif args.modified_files:
-        with open(args.modified_files, "r") as fp:
-            files = json.load(fp)
+    else:
+        repository_path = zephyr_base
 
-    if files:
-        print("Changed files:\n=========")
-        print("\n".join(files))
-        print("=========")
-
-    f = Filters(files, args.ignore_path, args.alt_tags, args.testsuite_root,
+    suite_filter = Filters(repository_path, files, args.commits, args.ignore_path, args.alt_tags, args.testsuite_root,
                 args.pull_request, args.platform, args.detailed_test_id)
-    f.process()
+    suite_filter.init()
+    suite_filter.process()
 
     # remove dupes and filtered cases
     dup_free = []
     dup_free_set = set()
-    logging.info(f'Total tests gathered: {len(f.all_tests)}')
-    for ts in f.all_tests:
-        if ts.get('status') == 'filtered':
-            continue
+    unfiltered_suites = list(filter(lambda t: t.get('status', None) is  None, suite_filter.all_tests))
+    logging.info(f'Total tests gathered: {len(unfiltered_suites)}')
+    for ts in unfiltered_suites:
         n = ts.get("name")
         a = ts.get("arch")
         p = ts.get("platform")
@@ -461,7 +474,7 @@ if __name__ == "__main__":
             dup_free.append(ts)
             dup_free_set.add((n, a, p,))
 
-    logging.info(f'Total tests to be run: {len(dup_free)}')
+    logging.info(f'Total tests to be run (after removing duplicates): {len(dup_free)}')
     with open(".testplan", "w") as tp:
         total_tests = len(dup_free)
         if total_tests and total_tests < args.tests_per_builder:
@@ -471,7 +484,7 @@ if __name__ == "__main__":
 
         tp.write(f"TWISTER_TESTS={total_tests}\n")
         tp.write(f"TWISTER_NODES={nodes}\n")
-        tp.write(f"TWISTER_FULL={f.full_twister}\n")
+        tp.write(f"TWISTER_FULL={suite_filter.full_twister}\n")
         logging.info(f'Total nodes to launch: {nodes}')
 
     header = ['test', 'arch', 'platform', 'status', 'extra_args', 'handler',
@@ -485,3 +498,6 @@ if __name__ == "__main__":
             json.dump(data, json_file, indent=4, separators=(',',':'))
 
     sys.exit(errors)
+
+if __name__ == "__main__":
+    _main()
