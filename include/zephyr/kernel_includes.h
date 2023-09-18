@@ -44,5 +44,7 @@
 #include <zephyr/app_memory/mem_domain.h>
 #include <zephyr/sys/kobject.h>
 #include <zephyr/kernel/thread.h>
+/* FIXMEL This needs to be removed. Exposes some private APIs to SOF */
+#include <zephyr/kernel/private/smp.h>
 
 #endif /* ZEPHYR_INCLUDE_KERNEL_INCLUDES_H_ */
