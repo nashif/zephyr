@@ -40,6 +40,14 @@
 #    to get test coverage as broad as possible.
 # 2. Keep tag entries sorted alphabetically
 
+
+bindesc:
+  files:
+    - subsys/bindesc/
+    - tests/subsys/bindesc/
+    - samples/subsys/bindesc/
+    - include/zephyr/bindesc.h
+
 bluetooth:
   files:
     - drivers/bluetooth/
