@@ -134,6 +134,48 @@ class Filters:
             self.find_boards()
         self.find_excludes()
 
+    def finalize(self, output_file, ntests_per_builder):
+        # remove duplicates and filtered test cases
+        dup_free = []
+        dup_free_set = set()
+        errors = 0
+
+        unfiltered_suites = list(filter(lambda t: t.get('status', None) is  None, self.all_tests))
+        logging.info(f'Total tests gathered: {len(unfiltered_suites)}')
+        for ts in unfiltered_suites:
+            n = ts.get("name")
+            a = ts.get("arch")
+            p = ts.get("platform")
+            if ts.get('status') == 'error':
+                logging.info(f"Error found: {n} on {p} ({ts.get('reason')})")
+                errors += 1
+            if (n, a, p,) not in dup_free_set:
+                dup_free.append(ts)
+                dup_free_set.add((n, a, p,))
+
+        logging.info(f'Total tests to be run (after removing duplicates): {len(dup_free)}')
+        with open(".testplan", "w") as tp:
+            total_tests = len(dup_free)
+            if total_tests and total_tests < ntests_per_builder:
+                nodes = 1
+            else:
+                nodes = round(total_tests / ntests_per_builder)
+
+            tp.write(f"TWISTER_TESTS={total_tests}\n")
+            tp.write(f"TWISTER_NODES={nodes}\n")
+            tp.write(f"TWISTER_FULL={self.full_twister}\n")
+            logging.info(f'Total nodes to launch: {nodes}')
+
+        header = ['test', 'arch', 'platform', 'status', 'extra_args', 'handler',
+                'handler_time', 'used_ram', 'used_rom']
+
+        # write plan
+        if dup_free:
+            data = {}
+            data['testsuites'] = dup_free
+            with open(output_file, 'w', newline='') as json_file:
+                json.dump(data, json_file, indent=4, separators=(',',':'))
+
     def get_plan(self, options, integration=False, use_testsuite_root=True):
         fname = "_test_plan_partial.json"
         cmd = [f"{zephyr_base}/scripts/twister", "-c"] + options + ["--save-tests", fname ]
@@ -217,7 +259,6 @@ class Filters:
                     self.resolved_files.append(f)
             else:
                 _global_change = True
-                logging.info("non-arch files matched")
 
         if _global_change:
             return
@@ -444,7 +485,6 @@ def parse_args():
 
 def _main():
     args = parse_args()
-    errors = 0
     if args.repo_to_scan:
         repository_path = Path(args.repo_to_scan)
     else:
@@ -462,45 +502,7 @@ def _main():
 
     suite_filter.init()
     suite_filter.process()
-
-    # remove dupes and filtered cases
-    dup_free = []
-    dup_free_set = set()
-    unfiltered_suites = list(filter(lambda t: t.get('status', None) is  None, suite_filter.all_tests))
-    logging.info(f'Total tests gathered: {len(unfiltered_suites)}')
-    for ts in unfiltered_suites:
-        n = ts.get("name")
-        a = ts.get("arch")
-        p = ts.get("platform")
-        if ts.get('status') == 'error':
-            logging.info(f"Error found: {n} on {p} ({ts.get('reason')})")
-            errors += 1
-        if (n, a, p,) not in dup_free_set:
-            dup_free.append(ts)
-            dup_free_set.add((n, a, p,))
-
-    logging.info(f'Total tests to be run (after removing duplicates): {len(dup_free)}')
-    with open(".testplan", "w") as tp:
-        total_tests = len(dup_free)
-        if total_tests and total_tests < args.tests_per_builder:
-            nodes = 1
-        else:
-            nodes = round(total_tests / args.tests_per_builder)
-
-        tp.write(f"TWISTER_TESTS={total_tests}\n")
-        tp.write(f"TWISTER_NODES={nodes}\n")
-        tp.write(f"TWISTER_FULL={suite_filter.full_twister}\n")
-        logging.info(f'Total nodes to launch: {nodes}')
-
-    header = ['test', 'arch', 'platform', 'status', 'extra_args', 'handler',
-            'handler_time', 'used_ram', 'used_rom']
-
-    # write plan
-    if dup_free:
-        data = {}
-        data['testsuites'] = dup_free
-        with open(args.output_file, 'w', newline='') as json_file:
-            json.dump(data, json_file, indent=4, separators=(',',':'))
+    errors = suite_filter.finalize(args.output_file, args.tests_per_builder)
 
     sys.exit(errors)
 
