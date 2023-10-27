@@ -124,7 +124,9 @@ class Filters:
             logging.info("--------------")
 
     def process(self):
-        self.find_modules()
+        if 'west.yml' in self.modified_files:
+            self.find_modules()
+
         self.find_tags()
         self.find_tests()
         if not self.platforms:
@@ -155,48 +157,43 @@ class Filters:
             os.remove(fname)
 
     def find_modules(self):
-        if 'west.yml' in self.modified_files:
-            logging.info("Manifest file 'west.yml' changed")
-            old_manifest_content = self.git_repo.git.show(f"{self.commits[:-2]}:west.yml")
-            with open("west_old.yml", "w") as manifest:
-                manifest.write(old_manifest_content)
-            old_manifest = Manifest.from_file("west_old.yml")
-            new_manifest = Manifest.from_file("west.yml")
-            old_projs = set((p.name, p.revision) for p in old_manifest.projects)
-            new_projs = set((p.name, p.revision) for p in new_manifest.projects)
-            logging.debug(f'old_projs: {old_projs}')
-            logging.debug(f'new_projs: {new_projs}')
-            # Removed projects
-            rprojs = set(filter(lambda p: p[0] not in list(p[0] for p in new_projs),
-                old_projs - new_projs))
-            # Updated projects
-            uprojs = set(filter(lambda p: p[0] in list(p[0] for p in old_projs),
-                new_projs - old_projs))
-            # Added projects
-            aprojs = new_projs - old_projs - uprojs
+        logging.info("Manifest file 'west.yml' changed")
+        old_manifest_content = self.git_repo.git.show(f"{self.commits[:-2]}:west.yml")
+        with open("west_old.yml", "w") as manifest:
+            manifest.write(old_manifest_content)
+        old_manifest = Manifest.from_file("west_old.yml")
+        new_manifest = Manifest.from_file("west.yml")
+        old_projs = set((p.name, p.revision) for p in old_manifest.projects)
+        new_projs = set((p.name, p.revision) for p in new_manifest.projects)
+        logging.debug(f'old_projs: {old_projs}')
+        logging.debug(f'new_projs: {new_projs}')
+        # Removed projects
+        rprojs = set(filter(lambda p: p[0] not in list(p[0] for p in new_projs),
+            old_projs - new_projs))
+        # Updated projects
+        uprojs = set(filter(lambda p: p[0] in list(p[0] for p in old_projs),
+            new_projs - old_projs))
+        # Added projects
+        aprojs = new_projs - old_projs - uprojs
 
-            # All projs
-            projs = rprojs | uprojs | aprojs
-            projs_names = [name for name, rev in projs]
+        # All projs
+        projs = rprojs | uprojs | aprojs
+        projs_names = [name for name, rev in projs]
 
-            logging.info(f'rprojs: {rprojs}')
-            logging.info(f'uprojs: {uprojs}')
-            logging.info(f'aprojs: {aprojs}')
-            logging.info(f'project: {projs_names}')
+        logging.info(f'rprojs: {rprojs}')
+        logging.info(f'uprojs: {uprojs}')
+        logging.info(f'aprojs: {aprojs}')
+        logging.info(f'project: {projs_names}')
 
-            _options = []
-            if self.platforms:
-                for platform in self.platforms:
-                    _options.extend(["-p", platform])
+        _options = []
+        if self.platforms:
+            for platform in self.platforms:
+                _options.extend(["-p", platform])
 
-            for p in projs_names:
-                _options.extend(["-t", p ])
+        for prj in projs_names:
+            _options.extend(["-t", prj ])
 
-            if self.platforms:
-                for platform in self.platforms:
-                    _options.extend(["-p", platform])
-
-            self.get_plan(_options, True)
+        self.get_plan(_options, True)
 
 
     def find_archs(self):
