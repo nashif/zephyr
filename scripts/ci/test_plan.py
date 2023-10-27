@@ -90,9 +90,10 @@ class Tag:
         return "<Tag {}>".format(self.name)
 
 class Filters:
-    def __init__(self, repository_path, modified_files, commits, ignore_path, alt_tags, testsuite_root,
+    def __init__(self, repository_path, commits, ignore_path, alt_tags, testsuite_root,
                  pull_request=False, platforms=[], detailed_test_id=True):
-        self.modified_files = modified_files
+
+        self.modified_files = []
         self.testsuite_root = testsuite_root
         self.resolved_files = []
         self.twister_options = []
@@ -423,12 +424,12 @@ def parse_args():
             help="Include paths to tests' locations in tests' names.")
     parser.add_argument("--no-detailed-test-id", dest='detailed_test_id', action="store_false",
             help="Don't put paths into tests' names.")
-    parser.add_argument('-r', '--repo-to-scan', default=None,
+    parser.add_argument('-r', '--repo-to-scan', default=zephyr_base,  type=Path,
             help="Repo to scan")
-    parser.add_argument('--ignore-path',
+    parser.add_argument('--ignores-file',  type=Path,
             default=os.path.join(zephyr_base, 'scripts', 'ci', 'twister_ignore.txt'),
             help="Path to a text file with patterns of files to be matched against changed files")
-    parser.add_argument('--alt-tags',
+    parser.add_argument('--tags-file',  type=Path,
             default=os.path.join(zephyr_base, 'scripts', 'ci', 'tags.yaml'),
             help="Path to a file describing relations between directories and tags")
     parser.add_argument(
@@ -446,15 +447,22 @@ def parse_args():
 
 def _main():
     args = parse_args()
-    files = []
     errors = 0
     if args.repo_to_scan:
         repository_path = Path(args.repo_to_scan)
     else:
         repository_path = zephyr_base
 
-    suite_filter = Filters(repository_path, files, args.commits, args.ignore_path, args.alt_tags, args.testsuite_root,
-                args.pull_request, args.platform, args.detailed_test_id)
+    suite_filter = Filters(
+            repository_path,
+            args.commits,
+            args.ignores_file,
+            args.tags_file,
+            args.testsuite_root,
+            args.pull_request,
+            args.platform,
+            args.detailed_test_id)
+
     suite_filter.init()
     suite_filter.process()
 
