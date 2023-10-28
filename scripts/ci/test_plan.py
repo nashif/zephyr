@@ -24,6 +24,9 @@ if "ZEPHYR_BASE" not in os.environ:
 # however, pylint complains that it doesn't recognized them when used (used-before-assignment).
 zephyr_base = Path(os.environ['ZEPHYR_BASE'])
 
+sys.path.insert(0, os.path.join(zephyr_base / "scripts"))
+from get_maintainer import Maintainers
+
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 
 sys.path.append(os.path.join(zephyr_base, 'scripts'))
@@ -126,6 +129,7 @@ class Filters:
         if 'west.yml' in self.modified_files:
             self.find_modules()
 
+        self.find_areas()
         self.find_tags()
         self.find_tests()
         if not self.platforms:
@@ -366,6 +370,25 @@ class Filters:
             #else:
             #    _options.append("--all")
             self.get_plan(_options, use_testsuite_root=False)
+
+    def find_areas(self):
+        maintf = zephyr_base / "MAINTAINERS.yml"
+        maintainer_file = Maintainers(maintf)
+
+        num_files = 0
+        all_areas = set()
+        for changed_file in self.modified_files:
+            num_files += 1
+            logging.info(f"file: {changed_file}")
+            areas = maintainer_file.path2areas(changed_file)
+
+            if not areas:
+                continue
+
+            all_areas.update(areas)
+
+        for area in all_areas:
+            logging.info(f"area {area.name} changed..")
 
     def find_tags(self):
 

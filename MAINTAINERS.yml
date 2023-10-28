@@ -206,6 +206,10 @@ Binary Descriptors:
     - tests/subsys/bindesc/
   labels:
     - "area: Binary Descriptors"
+  tags:
+    - bindesc
+  tests:
+    - bindesc
 
 Bluetooth:
   status: maintained
@@ -1164,7 +1168,7 @@ Release Notes:
     - dts/bindings/modem/
     - include/zephyr/drivers/modem/
   labels:
-    - "area: Modem"
+    - "area: Modem Drivers"
 
 "Drivers: Regulators":
   status: maintained
@@ -1788,6 +1792,10 @@ MCU Manager:
     - doc/services/device_mgmt/
   labels:
     - "area: mcumgr"
+  tests:
+    - mgmt.mcumgr
+  tags:
+    - mcumgr
 
 Modbus:
   status: maintained
@@ -1801,8 +1809,12 @@ Modbus:
     - doc/services/modbus/
   labels:
     - "area: modbus"
+  tests:
+    - modbus
+  tags:
+    - modbus
 
-Modem Modules:
+Modem:
   status: maintained
   maintainers:
     - bjarki-trackunit
@@ -1810,6 +1822,13 @@ Modem Modules:
     - subsys/modem/
     - include/zephyr/modem/
     - tests/subsys/modem/
+    - doc/services/modem/
+  labels:
+    - "area: Modem"
+  tests:
+    - modem
+  tags:
+    - modem
 
 OSDP:
   status: maintained
