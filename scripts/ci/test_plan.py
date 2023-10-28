@@ -91,7 +91,7 @@ class Tag:
 
 class Filters:
     def __init__(self, repository_path, commits, ignore_path, alt_tags, testsuite_root,
-                 pull_request=False, platforms=[], detailed_test_id=True):
+                 platforms=[], detailed_test_id=True):
 
         self.modified_files = []
         self.testsuite_root = testsuite_root
@@ -100,7 +100,6 @@ class Filters:
         self.full_twister = False
         self.all_tests = []
         self.tag_options = []
-        self.pull_request = pull_request
         self.platforms = platforms
         self.detailed_test_id = detailed_test_id
         self.ignore_path = ignore_path
@@ -450,8 +449,6 @@ def parse_args():
             help="File with information about changed/deleted/added files.")
     parser.add_argument('-o', '--output-file', default="testplan.json",
             help="JSON file with the test plan to be passed to twister")
-    parser.add_argument('-P', '--pull-request', action="store_true",
-            help="This is a pull request")
     parser.add_argument('-p', '--platform', action="append",
             help="Limit this for a platform or a list of platforms.")
     parser.add_argument('-t', '--tests_per_builder', default=700, type=int,
@@ -496,7 +493,6 @@ def _main():
             args.ignores_file,
             args.tags_file,
             args.testsuite_root,
-            args.pull_request,
             args.platform,
             args.detailed_test_id)
 
