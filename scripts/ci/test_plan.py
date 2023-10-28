@@ -130,7 +130,7 @@ class Filters:
             self.find_modules()
 
         self.find_areas()
-        self.find_tags()
+        #self.find_tags()
         self.find_tests()
         if not self.platforms:
             self.find_archs()
@@ -389,6 +389,9 @@ class Filters:
 
         for area in all_areas:
             logging.info(f"area {area.name} changed..")
+            for tag in area.tags:
+                self.tag_options.extend(["-t", tag ])
+
 
     def find_tags(self):
 
