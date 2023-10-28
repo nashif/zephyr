@@ -364,8 +364,8 @@ class Filters:
             if self.platforms:
                 for platform in self.platforms:
                     _options.extend(["-p", platform])
-            else:
-                _options.append("--all")
+            #else:
+            #    _options.append("--all")
             self.get_plan(_options, use_testsuite_root=False)
 
     def find_tags(self):
