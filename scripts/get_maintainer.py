@@ -479,7 +479,7 @@ def _check_maintainers(maints_path, yaml):
 
     ok_keys = {"status", "maintainers", "collaborators", "inform", "files",
                "files-exclude", "files-regex", "files-regex-exclude",
-               "labels", "description"}
+               "labels", "description", "tests", "tags"}
 
     ok_status = {"maintained", "odd fixes", "unmaintained", "obsolete"}
     ok_status_s = ", ".join('"' + s + '"' for s in ok_status)  # For messages
