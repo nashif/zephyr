@@ -405,7 +405,7 @@ class Filters:
         if exclude_tags:
             logging.info(f'Potential tag based filters: {exclude_tags}')
 
-    def find_excludes(self, skip=[]):
+    def find_excludes(self):
         with open(self.ignore_path, "r") as twister_ignore:
             ignores = twister_ignore.read().splitlines()
             ignores = filter(lambda x: not x.startswith("#"), ignores)
@@ -417,10 +417,10 @@ class Filters:
             if pattern:
                 found.update(fnmatch.filter(files_not_resolved, pattern))
 
-        logging.debug(found)
-        logging.debug(files_not_resolved)
+        logging.info(f"found matches: {found}")
+        logging.info(f"not resolved files: {files_not_resolved}")
 
-        # Full twister run can be ordered by detecting great number of tests/boards changed
+        # Full twister run can be requested by detecting great number of tests/boards changed
         # or if not all modified files were resolved (corresponding scope found)
         self.full_twister = self.full_twister or sorted(files_not_resolved) != sorted(found)
 
