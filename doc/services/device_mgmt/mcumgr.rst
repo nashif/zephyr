@@ -1,3 +1,4 @@
+
 .. _mcu_mgr:
 
 MCUmgr

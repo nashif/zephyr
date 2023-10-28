@@ -119,6 +119,10 @@ class Filters:
         else:
             sys.exit(1)
 
+        with open(self.ignore_path, "r") as twister_ignore:
+            ignores = twister_ignore.read().splitlines()
+            self.ignores = filter(lambda x: not x.startswith("#"), ignores)
+
         if self.modified_files:
             logging.info("Changed files:")
             for file in self.modified_files:
@@ -129,8 +133,8 @@ class Filters:
         if 'west.yml' in self.modified_files:
             self.find_modules()
 
-        self.find_areas()
-        #self.find_tags()
+        #self.find_areas()
+        self.find_tags()
         self.find_tests()
         if not self.platforms:
             self.find_archs()
@@ -432,14 +436,11 @@ class Filters:
             logging.info(f'Potential tag based filters: {exclude_tags}')
 
     def find_excludes(self):
-        with open(self.ignore_path, "r") as twister_ignore:
-            ignores = twister_ignore.read().splitlines()
-            ignores = filter(lambda x: not x.startswith("#"), ignores)
 
         found = set()
         files_not_resolved = list(filter(lambda x: x not in self.resolved_files, self.modified_files))
 
-        for pattern in ignores:
+        for pattern in self.ignores:
             if pattern:
                 found.update(fnmatch.filter(files_not_resolved, pattern))
 
