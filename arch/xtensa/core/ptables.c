@@ -256,12 +256,12 @@ static void map_memory(const uint32_t start, const uint32_t end,
 
 #ifdef CONFIG_XTENSA_MMU_DOUBLE_MAP
 	if (arch_xtensa_is_ptr_uncached((void *)start)) {
-		map_memory_range(POINTER_TO_UINT(z_soc_cached_ptr((void *)start)),
-			POINTER_TO_UINT(z_soc_cached_ptr((void *)end)),
+		map_memory_range(POINTER_TO_UINT(sys_cache_cached_ptr((void *)start)),
+			POINTER_TO_UINT(sys_cache_cached_ptr((void *)end)),
 			attrs | XTENSA_MMU_CACHED_WB, shared);
 	} else if (arch_xtensa_is_ptr_cached((void *)start)) {
-		map_memory_range(POINTER_TO_UINT(z_soc_uncached_ptr((void *)start)),
-			POINTER_TO_UINT(z_soc_uncached_ptr((void *)end)), attrs, shared);
+		map_memory_range(POINTER_TO_UINT(sys_cache_uncached_ptr((void *)start)),
+			POINTER_TO_UINT(sys_cache_uncached_ptr((void *)end)), attrs, shared);
 	}
 #endif
 }
@@ -415,17 +415,17 @@ static inline void __arch_mem_map(void *va, uintptr_t pa, uint32_t xtensa_flags,
 	if (IS_ENABLED(CONFIG_XTENSA_MMU_DOUBLE_MAP)) {
 		if (arch_xtensa_is_ptr_cached(va)) {
 			vaddr = va;
-			vaddr_uc = arch_xtensa_uncached_ptr(va);
+			vaddr_uc = sys_cache_uncached_ptr(va);
 		} else {
-			vaddr = arch_xtensa_cached_ptr(va);
+			vaddr = sys_cache_cached_ptr(va);
 			vaddr_uc = va;
 		}
 
 		if (arch_xtensa_is_ptr_cached((void *)pa)) {
 			paddr = pa;
-			paddr_uc = (uintptr_t)arch_xtensa_uncached_ptr((void *)pa);
+			paddr_uc = (uintptr_t)sys_cache_uncached_ptr((void *)pa);
 		} else {
-			paddr = (uintptr_t)arch_xtensa_cached_ptr((void *)pa);
+			paddr = (uintptr_t)sys_cache_cached_ptr((void *)pa);
 			paddr_uc = pa;
 		}
 
@@ -590,9 +590,9 @@ static inline void __arch_mem_unmap(void *va)
 	if (IS_ENABLED(CONFIG_XTENSA_MMU_DOUBLE_MAP)) {
 		if (arch_xtensa_is_ptr_cached(va)) {
 			vaddr = va;
-			vaddr_uc = arch_xtensa_uncached_ptr(va);
+			vaddr_uc = sys_cache_uncached_ptr(va);
 		} else {
-			vaddr = arch_xtensa_cached_ptr(va);
+			vaddr = sys_cache_cached_ptr(va);
 			vaddr_uc = va;
 		}
 	} else {
@@ -868,9 +868,9 @@ static inline int update_region(uint32_t *ptables, uintptr_t start,
 
 	if (arch_xtensa_is_ptr_cached((void *)start)) {
 		va = start;
-		va_uc = (uintptr_t)arch_xtensa_uncached_ptr((void *)start);
+		va_uc = (uintptr_t)sys_cache_uncached_ptr((void *)start);
 	} else {
-		va = (uintptr_t)arch_xtensa_cached_ptr((void *)start);
+		va = (uintptr_t)sys_cache_cached_ptr((void *)start);
 		va_uc = start;
 	}
 
