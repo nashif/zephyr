@@ -707,6 +707,11 @@ config CPU_HAS_DCACHE
 	help
 	  This hidden configuration should be selected when the CPU has a d-cache.
 
+config CPU_HAS_CACHE_COHERENCY
+	bool
+	help
+	  Pointer cache
+
 config CPU_HAS_ICACHE
 	bool
 	help
@@ -901,6 +906,13 @@ config ICACHE
 	default y
 	help
 	  This option enables the support for the instruction cache (i-cache).
+
+config CACHE_COHERENCY
+	bool "Cache Coherence support"
+	depends on CPU_HAS_CACHE_COHERENCY
+	default y
+	help
+	  Cache coherency
 
 config CACHE_MANAGEMENT
 	bool "Cache management features"

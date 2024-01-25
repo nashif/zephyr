@@ -441,6 +441,48 @@ static ALWAYS_INLINE size_t sys_cache_instr_line_size_get(void)
 #endif
 }
 
+
+static ALWAYS_INLINE bool sys_cache_is_ptr_cached(void *ptr)
+{
+#if defined(CONFIG_CACHE_MANAGEMENT) && defined(CONFIG_CACHE_COHERENCY)
+	return cache_is_ptr_cached(ptr);
+#endif
+	ARG_UNUSED(ptr);
+
+	return false;
+}
+
+static ALWAYS_INLINE bool sys_cache_is_ptr_uncached(void *ptr)
+{
+#if defined(CONFIG_CACHE_MANAGEMENT) && defined(CONFIG_CACHE_COHERENCY)
+	return cache_is_ptr_uncached(ptr);
+#endif
+	ARG_UNUSED(ptr);
+
+	return false;
+}
+
+static ALWAYS_INLINE void *sys_cache_cached_ptr(void *ptr)
+{
+#if defined(CONFIG_CACHE_MANAGEMENT) && defined(CONFIG_CACHE_COHERENCY)
+	return cache_cached_ptr(ptr);
+#endif
+	ARG_UNUSED(ptr);
+
+	return ptr;
+}
+
+static ALWAYS_INLINE void *sys_cache_uncached_ptr(void *ptr)
+{
+#if defined(CONFIG_CACHE_MANAGEMENT) && defined(CONFIG_CACHE_COHERENCY)
+	return cache_uncached_ptr(ptr);
+#endif
+	ARG_UNUSED(ptr);
+
+	return ptr;
+}
+
+
 #ifdef CONFIG_LIBMETAL
 static ALWAYS_INLINE void sys_cache_flush(void *addr, size_t size)
 {
