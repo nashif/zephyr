@@ -218,14 +218,14 @@ static inline bool arch_mem_coherent(void *ptr)
 
 #else /* CONFIG_XTENSA_RPO_CACHE */
 
-static inline bool arch_xtensa_is_ptr_cached(void *ptr)
+static inline bool sys_cache_is_ptr_cached(void *ptr)
 {
 	ARG_UNUSED(ptr);
 
 	return false;
 }
 
-static inline bool arch_xtensa_is_ptr_uncached(void *ptr)
+static inline bool sys_cache_is_ptr_uncached(void *ptr)
 {
 	ARG_UNUSED(ptr);
 

@@ -255,11 +255,11 @@ static void map_memory(const uint32_t start, const uint32_t end,
 	map_memory_range(start, end, attrs, shared);
 
 #ifdef CONFIG_XTENSA_MMU_DOUBLE_MAP
-	if (arch_xtensa_is_ptr_uncached((void *)start)) {
+	if (sys_cache_is_ptr_uncached((void *)start)) {
 		map_memory_range(POINTER_TO_UINT(sys_cache_cached_ptr((void *)start)),
 			POINTER_TO_UINT(sys_cache_cached_ptr((void *)end)),
 			attrs | XTENSA_MMU_CACHED_WB, shared);
-	} else if (arch_xtensa_is_ptr_cached((void *)start)) {
+	} else if (sys_cache_is_ptr_cached((void *)start)) {
 		map_memory_range(POINTER_TO_UINT(sys_cache_uncached_ptr((void *)start)),
 			POINTER_TO_UINT(sys_cache_uncached_ptr((void *)end)), attrs, shared);
 	}
@@ -413,7 +413,7 @@ static inline void __arch_mem_map(void *va, uintptr_t pa, uint32_t xtensa_flags,
 	uint32_t flags, flags_uc;
 
 	if (IS_ENABLED(CONFIG_XTENSA_MMU_DOUBLE_MAP)) {
-		if (arch_xtensa_is_ptr_cached(va)) {
+		if (sys_cache_is_ptr_cached(va)) {
 			vaddr = va;
 			vaddr_uc = sys_cache_uncached_ptr(va);
 		} else {
@@ -421,7 +421,7 @@ static inline void __arch_mem_map(void *va, uintptr_t pa, uint32_t xtensa_flags,
 			vaddr_uc = va;
 		}
 
-		if (arch_xtensa_is_ptr_cached((void *)pa)) {
+		if (sys_cache_is_ptr_cached((void *)pa)) {
 			paddr = pa;
 			paddr_uc = (uintptr_t)sys_cache_uncached_ptr((void *)pa);
 		} else {
@@ -588,7 +588,7 @@ static inline void __arch_mem_unmap(void *va)
 	void *vaddr, *vaddr_uc;
 
 	if (IS_ENABLED(CONFIG_XTENSA_MMU_DOUBLE_MAP)) {
-		if (arch_xtensa_is_ptr_cached(va)) {
+		if (sys_cache_is_ptr_cached(va)) {
 			vaddr = va;
 			vaddr_uc = sys_cache_uncached_ptr(va);
 		} else {
@@ -866,7 +866,7 @@ static inline int update_region(uint32_t *ptables, uintptr_t start,
 	uintptr_t va, va_uc;
 	uint32_t new_flags, new_flags_uc;
 
-	if (arch_xtensa_is_ptr_cached((void *)start)) {
+	if (sys_cache_is_ptr_cached((void *)start)) {
 		va = start;
 		va_uc = (uintptr_t)sys_cache_uncached_ptr((void *)start);
 	} else {
