@@ -505,12 +505,12 @@ static ALWAYS_INLINE bool sys_cache_is_ptr_uncached(void *ptr)
  * @param ptr A pointer to a valid C object
  * @return A pointer to the same object via the L1 dcache
  */
-static ALWAYS_INLINE void *sys_cache_cached_ptr_get(void *ptr)
+static ALWAYS_INLINE void __sparse_cache * sys_cache_cached_ptr_get(void *ptr)
 {
 #if defined(CONFIG_CACHE_MANAGEMENT) && defined(CONFIG_CACHE_DOUBLEMAP)
 	return cache_cached_ptr(ptr);
 #endif
-	return ptr;
+	return (__sparse_force void __sparse_cache *)ptr;
 }
 
 /**
@@ -529,12 +529,12 @@ static ALWAYS_INLINE void *sys_cache_cached_ptr_get(void *ptr)
  * @param ptr A pointer to a valid C object
  * @return A pointer to the same object bypassing the L1 dcache
  */
-static ALWAYS_INLINE void *sys_cache_uncached_ptr_get(void *ptr)
+static ALWAYS_INLINE void *sys_cache_uncached_ptr_get(void __sparse_cache * ptr)
 {
 #if defined(CONFIG_CACHE_MANAGEMENT) && defined(CONFIG_CACHE_DOUBLEMAP)
 	return cache_uncached_ptr(ptr);
 #endif
-	return ptr;
+	return (__sparse_force void *)ptr;
 }
 
 
