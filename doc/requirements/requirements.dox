@@ -1,0 +1,564 @@
+
+/**
+@page Requirements
+@tableofcontents
+@section Requirements
+
+
+@section Hardware Architecture Interface
+
+@subsection ZEP-1 ZEP-1: Architecture Layer Interface
+Zephyr shall provide a framework to communicate with a set of hardware architectural services.
+
+
+@subsection ZEP-3 ZEP-3: Support multiprocessor management
+Zephyr shall support symmetric multiprocessing on multiple cores.
+
+
+@subsection ZEP-8 ZEP-8: Atomic Operations
+Zephyr shall provide an interface functionality to access memory while ensuring mutual exclusion. Note: Implementation by atomic variables and accessing them by APIs.
+
+
+@subsection ZEP-9 ZEP-9: Thread Context Switching
+Zephyr shall provide a mechanism for context switching between threads.
+
+
+@subsection ZEP-10 ZEP-10: Software Exceptions
+Zephyr shall provide an interface to implement software exceptions.
+
+
+@subsection ZEP-11 ZEP-11: Processor Mode Support
+Zephyr shall provide an interface for managing processor modes.
+
+
+
+@section C Library
+
+@subsection ZEP-2 ZEP-2: Support Subset of Standard C Library
+Zephyr shall support a subset of the standard C library.
+
+
+@subsection ZEP-12 ZEP-12: Formatted output
+Zephyr shall support formatted output.
+
+
+@subsection ZEP-13 ZEP-13: Floating Point Math Support
+Zephyr shall support floating point math libraries for processors where floating point is available.
+
+
+@subsection ZEP-14 ZEP-14: Boolean Primitives Support
+Zephyr shall support boolean primitives.
+
+
+@subsection ZEP-15 ZEP-15: Standard Unix time interface
+Zephyr shall support the standard unix time interface.
+
+
+@subsection ZEP-16 ZEP-16: Strings support
+Zephyr shall support an interface to manage strings.
+
+
+@subsection ZEP-17 ZEP-17: Moving/copying regions of memory
+Zephyr shall support an interface to move contents between regions of memory.
+
+
+@subsection ZEP-18 ZEP-18: I/O based interface
+Zephyr shall support a file i/O based interface for driver communication.
+
+
+@subsection ZEP-19 ZEP-19: C99 integer types
+Zephyr shall support standard C99 integer types.
+
+
+@subsection ZEP-20 ZEP-20: Standard System Error Numbers (IEEE Std 1003.1-2017)
+Zephyr shall support standard system error numbers as defined by IEEE Std 1003.1-2017.
+
+
+@subsection ZEP-21 ZEP-21: Document set of Zephyr OS required C librariy functions in Safety Manual
+The set of C Library functions required by Zephyr needs to be documented in the Zephyr Safety Manual.
+
+
+@subsection ZEP-22 ZEP-22: Support external C libraries documentation in Zephyr Safety Manual
+The Zephyr Safety Manual needs to specify how to configure the support of external C Libraries.
+
+
+
+@section Utilities Library - Data Structures
+
+@subsection ZEP-35 ZEP-35: Data Structures Library Utilities
+Zephyr shall provide common container data structures as library utilities   (ring buffer, linked list, red black trees, ....   see document from Anas)
+
+
+
+@section Device Driver API
+
+@subsection ZEP-36 ZEP-36: Device Driver Abstracting
+Zephyr shall provide a framework for managing device driver behavior (note: device drivers includes peripherals).
+
+
+@subsection ZEP-45 ZEP-45: Device Driver Abstraction
+Zephyr shall provide abstraction of device drivers with common functionalities as an intermediate interface between applications and device drivers, where such interface is implemented by individual device drivers.
+
+Proposal for replacement: Zephyr shall provide an interface between application and individual device drivers to provide an abstraction of device drivers with common functionalities.
+
+
+@subsection ZEP-46 ZEP-46: Expose kernel to hardware interrupts
+Zephyr shall provide an interface for managing a defined set of hardware exceptions (including interupts) across all systems.
+
+
+
+@section Exception and Error Handling
+
+@subsection ZEP-37 ZEP-37: Fatal error and exception handling
+The Zephyr kernel shall provide a framework for error and exception handling.
+
+
+@subsection ZEP-47 ZEP-47: Fatal Exception Error Handler
+Zephyr shall provide default handlers for exceptions.
+
+
+@subsection ZEP-48 ZEP-48: Default handler for fatal errors
+Zephyr shall provide default handlers for fatal errors that do not have a dedicated handler.
+
+
+@subsection ZEP-49 ZEP-49: Assigning a specific handler
+Zephyr shall provide an interface to assign a specific handler with an exception.
+
+
+@subsection ZEP-50 ZEP-50: Assigning a specific handler (2)
+Zephyr shall provide an interface to assign a specific handler for a fatal error.
+
+
+
+@section File Systems
+
+@subsection ZEP-38 ZEP-38: Common File system operation support
+Zephyr shall provide a framework for managing file system access.
+
+
+
+@section Interrupts
+
+@subsection ZEP-39 ZEP-39: Interrupt Service Routine
+Zephyr shall provide a framework for interrupt management.
+
+
+@subsection ZEP-58 ZEP-58: Service routine for handling interrupts (ISR)
+Zephyr shall provide support a service routine for handling interrupts (ISR).
+
+
+@subsection ZEP-59 ZEP-59: Multi-level interrupts
+Zephyr shall support multi-level preemptive interrupt priorities, when supported by hardware. Note: detailed analysis to demonstrate non interferenace will be needed here.
+
+
+@subsection ZEP-60 ZEP-60: Associating application code with interrupts
+Zephyr shall provide an interface for associating application code with specific interrupts. (CLARIFY: Can it be a deferred procedure call at interrupt context? Would be different requirement)
+
+
+@subsection ZEP-61 ZEP-61: Enabling interrupts
+Zephyr shall provide mechanisms to enable interrupts.
+
+
+@subsection ZEP-62 ZEP-62: Disabling interrupts
+Zephyr shall provide mechanisms to disable interrupts.
+
+
+
+@section Logging
+
+@subsection ZEP-40 ZEP-40: Logging
+Zephyr shall provide a framework for logging events.
+
+
+@subsection ZEP-63 ZEP-63: Dedicated Logging Thread Support
+Zephyr shall support isolation of logging from other functionality.
+
+
+@subsection ZEP-64 ZEP-64: Logs available for post processing
+Zephyr logging shall produce logs that are capable of being post processed.
+
+
+@subsection ZEP-65 ZEP-65: Formatting log messages
+Zephyr logging shall support formatting of log messages to enable filtering.
+
+
+@subsection ZEP-66 ZEP-66: Logging Filtering Support
+Zephyr logging system shall support filtering based on severity level.
+
+
+@subsection ZEP-67 ZEP-67: Multiple Backend Logging Support
+Zephyr shall support logging messages to multiple system resources.
+
+
+@subsection ZEP-68 ZEP-68: Deferred Logging Support
+Zephyr shall support deferred logging (TODO: need more detail about the constraints and limits on what can be deferred).
+
+
+
+@section Memory Management
+
+@subsection ZEP-41 ZEP-41: Memory Management framework
+Zephyr shall support a memory management framework.
+
+
+
+@section Power Management
+
+@subsection ZEP-42 ZEP-42: Power Management
+Zephyr shall provide an interface to control hardware power states.
+
+
+@subsection ZEP-92 ZEP-92: Power State Control
+Zephyr shall provide control over changes to system power states.
+
+
+@subsection ZEP-93 ZEP-93: Power Management - TBD
+TBD
+
+
+@subsection ZEP-94 ZEP-94: Notification of changes to system power states
+Zephyr shall provide notification of changes to system power states.
+
+
+
+@section Thread Communication
+
+@subsection ZEP-43 ZEP-43: Mutex
+Zephyr shall provide an interface for managing communcation between threads.
+
+
+@subsection ZEP-95 ZEP-95: Mailbox
+Zephyr shall provide mechanisms for thread synchronization.
+
+
+@subsection ZEP-96 ZEP-96: Exchanging data between threads
+Zephyr shall provide a mechanism for exchanging data between threads.
+
+
+@subsection ZEP-97 ZEP-97: Waiting for results during communication
+Zephyr shall provide mechanisms to enable waiting for results during communication between threads. (NOTE:  waiting for results is really bad and dangerous, want to avoid if at all possible).
+
+
+@subsection ZEP-98 ZEP-98: Stack
+The Zephyr kernel shall provide a stack.
+
+
+@subsection ZEP-99 ZEP-99: Traditional Counting Semaphore
+Zephyr shall provide a counting semaphore abstraction for queuing and mutual exclusion.
+
+
+@subsection ZEP-100 ZEP-100: Poll Operation Support
+Zephyr shall support a poll operation which enables waiting concurrently for any one of multiple conditions to be fulfilled.
+
+
+@subsection ZEP-101 ZEP-101: Pipe Kernel Object
+Zephyr shall provide a kernel object that allows a thread to transfer a block of data to another thread.
+
+
+@subsection ZEP-102 ZEP-102: Message Queue Kernel Object
+Zephyr shall provide a kernel object that implements a simple message queue, allowing threads and ISRs to asynchronously send and receive fixed-size data items.
+
+
+@subsection ZEP-103 ZEP-103: Mailbox Abstraction
+Zephyr shall support a mailbox abstraction to enable targeted message passing between threads.
+
+
+
+@section Thread Mapping (should it just be scheduling)
+
+@subsection ZEP-44 ZEP-44: Multiple CPU scheduling
+Zephyr shall support scheduling of threads on multiple hardware CPUs.
+
+
+@subsection ZEP-105 ZEP-105: Running threads on specific CPUs
+Zephyr shall provide an interface for running threads on specific sets of CPUs ( default is 1 CPU).
+
+
+
+@section Thread Scheduling
+
+@subsection ZEP-4 ZEP-4: Scheduling
+Zephyr shall provide an interface to assign a thread to a specific CPU.
+
+
+@subsection ZEP-23 ZEP-23: Creating threads
+Zephyr shall provide an interface to create (start) a thread.
+
+
+@subsection ZEP-107 ZEP-107: Setting thread priority
+Zephyr shall provide an interface to set a thread's priority.
+
+
+@subsection ZEP-108 ZEP-108: Suspending a thread
+Zephyr shall provide an interface to suspend a thread.
+
+
+@subsection ZEP-109 ZEP-109: Resuming a suspended thread
+Zephyr shall provide an interface to resume a suspended thread.
+
+
+@subsection ZEP-111 ZEP-111: Deleting a thread
+Zephyr shall provide an interface to delete (end) a thread.
+
+
+@subsection ZEP-112 ZEP-112: Scheduling a thread based on an event
+Zephyr shall provide an interface to schedule a thread based on an event.
+
+
+@subsection ZEP-113 ZEP-113: Meta-IRQ Priorities
+The Zephyr kernel shall support running threads in Meta-IRQ Priorities.
+
+
+@subsection ZEP-114 ZEP-114: Deadline Scheduling Priorities
+Zephyr shall organize running threads by earliest deadline first priority.
+
+
+@subsection ZEP-115 ZEP-115: Work Queue utility capable of running preemptible work items
+Zephyr shall provide a thread-pooled work queue utility capable of running preemptible work items with specific scheduler priorities.
+
+
+@subsection ZEP-24 ZEP-24: Run user supplied functions in-order in a separate thread(s)
+Zephyr shall provide an interface for running user-supplied functions.
+
+
+@subsection ZEP-116 ZEP-116: Organize running threads into a fixed list
+Zephyr shall organize running threads into a fixed list of numeric priorities (see: https://docs.zephyrproject.org/latest/kernel/services/threads/index.html#thread-priorities).
+
+
+@subsection ZEP-117 ZEP-117: Preemption support
+Zephyr shall support preemption of a running thread by a higher priority thread.
+
+
+@subsection ZEP-118 ZEP-118: Un-preemptable thread priorities
+Zephyr shall support thread priorities which cannot be preempted by other user threads.
+
+
+@subsection ZEP-119 ZEP-119: Time sharing of CPU resources
+Zephyr shall support time sharing of CPU resources among threads of the same priority.
+
+
+
+@section Threads
+
+@subsection ZEP-5 ZEP-5: Managing threads
+Zephyr shall provide a framework for managing multiple threads of execution.
+
+
+@subsection ZEP-120 ZEP-120: Thread Support
+Zephyr shall support multiple threads of execution.
+
+
+@subsection ZEP-25 ZEP-25: Thread privileges
+Zephyr shall provide an interface to create threads with defined privilege.
+
+
+@subsection ZEP-26 ZEP-26: Scheduling multiple threads
+Zephyr shall provide an interface to schedule multiple threads.
+
+
+@subsection ZEP-121 ZEP-121: Threads - TBD
+??? Can Zephyr change priviledge level of a thread once created??
+
+
+
+@section Timers
+
+@subsection ZEP-6 ZEP-6: Timers
+Zephyr shall provide a framework for managing time-based events.
+
+
+@subsection ZEP-27 ZEP-27: Kernel Clock
+Zephyr shall provide a interface for checking the current value of the real-time clock.
+
+
+@subsection ZEP-28 ZEP-28: Call functions in interrupt context
+Zephyr shall provide an interface to schedule user mode call back function triggered by a real time clock value.
+
+
+
+@section Tracing
+
+@subsection ZEP-7 ZEP-7: Tracing
+Zepyhr shall provide a framework mechanism for tracing low level system operations  (NOTE: system calls, interrupts, kernel calls, thread, synchronization, etc.).
+
+
+@subsection ZEP-29 ZEP-29: Initializing a trace
+Zephyr shall provide an interface to initialize a trace.
+
+
+@subsection ZEP-30 ZEP-30: Triggering a trace
+Zephyr shall provide an interface to trigger a trace.
+
+
+@subsection ZEP-31 ZEP-31: Dumping trace results
+Zephyr shall provide an interface to dump results from a trace.
+
+
+@subsection ZEP-32 ZEP-32: Removing trace data
+Zephyr shall provide an interface to remove trace data.
+
+
+@subsection ZEP-33 ZEP-33: Tracing Object  Identification
+Zephyr shall provide an interface to identify the objects being traced.
+
+
+@subsection ZEP-34 ZEP-34: Tracing Non-Interference
+Zepyhr shall prevent the tracing functionality from interfering with normal operations.
+
+
+
+@section File System
+
+@subsection ZEP-51 ZEP-51: Create file
+Zephyr shall provide file create capabilities for files on the file system.
+
+
+@subsection ZEP-52 ZEP-52: Open files
+Zephyr shall provide file open capabilities for files on the file system.
+
+
+@subsection ZEP-53 ZEP-53: Read files
+Zephyr shall provide read access to files in the file system.
+
+
+@subsection ZEP-54 ZEP-54: Write to files
+Zephyr shall provide write access to the files in the file system.
+
+
+@subsection ZEP-55 ZEP-55: Close file
+Zephyr shall provide file close capabilities for files on the file system.
+
+
+@subsection ZEP-56 ZEP-56: Move file
+Zephyr shall provide the capability to move files on the file system.
+
+
+@subsection ZEP-57 ZEP-57: Delete file
+Zephyr shall provide file delete capabilities for files on the file system.
+
+
+
+@section Memory Protection
+
+@subsection ZEP-69 ZEP-69: Memory Protection
+Zephyr shall support memory protection features to isolate a thread's memory region.
+
+
+@subsection ZEP-70 ZEP-70: Granting access to kernel objects
+Zephyr shall provide a mechanism to grant user threads access to kernel objects.
+
+
+@subsection ZEP-71 ZEP-71: Separation between user and kernel threads for memory access
+Zephyr shall be able to differentiate between user threads and kernel threads for memory access.
+
+
+@subsection ZEP-72 ZEP-72: Safely handle unimplemented calls or invalid system calls
+Zephyr shall have a defined behaviour when an invocation of an unimplemented system call is made.
+
+
+@subsection ZEP-73 ZEP-73: Response to invalid system call IDs
+Zephyr shall have a defined behavior when an invalid system call ID is used.
+
+
+@subsection ZEP-74 ZEP-74: Prevent user threads creating higher priority threasds
+Zephyr shall prevent user threads from creating new threads that are higher priority than the caller.
+
+
+@subsection ZEP-75 ZEP-75: Revoking threads permissions on a kernel object
+Zephyr shall support revoking permission to a kernel object. User mode threads may only revoke their own access to an object.
+
+
+@subsection ZEP-78 ZEP-78: User Mode Threads Performing Privileged Operations
+Zephyr shall provide system calls to allow user mode threads to perform privileged operations.
+
+
+@subsection ZEP-79 ZEP-79: User mode handling of detected stack overflow
+Zephyr shall support a defined mechanism for user mode handling a of detected stack overflow.
+
+
+@subsection ZEP-80 ZEP-80: Stack Overflow Detection
+Zephyr shall support detection of stack overflows.
+
+
+@subsection ZEP-81 ZEP-81: Boot Time Memory Access Policy
+Zephyr shall support configurable access to memory during boot time.
+
+
+@subsection ZEP-82 ZEP-82: System Call Handler Functions
+Zephyr shall provide helper functions for system call handler functions to validate the inputs passed in from user mode before invoking the implementation function to protect the kernel.
+
+
+@subsection ZEP-83 ZEP-83: System Call C strings in user mode
+Zephyr shall support system calls to be able to safely accept C strings passed in from user mode.
+
+
+@subsection ZEP-84 ZEP-84: Tracking kernel objects in used by usermode threads
+Zephyr shall track kernel objects that are used by user mode threads.
+
+Note: this means Zephyr shall track the resources used by the user mode thread (associate this with a user story).
+
+
+@subsection ZEP-85 ZEP-85: Granting threads access to specific memory
+Zephyr shall have an interface to request access to specific memory after initial allocation.
+
+
+@subsection ZEP-86 ZEP-86: Assigning memory pools to act as a thread resource pool
+Zephyr shall support assigning a memory pool to act as that thread's resource pool.
+
+
+
+@section TBD: Memory Protection --> Thread
+
+@subsection ZEP-76 ZEP-76: Prevent user threads creating supervisor threads
+Zephyr shall prevent user threads from creating kernel threads.
+
+
+@subsection ZEP-77 ZEP-77: Reduced Privilege Level Threads
+Zephyr shall allow the creation of threads that run in reduced privilege level.
+
+
+
+@section Memory Objects
+
+@subsection ZEP-87 ZEP-87: Dynamic Memory Allocation
+Zephyr shall allow threads to dynamically allocate variable-sized memory regions from a specified range of memory.
+
+
+@subsection ZEP-88 ZEP-88: Memory Slab Object
+Zephyr shall allow threads to dynamically allocate fixed-sized memory regions from a specified range of memory.
+
+
+
+@section see: https://docs.zephyrproject.org/latest/reference/kernel/index.html - Data Passing
+
+@subsection ZEP-89 ZEP-89: Traditional FIFO Queue
+Zephyr shall provide a kernel object that implements a traditional first in, first out (FIFO) queue, allowing threads and ISRs to add and remove a limited number of 32-bit data values.
+
+
+@subsection ZEP-90 ZEP-90: Traditional LIFO queue
+Zephyr shall provide a kernel object that implements a traditional last in, first out (LIFO) queue, allowing threads and ISRs to add and remove a limited number of 32-bit data values.
+
+
+
+@section Mutex
+
+@subsection ZEP-91 ZEP-91: Mutex Kernel Object
+Zephyr shall support resource synchronization. (Note synchronization can be for memory access, and mutex may be one implementation, but not the only one).
+
+
+
+@section Thread Mapping (should it just be scheduling) -
+
+@subsection ZEP-104 ZEP-104: Support operation on more than one CPU
+The Zephyr kernel shall support operation on more than one physical CPU sharing the same kernel state.
+
+
+
+@section Thread Mapping (should it just be scheduling?)
+
+@subsection ZEP-106 ZEP-106: Exclusion between physical CPUs
+Zephyr shall provide an interface for mutual exclusion between multiple physical CPUs.
+
+
+
+*/

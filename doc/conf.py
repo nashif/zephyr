@@ -6,6 +6,8 @@ import os
 from pathlib import Path
 import re
 import textwrap
+import os
+import mlx.traceability
 
 from sphinx.cmd.build import get_parser
 
@@ -97,6 +99,7 @@ extensions = [
     "zephyr.external_content",
     "zephyr.domain",
     "zephyr.api_overview",
+    "mlx.traceability"
 ]
 
 # Only use SVG converter when it is really needed, e.g. LaTeX.
@@ -166,7 +169,10 @@ html_baseurl = "https://docs.zephyrproject.org/latest/"
 html_title = "Zephyr Project Documentation"
 html_logo = str(ZEPHYR_BASE / "doc" / "_static" / "images" / "logo.svg")
 html_favicon = str(ZEPHYR_BASE / "doc" / "_static" / "images" / "favicon.png")
-html_static_path = [str(ZEPHYR_BASE / "doc" / "_static")]
+html_static_path = [
+    str(ZEPHYR_BASE / "doc" / "_static"),
+    os.path.join(os.path.dirname(mlx.traceability.__file__), 'assets')
+    ]
 html_last_updated_fmt = "%b %d, %Y"
 html_domain_indices = False
 html_split_index = True
@@ -249,6 +255,7 @@ doxyrunner_outdir_var = "DOXY_OUT"
 
 breathe_projects = {"Zephyr": str(doxyrunner_outdir / "xml")}
 breathe_default_project = "Zephyr"
+breathe_show_define_initializer = True
 breathe_domain_by_extension = {
     "h": "c",
     "c": "c",
@@ -322,6 +329,8 @@ external_content_contents = [
     (ZEPHYR_BASE, "snippets/**/*.rst"),
     (ZEPHYR_BASE, "snippets/**/doc"),
 ]
+
+#external_content_contents = []
 external_content_keep = [
     "reference/kconfig/*",
     "develop/manifest/index.rst",
@@ -379,3 +388,41 @@ def setup(app):
     app.add_css_file("css/custom.css")
     app.add_js_file("js/custom.js")
     app.add_js_file("js/dark-mode-toggle.min.mjs", type="module")
+
+
+traceability_relationships = {
+    'trace': 'traced_by',
+    'depends_on': 'impacts_on',
+    'fulfills': 'fulfilled_by',
+    'implements': 'implemented_by',
+    'validates': 'validated_by',
+    'ext_toolname': ''
+}
+
+traceability_render_relationship_per_item = True
+
+traceability_relationship_to_string = {
+    'trace': 'Traces',
+    'traced_by': 'Traced by',
+    'depends_on': 'Depends on',
+    'impacts_on': 'Impacts on',
+    'fulfills': 'Fulfills',
+    'fulfilled_by': 'Fulfilled by',
+    'implements': 'Implements',
+    'implemented_by': 'Implemented by',
+    'validates': 'Validates',
+    'validated_by': 'Validated by',
+    'ext_toolname': 'Reference to toolname'
+}
+
+traceability_attributes = {
+    'value': '^.*$',
+    'asil': '^(QM|[ABCD])$',
+    'status': '^.*$',
+}
+
+traceability_collapse_links = False
+
+traceability_render_relationship_per_item = True
+traceability_render_attributes_per_item = False
+traceability_item_no_captions = False

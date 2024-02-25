@@ -59,47 +59,53 @@ Lifecycle
 Thread Creation
 ===============
 
-A thread must be created before it can be used. The kernel initializes
-the thread control block as well as one end of the stack portion. The remainder
-of the thread's stack is typically left uninitialized.
+.. item:: DESIGN-THREAD-CREATION Thread Creation
+   :fulfills: ZEP-23
 
-Specifying a start delay of :c:macro:`K_NO_WAIT` instructs the kernel
-to start thread execution immediately. Alternatively, the kernel can be
-instructed to delay execution of the thread by specifying a timeout
-value -- for example, to allow device hardware used by the thread
-to become available.
+   A thread must be created before it can be used. The kernel initializes
+   the thread control block as well as one end of the stack portion. The remainder
+   of the thread's stack is typically left uninitialized.
 
-The kernel allows a delayed start to be canceled before the thread begins
-executing. A cancellation request has no effect if the thread has already
-started. A thread whose delayed start was successfully canceled must be
-re-spawned before it can be used.
+   Specifying a start delay of :c:macro:`K_NO_WAIT` instructs the kernel
+   to start thread execution immediately. Alternatively, the kernel can be
+   instructed to delay execution of the thread by specifying a timeout
+   value -- for example, to allow device hardware used by the thread
+   to become available.
+
+   The kernel allows a delayed start to be canceled before the thread begins
+   executing. A cancellation request has no effect if the thread has already
+   started. A thread whose delayed start was successfully canceled must be
+   re-spawned before it can be used.
 
 Thread Termination
 ===================
 
-Once a thread is started it typically executes forever. However, a thread may
-synchronously end its execution by returning from its entry point function.
-This is known as **termination**.
+.. item:: DESIGN-THREAD-TERMINATION Thread Termination
+   :fulfills: ZEP-111
 
-A thread that terminates is responsible for releasing any shared resources
-it may own (such as mutexes and dynamically allocated memory)
-prior to returning, since the kernel does *not* reclaim them automatically.
+   Once a thread is started it typically executes forever. However, a thread may
+   synchronously end its execution by returning from its entry point function.
+   This is known as **termination**.
 
-In some cases a thread may want to sleep until another thread terminates.
-This can be accomplished with the :c:func:`k_thread_join` API. This
-will block the calling thread until either the timeout expires, the target
-thread self-exits, or the target thread aborts (either due to a
-:c:func:`k_thread_abort` call or triggering a fatal error).
+   A thread that terminates is responsible for releasing any shared resources
+   it may own (such as mutexes and dynamically allocated memory)
+   prior to returning, since the kernel does *not* reclaim them automatically.
 
-Once a thread has terminated, the kernel guarantees that no use will
-be made of the thread struct.  The memory of such a struct can then be
-re-used for any purpose, including spawning a new thread.  Note that
-the thread must be fully terminated, which presents race conditions
-where a thread's own logic signals completion which is seen by another
-thread before the kernel processing is complete.  Under normal
-circumstances, application code should use :c:func:`k_thread_join` or
-:c:func:`k_thread_abort` to synchronize on thread termination state
-and not rely on signaling from within application logic.
+   In some cases a thread may want to sleep until another thread terminates.
+   This can be accomplished with the :c:func:`k_thread_join` API. This
+   will block the calling thread until either the timeout expires, the target
+   thread self-exits, or the target thread aborts (either due to a
+   :c:func:`k_thread_abort` call or triggering a fatal error).
+
+   Once a thread has terminated, the kernel guarantees that no use will
+   be made of the thread struct.  The memory of such a struct can then be
+   re-used for any purpose, including spawning a new thread.  Note that
+   the thread must be fully terminated, which presents race conditions
+   where a thread's own logic signals completion which is seen by another
+   thread before the kernel processing is complete.  Under normal
+   circumstances, application code should use :c:func:`k_thread_join` or
+   :c:func:`k_thread_abort` to synchronize on thread termination state
+   and not rely on signaling from within application logic.
 
 Thread Aborting
 ===============
@@ -122,19 +128,22 @@ owned by an aborted thread.
 Thread Suspension
 ==================
 
-A thread can be prevented from executing for an indefinite period of time
-if it becomes **suspended**. The function :c:func:`k_thread_suspend`
-can be used to suspend any thread, including the calling thread.
-Suspending a thread that is already suspended has no additional effect.
+.. item:: DESIGN-THREAD-SUSPENSION Thread Suspension
+   :fulfills: ZEP-108 ZEP-109 ZEP-110
 
-Once suspended, a thread cannot be scheduled until another thread calls
-:c:func:`k_thread_resume` to remove the suspension.
+   A thread can be prevented from executing for an indefinite period of time
+   if it becomes **suspended**. The function :c:func:`k_thread_suspend`
+   can be used to suspend any thread, including the calling thread.
+   Suspending a thread that is already suspended has no additional effect.
 
-.. note::
-   A thread can prevent itself from executing for a specified period of time
-   using :c:func:`k_sleep`. However, this is different from suspending
-   a thread since a sleeping thread becomes executable automatically when the
-   time limit is reached.
+   Once suspended, a thread cannot be scheduled until another thread calls
+   :c:func:`k_thread_resume` to remove the suspension.
+
+   .. note::
+      A thread can prevent itself from executing for a specified period of time
+      using :c:func:`k_sleep`. However, this is different from suspending
+      a thread since a sleeping thread becomes executable automatically when the
+      time limit is reached.
 
 .. _thread_states:
 
@@ -226,48 +235,51 @@ have an identical effect to the ``K_KERNEL_STACK`` macros.
 Thread Priorities
 ******************
 
-A thread's priority is an integer value, and can be either negative or
-non-negative.
-Numerically lower priorities takes precedence over numerically higher values.
-For example, the scheduler gives thread A of priority 4 *higher* priority
-over thread B of priority 7; likewise thread C of priority -2 has higher
-priority than both thread A and thread B.
+.. item:: DESIGN-THREAD-PRIORITIES Thread Priorities
+   :fulfills: ZEP-107
 
-The scheduler distinguishes between two classes of threads,
-based on each thread's priority.
+   A thread's priority is an integer value, and can be either negative or
+   non-negative.
+   Numerically lower priorities takes precedence over numerically higher values.
+   For example, the scheduler gives thread A of priority 4 *higher* priority
+   over thread B of priority 7; likewise thread C of priority -2 has higher
+   priority than both thread A and thread B.
 
-* A :dfn:`cooperative thread` has a negative priority value.
-  Once it becomes the current thread, a cooperative thread remains
-  the current thread until it performs an action that makes it unready.
+   The scheduler distinguishes between two classes of threads,
+   based on each thread's priority.
 
-* A :dfn:`preemptible thread` has a non-negative priority value.
-  Once it becomes the current thread, a preemptible thread may be supplanted
-  at any time if a cooperative thread, or a preemptible thread of higher
-  or equal priority, becomes ready.
+   * A :dfn:`cooperative thread` has a negative priority value.
+   Once it becomes the current thread, a cooperative thread remains
+   the current thread until it performs an action that makes it unready.
+
+   * A :dfn:`preemptible thread` has a non-negative priority value.
+   Once it becomes the current thread, a preemptible thread may be supplanted
+   at any time if a cooperative thread, or a preemptible thread of higher
+   or equal priority, becomes ready.
 
 
-A thread's initial priority value can be altered up or down after the thread
-has been started. Thus it is possible for a preemptible thread to become
-a cooperative thread, and vice versa, by changing its priority.
+   A thread's initial priority value can be altered up or down after the thread
+   has been started. Thus it is possible for a preemptible thread to become
+   a cooperative thread, and vice versa, by changing its priority.
 
-.. note::
-    The scheduler does not make heuristic decisions to re-prioritize threads.
-    Thread priorities are set and changed only at the application's request.
+   .. note::
+      The scheduler does not make heuristic decisions to re-prioritize threads.
+      Thread priorities are set and changed only at the application's request.
 
-The kernel supports a virtually unlimited number of thread priority levels.
-The configuration options :kconfig:option:`CONFIG_NUM_COOP_PRIORITIES` and
-:kconfig:option:`CONFIG_NUM_PREEMPT_PRIORITIES` specify the number of priority
-levels for each class of thread, resulting in the following usable priority
-ranges:
+   The kernel supports a virtually unlimited number of thread priority levels.
+   The configuration options :kconfig:option:`CONFIG_NUM_COOP_PRIORITIES` and
+   :kconfig:option:`CONFIG_NUM_PREEMPT_PRIORITIES` specify the number of priority
+   levels for each class of thread, resulting in the following usable priority
+   ranges:
 
-* cooperative threads: (-:kconfig:option:`CONFIG_NUM_COOP_PRIORITIES`) to -1
-* preemptive threads: 0 to (:kconfig:option:`CONFIG_NUM_PREEMPT_PRIORITIES` - 1)
+   * cooperative threads: (-:kconfig:option:`CONFIG_NUM_COOP_PRIORITIES`) to -1
+   * preemptive threads: 0 to (:kconfig:option:`CONFIG_NUM_PREEMPT_PRIORITIES` - 1)
 
-.. image:: priorities.svg
-   :align: center
+   .. image:: priorities.svg
+      :align: center
 
-For example, configuring 5 cooperative priorities and 10 preemptive priorities
-results in the ranges -5 to -1 and 0 to 9, respectively.
+   For example, configuring 5 cooperative priorities and 10 preemptive priorities
+   results in the ranges -5 to -1 and 0 to 9, respectively.
 
 .. _metairq_priorities:
 

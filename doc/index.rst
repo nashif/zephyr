@@ -115,6 +115,10 @@ Sections
    samples/index.rst
    boards/index.rst
    releases/index.rst
+   SRS.rst
+   SYS.rst
+   tests.rst
+   traceability.rst
 
 Indices and Tables
 ******************

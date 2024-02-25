@@ -1,0 +1,33 @@
+uid,level,text,ref,links,active,derived,header,normative,reviewed,group
+ZEPH_001,1.0,Mutex,,,TRUE,FALSE,,FALSE,,Mutexes
+ZEPH_002,1.1,"The kernel shall support recursive mutexes.  A lock of a mutex already locked will succeed, and waiters will be unblocked only when the number of locks reaches zero.",,,TRUE,FALSE,Recursive mutexes,TRUE,,Mutexes
+ZEPH_003,1.2,The thread that has locked a mutex shall be eligible for priority inheritance. This means the kernel will temporarily elevate the thread's priority if a higher priority thread begins waiting on the mutex.,,,TRUE,FALSE,Mutex priority inheritance,TRUE,,Mutexes
+ZEPH_004,1.3,A mutex can be defined and initialized at compile time or run time,,,TRUE,FALSE,Defining and initializing mutexes ,TRUE,,Mutexes
+ZEPH_005,1.4,The mutex lock operation shall accept a timeout parameter indicating the maximum amount of time the thread will wait,,,TRUE,FALSE,Mutex lock operations,TRUE,,Mutexes
+ZEPH_006,1.5,An application shall be able to define any number of mutexes,,,TRUE,FALSE,Application definition of mutexes,TRUE,,Mutexes
+ZEPH_007,2.0,Semaphores,,,TRUE,FALSE,,FALSE,,Semaphores
+ZEPH_008,2.1,"A semaphore may be taken by a thread. Taking the semaphore shall decrement its count, unless the semaphore count is zero ",,,TRUE,FALSE,Semaphores may be taken by a thread,TRUE,,Semaphores
+ZEPH_009,2.2,An application shall be able to define any number of semaphores,,,TRUE,FALSE,Defining number of semaphores,TRUE,,Semaphores
+ZEPH_010,2.3,Any number of threads may wait on a semaphore simultaneously.,,,TRUE,FALSE,Thread waiting on a semaphore,TRUE,,Semaphores
+ZEPH_011,2.4,"When the semaphore is given, it is taken by the highest priority thread that has waited longest.",,,TRUE,FALSE,Semaphore thread priority,TRUE,,Semaphores
+ZEPH_012,2.5,"When a semaphore count is zero, a thread will wait for it to be incremented by another thread",,,TRUE,FALSE,Zero count semaphore,TRUE,,Semaphores
+ZEPH_013,2.6,A semaphore can be defined and initialized at compile time with an application-specified count,,,TRUE,FALSE,Defining and initializing semaphore at compile time,TRUE,,Semaphores
+ZEPH_014,2.7,The kernel shall accept a timeout argument with a take operation that specifies the maximum amount of time the thread will wait,,,TRUE,FALSE,Accepting timeout arguments,TRUE,,Semaphores
+ZEPH_015,2.8,A semaphore may be given by a thread or an ISR.,,,TRUE,FALSE,Semaphore given by thread or ISR,TRUE,,Semaphores
+ZEPH_016,2.9,A semaphore shall have the following properties: a count that indicated the number of times the semaphore can be taken and a limit that indicates the max. value the semaphore count can reach.,,,TRUE,FALSE,Semaphore properties,TRUE,,Semaphores
+ZEPH_017,3.0,Threads,,,TRUE,FALSE,,FALSE,,Threads
+ZEPH_018,3.1,The kernel shall supply a mechanism for statically initializing thread stacks in memory,,,TRUE,FALSE,Statically initializing thread stacks,TRUE,,Threads
+ZEPH_019,3.2,Each thread shall have a thread ID used to reference the thread in question,,,TRUE,FALSE,Thread ID,TRUE,,Threads
+ZEPH_020,3.3,The kernel shall preserve floating point context on thread context switch,,,TRUE,FALSE,Floating point context on thread context switch,TRUE,,Threads
+ZEPH_021,3.4,The kernel shall raise a fatal system error if the idle thread aborts,,,TRUE,FALSE,Raising fatal errors,TRUE,,Threads
+ZEPH_022,3.5,The kernel shall supply a mechanism for associating human-readable names with threads,,,TRUE,FALSE,Human-readable name thread association ,TRUE,,Threads
+ZEPH_023,3.6,The kernel should not incur floating point register save overhead for threads not using floating point,,,TRUE,FALSE,Floating point register thread poilicy ,TRUE,,Threads
+ZEPH_024,3.7,A thread may synchronously end its execution by returning from its entry point function.,,,TRUE,FALSE,Thread synchronous end,TRUE,,Threads
+ZEPH_025,3.8,A thread can be aborted by another thread.,,,TRUE,FALSE,Thread abortion,TRUE,,Threads
+ZEPH_026,3.9,The kernel shall support providing custom data per thread. The data will be thread specific and can be used by an application for any purpose.,,,TRUE,FALSE,Custom data per thread,TRUE,,Threads
+ZEPH_027,3.10,A thread may asynchronously end its execution by aborting.,,,TRUE,FALSE,Asynchronous thread end,TRUE,,Threads
+ZEPH_028,3.11,An application shall be able to define any number of threads,,,TRUE,FALSE,Application thread definition,TRUE,,Threads
+ZEPH_029,3.12,The kernel shall be able to configure a thread at compile time,,,TRUE,FALSE,Configuring a thread at compile time,TRUE,,Threads
+ZEPH_030,3.13,A thread shall be defined with options to either start execution immediately or with a delay by specifying a timeout value,,,TRUE,FALSE,Thread definition options,TRUE,,Threads
+ZEPH_031,3.14,The kernel shall prevent accidental access from one thread to the floating point registers of another,,,TRUE,FALSE,Preventing accidental access between threads,TRUE,,Threads
+ZEPH_032,3.15,The kernel shall allow delayed start to be cancelled before the thread starts execution,,,TRUE,FALSE,Cancelling delayed start before thread execution,TRUE,,Threads
