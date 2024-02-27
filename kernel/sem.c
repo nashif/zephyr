@@ -42,6 +42,11 @@ static struct k_spinlock lock;
 static struct k_obj_type obj_type_sem;
 #endif /* CONFIG_OBJ_CORE_SEM */
 
+/**
+ * @brief Implements semaphore initialization
+ *
+ * @satisfy{@req{12002}}
+ */
 int z_impl_k_sem_init(struct k_sem *sem, unsigned int initial_count,
 		      unsigned int limit)
 {
