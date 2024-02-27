@@ -4,6 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include <zephyr/ztest.h>
+/**
+ * @defgroup kernel_mutex_tests Mutex
+ * @ingroup all_tests
+ * @{
+ * @}
+ */
 
 #define TIMEOUT 500
 #define STACK_SIZE (512 + CONFIG_TEST_EXTRA_STACK_SIZE)
@@ -238,6 +244,11 @@ ZTEST_USER(mutex_api_1cpu, test_mutex_reent_lock_timeout_pass)
 	tmutex_test_lock_timeout(&kmutex, tThread_entry_lock_no_wait);
 }
 
+/**
+ * @brief test lock unlock
+ * @verify{@req{005}}
+ * @ingroup kernel_mutex_tests
+ */
 ZTEST_USER(mutex_api_1cpu, test_mutex_lock_unlock)
 {
 	/**TESTPOINT: test k_mutex_init mutex*/

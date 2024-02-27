@@ -112,7 +112,7 @@ static void tsema_thread_thread(struct k_sem *psem)
 
 	expect_k_sem_take_nomsg(psem, K_FOREVER, 0);
 
-	/*clean the spawn thread avoid side effect in next TC*/
+	/* clean the spawned thread to avoid side effect in next testcase*/
 	k_thread_join(tid, K_FOREVER);
 }
 
@@ -219,6 +219,7 @@ void sem_take_multiple_high_prio_long_helper(void *p1, void *p2, void *p3)
 }
 
 /**
+ * @defgroup kernel_semaphore_tests Semaphore
  * @ingroup kernel_semaphore_tests
  * @{
  */
@@ -231,6 +232,7 @@ void sem_take_multiple_high_prio_long_helper(void *p1, void *p2, void *p3)
  * - Verify the semaphore count equals to initialized value.
  * @ingroup kernel_semaphore_tests
  * @see k_sem_count_get()
+ * @verify{@req{12001}}
  */
 ZTEST_USER(semaphore, test_k_sem_define)
 {
@@ -243,6 +245,7 @@ ZTEST_USER(semaphore, test_k_sem_define)
 /**
  * @brief Test synchronization of threads with semaphore
  * @see k_sem_init(), #K_SEM_DEFINE(x)
+ * @verify{@req{12002}}
  */
 ZTEST_USER(semaphore, test_sem_thread2thread)
 {
@@ -271,12 +274,13 @@ ZTEST(semaphore, test_sem_thread2isr)
 }
 
 /**
- * @brief Test semaphore initialization at running time
+ * @brief Test semaphore initialization at runtime
  * @details
  * - Initialize a semaphore with valid count and max limit.
  * - Initialize a semaphore with invalid max limit.
  * - Initialize a semaphore with invalid count.
  * @ingroup kernel_semaphore_tests
+ * @verify{@req{12002}}
  */
 ZTEST_USER(semaphore, test_k_sem_init)
 {
@@ -296,6 +300,7 @@ ZTEST_USER(semaphore, test_k_sem_init)
 /**
  * @brief Test k_sem_reset() API
  * @see k_sem_reset()
+ * @verify{@req{12033}}
  */
 ZTEST_USER(semaphore, test_sem_reset)
 {
@@ -322,6 +327,11 @@ ZTEST_USER(semaphore, test_sem_reset)
 	expect_k_sem_count_get_nomsg(&msg_sema, 0);
 }
 
+/**
+ * @brief Test aborting all semaphore takes after k_sem_reset()
+ * @see k_sem_reset()
+ * @verify{@req{12034}}
+ */
 ZTEST_USER(semaphore, test_sem_reset_waiting)
 {
 	int32_t ret_value;
@@ -350,6 +360,7 @@ ZTEST_USER(semaphore, test_sem_reset_waiting)
 /**
  * @brief Test k_sem_count_get() API
  * @see k_sem_count_get()
+ * @verify{@req{12015}}
  */
 ZTEST_USER(semaphore, test_sem_count_get)
 {
@@ -432,6 +443,7 @@ ZTEST_USER(semaphore, test_sem_give_from_thread)
 /**
  * @brief Test if k_sem_take() decreases semaphore count
  * @see k_sem_take()
+ * @verify{@req{12011}}
  */
 ZTEST_USER(semaphore, test_sem_take_no_wait)
 {
@@ -454,6 +466,7 @@ ZTEST_USER(semaphore, test_sem_take_no_wait)
 /**
  * @brief Test k_sem_take() when there is no semaphore to take
  * @see k_sem_take()
+ * @verify{@req{12011}}
  */
 ZTEST_USER(semaphore, test_sem_take_no_wait_fails)
 {
@@ -478,6 +491,7 @@ ZTEST_USER(semaphore, test_sem_take_no_wait_fails)
  * - Take an unavailable semaphore and wait it until timeout.
  * @ingroup kernel_semaphore_tests
  * @see k_sem_take()
+ * @verify{@req{12010}}
  */
 ZTEST_USER(semaphore, test_sem_take_timeout_fails)
 {
@@ -501,6 +515,7 @@ ZTEST_USER(semaphore, test_sem_take_timeout_fails)
  * - Take semaphore and wait it given by other threads in specified timeout.
  * @ingroup kernel_semaphore_tests
  * @see k_sem_take()
+ * @verify{@req{12010}}
  */
 ZTEST_USER(semaphore, test_sem_take_timeout)
 {
@@ -737,12 +752,14 @@ ZTEST_USER(semaphore, test_sem_take_multiple)
  * - Reset an initialized semaphore's count to zero.
  * - Give the semaphore by a thread and verify the semaphore's count is
  *   as expected.
- * - Verify the max count a semaphore can reach.
+ * - Verify the max count a semaphore can be reached.
  * - Take the semaphore by a thread and verify the semaphore's count is
  *   as expected.
  * - Verify the max times a semaphore can be taken.
  * @ingroup kernel_semaphore_tests
  * @see k_sem_count_get(), k_sem_give()
+ * @verify{@req{12004}}
+ * @verify{@req{12009}}
  */
 ZTEST_USER(semaphore, test_k_sem_correct_count_limit)
 {
@@ -875,8 +892,12 @@ ZTEST(semaphore, test_sem_multiple_threads_wait)
 
 /**
  * @brief Test semaphore timeout period
+ * @details Test the timeout period of semaphore take
  * @ingroup kernel_semaphore_tests
  * @see k_sem_take(), k_sem_give(), k_sem_reset()
+ * @verify{@req{12009}}
+ * @verify{@req{12010}}
+ * @verify{@req{12011}}
  */
 ZTEST(semaphore, test_sem_measure_timeouts)
 {
@@ -935,6 +956,7 @@ void sem_measure_timeout_from_thread_helper(void *p1, void *p2, void *p3)
  * @brief Test timeout of semaphore from thread
  * @ingroup kernel_semaphore_tests
  * @see k_sem_give(), k_sem_reset(), k_sem_take()
+ * @verify{@req{12009}}
  */
 ZTEST(semaphore, test_sem_measure_timeout_from_thread)
 {
@@ -995,6 +1017,7 @@ void sem_multiple_take_and_timeouts_helper(void *p1, void *p2, void *p3)
  * @brief Test multiple semaphore take with timeouts
  * @ingroup kernel_semaphore_tests
  * @see k_sem_take(), k_sem_reset()
+ * @verify{@req{12009}}
  */
 ZTEST(semaphore_1cpu, test_sem_multiple_take_and_timeouts)
 {
@@ -1117,12 +1140,13 @@ ZTEST(semaphore, test_sem_multi_take_timeout_diff_sem)
 }
 
 /**
- * @brief Test thread mutual exclusion by semaphore
- * @details Test is using to see how mutual exclusion is made by semaphore
- * Made two threads, with two functions which use common variable.
- * That variable is a critical section and can't be changed by two threads
+ * @brief Test thread mutual exclusion using a semaphore
+ * @details Create two threads, with two functions using common variable.
+ * The variables act as critical sections and can't be changed by multiple threads
  * at the same time.
+ *
  * @ingroup kernel_semaphore_tests
+ * @verify{@req{99}}
  */
 ZTEST(semaphore_1cpu, test_sem_queue_mutual_exclusion)
 {
@@ -1180,9 +1204,7 @@ ZTEST_USER(semaphore_null_case, test_sem_give_null)
 
 	k_thread_join(tid, K_FOREVER);
 }
-#endif
 
-#ifdef CONFIG_USERSPACE
 static void thread_sem_init_null(void *p1, void *p2, void *p3)
 {
 	ARG_UNUSED(p1);
@@ -1215,9 +1237,7 @@ ZTEST_USER(semaphore_null_case, test_sem_init_null)
 
 	k_thread_join(tid, K_FOREVER);
 }
-#endif
 
-#ifdef CONFIG_USERSPACE
 static void thread_sem_take_null(void *p1, void *p2, void *p3)
 {
 	ARG_UNUSED(p1);
@@ -1250,9 +1270,7 @@ ZTEST_USER(semaphore_null_case, test_sem_take_null)
 
 	k_thread_join(tid, K_FOREVER);
 }
-#endif
 
-#ifdef CONFIG_USERSPACE
 static void thread_sem_reset_null(void *p1, void *p2, void *p3)
 {
 	ARG_UNUSED(p1);
@@ -1285,9 +1303,7 @@ ZTEST_USER(semaphore_null_case, test_sem_reset_null)
 
 	k_thread_join(tid, K_FOREVER);
 }
-#endif
 
-#ifdef CONFIG_USERSPACE
 static void thread_sem_count_get_null(void *p1, void *p2, void *p3)
 {
 	ARG_UNUSED(p1);

@@ -87,12 +87,14 @@ static void thread_entry(void *p1, void *p2, void *p3)
  * @{
  */
 
+
 /**
  * @brief test preempt thread initialization via K_THREAD_DEFINE
  *
  * @see #K_THREAD_DEFINE(x)
  *
  * @ingroup kernel_thread_tests
+ * @verify{@req{23}}
  */
 ZTEST_USER(thread_init, test_kdefine_preempt_thread)
 {
@@ -112,12 +114,16 @@ ZTEST_USER(thread_init, test_kdefine_preempt_thread)
 }
 
 /**
+ * @fn void test_kdefine_coop_thread(void)
  * @brief test coop thread initialization via K_THREAD_DEFINE
  *
  * @ingroup kernel_thread_tests
  *
  * @see #K_THREAD_DEFINE(x)
+ * @verify{@req{23}}
  */
+ #define test_kdefine_coop_thread(void) do { } while (false)
+
 ZTEST_USER(thread_init, test_kdefine_coop_thread)
 {
 	/*static thread creation time unknown, skip it*/
@@ -141,6 +147,7 @@ ZTEST_USER(thread_init, test_kdefine_coop_thread)
  * @ingroup kernel_thread_tests
  *
  * @see k_thread_create()
+ * @verify{@req{23}}
  */
 ZTEST_USER(thread_init, test_kinit_preempt_thread)
 {
@@ -174,6 +181,7 @@ ZTEST_USER(thread_init, test_kinit_preempt_thread)
  * @ingroup kernel_thread_tests
  *
  * @see k_thread_create()
+ * @verify{@req{23}}
  */
 ZTEST(thread_init, test_kinit_coop_thread)
 {
