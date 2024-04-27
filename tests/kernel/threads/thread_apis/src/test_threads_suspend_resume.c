@@ -86,10 +86,9 @@ void suspend_myself(void *arg0, void *arg1, void *arg2)
 }
 
 /**
- * @ingroup kernel_thread_tests
- *
  * @brief Check that k_thread_suspend() is a schedule point when
  * called on the current thread.
+ * @ingroup kernel_thread_tests
  *
  * @verify{@req{109}}
  */

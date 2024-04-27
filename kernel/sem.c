@@ -98,6 +98,11 @@ static inline bool handle_poll_events(struct k_sem *sem)
 #endif /* CONFIG_POLL */
 }
 
+/**
+ * @brief Implements semaphore give
+ *
+ * @satisfy{@req{12012}}
+ */
 void z_impl_k_sem_give(struct k_sem *sem)
 {
 	k_spinlock_key_t key = k_spin_lock(&lock);
@@ -134,6 +139,11 @@ static inline void z_vrfy_k_sem_give(struct k_sem *sem)
 #include <zephyr/syscalls/k_sem_give_mrsh.c>
 #endif /* CONFIG_USERSPACE */
 
+/**
+ * @brief Implements semaphore take
+ *
+ * @satisfy{@req{12006}}
+ */
 int z_impl_k_sem_take(struct k_sem *sem, k_timeout_t timeout)
 {
 	int ret;
@@ -168,6 +178,11 @@ out:
 	return ret;
 }
 
+/**
+ * @brief Implements semaphore reset
+ *
+ * @satisfy{@req{12023}}
+ */
 void z_impl_k_sem_reset(struct k_sem *sem)
 {
 	struct k_thread *thread;

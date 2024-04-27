@@ -246,7 +246,7 @@ ZTEST_USER(mutex_api_1cpu, test_mutex_reent_lock_timeout_pass)
 
 /**
  * @brief test lock unlock
- * @verify{@req{005}}
+ * @verify{@req{5}}
  * @ingroup kernel_mutex_tests
  */
 ZTEST_USER(mutex_api_1cpu, test_mutex_lock_unlock)

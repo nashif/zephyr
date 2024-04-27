@@ -88,7 +88,7 @@ extensions = [
     "zephyr.dtcompatible-role",
     "zephyr.link-roles",
     "sphinx_tabs.tabs",
-    "sphinx_sitemap",
+    #"sphinx_sitemap",
     "zephyr.warnings_filter",
     "zephyr.doxyrunner",
     "zephyr.gh_utils",
@@ -97,8 +97,8 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_togglebutton",
     "zephyr.external_content",
-    "zephyr.domain",
-    "zephyr.api_overview",
+    #"zephyr.domain",
+    #"zephyr.api_overview",
     "mlx.traceability"
 ]
 
@@ -321,13 +321,13 @@ kconfig_ext_paths = [ZEPHYR_BASE]
 
 external_content_contents = [
     (ZEPHYR_BASE / "doc", "[!_]*"),
-    (ZEPHYR_BASE, "boards/**/*.rst"),
-    (ZEPHYR_BASE, "boards/**/doc"),
-    (ZEPHYR_BASE, "samples/**/*.html"),
-    (ZEPHYR_BASE, "samples/**/*.rst"),
-    (ZEPHYR_BASE, "samples/**/doc"),
-    (ZEPHYR_BASE, "snippets/**/*.rst"),
-    (ZEPHYR_BASE, "snippets/**/doc"),
+    #(ZEPHYR_BASE, "boards/**/*.rst"),
+    #(ZEPHYR_BASE, "boards/**/doc"),
+    #(ZEPHYR_BASE, "samples/**/*.html"),
+    #(ZEPHYR_BASE, "samples/**/*.rst"),
+    #(ZEPHYR_BASE, "samples/**/doc"),
+    #(ZEPHYR_BASE, "snippets/**/*.rst"),
+    #(ZEPHYR_BASE, "snippets/**/doc"),
 ]
 
 #external_content_contents = []

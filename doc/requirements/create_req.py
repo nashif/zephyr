@@ -45,7 +45,7 @@ def parse_strictdoc_json(filename):
         docs = data.get('DOCUMENTS')
         for d in docs:
             print(f"{d['TITLE']}\n--------------------------------\n")
-            grouped = get_nodes(d['NODES'])
+            grouped = get_nodes(d['NODES'], grouped=dict())
             parsed_docs['{}'.format(d['TITLE'])] = grouped
 
     return parsed_docs
@@ -53,11 +53,13 @@ def parse_strictdoc_json(filename):
 def write_dox(parsed_docs, output="requirements.dox"):
     with open(output, "w") as req:
         req.write(HEADER)
+        d = 0
         for k,v in parsed_docs.items():
-            req.write("\n@section {}\n".format(k))
+            d += 1
+            req.write("\n@section {}_{} {}\n".format(k.replace(" ", "_"), d, k))
             for r in v.keys():
                 comp = v[r]
-                req.write("\n@subsection {}\n\n".format(r))
+                req.write("\n@subsection {}_{} {}\n\n".format(r.replace(" ", "_"), d, r))
                 for c in comp:
                     req.write("@subsubsection {} {}: {}\n".format(c['rid'], c['rid'], c['name']))
                     req.write("@details {}\n\n".format(c['req']))

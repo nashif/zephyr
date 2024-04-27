@@ -685,7 +685,7 @@
                             "TYPE": "Functional",
                             "UID": "ZEP-76",
                             "STATUS": "Draft",
-                            "COMPONENT": "TBD: Memory Protection --> Thread",
+                            "COMPONENT": "Memory Protection",
                             "TITLE": "Prevent user threads creating supervisor threads",
                             "STATEMENT": "The Zephyr RTOS shall prevent user threads from creating kernel threads.",
                             "USER_STORY": "As a Zephyr RTOS user I want to be protected against user threads creating higher privileged kernel/supervisor threads."
@@ -695,7 +695,7 @@
                             "TYPE": "Functional",
                             "UID": "ZEP-77",
                             "STATUS": "Draft",
-                            "COMPONENT": "TBD: Memory Protection --> Thread",
+                            "COMPONENT": "Memory Protection",
                             "TITLE": "Reduced Privilege Level Threads",
                             "STATEMENT": "The Zephyr RTOS shall allow the creation of threads that run in reduced privilege level.",
                             "USER_STORY": "As a Zephyr RTOS user I want to be able to create lower privileged threads than my own."
@@ -858,10 +858,29 @@
                 {
                     "_TOC": "12",
                     "TYPE": "SECTION",
-                    "TITLE": "Semaphores",
+                    "TITLE": "Mutex",
                     "NODES": [
                         {
                             "_TOC": "12.1",
+                            "TYPE": "Functional",
+                            "UID": "ZEP-91",
+                            "STATUS": "Draft",
+                            "COMPONENT": "Mutex",
+                            "TITLE": "Mutex Kernel Object",
+                            "STATEMENT": "The Zephyr RTOS shall support resource synchronization. (Note synchronization can be for memory access, and mutex may be one implementation, but not the only one).",
+                            "USER_STORY": "As a Zephyr RTOS user I want to be able to sychonize threads when accessing common resources, where the thread shall have the option to:\n- wait eternally until the resources becomes available.\n- immediately return with a negative message if the resource is not available and allow the thread to continue.\n- wait for a given time for the resource to become available or return with a negative message.",
+                            "REVIEW_COMMENT": "Concern over phrase recursive.  What is it MUTEXing? Memory Management?"
+                        }
+                    ],
+                    "REQ_PREFIX": "ZEP-"
+                },
+                {
+                    "_TOC": "13",
+                    "TYPE": "SECTION",
+                    "TITLE": "Semaphores",
+                    "NODES": [
+                        {
+                            "_TOC": "13.1",
                             "TYPE": "Functional",
                             "UID": "ZEP-12001",
                             "STATUS": "Draft",
@@ -876,7 +895,7 @@
                             ]
                         },
                         {
-                            "_TOC": "12.2",
+                            "_TOC": "13.2",
                             "TYPE": "Functional",
                             "UID": "ZEP-12002",
                             "STATUS": "Draft",
@@ -891,7 +910,7 @@
                             ]
                         },
                         {
-                            "_TOC": "12.3",
+                            "_TOC": "13.3",
                             "TYPE": "Functional",
                             "UID": "ZEP-12003",
                             "STATUS": "Draft",
@@ -900,7 +919,7 @@
                             "STATEMENT": "The Zephyr RTOS shall define the maximum limit of a semaphore when the semaphore is used for counting purposes and does not have an explicit limit."
                         },
                         {
-                            "_TOC": "12.4",
+                            "_TOC": "13.4",
                             "TYPE": "Functional",
                             "UID": "ZEP-12004",
                             "STATUS": "Draft",
@@ -915,7 +934,7 @@
                             ]
                         },
                         {
-                            "_TOC": "12.5",
+                            "_TOC": "13.5",
                             "TYPE": "Functional",
                             "UID": "ZEP-12005",
                             "STATUS": "Draft",
@@ -930,12 +949,12 @@
                             ]
                         },
                         {
-                            "_TOC": "12.6",
+                            "_TOC": "13.6",
                             "TYPE": "Functional",
                             "UID": "ZEP-12006",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
-                            "TITLE": "Semaphore acquisition",
+                            "TITLE": "Semaphore acquisition mechanism",
                             "STATEMENT": "The Zephyr RTOS shall provide a mechanism allowing threads to acquire a semaphore.",
                             "RELATIONS": [
                                 {
@@ -945,12 +964,12 @@
                             ]
                         },
                         {
-                            "_TOC": "12.7",
+                            "_TOC": "13.7",
                             "TYPE": "Functional",
                             "UID": "ZEP-12007",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
-                            "TITLE": "Semaphore acquisition",
+                            "TITLE": "Semaphore acquisition with count greater than zero",
                             "STATEMENT": "If the semaphore's count is greater than zero, the requesting thread shall acquire\nthe semaphore and decrement its count.",
                             "RELATIONS": [
                                 {
@@ -960,12 +979,12 @@
                             ]
                         },
                         {
-                            "_TOC": "12.8",
+                            "_TOC": "13.8",
                             "TYPE": "Functional",
                             "UID": "ZEP-12008",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
-                            "TITLE": "Semaphore acquisition",
+                            "TITLE": "Semaphore acquisition with zero count",
                             "STATEMENT": "If the semaphore's count is zero, the requesting thread shall be blocked until the semaphore is released by another thread.",
                             "RELATIONS": [
                                 {
@@ -975,7 +994,7 @@
                             ]
                         },
                         {
-                            "_TOC": "12.9",
+                            "_TOC": "13.9",
                             "TYPE": "Functional",
                             "UID": "ZEP-12009",
                             "STATUS": "Draft",
@@ -990,7 +1009,7 @@
                             ]
                         },
                         {
-                            "_TOC": "12.10",
+                            "_TOC": "13.10",
                             "TYPE": "Functional",
                             "UID": "ZEP-12010",
                             "STATUS": "Draft",
@@ -1005,7 +1024,7 @@
                             ]
                         },
                         {
-                            "_TOC": "12.11",
+                            "_TOC": "13.11",
                             "TYPE": "Functional",
                             "UID": "ZEP-12011",
                             "STATUS": "Draft",
@@ -1020,7 +1039,7 @@
                             ]
                         },
                         {
-                            "_TOC": "12.12",
+                            "_TOC": "13.12",
                             "TYPE": "Functional",
                             "UID": "ZEP-12012",
                             "STATUS": "Draft",
@@ -1035,37 +1054,7 @@
                             ]
                         },
                         {
-                            "_TOC": "12.13",
-                            "TYPE": "Functional",
-                            "UID": "ZEP-12033",
-                            "STATUS": "Draft",
-                            "COMPONENT": "Semaphore",
-                            "TITLE": "Semaphore reset",
-                            "STATEMENT": "The Zephyr RTOS shall provide a mechanism that resets the semaphore count to zero.",
-                            "RELATIONS": [
-                                {
-                                    "TYPE": "Parent",
-                                    "VALUE": "ZEP-99"
-                                }
-                            ]
-                        },
-                        {
-                            "_TOC": "12.14",
-                            "TYPE": "Functional",
-                            "UID": "ZEP-12034",
-                            "STATUS": "Draft",
-                            "COMPONENT": "Semaphore",
-                            "TITLE": "Semaphore acquisitions abort after reset",
-                            "STATEMENT": "When a semaphore is reset, the Zephyr RTOS shall abort all existing acquisitions\nof the semaphore returning a resource contention error code.",
-                            "RELATIONS": [
-                                {
-                                    "TYPE": "Parent",
-                                    "VALUE": "ZEP-99"
-                                }
-                            ]
-                        },
-                        {
-                            "_TOC": "12.15",
+                            "_TOC": "13.13",
                             "TYPE": "Functional",
                             "UID": "ZEP-12013",
                             "STATUS": "Draft",
@@ -1080,12 +1069,12 @@
                             ]
                         },
                         {
-                            "_TOC": "12.16",
+                            "_TOC": "13.14",
                             "TYPE": "Functional",
                             "UID": "ZEP-12014",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
-                            "TITLE": "Semaphore release",
+                            "TITLE": "Semaphore release with priority inheritance",
                             "STATEMENT": "If there are threads waiting on the semaphore, the highest-priority waiting thread\nshall be unblocked and acquire the semaphore.",
                             "RELATIONS": [
                                 {
@@ -1095,22 +1084,7 @@
                             ]
                         },
                         {
-                            "_TOC": "12.17",
-                            "TYPE": "Functional",
-                            "UID": "ZEP-12030",
-                            "STATUS": "Draft",
-                            "COMPONENT": "Semaphore",
-                            "TITLE": "Semaphore Initialization Option Validation",
-                            "STATEMENT": "When initializing a counting semaphore, where the maximum permitted count of a semaphore is invalid,\nthe Zephyr RTOS shall return an error indicating invalid values.",
-                            "RELATIONS": [
-                                {
-                                    "TYPE": "Parent",
-                                    "VALUE": "ZEP-99"
-                                }
-                            ]
-                        },
-                        {
-                            "_TOC": "12.18",
+                            "_TOC": "13.15",
                             "TYPE": "Functional",
                             "UID": "ZEP-12015",
                             "STATUS": "Draft",
@@ -1125,40 +1099,13 @@
                             ]
                         },
                         {
-                            "_TOC": "12.19",
-                            "TYPE": "Non-Functional",
-                            "UID": "ZEP-12016",
+                            "_TOC": "13.16",
+                            "TYPE": "Functional",
+                            "UID": "ZEP-12023",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
-                            "TITLE": "Efficiency",
-                            "STATEMENT": "Semaphore operations shall be implemented efficiently to minimize overhead and maximize system performance."
-                        },
-                        {
-                            "_TOC": "12.20",
-                            "TYPE": "Non-Functional",
-                            "UID": "ZEP-12022",
-                            "STATUS": "Draft",
-                            "COMPONENT": "Semaphore",
-                            "TITLE": "Scalability",
-                            "STATEMENT": "The Zephyr RTOS shall support a large number of semaphores without significant degradation in performance."
-                        },
-                        {
-                            "_TOC": "12.21",
-                            "TYPE": "Non-Functional",
-                            "UID": "ZEP-12017",
-                            "STATUS": "Draft",
-                            "COMPONENT": "Semaphore",
-                            "TITLE": "Robustness",
-                            "STATEMENT": "The Zephyr RTOS shall handle edge cases such as invalid semaphore handles or\nattempts to release an unacquired semaphore gracefully."
-                        },
-                        {
-                            "_TOC": "12.22",
-                            "TYPE": "Non-Functional",
-                            "UID": "ZEP-12021",
-                            "STATUS": "Draft",
-                            "COMPONENT": "Semaphore",
-                            "TITLE": "Error handling mechanisms",
-                            "STATEMENT": "Error handling mechanisms shall be in place to prevent system instability due to misuse of semaphore operations.",
+                            "TITLE": "Semaphore reset",
+                            "STATEMENT": "The Zephyr RTOS shall provide a mechanism that resets the semaphore count to zero.",
                             "RELATIONS": [
                                 {
                                     "TYPE": "Parent",
@@ -1167,31 +1114,28 @@
                             ]
                         },
                         {
-                            "_TOC": "12.23",
-                            "TYPE": "Non-Functional",
-                            "UID": "ZEP-12018",
+                            "_TOC": "13.17",
+                            "TYPE": "Functional",
+                            "UID": "ZEP-12024",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
-                            "TITLE": "Portability",
-                            "STATEMENT": "Semaphore operations shall be implemented in a platform-independent manner to\nensure portability across different hardware and software environments."
+                            "TITLE": "Semaphore acquisitions abort after reset",
+                            "STATEMENT": "When a semaphore is reset, the Zephyr RTOS shall abort all existing acquisitions\nof the semaphore returning a resource contention error code.",
+                            "RELATIONS": [
+                                {
+                                    "TYPE": "Parent",
+                                    "VALUE": "ZEP-99"
+                                }
+                            ]
                         },
                         {
-                            "_TOC": "12.24",
-                            "TYPE": "Non-Functional",
-                            "UID": "ZEP-12019",
+                            "_TOC": "13.18",
+                            "TYPE": "Functional",
+                            "UID": "ZEP-12025",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
-                            "TITLE": "Concurrency",
-                            "STATEMENT": "Semaphore operations shall be thread-safe to support concurrent execution of\nmultiple threads."
-                        },
-                        {
-                            "_TOC": "12.25",
-                            "TYPE": "Non-Functional",
-                            "UID": "ZEP-12020",
-                            "STATUS": "Draft",
-                            "COMPONENT": "Semaphore",
-                            "TITLE": "Synchronization Mechanisms",
-                            "STATEMENT": "The system shall use appropriate synchronization mechanisms to prevent race conditions and ensure consistent behavior in multi-threaded environments.",
+                            "TITLE": "Semaphore Initialization Option Validation",
+                            "STATEMENT": "When initializing a counting semaphore, where the maximum permitted count of a semaphore is invalid,\nthe Zephyr RTOS shall return an error indicating invalid values.",
                             "RELATIONS": [
                                 {
                                     "TYPE": "Parent",
@@ -1201,24 +1145,6 @@
                         }
                     ],
                     "REQ_PREFIX": "ZEP-"
-                },
-                {
-                    "_TOC": "13",
-                    "TYPE": "SECTION",
-                    "TITLE": "Mutex",
-                    "NODES": [
-                        {
-                            "_TOC": "13.1",
-                            "TYPE": "Functional",
-                            "UID": "ZEP-91",
-                            "STATUS": "Draft",
-                            "COMPONENT": "Mutex",
-                            "TITLE": "Mutex Kernel Object",
-                            "STATEMENT": "The Zephyr RTOS shall support resource synchronization. (Note synchronization can be for memory access, and mutex may be one implementation, but not the only one).",
-                            "USER_STORY": "As a Zephyr RTOS user I want to be able to sychonize threads when accessing common resources, where the thread shall have the option to:\n- wait eternally until the resources becomes available.\n- immediately return with a negative message if the resource is not available and allow the thread to continue.\n- wait for a given time for the resource to become available or return with a negative message.",
-                            "REVIEW_COMMENT": "Concern over phrase recursive.  What is it MUTEXing? Memory Management?"
-                        }
-                    ]
                 },
                 {
                     "_TOC": "14",
@@ -1241,7 +1167,7 @@
                             "UID": "ZEP-93",
                             "STATUS": "Draft",
                             "COMPONENT": "Power Management",
-                            "TITLE": "Power Management - TBD",
+                            "TITLE": "Power Management",
                             "STATEMENT": "TBD"
                         },
                         {
@@ -1897,8 +1823,7 @@
                     "COMPONENT": "C Library",
                     "TITLE": "Support Subset of Standard C Library",
                     "STATEMENT": "The Zephyr RTOS shall support a subset of the standard C library.",
-                    "USER_STORY": "As a Zephyr RTOS user I want to have a selection of standard C library implementations e.g. a full extend and a minimal with a smaller footprint or a particular fast executing implementation.",
-                    "REVIEW_COMMENT": "Can we limit the type of C library implementations? Testing might be hell if we do not limit ourselves to the ones defined? Like \"minimal libc\" and \"newlib\". Will it make sense to pull minimal Libc into the certification scope?\n\nClarification: Would prefer to cover the scope part first. Talking about the hooks which apply to each C Library. Open, Close, Diff. Hooks that are OS dependent. C or Library dependent. ref https://github.com/zephyrproject-rtos/zephyr/blob/main/lib/libc/newlib/libc-hooks.c\n\nTBD: The requirement needs refinement."
+                    "USER_STORY": "As a Zephyr RTOS user I want to have a selection of standard C library implementations e.g. a full extend and a minimal with a smaller footprint or a particular fast executing implementation."
                 },
                 {
                     "_TOC": "4",

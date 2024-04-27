@@ -12,7 +12,8 @@ K_SEM_DEFINE(static_coop_start_sema, 0, 1);
 K_SEM_DEFINE(coop_start_sema, 0, 1);
 
 K_SEM_DEFINE(end_sema, 0, 1);
-/*macro definition*/
+
+/* Macro definition */
 #define INIT_COOP_PRIO -2
 #define INIT_COOP_STACK_SIZE (500 + CONFIG_TEST_EXTRA_STACK_SIZE)
 #define INIT_COOP_P1			((void *)0xFFFF0000)
@@ -45,7 +46,7 @@ K_THREAD_ACCESS_GRANT(T_KDEFINE_COOP_THREAD, &static_preem_start_sema,
 K_THREAD_ACCESS_GRANT(T_KDEFINE_PREEMPT_THREAD, &static_preem_start_sema,
 	 &preem_start_sema, &static_coop_start_sema, &coop_start_sema, &end_sema);
 
-/*local variables*/
+/* Local variables */
 static K_THREAD_STACK_DEFINE(stack_coop, INIT_COOP_STACK_SIZE);
 static K_THREAD_STACK_DEFINE(stack_preempt, INIT_PREEMPT_STACK_SIZE);
 static struct k_thread thread_coop;
@@ -59,7 +60,7 @@ static ZTEST_BMEM struct thread_data {
 	void *init_p3;
 } expected;
 
-/*entry routines*/
+/* Entry routines */
 static void thread_entry(void *p1, void *p2, void *p3)
 {
 	if (t_create) {
@@ -93,7 +94,6 @@ static void thread_entry(void *p1, void *p2, void *p3)
  *
  * @see #K_THREAD_DEFINE(x)
  *
- * @ingroup kernel_thread_tests
  * @verify{@req{23}}
  */
 ZTEST_USER(thread_init, test_kdefine_preempt_thread)
@@ -116,8 +116,6 @@ ZTEST_USER(thread_init, test_kdefine_preempt_thread)
 /**
  * @fn void test_kdefine_coop_thread(void)
  * @brief test coop thread initialization via K_THREAD_DEFINE
- *
- * @ingroup kernel_thread_tests
  *
  * @see #K_THREAD_DEFINE(x)
  * @verify{@req{23}}
@@ -143,8 +141,6 @@ ZTEST_USER(thread_init, test_kdefine_coop_thread)
 
 /**
  * @brief test preempt thread initialization via k_thread_create
- *
- * @ingroup kernel_thread_tests
  *
  * @see k_thread_create()
  * @verify{@req{23}}
@@ -177,8 +173,6 @@ ZTEST_USER(thread_init, test_kinit_preempt_thread)
 
 /**
  * @brief test coop thread initialization via k_thread_create
- *
- * @ingroup kernel_thread_tests
  *
  * @see k_thread_create()
  * @verify{@req{23}}
@@ -217,7 +211,7 @@ ZTEST(thread_init, test_kinit_coop_thread)
  * @}
  */
 
-/*test case main entry*/
+/* Test case initial setup routine */
 void *thread_init_setup(void)
 {
 	k_thread_access_grant(k_current_get(), &thread_preempt, &stack_preempt,

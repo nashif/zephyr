@@ -220,7 +220,7 @@ void sem_take_multiple_high_prio_long_helper(void *p1, void *p2, void *p3)
 
 /**
  * @defgroup kernel_semaphore_tests Semaphore
- * @ingroup kernel_semaphore_tests
+ * @ingroup all_tests
  * @{
  */
 
@@ -233,6 +233,7 @@ void sem_take_multiple_high_prio_long_helper(void *p1, void *p2, void *p3)
  * @ingroup kernel_semaphore_tests
  * @see k_sem_count_get()
  * @verify{@req{12001}}
+ * @verify{@req{12005}}
  */
 ZTEST_USER(semaphore, test_k_sem_define)
 {
@@ -258,6 +259,7 @@ ZTEST_USER(semaphore, test_sem_thread2thread)
 	tsema_thread_thread(&ksema);
 }
 
+
 /**
  * @brief Test synchronization between thread and irq
  * @see k_sem_init(), #K_SEM_DEFINE(x)
@@ -281,6 +283,8 @@ ZTEST(semaphore, test_sem_thread2isr)
  * - Initialize a semaphore with invalid count.
  * @ingroup kernel_semaphore_tests
  * @verify{@req{12002}}
+ * @verify{@req{12006}}
+ * @verify{@req{12025}}
  */
 ZTEST_USER(semaphore, test_k_sem_init)
 {
@@ -295,12 +299,26 @@ ZTEST_USER(semaphore, test_k_sem_init)
 	/* initialize a semaphore with invalid count */
 	expect_k_sem_init_nomsg(&msg_sema, SEM_MAX_VAL + 1, SEM_MAX_VAL, -EINVAL);
 }
+/**
+ * @brief Test semaphore initialization with maximum limit
+ * @verify{@req{12003}}
+ */
+ZTEST_USER(semaphore, test_k_sem_init_max)
+{
+	/* initialize a semaphore with valid count and max limit */
+	expect_k_sem_init_nomsg(&msg_sema, SEM_INIT_VAL, K_SEM_MAX_LIMIT, 0);
+
+	k_sem_reset(&msg_sema);
+
+	/* initialize a semaphore with invalid count */
+	expect_k_sem_init_nomsg(&msg_sema, K_SEM_MAX_LIMIT + 1, K_SEM_MAX_LIMIT, -EINVAL);
+}
 
 
 /**
- * @brief Test k_sem_reset() API
+ * @brief Test semaphore reset interface
  * @see k_sem_reset()
- * @verify{@req{12033}}
+ * @verify{@req{12023}}
  */
 ZTEST_USER(semaphore, test_sem_reset)
 {
@@ -328,9 +346,9 @@ ZTEST_USER(semaphore, test_sem_reset)
 }
 
 /**
- * @brief Test aborting all semaphore takes after k_sem_reset()
+ * @brief Test aborting all semaphore takes after semaphore reset
  * @see k_sem_reset()
- * @verify{@req{12034}}
+ * @verify{@req{12024}}
  */
 ZTEST_USER(semaphore, test_sem_reset_waiting)
 {
@@ -393,6 +411,7 @@ ZTEST_USER(semaphore, test_sem_count_get)
  * - Verify whether the semaphore's count as expected
  * @ingroup kernel_semaphore_tests
  * @see k_sem_give()
+ * @verify{@req{12012}}
  */
 ZTEST(semaphore, test_sem_give_from_isr)
 {
@@ -421,6 +440,9 @@ ZTEST(semaphore, test_sem_give_from_isr)
  * - Verify whether the semaphore's count as expected
  * @ingroup kernel_semaphore_tests
  * @see k_sem_give()
+ * @verify{@req{12023}}
+ * @verify{@req{12013}}
+ * @verify{@req{12012}}
  */
 ZTEST_USER(semaphore, test_sem_give_from_thread)
 {
@@ -441,9 +463,10 @@ ZTEST_USER(semaphore, test_sem_give_from_thread)
 }
 
 /**
- * @brief Test if k_sem_take() decreases semaphore count
+ * @brief Test semaphore count decreases on semaphore acquisition
  * @see k_sem_take()
  * @verify{@req{12011}}
+ * @verify{@req{12007}}
  */
 ZTEST_USER(semaphore, test_sem_take_no_wait)
 {
@@ -464,7 +487,7 @@ ZTEST_USER(semaphore, test_sem_take_no_wait)
 }
 
 /**
- * @brief Test k_sem_take() when there is no semaphore to take
+ * @brief Test when there is no semaphore to take
  * @see k_sem_take()
  * @verify{@req{12011}}
  */
@@ -487,11 +510,12 @@ ZTEST_USER(semaphore, test_sem_take_no_wait_fails)
 /**
  * @brief Test a semaphore take operation with an unavailable semaphore
  * @details
- * - Reset the semaphore's count to zero, let it unavailable.
+ * - Reset the semaphore's count to zero, let it be unavailable.
  * - Take an unavailable semaphore and wait it until timeout.
  * @ingroup kernel_semaphore_tests
  * @see k_sem_take()
  * @verify{@req{12010}}
+ * @verify{@req{12008}}
  */
 ZTEST_USER(semaphore, test_sem_take_timeout_fails)
 {
@@ -516,6 +540,7 @@ ZTEST_USER(semaphore, test_sem_take_timeout_fails)
  * @ingroup kernel_semaphore_tests
  * @see k_sem_take()
  * @verify{@req{12010}}
+ * @verify{@req{12006}}
  */
 ZTEST_USER(semaphore, test_sem_take_timeout)
 {
@@ -551,6 +576,7 @@ ZTEST_USER(semaphore, test_sem_take_timeout)
  * - Take semaphore, wait it given by other thread forever until it's available.
  * @ingroup kernel_semaphore_tests
  * @see k_sem_take()
+ * @verify{@req{12006}}
  */
 ZTEST_USER(semaphore, test_sem_take_timeout_forever)
 {
@@ -579,6 +605,7 @@ ZTEST_USER(semaphore, test_sem_take_timeout_forever)
 /**
  * @brief Test k_sem_take() with timeout in ISR context
  * @see k_sem_take()
+ * @verify{@req{12006}}
  */
 ZTEST(semaphore_1cpu, test_sem_take_timeout_isr)
 {
@@ -603,6 +630,8 @@ ZTEST(semaphore_1cpu, test_sem_take_timeout_isr)
  * @brief Test semaphore take operation by multiple threads
  * @ingroup kernel_semaphore_tests
  * @see k_sem_take()
+ * @verify{@req{12006}}
+ * @verify{@req{12014}}
  */
 ZTEST_USER(semaphore, test_sem_take_multiple)
 {
@@ -758,6 +787,7 @@ ZTEST_USER(semaphore, test_sem_take_multiple)
  * - Verify the max times a semaphore can be taken.
  * @ingroup kernel_semaphore_tests
  * @see k_sem_count_get(), k_sem_give()
+ *
  * @verify{@req{12004}}
  * @verify{@req{12009}}
  */
@@ -895,6 +925,7 @@ ZTEST(semaphore, test_sem_multiple_threads_wait)
  * @details Test the timeout period of semaphore take
  * @ingroup kernel_semaphore_tests
  * @see k_sem_take(), k_sem_give(), k_sem_reset()
+ *
  * @verify{@req{12009}}
  * @verify{@req{12010}}
  * @verify{@req{12011}}

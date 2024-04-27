@@ -44,6 +44,16 @@ System capabilities
 =====================
 """
 
+try:
+    import textwrap
+    textwrap.indent
+except AttributeError:  # undefined function (wasn't added until Python 3.3)
+    def indent(text, amount, ch=' '):
+        padding = amount * ch
+        return ''.join(padding+line for line in text.splitlines(True))
+else:
+    def indent(text, amount, ch=' '):
+        return textwrap.indent(text, amount * ch)
 
 def debug(str):
     if DEBUG:
@@ -133,40 +143,42 @@ class TestSuite:
                 refid = case.xpath("@id")[0]
                 suite_name = case_name = None
                 argstrings = case.xpath("argsstring")
-                if argstrings:
-                    argstring = argstrings[0]
-                    ttm = re.compile(r"^\s*\(\s*(?P<suite_name>[a-zA-Z0-9_]+)\s*,"
-                                r"\s*(?P<testcase_name>[a-zA-Z0-9_]+)\s*", re.MULTILINE)
-                    m = ttm.match(argstring.text)
-                    if m:
-                        suite_name = m.group("suite_name")
-                        case_name = m.group("testcase_name")
-                if case_name:
-                    debug(f"suite: {suite_name}, case: {case_name}")
-                    if str(case_name).startswith(args.test_prefix):
-                        brief = ""
-                        brief_el = case.xpath("briefdescription/para")
-                        if brief_el:
-                            b = brief_el[0]
-                            brief = b.text
-                            if isinstance(b, objectify.ObjectifiedElement) and b.getchildren():
-                                for i in b.getchildren():
-                                    brief = brief + i.text
+                if 0:
+                    if argstrings:
+                        argstring = argstrings[0]
+                        ttm = re.compile(r"^\s*\(\s*(?P<suite_name>[a-zA-Z0-9_]+)\s*,"
+                                    r"\s*(?P<testcase_name>[a-zA-Z0-9_]+)\s*", re.MULTILINE)
+                        if ttm and argstring.text:
+                            m = ttm.match(argstring.text)
+                            if m:
+                                suite_name = m.group("suite_name")
+                                case_name = m.group("testcase_name")
+                    if case_name:
+                        debug(f"suite: {suite_name}, case: {case_name}")
+                        if str(case_name).startswith(args.test_prefix):
+                            brief = ""
+                            brief_el = case.xpath("briefdescription/para")
+                            if brief_el:
+                                b = brief_el[0]
+                                brief = b.text
+                                if isinstance(b, objectify.ObjectifiedElement) and b.getchildren():
+                                    for i in b.getchildren():
+                                        brief = brief + i.text
 
-                                if b.tail:
-                                    brief = brief + b.tail
+                                    if b.tail:
+                                        brief = brief + b.tail
 
-                        if args.add_test_identifiers:
-                            n = str(case_name).replace("test_", identifier + ".")
-                        else:
-                            n = str(case_name)
+                            if args.add_test_identifiers:
+                                n = str(case_name).replace("test_", identifier + ".")
+                            else:
+                                n = str(case_name)
 
-                        tc = TestCase(n, refid=str(refid))
-                        tc.group = str(title)
-                        tc.suite = suite_name
-                        tc.brief = brief
-                        self.add(tc)
-                elif str(case.name).startswith(args.test_prefix):
+                            tc = TestCase(n, refid=str(refid))
+                            tc.group = str(title)
+                            tc.suite = suite_name
+                            tc.brief = brief
+                            self.add(tc)
+                if str(case.name).startswith(args.test_prefix):
                     debug(f"case: {case.name}")
 
                     if args.add_test_identifiers:
@@ -379,7 +391,6 @@ class Requirements:
                 section.name = node['TITLE']
                 section.level = node['_TOC']
                 section.doc_type = 'Section'
-                #section.dump()
                 self.capture_requirements(parent=section, reqs=node['NODES'])
 
 
@@ -638,8 +649,10 @@ class RTM():
                     req.write(f".. item:: {c.reqid} {c.name}\n")
                     if c.tests:
                         req.write(f"    :validated_by: ")
+                    tnames = ""
                     for t in c.tests:
-                        req.write(f"{t.name} ")
+                        tnames += f"{t.name} "
+                    req.write(tnames.strip())
 
                     if c.tests:
                         req.write("\n")
@@ -653,7 +666,7 @@ class RTM():
                         req.write(f"    :class: {_class}\n")
 
                     req.write(f"    :status: {rev}\n")
-                    req.write(f"\n    {c.primary_text}\n\n")
+                    req.write(f"\n{indent(c.primary_text, 4)}\n\n")
 
     def write_rst(self, output_dir="doc"):
         out = os.path.join(output_dir, "SRS.rst")
@@ -668,12 +681,15 @@ class RTM():
             fp.write(f"{section}\n{len(section) * '='}\n\n")
             for item in self.suite.testcases:
                 fp.write(f"\n.. item:: {item.name} {item.brief.strip()}\n")
+                rr = ""
                 for req in self.requirements.get_by_test(item.name):
-                    fp.write(f"    :validates: {req.reqid}\n")
+                    rr += f" {req.reqid}"
+                fp.write(f"    :validates:{rr}\n")
                 fp.write("\n")
-                if True:
+                fp.write(f"    :c:func:`{item.name}`\n")
+                if False:
                     fp.write(f"""
-    .. doxygendefine:: {item.name}
+    .. doxygenfunction:: {item.name}
         :project: Zephyr\n""")
 
     def write_xls(self, output_file):
