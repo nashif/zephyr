@@ -863,7 +863,7 @@
                         {
                             "_TOC": "12.1",
                             "TYPE": "Functional",
-                            "UID": "ZEP-SEMAPHORE-001",
+                            "UID": "ZEP-12001",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
                             "TITLE": "Counting Semaphore Definition At Compile Time",
@@ -878,7 +878,7 @@
                         {
                             "_TOC": "12.2",
                             "TYPE": "Functional",
-                            "UID": "ZEP-SEMAPHORE-002",
+                            "UID": "ZEP-12002",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
                             "TITLE": "Counting Semaphore Definition At Run Time",
@@ -893,7 +893,7 @@
                         {
                             "_TOC": "12.3",
                             "TYPE": "Functional",
-                            "UID": "ZEP-SEMAPHORE-003",
+                            "UID": "ZEP-12003",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
                             "TITLE": "Maximum limit of a semaphore",
@@ -902,7 +902,7 @@
                         {
                             "_TOC": "12.4",
                             "TYPE": "Functional",
-                            "UID": "ZEP-SEMAPHORE-004",
+                            "UID": "ZEP-12004",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
                             "TITLE": "Initialialization with maximum count value",
@@ -917,7 +917,7 @@
                         {
                             "_TOC": "12.5",
                             "TYPE": "Functional",
-                            "UID": "ZEP-SEMAPHORE-005",
+                            "UID": "ZEP-12005",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
                             "TITLE": "Initialialization with initial semaphore value",
@@ -932,7 +932,7 @@
                         {
                             "_TOC": "12.6",
                             "TYPE": "Functional",
-                            "UID": "ZEP-SEMAPHORE-006",
+                            "UID": "ZEP-12006",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
                             "TITLE": "Semaphore acquisition",
@@ -947,7 +947,7 @@
                         {
                             "_TOC": "12.7",
                             "TYPE": "Functional",
-                            "UID": "ZEP-SEMAPHORE-007",
+                            "UID": "ZEP-12007",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
                             "TITLE": "Semaphore acquisition",
@@ -962,7 +962,7 @@
                         {
                             "_TOC": "12.8",
                             "TYPE": "Functional",
-                            "UID": "ZEP-SEMAPHORE-008",
+                            "UID": "ZEP-12008",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
                             "TITLE": "Semaphore acquisition",
@@ -977,7 +977,7 @@
                         {
                             "_TOC": "12.9",
                             "TYPE": "Functional",
-                            "UID": "ZEP-SEMAPHORE-009",
+                            "UID": "ZEP-12009",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
                             "TITLE": "Semaphore acquisition timeout",
@@ -992,7 +992,7 @@
                         {
                             "_TOC": "12.10",
                             "TYPE": "Functional",
-                            "UID": "ZEP-SEMAPHORE-010",
+                            "UID": "ZEP-12010",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
                             "TITLE": "Semaphore acquisition timeout error handling",
@@ -1007,7 +1007,7 @@
                         {
                             "_TOC": "12.11",
                             "TYPE": "Functional",
-                            "UID": "ZEP-SEMAPHORE-011",
+                            "UID": "ZEP-12011",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
                             "TITLE": "Semaphore acquisition no wait error handling",
@@ -1022,7 +1022,7 @@
                         {
                             "_TOC": "12.12",
                             "TYPE": "Functional",
-                            "UID": "ZEP-SEMAPHORE-012",
+                            "UID": "ZEP-12012",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
                             "TITLE": "Semaphore release",
@@ -1037,7 +1037,37 @@
                         {
                             "_TOC": "12.13",
                             "TYPE": "Functional",
-                            "UID": "ZEP-SEMAPHORE-013",
+                            "UID": "ZEP-12033",
+                            "STATUS": "Draft",
+                            "COMPONENT": "Semaphore",
+                            "TITLE": "Semaphore reset",
+                            "STATEMENT": "The Zephyr RTOS shall provide a mechanism that resets the semaphore count to zero.",
+                            "RELATIONS": [
+                                {
+                                    "TYPE": "Parent",
+                                    "VALUE": "ZEP-99"
+                                }
+                            ]
+                        },
+                        {
+                            "_TOC": "12.14",
+                            "TYPE": "Functional",
+                            "UID": "ZEP-12034",
+                            "STATUS": "Draft",
+                            "COMPONENT": "Semaphore",
+                            "TITLE": "Semaphore acquisitions abort after reset",
+                            "STATEMENT": "When a semaphore is reset, the Zephyr RTOS shall abort all existing acquisitions\nof the semaphore returning a resource contention error code.",
+                            "RELATIONS": [
+                                {
+                                    "TYPE": "Parent",
+                                    "VALUE": "ZEP-99"
+                                }
+                            ]
+                        },
+                        {
+                            "_TOC": "12.15",
+                            "TYPE": "Functional",
+                            "UID": "ZEP-12013",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
                             "TITLE": "Semaphore release",
@@ -1050,9 +1080,9 @@
                             ]
                         },
                         {
-                            "_TOC": "12.14",
+                            "_TOC": "12.16",
                             "TYPE": "Functional",
-                            "UID": "ZEP-SEMAPHORE-014",
+                            "UID": "ZEP-12014",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
                             "TITLE": "Semaphore release",
@@ -1065,9 +1095,9 @@
                             ]
                         },
                         {
-                            "_TOC": "12.15",
+                            "_TOC": "12.17",
                             "TYPE": "Functional",
-                            "UID": "ZEP-SEMAPHORE-030",
+                            "UID": "ZEP-12030",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
                             "TITLE": "Semaphore Initialization Option Validation",
@@ -1080,9 +1110,9 @@
                             ]
                         },
                         {
-                            "_TOC": "12.16",
+                            "_TOC": "12.18",
                             "TYPE": "Functional",
-                            "UID": "ZEP-SEMAPHORE-015",
+                            "UID": "ZEP-12015",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
                             "TITLE": "Checking semaphore count",
@@ -1095,36 +1125,36 @@
                             ]
                         },
                         {
-                            "_TOC": "12.17",
+                            "_TOC": "12.19",
                             "TYPE": "Non-Functional",
-                            "UID": "ZEP-SEMAPHORE-016",
+                            "UID": "ZEP-12016",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
                             "TITLE": "Efficiency",
                             "STATEMENT": "Semaphore operations shall be implemented efficiently to minimize overhead and maximize system performance."
                         },
                         {
-                            "_TOC": "12.18",
+                            "_TOC": "12.20",
                             "TYPE": "Non-Functional",
-                            "UID": "ZEP-SEMAPHORE-022",
+                            "UID": "ZEP-12022",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
                             "TITLE": "Scalability",
                             "STATEMENT": "The Zephyr RTOS shall support a large number of semaphores without significant degradation in performance."
                         },
                         {
-                            "_TOC": "12.19",
+                            "_TOC": "12.21",
                             "TYPE": "Non-Functional",
-                            "UID": "ZEP-SEMAPHORE-017",
+                            "UID": "ZEP-12017",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
                             "TITLE": "Robustness",
                             "STATEMENT": "The Zephyr RTOS shall handle edge cases such as invalid semaphore handles or\nattempts to release an unacquired semaphore gracefully."
                         },
                         {
-                            "_TOC": "12.20",
+                            "_TOC": "12.22",
                             "TYPE": "Non-Functional",
-                            "UID": "ZEP-SEMAPHORE-021",
+                            "UID": "ZEP-12021",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
                             "TITLE": "Error handling mechanisms",
@@ -1137,27 +1167,27 @@
                             ]
                         },
                         {
-                            "_TOC": "12.21",
+                            "_TOC": "12.23",
                             "TYPE": "Non-Functional",
-                            "UID": "ZEP-SEMAPHORE-018",
+                            "UID": "ZEP-12018",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
                             "TITLE": "Portability",
                             "STATEMENT": "Semaphore operations shall be implemented in a platform-independent manner to\nensure portability across different hardware and software environments."
                         },
                         {
-                            "_TOC": "12.22",
+                            "_TOC": "12.24",
                             "TYPE": "Non-Functional",
-                            "UID": "ZEP-SEMAPHORE-019",
+                            "UID": "ZEP-12019",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
                             "TITLE": "Concurrency",
                             "STATEMENT": "Semaphore operations shall be thread-safe to support concurrent execution of\nmultiple threads."
                         },
                         {
-                            "_TOC": "12.23",
+                            "_TOC": "12.25",
                             "TYPE": "Non-Functional",
-                            "UID": "ZEP-SEMAPHORE-020",
+                            "UID": "ZEP-12020",
                             "STATUS": "Draft",
                             "COMPONENT": "Semaphore",
                             "TITLE": "Synchronization Mechanisms",

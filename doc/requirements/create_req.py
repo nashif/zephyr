@@ -9,7 +9,6 @@ HEADER = """
 /**
 @page Requirements
 @tableofcontents
-@section Requirements
 
 """
 
@@ -35,30 +34,34 @@ def get_nodes(nodes, grouped=dict()):
             continue
         if not grouped.get(group, None):
             grouped[group] = []
-            grouped[group].append({'rid': rid, 'req': text, 'name': name })
+        grouped[group].append({'rid': rid, 'req': text, 'name': name, 'type': n['TYPE']})
 
     return grouped
 
 def parse_strictdoc_json(filename):
-    grouped = dict()
+    parsed_docs = dict()
     with open(filename) as fp:
         data = json.load(fp)
         docs = data.get('DOCUMENTS')
         for d in docs:
-            print(d['TITLE'])
-            grouped = get_nodes(d['NODES'], grouped)
+            print(f"{d['TITLE']}\n--------------------------------\n")
+            grouped = get_nodes(d['NODES'])
+            parsed_docs['{}'.format(d['TITLE'])] = grouped
 
-    return grouped
+    return parsed_docs
 
-def write_dox(grouped, output="requirements.dox"):
+def write_dox(parsed_docs, output="requirements.dox"):
     with open(output, "w") as req:
         req.write(HEADER)
-
-        for r in grouped.keys():
-            comp = grouped[r]
-            req.write("\n@section {}\n\n".format(r))
-            for c in comp:
-                req.write("@subsection {} {}: {}\n{}\n\n\n".format(c['rid'], c['rid'], c['name'], c['req']))
+        for k,v in parsed_docs.items():
+            req.write("\n@section {}\n".format(k))
+            for r in v.keys():
+                comp = v[r]
+                req.write("\n@subsection {}\n\n".format(r))
+                for c in comp:
+                    req.write("@subsubsection {} {}: {}\n".format(c['rid'], c['rid'], c['name']))
+                    req.write("@details {}\n\n".format(c['req']))
+                    req.write("@param TYPE {}\n\n".format(c['type']))
 
         req.write(FOOTER)
 
@@ -70,10 +73,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.csv:
-        filename = args.csv
-        write_dox(parse_dng_csv(filename))
-    elif args.json:
+    if args.json:
         filename = args.json
         write_dox(parse_strictdoc_json(filename), args.output)
 
