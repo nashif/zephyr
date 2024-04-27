@@ -5,9 +5,6 @@ import sys
 import argparse
 import json
 
-filename = sys.argv[1]
-print(filename)
-
 HEADER = """
 /**
 @page Requirements
@@ -23,6 +20,24 @@ FOOTER = """
 def debug(msg):
     print("DEBUG: {}".format(msg))
 
+def get_nodes(nodes, grouped=dict()):
+    for n in nodes:
+        print(n['TITLE'])
+        if n['TYPE'] == 'SECTION':
+            grouped = get_nodes(n['NODES'], grouped)
+            continue
+        rid = n['UID']
+        name = n['TITLE']
+        text= n['STATEMENT']
+        group = n.get('COMPONENT', None)
+        if not group:
+            debug("No group for {}".format(rid))
+            continue
+        if not grouped.get(group, None):
+            grouped[group] = []
+            grouped[group].append({'rid': rid, 'req': text, 'name': name })
+
+    return grouped
 
 def parse_strictdoc_json(filename):
     grouped = dict()
@@ -30,38 +45,9 @@ def parse_strictdoc_json(filename):
         data = json.load(fp)
         docs = data.get('DOCUMENTS')
         for d in docs:
-            for n in d['NODES']:
-                if n['TYPE'] == 'SECTION':
-                    continue
-                rid = n['UID']
-                name = n['TITLE']
-                text= n['STATEMENT']
-                group = n.get('COMPONENT', None)
-                if not group:
-                    debug("No group for {}".format(rid))
-                    continue
-                rtype = n['TYPE']
-                if not grouped.get(group, None):
-                    grouped[group] = []
-                grouped[group].append({'rid': rid, 'req': text, 'name': name })
-    return grouped
+            print(d['TITLE'])
+            grouped = get_nodes(d['NODES'], grouped)
 
-def parse_dng_csv(filename):
-
-    grouped = dict()
-    with open(filename) as fp:
-            cr = csv.DictReader(fp)
-            for row in cr:
-                group = row.get('Component Allocation')
-                rid = row.get('ZEP ID')
-                text = row.get('Primary Text').rstrip()
-                name = row.get('Name').rstrip()
-                rtype = row.get('Requirement Type')
-                level = row.get('Hierarchy', None)
-                if not grouped.get(group, None):
-                    grouped[group] = []
-
-                grouped[group].append({'rid': rid, 'req': text, 'name': name })
     return grouped
 
 def write_dox(grouped, output="requirements.dox"):
