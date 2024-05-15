@@ -17,7 +17,7 @@ LOG_MODULE_REGISTER(mctp, CONFIG_MCTP_LOG_LEVEL);
 #undef pr_fmt
 #define pr_fmt(fmt) "core: " fmt
 
-#include "libmctp.h"
+#include <zephyr/mctp/mctp.h>
 #include "libmctp-alloc.h"
 
 #include "libmctp-cmds.h"

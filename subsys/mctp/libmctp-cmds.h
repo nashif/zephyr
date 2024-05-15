@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-#include "libmctp.h"
+#include <zephyr/mctp/mctp.h>
 
 /*
  * Helper structs and functions for MCTP control messages.

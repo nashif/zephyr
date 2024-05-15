@@ -2,7 +2,7 @@
 
 #include <assert.h>
 
-#include "libmctp.h"
+#include <zephyr/mctp/mctp.h>
 #include "libmctp-alloc.h"
 
 #ifdef HAVE_CONFIG_H

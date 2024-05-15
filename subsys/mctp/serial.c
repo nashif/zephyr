@@ -7,9 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <zephyr/logging/log.h>
+LOG_MODULE_DECLARE(mctp, CONFIG_MCTP_LOG_LEVEL);
+
 
 #ifdef MCTP_HAVE_FILEIO
 #include <fcntl.h>
@@ -36,7 +36,7 @@ static const size_t write(int fd, void *buf, size_t len)
  */
 #define mctp_write_all(fn, dst, src, len)                                      \
 	({                                                                     \
-		typeof(src) __src = src;                                       \
+		__typeof__(src) __src = src;                                       \
 		ssize_t wrote;                                                 \
 		while (len) {                                                  \
 			wrote = fn(dst, __src, len);                           \
@@ -55,7 +55,7 @@ static ssize_t mctp_serial_write(int fildes, const void *buf, size_t nbyte)
 	return ((wrote = write(fildes, buf, nbyte)) < 0) ? -errno : wrote;
 }
 
-#include "libmctp.h"
+#include <zephyr/mctp/mctp.h>
 #include "libmctp-alloc.h"
 
 #include "libmctp-serial.h"
