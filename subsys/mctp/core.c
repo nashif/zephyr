@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <zephyr/sys/util.h>
+
 #undef pr_fmt
 #define pr_fmt(fmt) "core: " fmt
 
@@ -16,7 +18,6 @@
 #include "libmctp-alloc.h"
 
 #include "libmctp-cmds.h"
-#include "range.h"
 
 /* Internal data structures */
 

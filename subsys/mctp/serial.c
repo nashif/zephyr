@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later */
 
+#include <sys/types.h>
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -58,7 +59,6 @@ static ssize_t mctp_serial_write(int fildes, const void *buf, size_t nbyte)
 #include "libmctp-alloc.h"
 
 #include "libmctp-serial.h"
-#include "CONTAINER_OF.h"
 
 struct mctp_binding_serial {
 	struct mctp_binding binding;
