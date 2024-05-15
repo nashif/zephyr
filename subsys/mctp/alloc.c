@@ -5,9 +5,7 @@
 #include <zephyr/mctp/mctp.h>
 #include "libmctp-alloc.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#define MCTP_DEFAULT_ALLOC 1
 
 struct {
 	void *(*m_alloc)(size_t);

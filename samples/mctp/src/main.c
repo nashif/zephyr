@@ -47,13 +47,13 @@ int main(void)
 	mctp_register_bus(mctp, mctp_binding_serial_core(serial), 8);
 
 	mctp_set_rx_all(mctp, rx_message, NULL);
-
+#if 0
         for (;;) {
                 rc = mctp_serial_read(serial);
                 if (rc) {
                         break;
 		}
         }
-
+#endif
 	return 0;
 }
