@@ -6,7 +6,29 @@
 
 #include <stdio.h>
 #include <assert.h>
+#include <unistd.h>
+#include <zephyr/types.h>
 #include <zephyr/mctp/mctp.h>
+#include <zephyr/mctp/mctp-serial.h>
+
+#include <zephyr/logging/log.h>
+LOG_MODULE_DECLARE(mctp, CONFIG_MCTP_LOG_LEVEL);
+
+static void rx_message(uint8_t eid, bool tag_owner,
+                       uint8_t msg_tag, void *data, void *msg,
+                       size_t len)
+{
+        ssize_t rc;
+
+        rc = write(STDOUT_FILENO, msg, len);
+        if (rc < 0) {
+                LOG_WRN("Write failed");
+	}
+        else if ((size_t)rc < len) {
+                LOG_WRN("Short write of length %zd, requested %zd", rc, len);
+	}
+}
+
 
 int main(void)
 {
@@ -14,12 +36,24 @@ int main(void)
 
 	struct mctp_binding_serial *serial;
 	struct mctp *mctp;
+	int rc;
 
 	mctp = mctp_init();
 	assert(mctp != NULL);
 
 	serial = mctp_serial_init();
 	assert(serial);
+
+	mctp_register_bus(mctp, mctp_binding_serial_core(serial), 8);
+
+	mctp_set_rx_all(mctp, rx_message, NULL);
+
+        for (;;) {
+                rc = mctp_serial_read(serial);
+                if (rc) {
+                        break;
+		}
+        }
 
 	return 0;
 }

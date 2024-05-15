@@ -58,7 +58,7 @@ static ssize_t mctp_serial_write(int fildes, const void *buf, size_t nbyte)
 #include <zephyr/mctp/mctp.h>
 #include "libmctp-alloc.h"
 
-#include "libmctp-serial.h"
+#include <zephyr/mctp/mctp-serial.h>
 
 struct mctp_binding_serial {
 	struct mctp_binding binding;
