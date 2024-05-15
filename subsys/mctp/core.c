@@ -11,6 +11,9 @@
 
 #include <zephyr/sys/util.h>
 
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(mctp, CONFIG_MCTP_LOG_LEVEL);
+
 #undef pr_fmt
 #define pr_fmt(fmt) "core: " fmt
 
@@ -745,7 +748,7 @@ void mctp_binding_set_tx_enabled(struct mctp_binding *binding, bool enable)
 		}
 
 		bus->state = mctp_bus_state_tx_enabled;
-		mctp_prinfo("%s binding started", binding->name);
+		LOG_INF("%s binding started", binding->name);
 		return;
 	case mctp_bus_state_tx_enabled:
 		if (enable)
