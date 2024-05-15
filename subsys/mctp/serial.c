@@ -58,7 +58,7 @@ static ssize_t mctp_serial_write(int fildes, const void *buf, size_t nbyte)
 #include "libmctp-alloc.h"
 #include "libmctp-log.h"
 #include "libmctp-serial.h"
-#include "container_of.h"
+#include "CONTAINER_OF.h"
 
 struct mctp_binding_serial {
 	struct mctp_binding binding;
@@ -89,7 +89,7 @@ struct mctp_binding_serial {
 };
 
 #define binding_to_serial(b)                                                   \
-	container_of(b, struct mctp_binding_serial, binding)
+	CONTAINER_OF(b, struct mctp_binding_serial, binding)
 
 #define MCTP_SERIAL_REVISION	 0x01
 #define MCTP_SERIAL_FRAMING_FLAG 0x7e

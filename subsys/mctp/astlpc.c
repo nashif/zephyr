@@ -18,8 +18,7 @@
 
 #define pr_fmt(x) "astlpc: " x
 
-#include "container_of.h"
-#include "crc32.h"
+t#include "crc32.h"
 #include "libmctp.h"
 #include "libmctp-alloc.h"
 #include "libmctp-log.h"
@@ -139,7 +138,7 @@ struct mctp_binding_astlpc {
 };
 
 #define binding_to_astlpc(b)                                                   \
-	container_of(b, struct mctp_binding_astlpc, binding)
+	CONTAINER_OF(b, struct mctp_binding_astlpc, binding)
 
 #define astlpc_prlog(ctx, lvl, fmt, ...)                                       \
 	do {                                                                   \
@@ -596,7 +595,7 @@ static int mctp_astlpc_init_bmc(struct mctp_binding_astlpc *astlpc)
 static int mctp_binding_astlpc_start_bmc(struct mctp_binding *b)
 {
 	struct mctp_binding_astlpc *astlpc =
-		container_of(b, struct mctp_binding_astlpc, binding);
+		CONTAINER_OF(b, struct mctp_binding_astlpc, binding);
 
 	astlpc->proto = &astlpc_protocol_version[ASTLPC_VER_CUR];
 
@@ -773,7 +772,7 @@ static int mctp_astlpc_init_host(struct mctp_binding_astlpc *astlpc)
 static int mctp_binding_astlpc_start_host(struct mctp_binding *b)
 {
 	struct mctp_binding_astlpc *astlpc =
-		container_of(b, struct mctp_binding_astlpc, binding);
+		CONTAINER_OF(b, struct mctp_binding_astlpc, binding);
 
 	return mctp_astlpc_init_host(astlpc);
 }
