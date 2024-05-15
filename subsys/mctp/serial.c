@@ -198,7 +198,7 @@ static void mctp_rx_consume_one(struct mctp_binding_serial *serial, uint8_t c)
 {
 	struct mctp_pktbuf *pkt = serial->rx_pkt;
 
-	mctp_prdebug("state: %d, char 0x%02x", serial->rx_state, c);
+	LOG_DBG("state: %d, char 0x%02x", serial->rx_state, c);
 
 	assert(!pkt == (serial->rx_state == STATE_WAIT_SYNC_START ||
 			serial->rx_state == STATE_WAIT_REVISION ||
@@ -207,7 +207,7 @@ static void mctp_rx_consume_one(struct mctp_binding_serial *serial, uint8_t c)
 	switch (serial->rx_state) {
 	case STATE_WAIT_SYNC_START:
 		if (c != MCTP_SERIAL_FRAMING_FLAG) {
-			mctp_prdebug("lost sync, dropping packet");
+			LOG_DBG("lost sync, dropping packet");
 			if (pkt)
 				mctp_serial_finish_packet(serial, false);
 		} else {
@@ -226,19 +226,19 @@ static void mctp_rx_consume_one(struct mctp_binding_serial *serial, uint8_t c)
 			 * and receive 0x7e byte, then contine to stay in
 			 * STATE_WAIT_REVISION
 			 */
-			mctp_prdebug(
+			LOG_DBG(
 				"Received serial framing flag 0x%02x while waiting"
 				" for serial revision 0x%02x.",
 				c, MCTP_SERIAL_REVISION);
 		} else {
-			mctp_prdebug("invalid revision 0x%02x", c);
+			LOG_DBG("invalid revision 0x%02x", c);
 			serial->rx_state = STATE_WAIT_SYNC_START;
 		}
 		break;
 	case STATE_WAIT_LEN:
 		if (c > serial->binding.pkt_size ||
 		    c < sizeof(struct mctp_hdr)) {
-			mctp_prdebug("invalid size %d", c);
+			LOG_DBG("invalid size %d", c);
 			serial->rx_state = STATE_WAIT_SYNC_START;
 		} else {
 			mctp_serial_start_packet(serial, 0);
@@ -281,14 +281,14 @@ static void mctp_rx_consume_one(struct mctp_binding_serial *serial, uint8_t c)
 		if (c == MCTP_SERIAL_FRAMING_FLAG) {
 			mctp_serial_finish_packet(serial, true);
 		} else {
-			mctp_prdebug("missing end frame marker");
+			LOG_DBG("missing end frame marker");
 			mctp_serial_finish_packet(serial, false);
 		}
 		serial->rx_state = STATE_WAIT_SYNC_START;
 		break;
 	}
 
-	mctp_prdebug(" -> state: %d", serial->rx_state);
+	LOG_DBG(" -> state: %d", serial->rx_state);
 }
 static void mctp_rx_consume(struct mctp_binding_serial *serial, const void *buf,
 			    size_t len)
@@ -309,7 +309,7 @@ int mctp_serial_read(struct mctp_binding_serial *serial)
 		return -1;
 
 	if (len < 0) {
-		mctp_prerr("can't read from serial device: %m");
+		LOG_ERR("can't read from serial device: %m");
 		return -1;
 	}
 
@@ -332,7 +332,7 @@ int mctp_serial_open_path(struct mctp_binding_serial *serial,
 {
 	serial->fd = open(device, O_RDWR);
 	if (serial->fd < 0)
-		mctp_prerr("can't open device %s: %m", device);
+		LOG_ERR("can't open device %s: %m", device);
 
 	return 0;
 }

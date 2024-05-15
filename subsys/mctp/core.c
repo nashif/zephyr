@@ -372,7 +372,7 @@ int mctp_register_bus(struct mctp *mctp, struct mctp_binding *binding,
 	if (binding->start) {
 		rc = binding->start(binding);
 		if (rc < 0) {
-			mctp_prerr("Failed to start binding: %d", rc);
+			LOG_ERR("Failed to start binding: %d", rc);
 			binding->bus = NULL;
 			__mctp_free(mctp->busses);
 			mctp->busses = NULL;
@@ -418,7 +418,7 @@ int mctp_bridge_busses(struct mctp *mctp, struct mctp_binding *b1,
 	if (b1->start) {
 		rc = b1->start(b1);
 		if (rc < 0) {
-			mctp_prerr("Failed to start bridged bus %s: %d",
+			LOG_ERR("Failed to start bridged bus %s: %d",
 				   b1->name, rc);
 			goto done;
 		}
@@ -427,7 +427,7 @@ int mctp_bridge_busses(struct mctp *mctp, struct mctp_binding *b1,
 	if (b2->start) {
 		rc = b2->start(b2);
 		if (rc < 0) {
-			mctp_prerr("Failed to start bridged bus %s: %d",
+			LOG_ERR("Failed to start bridged bus %s: %d",
 				   b2->name, rc);
 			goto done;
 		}
@@ -591,7 +591,7 @@ void mctp_bus_rx(struct mctp_binding *binding, struct mctp_pktbuf *pkt)
 			/* If context creation fails due to exhaution of contexts we
 			* can support, drop the packet */
 			if (!ctx) {
-				mctp_prdebug("Context buffers exhausted.");
+				LOG_DBG("Context buffers exhausted.");
 				goto out;
 			}
 		}
@@ -617,7 +617,7 @@ void mctp_bus_rx(struct mctp_binding *binding, struct mctp_pktbuf *pkt)
 		exp_seq = (ctx->last_seq + 1) % 4;
 
 		if (exp_seq != seq) {
-			mctp_prdebug(
+			LOG_DBG(
 				"Sequence number %d does not match expected %d",
 				seq, exp_seq);
 			mctp_msg_ctx_drop(ctx);
@@ -627,7 +627,7 @@ void mctp_bus_rx(struct mctp_binding *binding, struct mctp_pktbuf *pkt)
 		len = mctp_pktbuf_size(pkt);
 
 		if (len > ctx->fragment_size) {
-			mctp_prdebug("Unexpected fragment size. Expected"
+			LOG_DBG("Unexpected fragment size. Expected"
 				     " less than %zu, received = %zu",
 				     ctx->fragment_size, len);
 			mctp_msg_ctx_drop(ctx);
@@ -650,7 +650,7 @@ void mctp_bus_rx(struct mctp_binding *binding, struct mctp_pktbuf *pkt)
 
 		exp_seq = (ctx->last_seq + 1) % 4;
 		if (exp_seq != seq) {
-			mctp_prdebug(
+			LOG_DBG(
 				"Sequence number %d does not match expected %d",
 				seq, exp_seq);
 			mctp_msg_ctx_drop(ctx);
@@ -660,7 +660,7 @@ void mctp_bus_rx(struct mctp_binding *binding, struct mctp_pktbuf *pkt)
 		len = mctp_pktbuf_size(pkt);
 
 		if (len != ctx->fragment_size) {
-			mctp_prdebug("Unexpected fragment size. Expected = %zu "
+			LOG_DBG("Unexpected fragment size. Expected = %zu "
 				     "received = %zu",
 				     ctx->fragment_size, len);
 			mctp_msg_ctx_drop(ctx);
@@ -736,7 +736,7 @@ void mctp_binding_set_tx_enabled(struct mctp_binding *binding, bool enable)
 			return;
 
 		if (binding->pkt_size < MCTP_PACKET_SIZE(MCTP_BTU)) {
-			mctp_prerr(
+			LOG_ERR(
 				"Cannot start %s binding with invalid MTU: %zu",
 				binding->name,
 				MCTP_BODY_SIZE(binding->pkt_size));
@@ -751,14 +751,14 @@ void mctp_binding_set_tx_enabled(struct mctp_binding *binding, bool enable)
 			return;
 
 		bus->state = mctp_bus_state_tx_disabled;
-		mctp_prdebug("%s binding Tx disabled", binding->name);
+		LOG_DBG("%s binding Tx disabled", binding->name);
 		return;
 	case mctp_bus_state_tx_disabled:
 		if (!enable)
 			return;
 
 		bus->state = mctp_bus_state_tx_enabled;
-		mctp_prdebug("%s binding Tx enabled", binding->name);
+		LOG_DBG("%s binding Tx enabled", binding->name);
 		mctp_send_tx_queue(bus);
 		return;
 	}
@@ -788,7 +788,7 @@ static int mctp_message_tx_on_bus(struct mctp_bus *bus, mctp_eid_t src,
 			return -EINVAL;
 	}
 
-	mctp_prdebug(
+	LOG_DBG(
 		"%s: Generating packets for transmission of %zu byte message from %hhu to %hhu",
 		__func__, msg_len, src, dest);
 
@@ -827,7 +827,7 @@ static int mctp_message_tx_on_bus(struct mctp_bus *bus, mctp_eid_t src,
 		p += payload_len;
 	}
 
-	mctp_prdebug("%s: Enqueued %d packets", __func__, i);
+	LOG_DBG("%s: Enqueued %d packets", __func__, i);
 
 	mctp_send_tx_queue(bus);
 
@@ -842,7 +842,7 @@ int mctp_message_tx(struct mctp *mctp, mctp_eid_t eid, bool tag_owner,
 	/* TODO: Protect against same tag being used across
 	 * different callers */
 	if ((msg_tag & MCTP_HDR_TAG_MASK) != msg_tag) {
-		mctp_prerr("Incorrect message tag %u passed.", msg_tag);
+		LOG_ERR("Incorrect message tag %u passed.", msg_tag);
 		return -EINVAL;
 	}
 

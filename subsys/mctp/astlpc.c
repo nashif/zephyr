@@ -218,7 +218,7 @@ void astlpc_pktbuf_protect_v3(struct mctp_pktbuf *pkt)
 	uint32_t code;
 
 	code = htobe32(crc32(mctp_pktbuf_hdr(pkt), mctp_pktbuf_size(pkt)));
-	mctp_prdebug("%s: 0x%" PRIx32, __func__, code);
+	LOG_DBG("%s: 0x%" PRIx32, __func__, code);
 	mctp_pktbuf_push(pkt, &code, 4);
 }
 
@@ -228,7 +228,7 @@ bool astlpc_pktbuf_validate_v3(struct mctp_pktbuf *pkt)
 	void *check;
 
 	code = be32toh(crc32(mctp_pktbuf_hdr(pkt), mctp_pktbuf_size(pkt) - 4));
-	mctp_prdebug("%s: 0x%" PRIx32, __func__, code);
+	LOG_DBG("%s: 0x%" PRIx32, __func__, code);
 	check = mctp_pktbuf_pop(pkt, 4);
 	return check && !memcmp(&code, check, 4);
 }
@@ -462,7 +462,7 @@ mctp_astlpc_buffer_validate(const struct mctp_binding_astlpc *astlpc,
 {
 	/* Check for overflow */
 	if (buf->offset + buf->size < buf->offset) {
-		mctp_prerr(
+		LOG_ERR(
 			"%s packet buffer parameters overflow: offset: 0x%" PRIx32
 			", size: %" PRIu32,
 			name, buf->offset, buf->size);
@@ -471,7 +471,7 @@ mctp_astlpc_buffer_validate(const struct mctp_binding_astlpc *astlpc,
 
 	/* Check that the buffers are contained within the allocated space */
 	if (buf->offset + buf->size > LPC_WIN_SIZE) {
-		mctp_prerr(
+		LOG_ERR(
 			"%s packet buffer parameters exceed %uM window size: offset: 0x%" PRIx32
 			", size: %" PRIu32,
 			name, (LPC_WIN_SIZE / (1024 * 1024)), buf->offset,
@@ -482,7 +482,7 @@ mctp_astlpc_buffer_validate(const struct mctp_binding_astlpc *astlpc,
 	/* Check that the baseline transmission unit is supported */
 	if (buf->size <
 	    astlpc->proto->packet_size(MCTP_PACKET_SIZE(MCTP_BTU))) {
-		mctp_prerr(
+		LOG_ERR(
 			"%s packet buffer too small: Require %" PRIu32
 			" bytes to support the %u byte baseline transmission unit, found %" PRIu32,
 			name,
@@ -493,7 +493,7 @@ mctp_astlpc_buffer_validate(const struct mctp_binding_astlpc *astlpc,
 
 	/* Check for overlap with the control space */
 	if (buf->offset < control_size) {
-		mctp_prerr(
+		LOG_ERR(
 			"%s packet buffer overlaps control region {0x%" PRIx32
 			", %" PRIu32 "}: Rx {0x%" PRIx32 ", %" PRIu32 "}",
 			name, 0U, control_size, buf->offset, buf->size);
@@ -520,7 +520,7 @@ mctp_astlpc_layout_validate(const struct mctp_binding_astlpc *astlpc,
 	/* Check that the buffers are disjoint */
 	if ((rx->offset <= tx->offset && rx->offset + rx->size > tx->offset) ||
 	    (tx->offset <= rx->offset && tx->offset + tx->size > rx->offset)) {
-		mctp_prerr("Rx and Tx packet buffers overlap: Rx {0x%" PRIx32
+		LOG_ERR("Rx and Tx packet buffers overlap: Rx {0x%" PRIx32
 			   ", %" PRIu32 "}, Tx {0x%" PRIx32 ", %" PRIu32 "}",
 			   rx->offset, rx->size, tx->offset, tx->size);
 		return false;
@@ -609,24 +609,24 @@ static bool mctp_astlpc_validate_version(uint16_t bmc_ver_min,
 					 uint16_t host_ver_cur)
 {
 	if (!(bmc_ver_min && bmc_ver_cur && host_ver_min && host_ver_cur)) {
-		mctp_prerr("Invalid version present in [%" PRIu16 ", %" PRIu16
+		LOG_ERR("Invalid version present in [%" PRIu16 ", %" PRIu16
 			   "], [%" PRIu16 ", %" PRIu16 "]",
 			   bmc_ver_min, bmc_ver_cur, host_ver_min,
 			   host_ver_cur);
 		return false;
 	} else if (bmc_ver_min > bmc_ver_cur) {
-		mctp_prerr("Invalid bmc version range [%" PRIu16 ", %" PRIu16
+		LOG_ERR("Invalid bmc version range [%" PRIu16 ", %" PRIu16
 			   "]",
 			   bmc_ver_min, bmc_ver_cur);
 		return false;
 	} else if (host_ver_min > host_ver_cur) {
-		mctp_prerr("Invalid host version range [%" PRIu16 ", %" PRIu16
+		LOG_ERR("Invalid host version range [%" PRIu16 ", %" PRIu16
 			   "]",
 			   host_ver_min, host_ver_cur);
 		return false;
 	} else if ((host_ver_cur < bmc_ver_min) ||
 		   (host_ver_min > bmc_ver_cur)) {
-		mctp_prerr(
+		LOG_ERR(
 			"Unable to satisfy version negotiation with ranges [%" PRIu16
 			", %" PRIu16 "] and [%" PRIu16 ", %" PRIu16 "]",
 			bmc_ver_min, bmc_ver_cur, host_ver_min, host_ver_cur);
@@ -707,7 +707,7 @@ static int mctp_astlpc_init_host(struct mctp_binding_astlpc *astlpc)
 
 	rc = mctp_astlpc_kcs_read(astlpc, MCTP_ASTLPC_KCS_REG_STATUS, &status);
 	if (rc) {
-		mctp_prwarn("KCS status read failed");
+		LOG_WRN("KCS status read failed");
 		return rc;
 	}
 
@@ -1098,7 +1098,7 @@ static int mctp_astlpc_finalise_channel(struct mctp_binding_astlpc *astlpc)
 		return rc;
 
 	if (!mctp_astlpc_layout_validate(astlpc, &layout)) {
-		mctp_prerr("BMC proposed invalid buffer parameters");
+		LOG_ERR("BMC proposed invalid buffer parameters");
 		return -EINVAL;
 	}
 
@@ -1297,7 +1297,7 @@ mctp_astlpc_init(uint8_t mode, uint32_t mtu, void *lpc_map,
 
 	if (!(mode == MCTP_BINDING_ASTLPC_MODE_BMC ||
 	      mode == MCTP_BINDING_ASTLPC_MODE_HOST)) {
-		mctp_prerr("Unknown binding mode: %u", mode);
+		LOG_ERR("Unknown binding mode: %u", mode);
 		return NULL;
 	}
 
