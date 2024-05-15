@@ -14,7 +14,7 @@
 
 #include "libmctp.h"
 #include "libmctp-alloc.h"
-#include "libmctp-log.h"
+
 #include "libmctp-cmds.h"
 #include "range.h"
 

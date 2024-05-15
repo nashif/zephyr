@@ -56,7 +56,7 @@ static ssize_t mctp_serial_write(int fildes, const void *buf, size_t nbyte)
 
 #include "libmctp.h"
 #include "libmctp-alloc.h"
-#include "libmctp-log.h"
+
 #include "libmctp-serial.h"
 #include "CONTAINER_OF.h"
 

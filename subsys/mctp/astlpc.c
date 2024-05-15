@@ -21,7 +21,7 @@
 t#include "crc32.h"
 #include "libmctp.h"
 #include "libmctp-alloc.h"
-#include "libmctp-log.h"
+
 #include "libmctp-astlpc.h"
 #include "range.h"
 
