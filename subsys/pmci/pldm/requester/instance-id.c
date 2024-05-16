@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later */
 // NOLINTNEXTLINE(bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 #define _GNU_SOURCE
-#include <libpldm/instance-id.h>
-#include <libpldm/pldm.h>
+#include <zephyr/pmci/pldm/instance-id.h>
+#include <zephyr/pmci/pldm/pldm.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -32,7 +32,6 @@ static inline int iid_next(pldm_instance_id_t cur)
 	return (cur + 1) % PLDM_INST_ID_MAX;
 }
 
-LIBPLDM_ABI_STABLE
 int pldm_instance_db_init(struct pldm_instance_db **ctx, const char *dbpath)
 {
 	struct pldm_instance_db *l_ctx;
@@ -81,14 +80,12 @@ int pldm_instance_db_init(struct pldm_instance_db **ctx, const char *dbpath)
 	return 0;
 }
 
-LIBPLDM_ABI_STABLE
 int pldm_instance_db_init_default(struct pldm_instance_db **ctx)
 {
 	return pldm_instance_db_init(ctx,
 				     "/usr/share/libpldm/instance-db/default");
 }
 
-LIBPLDM_ABI_STABLE
 int pldm_instance_db_destroy(struct pldm_instance_db *ctx)
 {
 	if (!ctx) {
@@ -99,7 +96,6 @@ int pldm_instance_db_destroy(struct pldm_instance_db *ctx)
 	return 0;
 }
 
-LIBPLDM_ABI_STABLE
 int pldm_instance_id_alloc(struct pldm_instance_db *ctx, pldm_tid_t tid,
 			   pldm_instance_id_t *iid)
 {
@@ -188,7 +184,6 @@ int pldm_instance_id_alloc(struct pldm_instance_db *ctx, pldm_tid_t tid,
 	return -EAGAIN;
 }
 
-LIBPLDM_ABI_STABLE
 int pldm_instance_id_free(struct pldm_instance_db *ctx, pldm_tid_t tid,
 			  pldm_instance_id_t iid)
 {

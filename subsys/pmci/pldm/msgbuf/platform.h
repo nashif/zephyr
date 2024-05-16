@@ -2,9 +2,10 @@
 #ifndef PLDM_MSGBUF_PLATFORM_H
 #define PLDM_MSGBUF_PLATFORM_H
 
+#include <limits.h>
 #include "../msgbuf.h"
-#include <libpldm/base.h>
-#include <libpldm/platform.h>
+#include <zephyr/pmci/pldm/base.h>
+#include <zephyr/pmci/pldm/platform.h>
 
 static inline int
 pldm_msgbuf_extract_value_pdr_hdr(struct pldm_msgbuf *ctx,

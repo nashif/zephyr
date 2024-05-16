@@ -9,9 +9,9 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
-#include <libpldm/base.h>
-#include <libpldm/pdr.h>
-#include <libpldm/pldm_types.h>
+#include <zephyr/pmci/pldm/base.h>
+#include <zephyr/pmci/pldm/pdr.h>
+#include <zephyr/pmci/pldm/pldm_types.h>
 
 /* Maximum size for request */
 #define PLDM_SET_STATE_EFFECTER_STATES_REQ_BYTES  19

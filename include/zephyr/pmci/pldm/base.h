@@ -6,9 +6,9 @@
 extern "C" {
 #endif
 
-#include <libpldm/pldm_types.h>
+#include <zephyr/pmci/pldm/pldm_types.h>
 
-#include <asm/byteorder.h>
+#include <zephyr/sys/byteorder.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>

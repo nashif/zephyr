@@ -6,8 +6,8 @@
 extern "C" {
 #endif
 
-#include <libpldm/base.h>
-#include <libpldm/pldm.h>
+#include <zephyr/pmci/pldm/base.h>
+#include <zephyr/pmci/pldm/pldm.h>
 
 #include <stddef.h>
 

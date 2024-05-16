@@ -2,9 +2,9 @@
 #include "msgbuf.h"
 #include "msgbuf/platform.h"
 
-#include <libpldm/base.h>
-#include <libpldm/platform.h>
-#include <libpldm/pldm_types.h>
+#include <zephyr/pmci/pldm/base.h>
+#include <zephyr/pmci/pldm/platform.h>
+#include <zephyr/pmci/pldm/pldm_types.h>
 
 #include <endian.h>
 #include <stdint.h>
@@ -25,7 +25,6 @@ static int pldm_platform_pdr_hdr_validate(struct pldm_value_pdr_hdr *ctx,
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int encode_state_effecter_pdr(
 	struct pldm_state_effecter_pdr *const effecter,
 	const size_t allocation_size,
@@ -96,7 +95,6 @@ int encode_state_effecter_pdr(
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int encode_state_sensor_pdr(
 	struct pldm_state_sensor_pdr *const sensor,
 	const size_t allocation_size,
@@ -164,7 +162,6 @@ int encode_state_sensor_pdr(
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int encode_set_state_effecter_states_resp(uint8_t instance_id,
 					  uint8_t completion_code,
 					  struct pldm_msg *msg)
@@ -189,7 +186,6 @@ int encode_set_state_effecter_states_resp(uint8_t instance_id,
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int encode_set_state_effecter_states_req(uint8_t instance_id,
 					 uint16_t effecter_id,
 					 uint8_t comp_effecter_count,
@@ -227,7 +223,6 @@ int encode_set_state_effecter_states_req(uint8_t instance_id,
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int decode_set_state_effecter_states_resp(const struct pldm_msg *msg,
 					  size_t payload_length,
 					  uint8_t *completion_code)
@@ -249,7 +244,6 @@ int decode_set_state_effecter_states_resp(const struct pldm_msg *msg,
 }
 
 #define PLDM_SET_STATE_EFFECTER_STATES_MIN_SIZE 3
-LIBPLDM_ABI_STABLE
 int decode_set_state_effecter_states_req(const struct pldm_msg *msg,
 					 size_t payload_length,
 					 uint16_t *effecter_id,
@@ -291,7 +285,6 @@ int decode_set_state_effecter_states_req(const struct pldm_msg *msg,
 	return pldm_msgbuf_destroy(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int decode_get_pdr_req(const struct pldm_msg *msg, size_t payload_length,
 		       uint32_t *record_hndl, uint32_t *data_transfer_hndl,
 		       uint8_t *transfer_op_flag, uint16_t *request_cnt,
@@ -326,7 +319,6 @@ int decode_get_pdr_req(const struct pldm_msg *msg, size_t payload_length,
 	return pldm_msgbuf_destroy(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int encode_get_pdr_resp(uint8_t instance_id, uint8_t completion_code,
 			uint32_t next_record_hndl,
 			uint32_t next_data_transfer_hndl, uint8_t transfer_flag,
@@ -372,7 +364,6 @@ int encode_get_pdr_resp(uint8_t instance_id, uint8_t completion_code,
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int encode_get_pdr_repository_info_resp(
 	uint8_t instance_id, uint8_t completion_code, uint8_t repository_state,
 	const uint8_t *update_time, const uint8_t *oem_update_time,
@@ -419,7 +410,6 @@ int encode_get_pdr_repository_info_resp(
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int decode_get_pdr_repository_info_resp(
 	const struct pldm_msg *msg, size_t payload_length,
 	uint8_t *completion_code, uint8_t *repository_state,
@@ -465,7 +455,6 @@ int decode_get_pdr_repository_info_resp(
 	return pldm_msgbuf_destroy(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int encode_get_pdr_req(uint8_t instance_id, uint32_t record_hndl,
 		       uint32_t data_transfer_hndl, uint8_t transfer_op_flag,
 		       uint16_t request_cnt, uint16_t record_chg_num,
@@ -501,7 +490,6 @@ int encode_get_pdr_req(uint8_t instance_id, uint32_t record_hndl,
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int decode_get_pdr_resp(const struct pldm_msg *msg, size_t payload_length,
 			uint8_t *completion_code, uint32_t *next_record_hndl,
 			uint32_t *next_data_transfer_hndl,
@@ -552,7 +540,6 @@ int decode_get_pdr_resp(const struct pldm_msg *msg, size_t payload_length,
 	return pldm_msgbuf_destroy(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int decode_set_numeric_effecter_value_req(const struct pldm_msg *msg,
 					  size_t payload_length,
 					  uint16_t *effecter_id,
@@ -591,7 +578,6 @@ int decode_set_numeric_effecter_value_req(const struct pldm_msg *msg,
 	return pldm_msgbuf_destroy(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int encode_set_numeric_effecter_value_resp(uint8_t instance_id,
 					   uint8_t completion_code,
 					   struct pldm_msg *msg,
@@ -621,7 +607,6 @@ int encode_set_numeric_effecter_value_resp(uint8_t instance_id,
 	return rc;
 }
 
-LIBPLDM_ABI_STABLE
 int encode_set_numeric_effecter_value_req(uint8_t instance_id,
 					  uint16_t effecter_id,
 					  uint8_t effecter_data_size,
@@ -686,7 +671,6 @@ int encode_set_numeric_effecter_value_req(uint8_t instance_id,
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int decode_set_numeric_effecter_value_resp(const struct pldm_msg *msg,
 					   size_t payload_length,
 					   uint8_t *completion_code)
@@ -704,7 +688,6 @@ int decode_set_numeric_effecter_value_resp(const struct pldm_msg *msg,
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int encode_get_state_sensor_readings_resp(uint8_t instance_id,
 					  uint8_t completion_code,
 					  uint8_t comp_sensor_count,
@@ -741,7 +724,6 @@ int encode_get_state_sensor_readings_resp(uint8_t instance_id,
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int encode_get_state_sensor_readings_req(uint8_t instance_id,
 					 uint16_t sensor_id,
 					 bitfield8_t sensor_rearm,
@@ -772,7 +754,6 @@ int encode_get_state_sensor_readings_req(uint8_t instance_id,
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int decode_get_state_sensor_readings_resp(const struct pldm_msg *msg,
 					  size_t payload_length,
 					  uint8_t *completion_code,
@@ -824,7 +805,6 @@ int decode_get_state_sensor_readings_resp(const struct pldm_msg *msg,
 	return pldm_msgbuf_destroy_consumed(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int decode_get_state_sensor_readings_req(const struct pldm_msg *msg,
 					 size_t payload_length,
 					 uint16_t *sensor_id,
@@ -852,7 +832,6 @@ int decode_get_state_sensor_readings_req(const struct pldm_msg *msg,
 	return pldm_msgbuf_destroy(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int encode_sensor_event_data(
 	struct pldm_sensor_event_data *const event_data,
 	const size_t event_data_size, const uint16_t sensor_id,
@@ -888,7 +867,6 @@ int encode_sensor_event_data(
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int decode_platform_event_message_req(const struct pldm_msg *msg,
 				      size_t payload_length,
 				      uint8_t *format_version, uint8_t *tid,
@@ -919,7 +897,6 @@ int decode_platform_event_message_req(const struct pldm_msg *msg,
 	return pldm_msgbuf_destroy(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int decode_poll_for_platform_event_message_req(
 	const struct pldm_msg *msg, size_t payload_length,
 	uint8_t *format_version, uint8_t *transfer_operation_flag,
@@ -966,7 +943,6 @@ int decode_poll_for_platform_event_message_req(
 	return pldm_msgbuf_destroy(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int encode_platform_event_message_resp(uint8_t instance_id,
 				       uint8_t completion_code,
 				       uint8_t platform_event_status,
@@ -999,7 +975,6 @@ int encode_platform_event_message_resp(uint8_t instance_id,
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int encode_poll_for_platform_event_message_resp(
 	uint8_t instance_id, uint8_t completion_code, uint8_t tid,
 	uint16_t event_id, uint32_t next_data_transfer_handle,
@@ -1065,7 +1040,6 @@ int encode_poll_for_platform_event_message_resp(
 	return pldm_msgbuf_destroy(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int encode_platform_event_message_req(
 	uint8_t instance_id, uint8_t format_version, uint8_t tid,
 	uint8_t event_class, const uint8_t *event_data,
@@ -1115,7 +1089,6 @@ int encode_platform_event_message_req(
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int decode_platform_event_message_resp(const struct pldm_msg *msg,
 				       size_t payload_length,
 				       uint8_t *completion_code,
@@ -1157,7 +1130,6 @@ int decode_platform_event_message_resp(const struct pldm_msg *msg,
 	return pldm_msgbuf_destroy(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int encode_event_message_buffer_size_req(uint8_t instance_id,
 					 uint16_t event_receiver_max_buffer_size,
 					 struct pldm_msg *msg)
@@ -1181,7 +1153,6 @@ int encode_event_message_buffer_size_req(uint8_t instance_id,
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int decode_event_message_buffer_size_resp(const struct pldm_msg *msg,
 					  size_t payload_length,
 					  uint8_t *completion_code,
@@ -1216,7 +1187,6 @@ int decode_event_message_buffer_size_resp(const struct pldm_msg *msg,
 	return pldm_msgbuf_destroy_consumed(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int encode_event_message_supported_req(uint8_t instance_id,
 				       uint8_t format_version,
 				       struct pldm_msg *msg)
@@ -1247,7 +1217,6 @@ int encode_event_message_supported_req(uint8_t instance_id,
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int decode_event_message_supported_resp(const struct pldm_msg *msg,
 					size_t payload_length,
 					uint8_t *completion_code,
@@ -1314,7 +1283,6 @@ int decode_event_message_supported_resp(const struct pldm_msg *msg,
 	return pldm_msgbuf_destroy_consumed(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int decode_sensor_event_data(const uint8_t *event_data,
 			     size_t event_data_length, uint16_t *sensor_id,
 			     uint8_t *sensor_event_class_type,
@@ -1366,7 +1334,6 @@ int decode_sensor_event_data(const uint8_t *event_data,
 	return pldm_msgbuf_destroy(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int decode_sensor_op_data(const uint8_t *sensor_data, size_t sensor_data_length,
 			  uint8_t *present_op_state, uint8_t *previous_op_state)
 {
@@ -1391,7 +1358,6 @@ int decode_sensor_op_data(const uint8_t *sensor_data, size_t sensor_data_length,
 	return pldm_msgbuf_destroy_consumed(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int decode_state_sensor_data(const uint8_t *sensor_data,
 			     size_t sensor_data_length, uint8_t *sensor_offset,
 			     uint8_t *event_state,
@@ -1420,7 +1386,6 @@ int decode_state_sensor_data(const uint8_t *sensor_data,
 	return pldm_msgbuf_destroy_consumed(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int decode_numeric_sensor_data(const uint8_t *sensor_data,
 			       size_t sensor_data_length, uint8_t *event_state,
 			       uint8_t *previous_event_state,
@@ -1510,7 +1475,6 @@ int decode_numeric_sensor_data(const uint8_t *sensor_data,
 	return pldm_msgbuf_destroy_consumed(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int decode_numeric_sensor_pdr_data(
 	const void *pdr_data, size_t pdr_data_length,
 	struct pldm_numeric_sensor_value_pdr *pdr_value)
@@ -1611,7 +1575,6 @@ int decode_numeric_sensor_pdr_data(
 	return pldm_msgbuf_destroy(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int encode_get_numeric_effecter_value_req(uint8_t instance_id,
 					  uint16_t effecter_id,
 					  struct pldm_msg *msg)
@@ -1638,7 +1601,6 @@ int encode_get_numeric_effecter_value_req(uint8_t instance_id,
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int encode_get_numeric_effecter_value_resp(
 	uint8_t instance_id, uint8_t completion_code,
 	uint8_t effecter_data_size, uint8_t effecter_oper_state,
@@ -1719,7 +1681,6 @@ int encode_get_numeric_effecter_value_resp(
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int decode_get_numeric_effecter_value_req(const struct pldm_msg *msg,
 					  size_t payload_length,
 					  uint16_t *effecter_id)
@@ -1743,7 +1704,6 @@ int decode_get_numeric_effecter_value_req(const struct pldm_msg *msg,
 	return pldm_msgbuf_destroy_consumed(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int decode_get_numeric_effecter_value_resp(const struct pldm_msg *msg,
 					   size_t payload_length,
 					   uint8_t *completion_code,
@@ -1804,7 +1764,6 @@ int decode_get_numeric_effecter_value_resp(const struct pldm_msg *msg,
 	return pldm_msgbuf_destroy_consumed(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int encode_pldm_pdr_repository_chg_event_data(
 	uint8_t event_data_format, uint8_t number_of_change_records,
 	const uint8_t *event_data_operations,
@@ -1868,7 +1827,6 @@ int encode_pldm_pdr_repository_chg_event_data(
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int decode_pldm_pdr_repository_chg_event_data(const uint8_t *event_data,
 					      size_t event_data_size,
 					      uint8_t *event_data_format,
@@ -1899,7 +1857,6 @@ int decode_pldm_pdr_repository_chg_event_data(const uint8_t *event_data,
 	return pldm_msgbuf_destroy(buf);
 }
 
-LIBPLDM_ABI_TESTING
 int decode_pldm_message_poll_event_data(const uint8_t *event_data,
 					size_t event_data_length,
 					uint8_t *format_version,
@@ -1936,7 +1893,6 @@ int decode_pldm_message_poll_event_data(const uint8_t *event_data,
 	return pldm_msgbuf_destroy_consumed(buf);
 }
 
-LIBPLDM_ABI_TESTING
 int encode_pldm_message_poll_event_data(uint8_t format_version,
 					uint16_t event_id,
 					uint32_t data_transfer_handle,
@@ -1967,7 +1923,6 @@ int encode_pldm_message_poll_event_data(uint8_t format_version,
 	return pldm_msgbuf_destroy(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int decode_pldm_pdr_repository_change_record_data(
 	const uint8_t *change_record_data, size_t change_record_data_size,
 	uint8_t *event_data_operation, uint8_t *number_of_change_entries,
@@ -1997,7 +1952,6 @@ int decode_pldm_pdr_repository_change_record_data(
 	return pldm_msgbuf_destroy(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int encode_get_sensor_reading_req(uint8_t instance_id, uint16_t sensor_id,
 				  uint8_t rearm_event_state,
 				  struct pldm_msg *msg)
@@ -2026,7 +1980,6 @@ int encode_get_sensor_reading_req(uint8_t instance_id, uint16_t sensor_id,
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int decode_get_sensor_reading_resp(
 	const struct pldm_msg *msg, size_t payload_length,
 	uint8_t *completion_code, uint8_t *sensor_data_size,
@@ -2082,7 +2035,6 @@ int decode_get_sensor_reading_resp(
 	return pldm_msgbuf_destroy_consumed(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int encode_get_sensor_reading_resp(uint8_t instance_id, uint8_t completion_code,
 				   uint8_t sensor_data_size,
 				   uint8_t sensor_operational_state,
@@ -2153,7 +2105,6 @@ int encode_get_sensor_reading_resp(uint8_t instance_id, uint8_t completion_code,
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int decode_get_sensor_reading_req(const struct pldm_msg *msg,
 				  size_t payload_length, uint16_t *sensor_id,
 				  uint8_t *rearm_event_state)
@@ -2178,7 +2129,6 @@ int decode_get_sensor_reading_req(const struct pldm_msg *msg,
 	return pldm_msgbuf_destroy(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int encode_set_event_receiver_req(uint8_t instance_id,
 				  uint8_t event_message_global_enable,
 				  uint8_t transport_protocol_type,
@@ -2223,7 +2173,6 @@ int encode_set_event_receiver_req(uint8_t instance_id,
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int decode_set_event_receiver_resp(const struct pldm_msg *msg,
 				   size_t payload_length,
 				   uint8_t *completion_code)
@@ -2247,7 +2196,6 @@ int decode_set_event_receiver_resp(const struct pldm_msg *msg,
 	return pldm_msgbuf_destroy(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int decode_set_event_receiver_req(const struct pldm_msg *msg,
 				  size_t payload_length,
 				  uint8_t *event_message_global_enable,
@@ -2291,7 +2239,6 @@ int decode_set_event_receiver_req(const struct pldm_msg *msg,
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int encode_set_event_receiver_resp(uint8_t instance_id, uint8_t completion_code,
 				   struct pldm_msg *msg)
 
@@ -2316,7 +2263,6 @@ int encode_set_event_receiver_resp(uint8_t instance_id, uint8_t completion_code,
 	return PLDM_SUCCESS;
 }
 
-LIBPLDM_ABI_STABLE
 int encode_poll_for_platform_event_message_req(uint8_t instance_id,
 					       uint8_t format_version,
 					       uint8_t transfer_operation_flag,
@@ -2359,7 +2305,6 @@ int encode_poll_for_platform_event_message_req(uint8_t instance_id,
 	return pldm_msgbuf_destroy(buf);
 }
 
-LIBPLDM_ABI_STABLE
 int decode_poll_for_platform_event_message_resp(
 	const struct pldm_msg *msg, size_t payload_length,
 	uint8_t *completion_code, uint8_t *tid, uint16_t *event_id,
@@ -2430,7 +2375,6 @@ int decode_poll_for_platform_event_message_resp(
 	return pldm_msgbuf_destroy_consumed(buf);
 }
 
-LIBPLDM_ABI_TESTING
 int decode_numeric_effecter_pdr_data(
 	const void *pdr_data, size_t pdr_data_length,
 	struct pldm_numeric_effecter_value_pdr *pdr_value)

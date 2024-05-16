@@ -23,7 +23,6 @@ struct pldm_transport_test {
 #define transport_to_test(ptr)                                                 \
 	container_of(ptr, struct pldm_transport_test, transport)
 
-LIBPLDM_ABI_TESTING
 struct pldm_transport *pldm_transport_test_core(struct pldm_transport_test *ctx)
 {
 	return &ctx->transport;
@@ -31,7 +30,6 @@ struct pldm_transport *pldm_transport_test_core(struct pldm_transport_test *ctx)
 
 #ifdef PLDM_HAS_POLL
 #include <poll.h>
-LIBPLDM_ABI_TESTING
 int pldm_transport_test_init_pollfd(struct pldm_transport *ctx,
 				    struct pollfd *pollfd)
 {
@@ -167,7 +165,6 @@ static pldm_requester_rc_t pldm_transport_test_send(struct pldm_transport *ctx,
 	return PLDM_REQUESTER_SUCCESS;
 }
 
-LIBPLDM_ABI_TESTING
 int pldm_transport_test_init(struct pldm_transport_test **ctx,
 			     const struct pldm_transport_test_descriptor *seq,
 			     size_t count)
@@ -206,7 +203,6 @@ cleanup_test:
 	return rc;
 }
 
-LIBPLDM_ABI_TESTING
 void pldm_transport_test_destroy(struct pldm_transport_test *ctx)
 {
 	close(ctx->timerfd);

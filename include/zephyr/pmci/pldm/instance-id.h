@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-#include <libpldm/base.h>
+#include <zephyr/pmci/pldm/base.h>
 
 #include <stdint.h>
 

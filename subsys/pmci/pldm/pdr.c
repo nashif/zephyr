@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later */
-#include <libpldm/pdr.h>
-#include <libpldm/platform.h>
+#include <zephyr/pmci/pldm/pdr.h>
+#include <zephyr/pmci/pldm/platform.h>
 
 #include <assert.h>
 #include <endian.h>
@@ -36,7 +36,6 @@ static inline uint32_t get_next_record_handle(const pldm_pdr *repo,
 	return record->next->record_handle;
 }
 
-LIBPLDM_ABI_STABLE
 int pldm_pdr_add_check(pldm_pdr *repo, const uint8_t *data, uint32_t size,
 		       bool is_remote, uint16_t terminus_handle,
 		       uint32_t *record_handle)
@@ -110,7 +109,6 @@ int pldm_pdr_add_check(pldm_pdr *repo, const uint8_t *data, uint32_t size,
 	return 0;
 }
 
-LIBPLDM_ABI_STABLE
 pldm_pdr *pldm_pdr_init(void)
 {
 	pldm_pdr *repo = malloc(sizeof(pldm_pdr));
@@ -125,7 +123,6 @@ pldm_pdr *pldm_pdr_init(void)
 	return repo;
 }
 
-LIBPLDM_ABI_STABLE
 void pldm_pdr_destroy(pldm_pdr *repo)
 {
 	if (!repo) {
@@ -145,7 +142,6 @@ void pldm_pdr_destroy(pldm_pdr *repo)
 	free(repo);
 }
 
-LIBPLDM_ABI_STABLE
 const pldm_pdr_record *pldm_pdr_find_record(const pldm_pdr *repo,
 					    uint32_t record_handle,
 					    uint8_t **data, uint32_t *size,
@@ -176,7 +172,6 @@ const pldm_pdr_record *pldm_pdr_find_record(const pldm_pdr *repo,
 	return NULL;
 }
 
-LIBPLDM_ABI_STABLE
 const pldm_pdr_record *
 pldm_pdr_get_next_record(const pldm_pdr *repo,
 			 const pldm_pdr_record *curr_record, uint8_t **data,
@@ -199,7 +194,6 @@ pldm_pdr_get_next_record(const pldm_pdr *repo,
 	return curr_record->next;
 }
 
-LIBPLDM_ABI_STABLE
 const pldm_pdr_record *
 pldm_pdr_find_record_by_type(const pldm_pdr *repo, uint8_t pdr_type,
 			     const pldm_pdr_record *curr_record, uint8_t **data,
@@ -231,7 +225,6 @@ pldm_pdr_find_record_by_type(const pldm_pdr *repo, uint8_t pdr_type,
 	return NULL;
 }
 
-LIBPLDM_ABI_STABLE
 uint32_t pldm_pdr_get_record_count(const pldm_pdr *repo)
 {
 	assert(repo != NULL);
@@ -239,7 +232,6 @@ uint32_t pldm_pdr_get_record_count(const pldm_pdr *repo)
 	return repo->record_count;
 }
 
-LIBPLDM_ABI_STABLE
 uint32_t pldm_pdr_get_repo_size(const pldm_pdr *repo)
 {
 	assert(repo != NULL);
@@ -247,7 +239,6 @@ uint32_t pldm_pdr_get_repo_size(const pldm_pdr *repo)
 	return repo->size;
 }
 
-LIBPLDM_ABI_STABLE
 uint32_t pldm_pdr_get_record_handle(const pldm_pdr *repo
 				    __attribute__((unused)),
 				    const pldm_pdr_record *record)
@@ -258,7 +249,6 @@ uint32_t pldm_pdr_get_record_handle(const pldm_pdr *repo
 	return record->record_handle;
 }
 
-LIBPLDM_ABI_STABLE
 bool pldm_pdr_record_is_remote(const pldm_pdr_record *record)
 {
 	assert(record != NULL);
@@ -266,7 +256,6 @@ bool pldm_pdr_record_is_remote(const pldm_pdr_record *record)
 	return record->is_remote;
 }
 
-LIBPLDM_ABI_STABLE
 int pldm_pdr_add_fru_record_set_check(pldm_pdr *repo, uint16_t terminus_handle,
 				      uint16_t fru_rsi, uint16_t entity_type,
 				      uint16_t entity_instance_num,
@@ -300,7 +289,6 @@ int pldm_pdr_add_fru_record_set_check(pldm_pdr *repo, uint16_t terminus_handle,
 				  bmc_record_handle);
 }
 
-LIBPLDM_ABI_STABLE
 const pldm_pdr_record *pldm_pdr_fru_record_set_find_by_rsi(
 	const pldm_pdr *repo, uint16_t fru_rsi, uint16_t *terminus_handle,
 	uint16_t *entity_type, uint16_t *entity_instance_num,
@@ -341,7 +329,6 @@ const pldm_pdr_record *pldm_pdr_fru_record_set_find_by_rsi(
 	return NULL;
 }
 
-LIBPLDM_ABI_STABLE
 /* NOLINTNEXTLINE(readability-identifier-naming) */
 void pldm_pdr_update_TL_pdr(const pldm_pdr *repo, uint16_t terminus_handle,
 			    uint8_t tid, uint8_t tl_eid, bool valid_bit)
@@ -379,7 +366,6 @@ static bool pldm_record_handle_in_range(uint32_t record_handle,
 	       record_handle <= last_record_handle;
 }
 
-LIBPLDM_ABI_TESTING
 int pldm_pdr_find_child_container_id_index_range_exclude(
 	const pldm_pdr *repo, uint16_t entity_type, uint16_t entity_instance,
 	uint8_t child_index, uint32_t range_exclude_start_handle,
@@ -454,7 +440,6 @@ static inline uint16_t next_container_id(pldm_entity_association_tree *tree)
 	return ++tree->last_used_container_id;
 }
 
-LIBPLDM_ABI_STABLE
 pldm_entity pldm_entity_extract(pldm_entity_node *node)
 {
 	assert(node != NULL);
@@ -462,7 +447,6 @@ pldm_entity pldm_entity_extract(pldm_entity_node *node)
 	return node->entity;
 }
 
-LIBPLDM_ABI_STABLE
 uint16_t
 pldm_entity_node_get_remote_container_id(const pldm_entity_node *entity)
 {
@@ -471,7 +455,6 @@ pldm_entity_node_get_remote_container_id(const pldm_entity_node *entity)
 	return entity->remote_container_id;
 }
 
-LIBPLDM_ABI_STABLE
 pldm_entity_association_tree *pldm_entity_association_tree_init(void)
 {
 	pldm_entity_association_tree *tree =
@@ -506,7 +489,6 @@ static pldm_entity_node *find_insertion_at(pldm_entity_node *start,
 	return start;
 }
 
-LIBPLDM_ABI_STABLE
 pldm_entity_node *pldm_entity_association_tree_add(
 	pldm_entity_association_tree *tree, pldm_entity *entity,
 	uint16_t entity_instance_number, pldm_entity_node *parent,
@@ -518,7 +500,6 @@ pldm_entity_node *pldm_entity_association_tree_add(
 						       false, true, 0xffff);
 }
 
-LIBPLDM_ABI_STABLE
 pldm_entity_node *pldm_entity_association_tree_add_entity(
 	pldm_entity_association_tree *tree, pldm_entity *entity,
 	uint16_t entity_instance_number, pldm_entity_node *parent,
@@ -655,7 +636,6 @@ static void entity_association_tree_visit(pldm_entity_node *node,
 	entity_association_tree_visit(node->first_child, entities, index);
 }
 
-LIBPLDM_ABI_STABLE
 void pldm_entity_association_tree_visit(pldm_entity_association_tree *tree,
 					pldm_entity **entities, size_t *size)
 {
@@ -688,7 +668,6 @@ static void entity_association_tree_destroy(pldm_entity_node *node)
 	free(node);
 }
 
-LIBPLDM_ABI_STABLE
 void pldm_entity_association_tree_destroy(pldm_entity_association_tree *tree)
 {
 	if (!tree) {
@@ -699,7 +678,6 @@ void pldm_entity_association_tree_destroy(pldm_entity_association_tree *tree)
 	free(tree);
 }
 
-LIBPLDM_ABI_STABLE
 bool pldm_entity_is_node_parent(pldm_entity_node *node)
 {
 	assert(node != NULL);
@@ -707,7 +685,6 @@ bool pldm_entity_is_node_parent(pldm_entity_node *node)
 	return node->first_child != NULL;
 }
 
-LIBPLDM_ABI_STABLE
 pldm_entity pldm_entity_get_parent(pldm_entity_node *node)
 {
 	assert(node != NULL);
@@ -715,7 +692,6 @@ pldm_entity pldm_entity_get_parent(pldm_entity_node *node)
 	return node->parent;
 }
 
-LIBPLDM_ABI_STABLE
 bool pldm_entity_is_exist_parent(pldm_entity_node *node)
 {
 	assert(node != NULL);
@@ -729,7 +705,6 @@ bool pldm_entity_is_exist_parent(pldm_entity_node *node)
 	return true;
 }
 
-LIBPLDM_ABI_STABLE
 uint8_t pldm_entity_get_num_children(pldm_entity_node *node,
 				     uint8_t association_type)
 {
@@ -755,7 +730,6 @@ uint8_t pldm_entity_get_num_children(pldm_entity_node *node,
 	return count < UINT8_MAX ? count : 0;
 }
 
-LIBPLDM_ABI_STABLE
 bool pldm_is_current_parent_child(pldm_entity_node *parent, pldm_entity *node)
 {
 	if (!parent || !node) {
@@ -916,7 +890,6 @@ static int entity_association_pdr_add(pldm_entity_node *curr, pldm_pdr *repo,
 					  terminus_handle, record_handle);
 }
 
-LIBPLDM_ABI_STABLE
 int pldm_entity_association_pdr_add_check(pldm_entity_association_tree *tree,
 					  pldm_pdr *repo, bool is_remote,
 					  uint16_t terminus_handle)
@@ -929,7 +902,6 @@ int pldm_entity_association_pdr_add_check(pldm_entity_association_tree *tree,
 					  terminus_handle, 0);
 }
 
-LIBPLDM_ABI_STABLE
 int pldm_entity_association_pdr_add_from_node_check(
 	pldm_entity_node *node, pldm_pdr *repo, pldm_entity **entities,
 	size_t num_entities, bool is_remote, uint16_t terminus_handle)
@@ -939,7 +911,6 @@ int pldm_entity_association_pdr_add_from_node_check(
 		0);
 }
 
-LIBPLDM_ABI_STABLE
 int pldm_entity_association_pdr_add_from_node_with_record_handle(
 	pldm_entity_node *node, pldm_pdr *repo, pldm_entity **entities,
 	size_t num_entities, bool is_remote, uint16_t terminus_handle,
@@ -981,7 +952,6 @@ static void find_entity_ref_in_tree(pldm_entity_node *tree_node,
 	find_entity_ref_in_tree(tree_node->next_sibling, entity, node);
 }
 
-LIBPLDM_ABI_STABLE
 void pldm_find_entity_ref_in_tree(pldm_entity_association_tree *tree,
 				  pldm_entity entity, pldm_entity_node **node)
 {
@@ -992,7 +962,6 @@ void pldm_find_entity_ref_in_tree(pldm_entity_association_tree *tree,
 	find_entity_ref_in_tree(tree->root, entity, node);
 }
 
-LIBPLDM_ABI_STABLE
 void pldm_pdr_remove_pdrs_by_terminus_handle(pldm_pdr *repo,
 					     uint16_t terminus_handle)
 {
@@ -1044,7 +1013,6 @@ void pldm_pdr_remove_pdrs_by_terminus_handle(pldm_pdr *repo,
 	}
 }
 
-LIBPLDM_ABI_STABLE
 void pldm_pdr_remove_remote_pdrs(pldm_pdr *repo)
 {
 	if (!repo) {
@@ -1095,7 +1063,6 @@ void pldm_pdr_remove_remote_pdrs(pldm_pdr *repo)
 	}
 }
 
-LIBPLDM_ABI_STABLE
 pldm_pdr_record *pldm_pdr_find_last_in_range(const pldm_pdr *repo,
 					     uint32_t first, uint32_t last)
 {
@@ -1147,7 +1114,6 @@ static void entity_association_tree_find_if_remote(pldm_entity_node *node,
 					       is_remote);
 }
 
-LIBPLDM_ABI_STABLE
 pldm_entity_node *pldm_entity_association_tree_find_with_locality(
 	pldm_entity_association_tree *tree, pldm_entity *entity, bool is_remote)
 {
@@ -1178,7 +1144,6 @@ static void entity_association_tree_find(pldm_entity_node *node,
 	entity_association_tree_find(node->first_child, entity, out);
 }
 
-LIBPLDM_ABI_STABLE
 pldm_entity_node *
 pldm_entity_association_tree_find(pldm_entity_association_tree *tree,
 				  pldm_entity *entity)
@@ -1211,7 +1176,6 @@ static void entity_association_tree_copy(pldm_entity_node *org_node,
 				     &((*new_node)->next_sibling));
 }
 
-LIBPLDM_ABI_STABLE
 void pldm_entity_association_tree_copy_root(
 	pldm_entity_association_tree *org_tree,
 	pldm_entity_association_tree *new_tree)
@@ -1223,7 +1187,6 @@ void pldm_entity_association_tree_copy_root(
 	entity_association_tree_copy(org_tree->root, &(new_tree->root));
 }
 
-LIBPLDM_ABI_STABLE
 void pldm_entity_association_tree_destroy_root(
 	pldm_entity_association_tree *tree)
 {
@@ -1236,13 +1199,11 @@ void pldm_entity_association_tree_destroy_root(
 	tree->root = NULL;
 }
 
-LIBPLDM_ABI_STABLE
 bool pldm_is_empty_entity_assoc_tree(pldm_entity_association_tree *tree)
 {
 	return ((tree->root == NULL) ? true : false);
 }
 
-LIBPLDM_ABI_STABLE
 void pldm_entity_association_pdr_extract(const uint8_t *pdr, uint16_t pdr_len,
 					 size_t *num_entities,
 					 pldm_entity **entities)

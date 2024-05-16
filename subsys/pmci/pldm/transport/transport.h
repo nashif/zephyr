@@ -2,8 +2,8 @@
 #ifndef LIBPLDM_SRC_TRANSPORT_TRANSPORT_H
 #define LIBPLDM_SRC_TRANSPORT_TRANSPORT_H
 
-#include <libpldm/base.h>
-#include <libpldm/pldm.h>
+#include <zephyr/pmci/pldm/base.h>
+#include <zephyr/pmci/pldm/pldm.h>
 struct pollfd;
 
 /**

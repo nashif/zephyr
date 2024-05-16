@@ -39,8 +39,8 @@
 extern "C" {
 #endif
 
-#include <libpldm/base.h>
-#include <libpldm/pldm_types.h>
+#include <zephyr/pmci/pldm/base.h>
+#include <zephyr/pmci/pldm/pldm_types.h>
 
 #include "compiler.h"
 

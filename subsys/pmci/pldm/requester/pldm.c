@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later */
-#include <libpldm/base.h>
-#include <libpldm/pldm.h>
-#include <libpldm/transport.h>
+#include <zephyr/pmci/pldm/base.h>
+#include <zephyr/pmci/pldm/pldm.h>
+#include <zephyr/pmci/pldm/transport.h>
 
 #include <bits/types/struct_iovec.h>
 #include <fcntl.h>
@@ -13,7 +13,7 @@
 #include <unistd.h>
 
 /* Temporary for old api */
-#include <libpldm/transport/mctp-demux.h>
+#include <zephyr/pmci/pldm/transport/mctp-demux.h>
 extern int
 pldm_transport_mctp_demux_get_socket_fd(struct pldm_transport_mctp_demux *ctx);
 extern struct pldm_transport_mctp_demux *

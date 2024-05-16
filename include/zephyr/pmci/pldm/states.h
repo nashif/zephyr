@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-#include <libpldm/pldm_types.h>
+#include <zephyr/pmci/pldm/pldm_types.h>
 
 /** @brief PLDM enums for the boot progress state set
  */

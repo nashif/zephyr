@@ -2,8 +2,8 @@
 #ifndef LIBPLDM_SRC_RESPONDER_H
 #define LIBPLDM_SRC_RESPONDER_H
 
-#include <libpldm/base.h>
-#include <libpldm/instance-id.h>
+#include <zephyr/pmci/pldm/base.h>
+#include <zephyr/pmci/pldm/instance-id.h>
 
 #include <stdint.h>
 
