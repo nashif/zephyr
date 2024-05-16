@@ -33,6 +33,7 @@ add_subdirectory(testsuite)
 add_subdirectory(tracing)
 add_subdirectory(usb)
 add_subdirectory(mctp)
+add_subdirectory(pmci)
 
 add_subdirectory_ifdef(CONFIG_ARM_SIP_SVC_SUBSYS sip_svc)
 add_subdirectory_ifdef(CONFIG_BINDESC bindesc)
