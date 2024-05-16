@@ -130,7 +130,7 @@ ssize_t ver2str(const ver32_t *version, char *buffer, size_t buffer_size)
 		return -1;
 	}
 
-	if (buffer_size > SSIZE_MAX) {
+	if (buffer_size > SIZE_MAX) {
 		return -1;
 	}
 

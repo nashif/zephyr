@@ -47,9 +47,9 @@ extern "C" {
 #define LLONG_MIN	(-LLONG_MAX - 1LL)
 
 #if __SIZE_MAX__ == __UINT32_MAX__
-#define SSIZE_MAX	__INT32_MAX__
+#define SIZE_MAX	__INT32_MAX__
 #elif __SIZE_MAX__ == __UINT64_MAX__
-#define SSIZE_MAX	__INT64_MAX__
+#define SIZE_MAX	__INT64_MAX__
 #else
 #error "unexpected __SIZE_MAX__ value"
 #endif

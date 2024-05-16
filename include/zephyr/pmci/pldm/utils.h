@@ -41,7 +41,7 @@ uint32_t crc32(const void *data, size_t size);
 /** @brief Convert ver32_t to string
  *  @param[in] version - Pointer to ver32_t
  *  @param[out] buffer - Pointer to the buffer
- *  @param[in] buffer_size - Size of the buffer, up to SSIZE_MAX
+ *  @param[in] buffer_size - Size of the buffer, up to SIZE_MAX
  *  @return The number of characters written to the buffer (excluding the null
  * byte). The converted string may be truncated, and truncation is not
  * considered an error. The result is negative if invalid arguments are supplied

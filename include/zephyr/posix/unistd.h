@@ -148,7 +148,7 @@ extern "C" {
 #define _POSIX_SEM_NSEMS_MAX		    CONFIG_SEM_NAMELEN_MAX
 #define _POSIX_SEM_VALUE_MAX		    CONFIG_SEM_VALUE_MAX
 #define _POSIX_SIGQUEUE_MAX		    (32)
-#define _POSIX_SSIZE_MAX		    (32767)
+#define _POSIX_SIZE_MAX		    (32767)
 #define _POSIX_SS_REPL_MAX		    (4)
 #define _POSIX_STREAM_MAX		    (8)
 #define _POSIX_SYMLINK_MAX		    (255)

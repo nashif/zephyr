@@ -79,7 +79,7 @@ pldm_msgbuf_init(struct pldm_msgbuf *ctx, size_t minsize, const void *buf,
 		return PLDM_ERROR_INVALID_DATA;
 	}
 
-	if ((minsize > len) || (len > SSIZE_MAX)) {
+	if ((minsize > len) || (len > SIZE_MAX)) {
 		return PLDM_ERROR_INVALID_LENGTH;
 	}
 
@@ -529,7 +529,7 @@ static inline int pldm_msgbuf_extract_array_uint8(struct pldm_msgbuf *ctx,
 		return PLDM_SUCCESS;
 	}
 
-	if (count >= SSIZE_MAX) {
+	if (count >= SIZE_MAX) {
 		return PLDM_ERROR_INVALID_LENGTH;
 	}
 
@@ -692,7 +692,7 @@ static inline int pldm_msgbuf_insert_array_uint8(struct pldm_msgbuf *ctx,
 		return PLDM_SUCCESS;
 	}
 
-	if (count >= SSIZE_MAX) {
+	if (count >= SIZE_MAX) {
 		return PLDM_ERROR_INVALID_LENGTH;
 	}
 
@@ -719,7 +719,7 @@ static inline int pldm_msgbuf_span_required(struct pldm_msgbuf *ctx,
 		return PLDM_ERROR_INVALID_DATA;
 	}
 
-	if (required > SSIZE_MAX) {
+	if (required > SIZE_MAX) {
 		return PLDM_ERROR_INVALID_LENGTH;
 	}
 
