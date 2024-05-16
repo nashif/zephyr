@@ -107,6 +107,10 @@ struct mctp_serial_trailer {
 	uint8_t flag;
 };
 
+/**
+ * @brief Escape special characters in the packet
+ * @details Escape 0x7e and 0x7d characters in the packet
+ */
 static size_t mctp_serial_pkt_escape(struct mctp_pktbuf *pkt, uint8_t *buf)
 {
 	uint8_t total_len;

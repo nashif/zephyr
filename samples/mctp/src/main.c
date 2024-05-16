@@ -18,15 +18,6 @@ static void rx_message(uint8_t eid, bool tag_owner,
                        uint8_t msg_tag, void *data, void *msg,
                        size_t len)
 {
-        ssize_t rc;
-
-        rc = write(STDOUT_FILENO, msg, len);
-        if (rc < 0) {
-                LOG_WRN("Write failed");
-	}
-        else if ((size_t)rc < len) {
-                LOG_WRN("Short write of length %zd, requested %zd", rc, len);
-	}
 }
 
 
