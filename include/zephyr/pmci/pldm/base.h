@@ -119,22 +119,22 @@ typedef enum {
  * Structure representing PLDM message header fields
  */
 struct pldm_msg_hdr {
-#if defined(__LITTLE_ENDIAN_BITFIELD)
+#if defined(CONFIG_LITTLE_ENDIAN)
 	uint8_t instance_id : 5; //!< Instance ID
 	uint8_t reserved : 1;	 //!< Reserved
 	uint8_t datagram : 1;	 //!< Datagram bit
 	uint8_t request : 1;	 //!< Request bit
-#elif defined(__BIG_ENDIAN_BITFIELD)
+#elif defined(CONFIG_BIG_ENDIAN)
 	uint8_t request : 1;	 //!< Request bit
 	uint8_t datagram : 1;	 //!< Datagram bit
 	uint8_t reserved : 1;	 //!< Reserved
 	uint8_t instance_id : 5; //!< Instance ID
 #endif
 
-#if defined(__LITTLE_ENDIAN_BITFIELD)
+#if defined(CONFIG_LITTLE_ENDIAN)
 	uint8_t type : 6;	//!< PLDM type
 	uint8_t header_ver : 2; //!< Header version
-#elif defined(__BIG_ENDIAN_BITFIELD)
+#elif defined(CONFIG_BIG_ENDIAN)
 	uint8_t header_ver : 2; //!< Header version
 	uint8_t type : 6;	//!< PLDM type
 #endif
