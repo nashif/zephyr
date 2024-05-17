@@ -5,6 +5,7 @@
 #include <limits.h>
 #include <stdio.h>
 
+#if 0
 /** CRC32 code derived from work by Gary S. Brown.
  *  http://web.mit.edu/freebsd/head/sys/libkern/crc32.c
  *
@@ -57,6 +58,7 @@ static uint32_t crc32_tab[] = {
 	0x54de5729, 0x23d967bf, 0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94,
 	0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
+#endif
 
 /* 0x07(polynomial: x8+x2+x1+1)
  */
@@ -85,6 +87,7 @@ static const uint8_t crc8_table[] = {
 	0xfa, 0xfd, 0xf4, 0xf3
 };
 
+#if 0
 uint32_t crc32(const void *data, size_t size)
 {
 	const uint8_t *p = data;
@@ -94,6 +97,8 @@ uint32_t crc32(const void *data, size_t size)
 	}
 	return crc ^ ~0U;
 }
+
+#endif
 
 uint8_t crc8(const void *data, size_t size)
 {
