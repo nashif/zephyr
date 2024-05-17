@@ -25,7 +25,7 @@ static void rx_message(uint8_t eid, bool tag_owner,
 }
 
 
-const struct device *uart = DEVICE_DT_GET(DT_NODELABEL(arduino_serial));
+const struct device *uart = DEVICE_DT_GET(DT_CHOSEN(zephyr_mctp_uart));
 
 int main(void)
 {
