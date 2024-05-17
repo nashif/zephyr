@@ -14,6 +14,9 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(mctp, CONFIG_MCTP_LOG_LEVEL);
 
+
+#define MCTP_EID 8
+
 static void rx_message(uint8_t eid, bool tag_owner,
                        uint8_t msg_tag, void *data, void *msg,
                        size_t len)
@@ -35,9 +38,9 @@ int main(void)
 	serial = mctp_serial_init();
 	assert(serial);
 
-	mctp_register_bus(mctp, mctp_binding_serial_core(serial), 8);
-
+	mctp_register_bus(mctp, mctp_binding_serial_core(serial), MCTP_EID);
 	mctp_set_rx_all(mctp, rx_message, NULL);
+
 #if 0
         for (;;) {
                 rc = mctp_serial_read(serial);
