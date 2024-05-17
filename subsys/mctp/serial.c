@@ -6,21 +6,11 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <zephyr/drivers/uart.h>
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(mctp, CONFIG_MCTP_LOG_LEVEL);
 
 
-#ifdef MCTP_HAVE_FILEIO
-#include <fcntl.h>
-#include <poll.h>
-#include <unistd.h>
-#else
-static const size_t write(int fd, void *buf, size_t len)
-{
-	return -1;
-}
-#endif
 
 #define pr_fmt(x) "serial: " x
 
@@ -48,11 +38,13 @@ static const size_t write(int fd, void *buf, size_t len)
 		len ? wrote : 0;                                               \
 	})
 
-static ssize_t mctp_serial_write(int fildes, const void *buf, size_t nbyte)
+static ssize_t mctp_serial_write(const struct device *uart, const void *buf, size_t nbyte)
 {
-	ssize_t wrote;
+	for (size_t i = 0; i < nbyte; i++) {
+		uart_poll_out(uart, ((uint8_t *)buf)[i]);
+	}
 
-	return ((wrote = write(fildes, buf, nbyte)) < 0) ? -errno : wrote;
+	return nbyte;
 }
 
 #include <zephyr/mctp/mctp.h>
@@ -62,7 +54,7 @@ static ssize_t mctp_serial_write(int fildes, const void *buf, size_t nbyte)
 
 struct mctp_binding_serial {
 	struct mctp_binding binding;
-	int fd;
+	const struct device *uart;
 	unsigned long bus_id;
 
 	mctp_serial_tx_fn tx_fn;
@@ -173,7 +165,7 @@ static int mctp_binding_serial_tx(struct mctp_binding *b,
 	len += sizeof(*hdr) + sizeof(*tlr);
 
 	if (!serial->tx_fn)
-		return mctp_write_all(mctp_serial_write, serial->fd,
+		return mctp_write_all(mctp_serial_write, serial->uart,
 				      &serial->txbuf[0], len);
 
 	return mctp_write_all(serial->tx_fn, serial->tx_fn_data,
@@ -298,17 +290,25 @@ static void mctp_rx_consume(struct mctp_binding_serial *serial, const void *buf,
 			    size_t len)
 {
 	size_t i;
+	const uint8_t *bbuf = buf;
 
-	for (i = 0; i < len; i++)
-		mctp_rx_consume_one(serial, *(uint8_t *)(buf + i));
+	for (i = 0; i < len; i++) {
+		mctp_rx_consume_one(serial, bbuf[i]);
+	}
 }
 
-#ifdef MCTP_HAVE_FILEIO
 int mctp_serial_read(struct mctp_binding_serial *serial)
 {
 	ssize_t len;
 
-	len = read(serial->fd, serial->rxbuf, sizeof(serial->rxbuf));
+	for (len = 0; len < sizeof(serial->rxbuf); len++) {
+		int res = uart_poll_in(serial->uart, &serial->rxbuf[len]);
+
+		if (res != 0) {
+			break;
+		}
+	}
+
 	if (len == 0)
 		return -1;
 
@@ -322,30 +322,11 @@ int mctp_serial_read(struct mctp_binding_serial *serial)
 	return 0;
 }
 
-int mctp_serial_init_pollfd(struct mctp_binding_serial *serial,
-			    struct pollfd *pollfd)
+void mctp_serial_open(struct mctp_binding_serial *serial, const struct device *uart)
 {
-	pollfd->fd = serial->fd;
-	pollfd->events = POLLIN;
-
-	return 0;
+	serial->uart = uart;
 }
 
-int mctp_serial_open_path(struct mctp_binding_serial *serial,
-			  const char *device)
-{
-	serial->fd = open(device, O_RDWR);
-	if (serial->fd < 0)
-		LOG_ERR("can't open device %s: %m", device);
-
-	return 0;
-}
-
-void mctp_serial_open_fd(struct mctp_binding_serial *serial, int fd)
-{
-	serial->fd = fd;
-}
-#endif
 
 void mctp_serial_set_tx_fn(struct mctp_binding_serial *serial,
 			   mctp_serial_tx_fn fn, void *data)
@@ -378,7 +359,7 @@ struct mctp_binding_serial *mctp_serial_init(void)
 
 	serial = __mctp_alloc(sizeof(*serial));
 	memset(serial, 0, sizeof(*serial));
-	serial->fd = -1;
+	serial->uart = NULL;
 	serial->rx_state = STATE_WAIT_SYNC_START;
 	serial->rx_pkt = NULL;
 	serial->binding.name = "serial";

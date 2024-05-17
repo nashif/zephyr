@@ -15,6 +15,7 @@
 LOG_MODULE_DECLARE(mctp, CONFIG_MCTP_LOG_LEVEL);
 
 
+
 #define MCTP_EID 8
 
 static void rx_message(uint8_t eid, bool tag_owner,
@@ -24,13 +25,16 @@ static void rx_message(uint8_t eid, bool tag_owner,
 }
 
 
+const struct device *uart = DEVICE_DT_GET(DT_NODELABEL(arduino_serial));
+
 int main(void)
 {
-	printf("Hello World! %s\n", CONFIG_BOARD_TARGET);
+	printf("Hello MCTP! %s\n", CONFIG_BOARD_TARGET);
 
 	struct mctp_binding_serial *serial;
 	struct mctp *mctp;
 	int rc;
+
 
 	mctp = mctp_init();
 	assert(mctp != NULL);
@@ -38,16 +42,17 @@ int main(void)
 	serial = mctp_serial_init();
 	assert(serial);
 
+	mctp_serial_open(serial, uart);
+
 	mctp_register_bus(mctp, mctp_binding_serial_core(serial), MCTP_EID);
 	mctp_set_rx_all(mctp, rx_message, NULL);
 
-#if 0
         for (;;) {
                 rc = mctp_serial_read(serial);
                 if (rc) {
                         break;
 		}
         }
-#endif
+
 	return 0;
 }
