@@ -2,5 +2,4 @@
 
 zephyr_sources(
    instance-id.c
-   pldm.c
 )
