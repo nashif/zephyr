@@ -7,8 +7,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include <libmctp.h>
-#include <libmctp-alloc.h>
+#include <zephyr/mctp/mctp.h>
 
 #include "test-utils.h"
 

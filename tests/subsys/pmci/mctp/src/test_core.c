@@ -18,8 +18,9 @@
 #include <unistd.h>
 
 #include "compiler.h"
-#include "zephyr/mctp/mctp-alloc.h"
-#include "test-utils.h"
+#include "zephyr/mctp/mctp.h"
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(test);
 
 #define TEST_DEST_EID 9
 #define TEST_SRC_EID  10
@@ -43,7 +44,7 @@ static void rx_message(uint8_t eid __unused, bool tag_owner, uint8_t msg_tag,
 {
 	struct test_params *param = (struct test_params *)data;
 
-	mctp_prdebug("MCTP message received: len %zd, tag %u", len, msg_tag);
+	LOG_DBG("MCTP message received: len %zd, tag %u", len, msg_tag);
 
 	param->seen = true;
 	param->message_size = len;
