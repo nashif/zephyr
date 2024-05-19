@@ -17,10 +17,12 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "compiler.h"
+#include <zephyr/types.h>
 #include "zephyr/mctp/mctp.h"
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(test);
+
+#include "test-utils.h"
 
 #define TEST_DEST_EID 9
 #define TEST_SRC_EID  10
