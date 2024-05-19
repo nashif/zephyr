@@ -1,0 +1,13 @@
+config MCTP
+	bool "Enable MCTP support"
+	default y
+	help
+	  Enable MCTP support.
+if MCTP
+
+module = MCTP
+module-str = MCTP
+module-help = Sets log level for MCTP support
+source "subsys/logging/Kconfig.template.log_config"
+
+endif
