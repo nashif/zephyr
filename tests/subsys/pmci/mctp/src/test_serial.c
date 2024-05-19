@@ -2,17 +2,12 @@
 
 #define _GNU_SOURCE
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <zephyr/ztest.h>
+#include "zephyr/mctp/mctp-serial.h"
 
-#include "compiler.h"
-#include "libmctp-log.h"
-#include "libmctp-serial.h"
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(test);
 
-#ifdef NDEBUG
-#undef NDEBUG
-#endif
 
 #include <assert.h>
 #include <errno.h>
@@ -35,8 +30,8 @@ static int mctp_binding_serial_pipe_tx(void *data, void *buf, size_t len)
 	ssize_t rc;
 
 	rc = write(ctx->egress, buf, len);
-	assert(rc >= 0);
-	assert((size_t)rc == len);
+	zassert_true(rc >= 0);
+	zassert_true((size_t)rc == len);
 
 	return rc;
 }
@@ -54,11 +49,11 @@ static void rx_message(uint8_t eid __unused, bool tag_owner, uint8_t msg_tag,
 
 	type = *(uint8_t *)msg;
 
-	mctp_prdebug("MCTP message received: len %zd, type %d, tag %d", len,
+	LOG_DBG("MCTP message received: len %zd, type %d, tag %d", len,
 		     type, msg_tag);
 
-	assert(sizeof(mctp_msg_src) == len);
-	assert(!memcmp(mctp_msg_src, msg, len));
+	zassert_true(sizeof(mctp_msg_src) == len);
+	zassert_true(!memcmp(mctp_msg_src, msg, len));
 
 	seen = true;
 	received_msg_tag = msg_tag;
@@ -70,7 +65,7 @@ struct serial_test {
 	struct mctp *mctp;
 };
 
-int main(void)
+ZTEST(mctp_serial_pipe, test_serial_pipe)
 {
 	struct serial_test scenario[2];
 
@@ -81,22 +76,20 @@ int main(void)
 	int p[2][2];
 	int rc;
 
-	mctp_set_log_stdio(MCTP_LOG_DEBUG);
-
 	memset(&mctp_msg_src[0], 0x5a, MCTP_BTU);
 	memset(&mctp_msg_src[MCTP_BTU], 0xa5, MCTP_BTU);
 
 	rc = pipe(p[0]);
-	assert(!rc);
+	zassert_true(!rc);
 
 	rc = pipe(p[1]);
-	assert(!rc);
+	zassert_true(!rc);
 
 	/* Instantiate the A side of the serial pipe */
 	scenario[0].mctp = mctp_init();
-	assert(scenario[0].mctp);
+	zassert_true(scenario[0].mctp);
 	scenario[0].binding.serial = mctp_serial_init();
-	assert(scenario[0].binding.serial);
+	zassert_true(scenario[0].binding.serial);
 	a = &scenario[0].binding;
 	a->ingress = p[0][0];
 	a->egress = p[1][1];
@@ -107,10 +100,10 @@ int main(void)
 
 	/* Instantiate the B side of the serial pipe */
 	scenario[1].mctp = mctp_init();
-	assert(scenario[1].mctp);
+	zassert_true(scenario[1].mctp);
 	mctp_set_rx_all(scenario[1].mctp, rx_message, NULL);
 	scenario[1].binding.serial = mctp_serial_init();
-	assert(scenario[1].binding.serial);
+	zassert_true(scenario[1].binding.serial);
 	b = &scenario[1].binding;
 	b->ingress = p[1][0];
 	b->egress = p[0][1];
@@ -122,21 +115,21 @@ int main(void)
 	/* Transmit a message from A to B, with message tag */
 	rc = mctp_message_tx(scenario[0].mctp, 9, tag_owner, msg_tag,
 			     mctp_msg_src, sizeof(mctp_msg_src));
-	assert(rc == 0);
+	zassert_true(rc == 0);
 
 	/* Read the message at B from A */
 	seen = false;
 	received_tag_owner = true;
 	received_msg_tag = 0;
 	mctp_serial_read(b->serial);
-	assert(seen);
-	assert(received_tag_owner == tag_owner);
-	assert(received_msg_tag == msg_tag);
+	zassert_true(seen);
+	zassert_true(received_tag_owner == tag_owner);
+	zassert_true(received_msg_tag == msg_tag);
 
 	mctp_serial_destroy(scenario[1].binding.serial);
 	mctp_destroy(scenario[1].mctp);
 	mctp_serial_destroy(scenario[0].binding.serial);
 	mctp_destroy(scenario[0].mctp);
-
-	return 0;
 }
+
+ZTEST_SUITE(mctp_serial_pipe, NULL, NULL, NULL, NULL, NULL);

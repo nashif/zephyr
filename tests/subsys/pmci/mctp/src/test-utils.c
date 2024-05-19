@@ -7,6 +7,7 @@
 #include <string.h>
 #include <assert.h>
 
+#include <zephyr/ztest.h>
 #include <zephyr/mctp/mctp.h>
 
 #include "test-utils.h"
@@ -19,7 +20,7 @@ static int mctp_binding_test_tx(struct mctp_binding *b __attribute__((unused)),
 				struct mctp_pktbuf *pkt __attribute__((unused)))
 {
 	/* we are not expecting TX packets */
-	assert(0);
+	zassert_true(0);
 	return 0;
 }
 
@@ -48,7 +49,7 @@ void mctp_binding_test_rx_raw(struct mctp_binding_test *test, void *buf,
 	struct mctp_pktbuf *pkt;
 
 	pkt = mctp_pktbuf_alloc(&test->binding, len);
-	assert(pkt);
+	zassert_true(pkt);
 	memcpy(mctp_pktbuf_hdr(pkt), buf, len);
 	mctp_bus_rx(&test->binding, pkt);
 }
@@ -63,10 +64,10 @@ void mctp_test_stack_init(struct mctp **mctp,
 			  struct mctp_binding_test **binding, mctp_eid_t eid)
 {
 	*mctp = mctp_init();
-	assert(*mctp);
+	zassert_true(*mctp);
 
 	*binding = mctp_binding_test_init();
-	assert(*binding);
+	zassert_true(*binding);
 
 	mctp_binding_test_register_bus(*binding, *mctp, eid);
 }

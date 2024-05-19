@@ -9,8 +9,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "compiler.h"
-#include "libmctp.h"
+#include <zephyr/ztest.h>
+#include "zephyr/mctp/mctp.h"
 #include "test-utils.h"
 
 struct test_ctx {
@@ -41,7 +41,7 @@ static void create_packet(struct mctp_hdr *pkt, mctp_eid_t src, mctp_eid_t dest)
 	pkt->flags_seq_tag = MCTP_HDR_FLAG_SOM | MCTP_HDR_FLAG_EOM;
 }
 
-int main(void)
+ZTEST(mctp_eid, test_eid)
 {
 	struct test_ctx _ctx, *ctx = &_ctx;
 	const mctp_eid_t local_eid = 8;
@@ -63,8 +63,8 @@ int main(void)
 
 	mctp_binding_test_rx_raw(ctx->binding, &pktbuf, sizeof(pktbuf));
 
-	assert(ctx->rx_count == 1);
-	assert(ctx->src_eid == remote_eid);
+	zassert_true(ctx->rx_count == 1);
+	zassert_true(ctx->src_eid == remote_eid);
 
 	/* check a message not addressed to us is not received */
 	ctx->rx_count = 0;
@@ -73,10 +73,11 @@ int main(void)
 
 	mctp_binding_test_rx_raw(ctx->binding, &pktbuf, sizeof(pktbuf));
 
-	assert(ctx->rx_count == 0);
+	zassert_true(ctx->rx_count == 0);
 
 	mctp_binding_test_destroy(ctx->binding);
 	mctp_destroy(ctx->mctp);
 
-	return EXIT_SUCCESS;
 }
+
+ZTEST_SUITE(mctp_eid, NULL, NULL, NULL, NULL, NULL);

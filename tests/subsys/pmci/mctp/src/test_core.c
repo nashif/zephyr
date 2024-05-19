@@ -83,7 +83,7 @@ static void receive_ptkbuf(struct mctp_binding_test *binding,
 	struct mctp_pktbuf *rx_pkt;
 
 	rx_pkt = __mctp_alloc(sizeof(*rx_pkt) + MCTP_PACKET_SIZE(alloc_size));
-	assert(rx_pkt);
+	zassert_true(rx_pkt);
 
 	/* Preserve passed len parameter */
 	rx_pkt->size = MCTP_PACKET_SIZE(len);
@@ -126,6 +126,12 @@ static void receive_two_fragment_message(struct mctp_binding_test *binding,
 			     flags_seq_tag, pktbuf);
 }
 
+/**
+ * @brief Test the reception of a single fragment message
+ *
+ * @details Test the reception of a single fragment message
+ * with a size of MCTP_BTU bytes.
+ */
 ZTEST(mctp_core, mctp_core_test_simple_rx)
 {
 	struct mctp *mctp = NULL;
@@ -147,8 +153,8 @@ ZTEST(mctp_core, mctp_core_test_simple_rx)
 	receive_two_fragment_message(binding, test_payload, MCTP_BTU, MCTP_BTU,
 				     &pktbuf);
 
-	assert(test_param.seen);
-	assert(test_param.message_size == 2 * MCTP_BTU);
+	zassert_true(test_param.seen);
+	zassert_true(test_param.message_size == 2 * MCTP_BTU);
 
 	mctp_binding_test_destroy(binding);
 	mctp_destroy(mctp);
@@ -188,8 +194,8 @@ ZTEST(mctp_core, mctp_core_test_receive_equal_length_fragments)
 	receive_one_fragment(binding, test_payload + (2 * MCTP_BTU), MCTP_BTU,
 			     flags_seq_tag, &pktbuf);
 
-	assert(test_param.seen);
-	assert(test_param.message_size == 3 * MCTP_BTU);
+	zassert_true(test_param.seen);
+	zassert_true(test_param.message_size == 3 * MCTP_BTU);
 
 	mctp_binding_test_destroy(binding);
 	mctp_destroy(mctp);
@@ -229,7 +235,7 @@ ZTEST(mctp_core, mctp_core_test_receive_unexpected_smaller_middle_fragment)
 	receive_one_fragment(binding, test_payload + (2 * MCTP_BTU), MCTP_BTU,
 			     flags_seq_tag, &pktbuf);
 
-	assert(!test_param.seen);
+	zassert_true(!test_param.seen);
 
 	mctp_binding_test_destroy(binding);
 	mctp_destroy(mctp);
@@ -269,7 +275,7 @@ ZTEST( mctp_core, mctp_core_test_receive_unexpected_bigger_middle_fragment)
 	receive_one_fragment(binding, test_payload + (2 * MCTP_BTU), MCTP_BTU,
 			     flags_seq_tag, &pktbuf);
 
-	assert(!test_param.seen);
+	zassert_true(!test_param.seen);
 
 	mctp_binding_test_destroy(binding);
 	mctp_destroy(mctp);
@@ -309,8 +315,8 @@ ZTEST(mctp_core, mctp_core_test_receive_smaller_end_fragment)
 	receive_one_fragment(binding, test_payload + (2 * MCTP_BTU),
 			     end_frag_size, flags_seq_tag, &pktbuf);
 
-	assert(test_param.seen);
-	assert(test_param.message_size ==
+	zassert_true(test_param.seen);
+	zassert_true(test_param.message_size ==
 	       (size_t)(2 * MCTP_BTU + end_frag_size));
 
 	mctp_binding_test_destroy(binding);
@@ -351,7 +357,7 @@ ZTEST(mctp_core, mctp_core_test_receive_bigger_end_fragment)
 	receive_one_fragment(binding, test_payload + (2 * MCTP_BTU),
 			     end_frag_size, flags_seq_tag, &pktbuf);
 
-	assert(!test_param.seen);
+	zassert_true(!test_param.seen);
 
 	mctp_binding_test_destroy(binding);
 	mctp_destroy(mctp);
@@ -381,7 +387,7 @@ ZTEST(mctp_core, mctp_core_test_drop_large_fragments)
 				     SIZE_MAX - sizeof(struct mctp_hdr),
 				     &pktbuf);
 
-	assert(!test_param.seen);
+	zassert_true(!test_param.seen);
 
 	mctp_binding_test_destroy(binding);
 	mctp_destroy(mctp);
@@ -425,7 +431,7 @@ ZTEST(mctp_core, mctp_core_test_exhaust_context_buffers)
 				     &pktbuf);
 
 	/* Message assembly should fail */
-	assert(!test_param.seen);
+	zassert_true(!test_param.seen);
 
 	/* Complete message assembly for one of the messages */
 	pktbuf.hdr.src -= max_context_buffers;
@@ -434,8 +440,8 @@ ZTEST(mctp_core, mctp_core_test_exhaust_context_buffers)
 	receive_one_fragment(binding, test_payload, MCTP_BTU, flags_seq_tag,
 			     &pktbuf);
 
-	assert(test_param.seen);
-	assert(test_param.message_size == (2 * MCTP_BTU));
+	zassert_true(test_param.seen);
+	zassert_true(test_param.message_size == (2 * MCTP_BTU));
 
 	mctp_binding_test_destroy(binding);
 	mctp_destroy(mctp);
@@ -469,10 +475,10 @@ ZTEST(mctp_core, mctp_core_test_rx_with_tag)
 	receive_one_fragment(binding, test_payload, MCTP_BTU, flags_seq_tag,
 			     &pktbuf);
 
-	assert(test_param.seen);
-	assert(test_param.message_size == (MCTP_BTU));
-	assert(test_param.msg_tag == tag);
-	assert(test_param.tag_owner);
+	zassert_true(test_param.seen);
+	zassert_true(test_param.message_size == (MCTP_BTU));
+	zassert_true(test_param.msg_tag == tag);
+	zassert_true(test_param.tag_owner);
 
 	mctp_binding_test_destroy(binding);
 	mctp_destroy(mctp);
@@ -518,10 +524,10 @@ ZTEST(mctp_core, mctp_core_test_rx_with_tag_multifragment)
 	receive_one_fragment(binding, test_payload, MCTP_BTU, flags_seq_tag,
 			     &pktbuf);
 
-	assert(test_param.seen);
-	assert(test_param.message_size == (3 * MCTP_BTU));
-	assert(test_param.msg_tag == tag);
-	assert(test_param.tag_owner);
+	zassert_true(test_param.seen);
+	zassert_true(test_param.message_size == (3 * MCTP_BTU));
+	zassert_true(test_param.msg_tag == tag);
+	zassert_true(test_param.tag_owner);
 
 	mctp_binding_test_destroy(binding);
 	mctp_destroy(mctp);

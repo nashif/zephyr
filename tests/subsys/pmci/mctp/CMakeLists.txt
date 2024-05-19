@@ -7,4 +7,7 @@ project(mctp)
 target_sources(app PRIVATE
   src/test_core.c
   src/test-utils.c
+  src/test_eid.c
+  src/test_seq.c
+  #src/test_serial.c
 )

@@ -9,13 +9,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "compiler.h"
-#include "libmctp.h"
+#include <zephyr/ztest.h>
+#include "zephyr/mctp/mctp.h"
 #include "test-utils.h"
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
-#endif
 
 struct test_ctx {
 	struct mctp *mctp;
@@ -33,8 +30,8 @@ static void test_rx(uint8_t eid __unused, bool tag_owner __unused,
 	ctx->rx_count++;
 
 	/* append incoming message data to the existing rx_data */
-	assert(len <= sizeof(ctx->rx_data));
-	assert(ctx->rx_len + len <= sizeof(ctx->rx_data));
+	zassert_true(len <= sizeof(ctx->rx_data));
+	zassert_true(ctx->rx_len + len <= sizeof(ctx->rx_data));
 
 	memcpy(ctx->rx_data + ctx->rx_len, msg, len);
 	ctx->rx_len += len;
@@ -127,24 +124,27 @@ static void run_one_test(struct test_ctx *ctx, struct test *test)
 		mctp_binding_test_rx_raw(ctx->binding, &pktbuf, sizeof(pktbuf));
 	}
 
-	assert(ctx->rx_count == test->exp_rx_count);
-	assert(ctx->rx_len == test->exp_rx_len);
+	zassert_true(ctx->rx_count == test->exp_rx_count);
+	zassert_true(ctx->rx_len == test->exp_rx_len);
 
 	/* ensure the payload data was reconstructed correctly */
 	for (i = 0; i < (int)ctx->rx_len; i++)
-		assert(ctx->rx_data[i] == i);
+		zassert_true(ctx->rx_data[i] == i);
 
 	mctp_binding_test_destroy(ctx->binding);
 	mctp_destroy(ctx->mctp);
 }
 
-int main(void)
+ZTEST(mctp_seq, test_mctp_seq)
 {
 	struct test_ctx ctx;
 	unsigned int i;
 
-	for (i = 0; i < ARRAY_SIZE(tests); i++)
+	for (i = 0; i < ARRAY_SIZE(tests); i++) {
 		run_one_test(&ctx, &tests[i]);
+	}
 
-	return EXIT_SUCCESS;
 }
+
+ZTEST_SUITE(mctp_seq, NULL, NULL, NULL, NULL, NULL);
+
