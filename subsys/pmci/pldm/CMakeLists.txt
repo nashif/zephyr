@@ -2,8 +2,8 @@
 
 zephyr_include_directories(.)
 
-add_subdirectory(transport)
-add_subdirectory(requester)
+#add_subdirectory(transport)
+#add_subdirectory(requester)
 
 zephyr_sources(
   base.c
