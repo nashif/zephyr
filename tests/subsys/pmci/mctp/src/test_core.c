@@ -1,13 +1,11 @@
 /* SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later */
 
+#include <zephyr/ztest.h>
+
 #define _GNU_SOURCE
 
 #ifdef NDEBUG
 #undef NDEBUG
-#endif
-
-#if HAVE_CONFIG_H
-#include "config.h"
 #endif
 
 #include <assert.h>
@@ -20,17 +18,11 @@
 #include <unistd.h>
 
 #include "compiler.h"
-#include "libmctp-alloc.h"
-#include "libmctp-log.h"
-#include "range.h"
+#include "zephyr/mctp/mctp-alloc.h"
 #include "test-utils.h"
 
 #define TEST_DEST_EID 9
 #define TEST_SRC_EID  10
-
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
-#endif
 
 #define MAX_PAYLOAD_SIZE 50000
 
@@ -131,7 +123,7 @@ static void receive_two_fragment_message(struct mctp_binding_test *binding,
 			     flags_seq_tag, pktbuf);
 }
 
-static void mctp_core_test_simple_rx()
+ZTEST(mctp_core, mctp_core_test_simple_rx)
 {
 	struct mctp *mctp = NULL;
 	struct mctp_binding_test *binding = NULL;
@@ -159,7 +151,7 @@ static void mctp_core_test_simple_rx()
 	mctp_destroy(mctp);
 }
 
-static void mctp_core_test_receive_equal_length_fragments()
+ZTEST(mctp_core, mctp_core_test_receive_equal_length_fragments)
 {
 	struct mctp *mctp = NULL;
 	struct mctp_binding_test *binding = NULL;
@@ -200,7 +192,7 @@ static void mctp_core_test_receive_equal_length_fragments()
 	mctp_destroy(mctp);
 }
 
-static void mctp_core_test_receive_unexpected_smaller_middle_fragment()
+ZTEST(mctp_core, mctp_core_test_receive_unexpected_smaller_middle_fragment)
 {
 	struct mctp *mctp = NULL;
 	struct mctp_binding_test *binding = NULL;
@@ -240,7 +232,7 @@ static void mctp_core_test_receive_unexpected_smaller_middle_fragment()
 	mctp_destroy(mctp);
 }
 
-static void mctp_core_test_receive_unexpected_bigger_middle_fragment()
+ZTEST( mctp_core, mctp_core_test_receive_unexpected_bigger_middle_fragment)
 {
 	struct mctp *mctp = NULL;
 	struct mctp_binding_test *binding = NULL;
@@ -280,7 +272,7 @@ static void mctp_core_test_receive_unexpected_bigger_middle_fragment()
 	mctp_destroy(mctp);
 }
 
-static void mctp_core_test_receive_smaller_end_fragment()
+ZTEST(mctp_core, mctp_core_test_receive_smaller_end_fragment)
 {
 	struct mctp *mctp = NULL;
 	struct mctp_binding_test *binding = NULL;
@@ -322,7 +314,7 @@ static void mctp_core_test_receive_smaller_end_fragment()
 	mctp_destroy(mctp);
 }
 
-static void mctp_core_test_receive_bigger_end_fragment()
+ZTEST(mctp_core, mctp_core_test_receive_bigger_end_fragment)
 {
 	struct mctp *mctp = NULL;
 	struct mctp_binding_test *binding = NULL;
@@ -362,7 +354,7 @@ static void mctp_core_test_receive_bigger_end_fragment()
 	mctp_destroy(mctp);
 }
 
-static void mctp_core_test_drop_large_fragments()
+ZTEST(mctp_core, mctp_core_test_drop_large_fragments)
 {
 	struct mctp *mctp = NULL;
 	struct mctp_binding_test *binding = NULL;
@@ -392,7 +384,7 @@ static void mctp_core_test_drop_large_fragments()
 	mctp_destroy(mctp);
 }
 
-static void mctp_core_test_exhaust_context_buffers()
+ZTEST(mctp_core, mctp_core_test_exhaust_context_buffers)
 {
 	struct mctp *mctp = NULL;
 	struct mctp_binding_test *binding = NULL;
@@ -446,7 +438,7 @@ static void mctp_core_test_exhaust_context_buffers()
 	mctp_destroy(mctp);
 }
 
-static void mctp_core_test_rx_with_tag()
+ZTEST(mctp_core, mctp_core_test_rx_with_tag)
 {
 	struct mctp *mctp = NULL;
 	struct mctp_binding_test *binding = NULL;
@@ -483,7 +475,7 @@ static void mctp_core_test_rx_with_tag()
 	mctp_destroy(mctp);
 }
 
-static void mctp_core_test_rx_with_tag_multifragment()
+ZTEST(mctp_core, mctp_core_test_rx_with_tag_multifragment)
 {
 	struct mctp *mctp = NULL;
 	struct mctp_binding_test *binding = NULL;
@@ -532,46 +524,4 @@ static void mctp_core_test_rx_with_tag_multifragment()
 	mctp_destroy(mctp);
 }
 
-/* clang-format off */
-#define TEST_CASE(test) { #test, test }
-static const struct {
-	const char *name;
-	void (*test)(void);
-} mctp_core_tests[] = {
-	TEST_CASE(mctp_core_test_simple_rx),
-	TEST_CASE(mctp_core_test_receive_equal_length_fragments),
-	TEST_CASE(mctp_core_test_receive_unexpected_smaller_middle_fragment),
-	TEST_CASE(mctp_core_test_receive_unexpected_bigger_middle_fragment),
-	TEST_CASE(mctp_core_test_receive_smaller_end_fragment),
-	TEST_CASE(mctp_core_test_receive_bigger_end_fragment),
-	TEST_CASE(mctp_core_test_drop_large_fragments),
-	TEST_CASE(mctp_core_test_exhaust_context_buffers),
-	TEST_CASE(mctp_core_test_rx_with_tag),
-	TEST_CASE(mctp_core_test_rx_with_tag_multifragment),
-};
-/* clang-format on */
-
-#ifndef BUILD_ASSERT
-#define BUILD_ASSERT(x)                                                        \
-	do {                                                                   \
-		(void)sizeof(char[0 - (!(x))]);                                \
-	} while (0)
-#endif
-
-int main(void)
-{
-	uint8_t i;
-
-	mctp_set_log_stdio(MCTP_LOG_DEBUG);
-
-	BUILD_ASSERT(ARRAY_SIZE(mctp_core_tests) < SIZE_MAX);
-	for (i = 0; i < ARRAY_SIZE(mctp_core_tests); i++) {
-		mctp_prlog(MCTP_LOG_DEBUG, "begin: %s",
-			   mctp_core_tests[i].name);
-		mctp_core_tests[i].test();
-		mctp_prlog(MCTP_LOG_DEBUG, "end: %s\n",
-			   mctp_core_tests[i].name);
-	}
-
-	return 0;
-}
+ZTEST_SUITE(mctp_core, NULL, NULL, NULL, NULL, NULL);
