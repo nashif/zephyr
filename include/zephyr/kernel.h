@@ -327,7 +327,7 @@ __syscall int k_thread_stack_free(k_thread_stack_t *stack);
  * @param delay Scheduling delay, or K_NO_WAIT (for no delay).
  *
  * @return ID of new thread.
- *
+ * @satisfy{@req{23}}
  */
 __syscall k_tid_t k_thread_create(struct k_thread *new_thread,
 				  k_thread_stack_t *stack,

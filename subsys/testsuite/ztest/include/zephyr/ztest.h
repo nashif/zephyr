@@ -14,6 +14,13 @@
 #define ZEPHYR_TESTSUITE_INCLUDE_ZTEST_H_
 
 /**
+ * @brief Zephyr Tests (ZTest)
+ * @defgroup all_tests Zephyr Tests
+ * @{
+ * @}
+ */
+
+/**
  * @defgroup ztest Zephyr Testing Framework (ZTest)
  * @ingroup testing
  */
