@@ -658,6 +658,9 @@ FUNC_NORETURN void z_cstart(void)
 	/* do any necessary initialization of static devices */
 	z_device_state_init();
 
+#if defined(CONFIG_SMP)
+	arch_smp_init();
+#endif
 	/* perform basic hardware initialization */
 	z_sys_init_run_level(INIT_LEVEL_PRE_KERNEL_1);
 	z_sys_init_run_level(INIT_LEVEL_PRE_KERNEL_2);
