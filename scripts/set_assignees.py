@@ -81,21 +81,37 @@ def process_pr(gh, maintainer_file, number):
         log(f"Too many files changed ({len(fn)}), skipping....")
         return
 
+    # areas where assignment happens if only area is affected
+    meta_areas = [
+            'Release Notes',
+            'Documentation',
+            'Samples'
+            ]
+
     for changed_file in fn:
         num_files += 1
         log(f"file: {changed_file.filename}")
         areas = maintainer_file.path2areas(changed_file.filename)
+        print(f"areas for {changed_file}: {areas}")
 
         if not areas:
             continue
 
         all_areas.update(areas)
+        # instance of an area, for example a driver or a board, not APIs or subsys code.
         is_instance = False
         sorted_areas = sorted(areas, key=lambda x: 'Platform' in x.name, reverse=True)
         for area in sorted_areas:
-            c = 1 if not is_instance else 0
+            # do not count cmake file changes, i.e. when there are changes to
+            # instances of an area listed in both the subsystem and the
+            # platform implementing it
+            if 'CMakeLists.txt' in changed_file.filename or area.name in meta_areas:
+                c = 0
+            else:
+                c = 1 if not is_instance else 0
 
             area_counter[area] += c
+            print(f"area counter: {area_counter}")
             labels.update(area.labels)
             # FIXME: Here we count the same file multiple times if it exists in
             # multiple areas with same maintainer
@@ -122,14 +138,16 @@ def process_pr(gh, maintainer_file, number):
     log(f"Submitted by: {pr.user.login}")
     log(f"candidate maintainers: {_all_maintainers}")
 
-    assignees = []
-    tmp_assignees = []
+    ranked_assignees = []
 
     # we start with areas with most files changed and pick the maintainer from the first one.
     # if the first area is an implementation, i.e. driver or platform, we
     # continue searching for any other areas involved
     for area, count in area_counter.items():
-        if count == 0:
+        if area.name in meta_areas and len(area_counter) == 1:
+            assignees = area.maintainers
+            break
+        if count == 0 or len(area.maintainers) == 0:
             continue
         if len(area.maintainers) > 0:
             tmp_assignees = area.maintainers
@@ -146,11 +164,25 @@ def process_pr(gh, maintainer_file, number):
             else:
                 assignees = area.maintainers
 
-            if 'Platform' not in area.name:
-                break
 
-    if tmp_assignees and not assignees:
-        assignees = tmp_assignees
+        if pr.user.login in area.maintainers:
+            # submitter = assignee, try to pick next area and
+            # assign someone else other than the submitter, set assignees in case no other areas
+            # are found.
+            assignees = area.maintainers
+            log(f"Submitter {pr.user.login} is a potential assignee, see if something else was changed out of this area: {area}")
+            continue
+
+        # found a non-platform area that was changed, pick assignee from this
+        # area and put them on top of the list, otherwise just append.
+        if 'Platform' not in area.name:
+            ranked_assignees.insert(0, area.maintainers)
+            break
+        else:
+            ranked_assignees.append(area.maintainers)
+
+    if ranked_assignees:
+        assignees = ranked_assignees[0]
 
     if assignees:
         prop = (found_maintainers[assignees[0]] / num_files) * 100
