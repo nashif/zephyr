@@ -81,21 +81,37 @@ def process_pr(gh, maintainer_file, number):
         log(f"Too many files changed ({len(fn)}), skipping....")
         return
 
+    # areas where assignment happens if only area is affected
+    meta_areas = [
+            'Release Notes',
+            'Documentation',
+            'Samples'
+            ]
+
     for changed_file in fn:
         num_files += 1
         log(f"file: {changed_file.filename}")
         areas = maintainer_file.path2areas(changed_file.filename)
+        print(f"areas for {changed_file}: {areas}")
 
         if not areas:
             continue
 
         all_areas.update(areas)
+        # instance of an area, for example a driver or a board, not APIs or subsys code.
         is_instance = False
         sorted_areas = sorted(areas, key=lambda x: 'Platform' in x.name, reverse=True)
         for area in sorted_areas:
-            c = 1 if not is_instance else 0
+            # do not count cmake file changes, i.e. when there are changes to
+            # instances of an area listed in both the subsystem and the
+            # platform implementing it
+            if 'CMakeLists.txt' in changed_file.filename or area.name in meta_areas:
+                c = 0
+            else:
+                c = 1 if not is_instance else 0
 
             area_counter[area] += c
+            print(f"area counter: {area_counter}")
             labels.update(area.labels)
             # FIXME: Here we count the same file multiple times if it exists in
             # multiple areas with same maintainer
@@ -122,22 +138,26 @@ def process_pr(gh, maintainer_file, number):
     log(f"Submitted by: {pr.user.login}")
     log(f"candidate maintainers: {_all_maintainers}")
 
-    assignees = []
-    tmp_assignees = []
+    ranked_assignees = []
+    assignees = None
 
     # we start with areas with most files changed and pick the maintainer from the first one.
     # if the first area is an implementation, i.e. driver or platform, we
     # continue searching for any other areas involved
     for area, count in area_counter.items():
-        if count == 0:
+        # if only meta area is affected, assign one of the maintainers of that area
+        if area.name in meta_areas and len(area_counter) == 1:
+            assignees = area.maintainers
+            break
+        # if no maintainers, skip
+        if count == 0 or len(area.maintainers) == 0:
             continue
+        # if there are maintainers, but no assignees yet, set them
         if len(area.maintainers) > 0:
-            tmp_assignees = area.maintainers
             if pr.user.login in area.maintainers:
-                # submitter = assignee, try to pick next area and
-                # assign someone else other than the submitter
-                # when there also other maintainers for the area
-                # assign them
+                # If submitter = assignee, try to pick next area and assign
+                # someone else other than the submitter, otherwise when there
+                # are other maintainers for the area, assign them.
                 if len(area.maintainers) > 1:
                     assignees = area.maintainers.copy()
                     assignees.remove(pr.user.login)
@@ -146,16 +166,25 @@ def process_pr(gh, maintainer_file, number):
             else:
                 assignees = area.maintainers
 
-            if 'Platform' not in area.name:
-                break
+        # found a non-platform area that was changed, pick assignee from this
+        # area and put them on top of the list, otherwise just append.
+        if 'Platform' not in area.name:
+            ranked_assignees.insert(0, area.maintainers)
+            break
+        else:
+            ranked_assignees.append(area.maintainers)
 
-    if tmp_assignees and not assignees:
-        assignees = tmp_assignees
+    if ranked_assignees:
+        assignees = ranked_assignees[0]
 
     if assignees:
         prop = (found_maintainers[assignees[0]] / num_files) * 100
         log(f"Picked assignees: {assignees} ({prop:.2f}% ownership)")
         log("+++++++++++++++++++++++++")
+    elif len(_all_maintainers) > 0:
+        # if we have maintainers found, but could not pick one based on area,
+        # then pick the one with most changes
+        assignees = [next(iter(_all_maintainers))]
 
     # Set labels
     if labels:
@@ -206,21 +235,24 @@ def process_pr(gh, maintainer_file, number):
         if len(existing_reviewers) < 15:
             reviewer_vacancy = 15 - len(existing_reviewers)
             reviewers = reviewers[:reviewer_vacancy]
-
-            if reviewers:
-                try:
-                    log(f"adding reviewers {reviewers}...")
-                    if not args.dry_run:
-                        pr.create_review_request(reviewers=reviewers)
-                except GithubException:
-                    log("cant add reviewer")
         else:
             log("not adding reviewers because the existing reviewer count is greater than or "
-                "equal to 15")
+                "equal to 15. Adding maintainers of all areas as reviewers instead.")
+            # FIXME: Here we could also add collaborators of the areas most
+            # affected, i.e. the one with the final assigne.
+            reviewers = list(_all_maintainers.keys())
+
+        if reviewers:
+            try:
+                log(f"adding reviewers {reviewers}...")
+                if not args.dry_run:
+                    pr.create_review_request(reviewers=reviewers)
+            except GithubException:
+                log("can't add reviewer")
 
     ms = []
     # assignees
-    if assignees and not pr.assignee:
+    if assignees and (not pr.assignee or args.dry_run):
         try:
             for assignee in assignees:
                 u = gh.get_user(assignee)
