@@ -47,9 +47,11 @@ static void threads_suspend_resume(int prio)
  *
  * @details Create a thread with the priority lower than the current
  * thread which is cooperative and suspend it, make sure it doesn't
- * gets scheduled, and resume and check if the entry function is executed.
+ * get scheduled, and resume and check if the entry function is executed.
  *
  * @see k_thread_suspend(), k_thread_resume()
+ * @verify{@req{SRS-1-3}}
+ * @verify{@req{SRS-1-4}}
  */
 ZTEST(threads_lifecycle_1cpu, test_threads_suspend_resume_cooperative)
 {
@@ -62,7 +64,7 @@ ZTEST(threads_lifecycle_1cpu, test_threads_suspend_resume_cooperative)
  * preemptive thread
  *
  * @details Create a thread with the priority lower than the current
- * thread which is preemptive and suspend it, make sure it doesn't gets
+ * thread which is preemptive and suspend it, make sure it doesn't get
  * scheduled, and resume and check if the entry function is executed.
  *
  * @see k_thread_suspend(), k_thread_resume()
@@ -88,6 +90,8 @@ void suspend_myself(void *arg0, void *arg1, void *arg2)
  *
  * @brief Check that suspending a thread is a schedule point when
  * called on the current thread.
+ *
+ * @verify{@req{SRS-1-3}}
  */
 ZTEST(threads_lifecycle, test_threads_suspend)
 {
@@ -125,6 +129,8 @@ void sleep_suspended(void *arg0, void *arg1, void *arg2)
  *
  * @details Suspended threads should not wake up unexpectedly if they
  * happened to have been sleeping when suspended.
+ *
+ * @verify{@req{SRS-1-3}}
  */
 ZTEST(threads_lifecycle, test_threads_suspend_timeout)
 {
@@ -153,6 +159,8 @@ ZTEST(threads_lifecycle, test_threads_suspend_timeout)
  *
  * @details Use k_thread_state_str() to get thread state.
  * Resume an unsuspend thread will not change the thread state.
+ *
+ * @verify{@req{SRS-1-4}}
  */
 ZTEST(threads_lifecycle, test_resume_unsuspend_thread)
 {
