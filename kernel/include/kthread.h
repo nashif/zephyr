@@ -11,7 +11,9 @@
 #include <zephyr/kernel.h>
 #include <kernel_internal.h>
 #include <timeout_q.h>
+#include <priority_q.h>
 
+extern struct k_spinlock _sched_spinlock;
 
 #define Z_STATE_STR_DUMMY       "dummy"
 #define Z_STATE_STR_PENDING     "pending"
@@ -243,5 +245,46 @@ static inline bool z_is_idle_thread_object(struct k_thread *thread)
 #endif /* CONFIG_MULTITHREADING */
 }
 
+
+static _wait_q_t *pended_on_thread(struct k_thread *thread)
+{
+	__ASSERT_NO_MSG(thread->base.pended_on);
+
+	return thread->base.pended_on;
+}
+
+
+static ALWAYS_INLINE void unpend_thread_no_timeout(struct k_thread *thread)
+{
+	_priq_wait_remove(&pended_on_thread(thread)->waitq, thread);
+	z_mark_thread_as_not_pending(thread);
+	thread->base.pended_on = NULL;
+}
+
+
+static ALWAYS_INLINE void z_unpend_thread_no_timeout(struct k_thread *thread)
+{
+	K_SPINLOCK(&_sched_spinlock) {
+		if (thread->base.pended_on != NULL) {
+			unpend_thread_no_timeout(thread);
+		}
+	}
+}
+
+static ALWAYS_INLINE struct k_thread *z_unpend_first_thread(_wait_q_t *wait_q)
+{
+	struct k_thread *thread = NULL;
+
+	K_SPINLOCK(&_sched_spinlock) {
+		thread = _priq_wait_best(&wait_q->waitq);
+
+		if (thread != NULL) {
+			unpend_thread_no_timeout(thread);
+			(void)z_abort_thread_timeout(thread);
+		}
+	}
+
+	return thread;
+}
 
 #endif /* ZEPHYR_KERNEL_INCLUDE_THREAD_H_ */
