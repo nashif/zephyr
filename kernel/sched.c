@@ -689,7 +689,6 @@ struct k_thread *z_unpend1_no_timeout(_wait_q_t *wait_q)
 }
 
 
-
 void z_unpend_thread(struct k_thread *thread)
 {
 	z_unpend_thread_no_timeout(thread);
