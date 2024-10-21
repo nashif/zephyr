@@ -191,10 +191,6 @@ static ALWAYS_INLINE void z_priq_mq_update(struct _priq_mq *pq,
 	struct prio_info pos = get_prio_info(thread->base.prio);
 
 	sys_dlist_remove(&thread->base.qnode_dlist);
-	if (sys_dlist_is_empty(&pq->queues[pos.offset_prio])) {
-		pq->bitmask[pos.idx] &= ~BIT(pos.bit);
-	}
-
 	sys_dlist_append(&pq->queues[pos.offset_prio], &thread->base.qnode_dlist);
 	pq->bitmask[pos.idx] |= BIT(pos.bit);
 }
