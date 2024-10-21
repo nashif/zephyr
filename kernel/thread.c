@@ -34,6 +34,8 @@
 
 LOG_MODULE_DECLARE(os, CONFIG_KERNEL_LOG_LEVEL);
 
+uint32_t thread_highest_priority;
+
 #ifdef CONFIG_OBJ_CORE_THREAD
 static struct k_obj_type  obj_type_thread;
 
@@ -761,6 +763,9 @@ void z_init_thread_base(struct _thread_base *thread_base, int priority,
 	thread_base->thread_state = (uint8_t)initial_state;
 
 	thread_base->prio = priority;
+	if (thread_highest_priority < (uint32_t)priority) {
+		thread_highest_priority = (uint32_t)priority;
+	}
 
 	thread_base->sched_locked = 0U;
 

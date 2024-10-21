@@ -22,6 +22,9 @@
 #define Z_STATE_STR_SUSPENDING  "suspending"
 #define Z_STATE_STR_QUEUED      "queued"
 
+
+extern uint32_t thread_highest_priority;
+
 #ifdef CONFIG_THREAD_MONITOR
 /* This lock protects the linked list of active threads; i.e. the
  * initial _kernel.threads pointer and the linked list made up of

@@ -165,6 +165,11 @@ static ALWAYS_INLINE void dequeue_thread(struct k_thread *thread)
 	}
 }
 
+static ALWAYS_INLINE void requeue_thread(struct k_thread *thread)
+{
+	_priq_run_update(thread_runq(thread), thread);
+}
+
 /* Called out of z_swap() when CONFIG_SMP.  The current thread can
  * never live in the run queue until we are inexorably on the context
  * switch path on SMP, otherwise there is a deadlock condition where a
@@ -1082,11 +1087,11 @@ void z_impl_k_yield(void)
 
 	k_spinlock_key_t key = k_spin_lock(&_sched_spinlock);
 
-	if (!IS_ENABLED(CONFIG_SMP) ||
-	    z_is_thread_queued(_current)) {
-		dequeue_thread(_current);
+	if (!IS_ENABLED(CONFIG_SMP) || z_is_thread_queued(_current)) {
+		requeue_thread(_current);
+	} else {
+		queue_thread(_current);
 	}
-	queue_thread(_current);
 	update_cache(1);
 	z_swap(&_sched_spinlock, key);
 }
