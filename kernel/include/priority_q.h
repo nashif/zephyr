@@ -19,6 +19,7 @@ bool z_priq_rb_lessthan(struct rbnode *a, struct rbnode *b);
 #if defined(CONFIG_SCHED_DUMB)
 #define _priq_run_add		z_priq_dumb_add
 #define _priq_run_remove	z_priq_dumb_remove
+#define _priq_run_update	z_priq_dumb_update
 # if defined(CONFIG_SCHED_CPU_MASK)
 #  define _priq_run_best	z_priq_dumb_mask_best
 # else
@@ -57,24 +58,6 @@ static ALWAYS_INLINE void z_priq_mq_remove(struct _priq_mq *pq, struct k_thread 
 #define _priq_wait_remove	z_priq_dumb_remove
 #define _priq_wait_best		z_priq_dumb_best
 #endif
-
-static ALWAYS_INLINE void z_priq_dumb_remove(sys_dlist_t *pq, struct k_thread *thread)
-{
-	ARG_UNUSED(pq);
-
-	sys_dlist_remove(&thread->base.qnode_dlist);
-}
-
-static ALWAYS_INLINE struct k_thread *z_priq_dumb_best(sys_dlist_t *pq)
-{
-	struct k_thread *thread = NULL;
-	sys_dnode_t *n = sys_dlist_peek_head(pq);
-
-	if (n != NULL) {
-		thread = CONTAINER_OF(n, struct k_thread, base.qnode_dlist);
-	}
-	return thread;
-}
 
 static ALWAYS_INLINE void z_priq_rb_add(struct _priq_rb *pq, struct k_thread *thread)
 {
@@ -196,7 +179,23 @@ static ALWAYS_INLINE void z_priq_mq_update(struct _priq_mq *pq,
 }
 #endif /* CONFIG_SCHED_MULTIQ */
 
+static ALWAYS_INLINE void z_priq_dumb_remove(sys_dlist_t *pq, struct k_thread *thread)
+{
+	ARG_UNUSED(pq);
 
+	sys_dlist_remove(&thread->base.qnode_dlist);
+}
+
+static ALWAYS_INLINE struct k_thread *z_priq_dumb_best(sys_dlist_t *pq)
+{
+	struct k_thread *thread = NULL;
+	sys_dnode_t *n = sys_dlist_peek_head(pq);
+
+	if (n != NULL) {
+		thread = CONTAINER_OF(n, struct k_thread, base.qnode_dlist);
+	}
+	return thread;
+}
 
 #ifdef CONFIG_SCHED_CPU_MASK
 static ALWAYS_INLINE struct k_thread *z_priq_dumb_mask_best(sys_dlist_t *pq)
@@ -232,6 +231,25 @@ static ALWAYS_INLINE void z_priq_dumb_add(sys_dlist_t *pq,
 
 	sys_dlist_append(pq, &thread->base.qnode_dlist);
 }
+
+static ALWAYS_INLINE void z_priq_dumb_update(sys_dlist_t *pq,
+					  struct k_thread *thread)
+{
+	struct k_thread *t;
+
+	sys_dlist_remove(&thread->base.qnode_dlist);
+
+	SYS_DLIST_FOR_EACH_CONTAINER(pq, t, base.qnode_dlist) {
+		if (z_sched_prio_cmp(thread, t) > 0) {
+			sys_dlist_insert(&t->base.qnode_dlist,
+					 &thread->base.qnode_dlist);
+			return;
+		}
+	}
+
+	sys_dlist_append(pq, &thread->base.qnode_dlist);
+}
+
 #endif /* CONFIG_SCHED_DUMB || CONFIG_WAITQ_DUMB */
 
 #endif /* ZEPHYR_KERNEL_INCLUDE_PRIORITY_Q_H_ */
