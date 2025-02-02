@@ -9,7 +9,7 @@ tests:
   sample.shell.shell_module:
     filter: CONFIG_SERIAL and dt_chosen_enabled("zephyr,shell-uart")
     tags: shell
-    harness: keyboard
+    harness: shell
     min_ram: 40
     integration_platforms:
       - native_sim
