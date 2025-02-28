@@ -7,4 +7,3 @@ tests:
     filter: dt_alias_exists("co2")
     depends_on:
       - serial
-      - uart_interrupt_driven

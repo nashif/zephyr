@@ -3,4 +3,3 @@ sample:
 tests:
   sample.drivers.charger:
     tags: charger
-    depends_on: charger
