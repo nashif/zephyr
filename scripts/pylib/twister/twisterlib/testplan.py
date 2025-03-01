@@ -570,6 +570,9 @@ class TestPlan:
                         if suite.skip:
                             logger.qa(f"skip set in {suite.name}")
 
+                        if suite.filter and not suite.integration_platforms and not suite.platform_allow:
+                            logger.qa(f"filter with no integration platforms in {suite.name}")
+
                         if suite.platform_allow and suite.integration_platforms:
                             _default_p = set(self.default_platforms)
                             _platform_allow = set(suite.platform_allow)
