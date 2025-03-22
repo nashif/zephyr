@@ -715,6 +715,11 @@ class TestPlan:
         ignore_platform_key = self.options.ignore_platform_key
         emu_filter = self.options.emulation_only
 
+        test_config = self.test_config.get('options', {})
+        platform_config = self.test_config.get('platforms', {})
+        integration_mode = test_config.get('integration_mode', [])
+
+
         logger.debug("platform filter: " + str(platform_filter))
         logger.debug("  vendor filter: " + str(vendor_filter))
         logger.debug("    arch_filter: " + str(arch_filter))
@@ -766,11 +771,9 @@ class TestPlan:
         else:
             platforms = self.platforms
 
-        platform_config = self.test_config.get('platforms', {})
         logger.info("Building initial testsuite list...")
 
         keyed_tests = {}
-
         for _, ts in self.testsuites.items():
             if (
                 ts.build_on_all
@@ -779,20 +782,15 @@ class TestPlan:
             ):
                 platform_scope = self.platforms
             elif ts.integration_platforms:
-                integration_platforms = list(
-                    filter(lambda item: item.name in ts.integration_platforms, self.platforms)
-                )
                 if self.options.integration:
-                    platform_scope = integration_platforms
+                    platform_scope = list(
+                        filter(lambda item: item.name in ts.integration_platforms, self.platforms)
+                    )
                 else:
-                    platform_scope = platforms
-                    if not platform_filter:
-                        tco = self.test_config.get('options', {})
-                        im = tco.get('integration_mode', [])
-                        if any(ts.id.startswith(i) for i in im):
-                            platform_scope = integration_platforms
-                        else:
-                            platform_scope += integration_platforms
+                    if not platform_filter and any(ts.id.startswith(i) for i in integration_mode):
+                        platform_scope = [p for p in self.platforms if p.name in ts.integration_platforms]
+                    else:
+                        platform_scope = platforms + [p for p in self.platforms if p.name in ts.integration_platforms]
             else:
                 platform_scope = platforms
 
