@@ -65,6 +65,7 @@ def find_best_coverage(database, changed_files, tests):
 
 def main(database_path, changed_files):
     tests = find_areas(changed_files)
+    print(tests)
     database = load_database(database_path)
     best_coverage = find_best_coverage(database, changed_files, tests)
 

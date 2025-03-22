@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import json
+import argparse
 
 def find_compile_commands_files(directory):
     compile_commands_files = []
@@ -30,7 +31,10 @@ def generate_testsuite_database(directory, output_file):
         json.dump(database, output, indent=4)
 
 if __name__ == "__main__":
-    directory = "/home/nashif/zephyrproject/zephyr/twister-out.my"
-    output_file = "testsuite_database.json"
-    generate_testsuite_database(directory, output_file)
-    print(f"Database generated and saved to {output_file}")
+    parser = argparse.ArgumentParser(description="Generate a testsuite database from compile_commands files.")
+    parser.add_argument("--directory", required=True, help="Directory to search for compile_commands files")
+    parser.add_argument("--output", required=True, help="Output file for the generated database")
+    args = parser.parse_args()
+
+    generate_testsuite_database(args.directory, args.output)
+    print(f"Database generated and saved to {args.output}")
