@@ -49,7 +49,8 @@ def find_best_coverage(database, changed_files, tests):
     for file in changed_files:
         if file in database:
             for entry in database[file]:
-                if tests and not any(re.search(f"^{test}", entry["testsuite_id"]) for test in tests):
+                if not any(re.search(f"^{test}", entry["testsuite_id"]) for test in tests):
+                    print("skip")
                     continue
                 testsuite_id = entry["testsuite_id"]
                 platform = entry["platform"]
@@ -65,7 +66,6 @@ def find_best_coverage(database, changed_files, tests):
 
 def main(database_path, changed_files):
     tests = find_areas(changed_files)
-    print(tests)
     database = load_database(database_path)
     best_coverage = find_best_coverage(database, changed_files, tests)
 
