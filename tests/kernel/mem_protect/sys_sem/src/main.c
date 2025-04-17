@@ -121,7 +121,7 @@ static void sem_multiple_threads_wait_helper(void *p1, void *p2, void *p3)
 }
 
 /**
- * @ingroup sys_sem_tests
+ * @ingroup kernel_semaphore_tests
  * @{
  */
 
