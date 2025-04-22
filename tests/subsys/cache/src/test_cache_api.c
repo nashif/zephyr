@@ -11,6 +11,15 @@
 
 static ZTEST_BMEM uint8_t user_buffer[SIZE];
 
+/**
+ * @defgroup cache_api_tests Cache Management
+ * @ingroup all_tests
+ * @{
+ */
+
+ /**
+  * @brief Test the instruction cache API
+  */
 ZTEST(cache_api, test_instr_cache_api)
 {
 	int ret;
@@ -44,6 +53,9 @@ ZTEST(cache_api, test_instr_cache_api)
 	zassert_true((ret == 0) || (ret == -ENOTSUP));
 }
 
+/**
+ * @brief Test the data cache API
+ */
 ZTEST(cache_api, test_data_cache_api)
 {
 	int ret;
@@ -65,6 +77,9 @@ ZTEST(cache_api, test_data_cache_api)
 
 }
 
+/**
+ * @brief Test the data cache API in user mode
+ */
 ZTEST_USER(cache_api, test_data_cache_api_user)
 {
 	int ret;
@@ -92,5 +107,9 @@ static void cache_api_teardown(void *unused)
 	sys_cache_data_disable();
 	sys_cache_instr_disable();
 }
+
+/**
+ * @}
+ */
 
 ZTEST_SUITE(cache_api, NULL, cache_api_setup, NULL, NULL, cache_api_teardown);

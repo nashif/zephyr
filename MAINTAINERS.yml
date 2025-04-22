@@ -662,7 +662,7 @@ Cache:
     - include/zephyr/cache.h
     - doc/hardware/cache/index.rst
     - drivers/cache/
-    - tests/kernel/cache/
+    - tests/subsys/cache/
   labels:
     - "area: Cache"
   tests:
