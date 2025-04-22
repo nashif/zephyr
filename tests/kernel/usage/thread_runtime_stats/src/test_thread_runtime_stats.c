@@ -9,6 +9,13 @@
 #define HELPER_STACK_SIZE 500
 
 /**
+ * @defgroup kernel_stats_tests Runtime Statistics
+ * @ingroup all_tests
+ *
+ * @{
+ */
+
+/**
  * @brief Verify @a va1 and @a val2 are within @a pcnt % of each other
  */
 #define TEST_WITHIN_X_PERCENT(val1, val2, pcnt)                       \
@@ -546,6 +553,10 @@ ZTEST(usage_api, test_thread_stats_usage)
 
 	k_thread_abort(tid);
 }
+
+/**
+ * @}
+ */
 
 ZTEST_SUITE(usage_api, NULL, NULL,
 		ztest_simple_1cpu_before, ztest_simple_1cpu_after, NULL);
