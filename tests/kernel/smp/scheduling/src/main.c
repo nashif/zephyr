@@ -73,21 +73,6 @@ static int curr_cpu(void)
  * @{
  * @}
  */
-
-/**
- * @defgroup kernel_smp_integration_tests SMP Integration Tests
- * @ingroup kernel_smp_tests
- * @{
- * @}
- */
-
-/**
- * @defgroup kernel_smp_module_tests SMP Module Tests
- * @ingroup kernel_smp_tests
- * @{
- * @}
- */
-
 static void t2_fn(void *a, void *b, void *c)
 {
 	ARG_UNUSED(a);
@@ -603,7 +588,7 @@ static void thread_get_cpu_entry(void *p1, void *p2, void *p3)
 /**
  * @brief Test get a pointer of CPU
  *
- * @ingroup kernel_smp_module_tests
+ * @ingroup kernel_smp_tests
  *
  * @details
  * Test Objective:
@@ -688,7 +673,7 @@ void z_trace_sched_ipi(void)
 /**
  * @brief Test interprocessor interrupt
  *
- * @ingroup kernel_smp_integration_tests
+ * @ingroup kernel_smp_tests
  *
  * @details
  * Test Objective:
@@ -793,7 +778,7 @@ void entry_oops(void *p1, void *p2, void *p3)
  * platforms, exception can be triggered on different core at
  * the same time.
  *
- * @ingroup kernel_common_tests
+ * @ingroup kernel_smp_tests
  */
 ZTEST(smp, test_fatal_on_smp)
 {
@@ -828,7 +813,7 @@ static void workq_handler(struct k_work *work)
  * @details When macro CONFIG_SMP is enabled, workq can be run
  * on different core.
  *
- * @ingroup kernel_common_tests
+ * @ingroup kernel_smp_tests
  */
 ZTEST(smp, test_workq_on_smp)
 {

@@ -52,6 +52,10 @@ static void thread_entry(void *p1, void *p2, void *p3)
 	}
 }
 
+/**
+ * @brief Test SMP suspend/resume thread starvation
+ * @ingroup kernel_smp_tests
+ */
 ZTEST(smp_suspend_resume, test_smp_thread_suspend_resume_stress)
 {
 	unsigned int  i;
