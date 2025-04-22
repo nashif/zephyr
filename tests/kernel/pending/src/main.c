@@ -279,17 +279,18 @@ void task_low(void)
 }
 
 /**
- * @brief Test pending
- *
  * @defgroup kernel_pending_tests Pending tests
+ * @brief Preemptible Threads Pending on kernel Objects
+ *
+ * This test verifies that preemptible threads can pend on the following
+ * kernel objects: FIFOs, LIFOs, ands timers.
  *
  * @ingroup all_tests
- *
  * @{
  */
 
 /**
- * @brief Test pending of workq, fifo and lifo
+ * @brief Test Preemptible Threads Pending on FIFO
  *
  * @see k_sleep(), K_THREAD_DEFINE()
  */
@@ -359,7 +360,9 @@ ZTEST(pending, test_pending_fifo)
 		      "**** Unexpected delivery order");
 }
 
-
+/**
+ * @brief Test Preemptible Threads Pending on LIFO
+ */
 ZTEST(pending, test_pending_lifo)
 {
 	/*
@@ -427,6 +430,9 @@ ZTEST(pending, test_pending_lifo)
 
 }
 
+/**
+ * @brief Test Preemptible Threads Pending on Timer
+ */
 ZTEST(pending, test_pending_timer)
 {
 	/*
