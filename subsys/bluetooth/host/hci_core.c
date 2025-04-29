@@ -119,7 +119,30 @@ static K_WORK_DEFINE(rx_work, rx_work_handler);
 #if defined(CONFIG_BT_RECV_WORKQ_BT)
 static struct k_work_q bt_workq;
 static K_KERNEL_STACK_DEFINE(rx_thread_stack, CONFIG_BT_RX_STACK_SIZE);
+/* General purpose Bluetooth workqueue for the host's internal delayed and
+ * immediate work items. It is backed by the RX thread, avoiding the shared
+ * system workqueue. When the RX packets are processed in the system workqueue
+ * (BT_RECV_WORKQ_SYS) there is no dedicated thread, so we fall back to it.
+ */
+static struct k_work_q *const bt_wq = &bt_workq;
+#else
+static struct k_work_q *const bt_wq = &k_sys_work_q;
 #endif /* CONFIG_BT_RECV_WORKQ_BT */
+
+int bt_work_submit(struct k_work *work)
+{
+	return k_work_submit_to_queue(bt_wq, work);
+}
+
+int bt_work_schedule(struct k_work_delayable *work, k_timeout_t delay)
+{
+	return k_work_schedule_for_queue(bt_wq, work, delay);
+}
+
+int bt_work_reschedule(struct k_work_delayable *work, k_timeout_t delay)
+{
+	return k_work_reschedule_for_queue(bt_wq, work, delay);
+}
 
 static void init_work(struct k_work *work);
 
@@ -4502,11 +4525,8 @@ static void rx_queue_put(struct net_buf *buf)
 {
 	net_buf_slist_put(&bt_dev.rx_queue, buf);
 
-#if defined(CONFIG_BT_RECV_WORKQ_SYS)
-	const int err = k_work_submit(&rx_work);
-#elif defined(CONFIG_BT_RECV_WORKQ_BT)
-	const int err = k_work_submit_to_queue(&bt_workq, &rx_work);
-#endif /* CONFIG_BT_RECV_WORKQ_SYS */
+	const int err = bt_work_submit(&rx_work);
+
 	if (err < 0) {
 		LOG_ERR("Could not submit rx_work: %d", err);
 	}
@@ -4689,12 +4709,7 @@ static void rx_work_handler(struct k_work *work)
 	 * we used a while() loop with a k_yield() statement.
 	 */
 	if (!sys_slist_is_empty(&bt_dev.rx_queue)) {
-
-#if defined(CONFIG_BT_RECV_WORKQ_SYS)
-		err = k_work_submit(&rx_work);
-#elif defined(CONFIG_BT_RECV_WORKQ_BT)
-		err = k_work_submit_to_queue(&bt_workq, &rx_work);
-#endif
+		err = bt_work_submit(&rx_work);
 		if (err < 0) {
 			LOG_ERR("Could not submit rx_work: %d", err);
 		}
