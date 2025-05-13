@@ -366,7 +366,7 @@ int z_thread_stats_query(struct k_obj_core *obj_core, void *stats)
 	return 0;
 }
 
-int z_thread_stats_reset(struct k_obj_core *obj_core)
+int k_priv_thread_stats_reset(struct k_obj_core *obj_core)
 {
 	k_spinlock_key_t  key;
 	struct k_cycle_stats  *stats;

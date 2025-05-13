@@ -43,7 +43,7 @@ static struct k_obj_core_stats_desc  thread_stats_desc = {
 	.query_size = sizeof(struct k_thread_runtime_stats),
 	.raw   = z_thread_stats_raw,
 	.query = z_thread_stats_query,
-	.reset = z_thread_stats_reset,
+	.reset = k_priv_thread_stats_reset,
 	.disable = z_thread_stats_disable,
 	.enable  = z_thread_stats_enable,
 };

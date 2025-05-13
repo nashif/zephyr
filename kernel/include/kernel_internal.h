@@ -262,7 +262,7 @@ void z_paging_histogram_inc(struct k_mem_paging_histogram_t *hist,
 #ifdef CONFIG_OBJ_CORE_STATS_THREAD
 int z_thread_stats_raw(struct k_obj_core *obj_core, void *stats);
 int z_thread_stats_query(struct k_obj_core *obj_core, void *stats);
-int z_thread_stats_reset(struct k_obj_core *obj_core);
+int k_priv_thread_stats_reset(struct k_obj_core *obj_core);
 int z_thread_stats_disable(struct k_obj_core *obj_core);
 int z_thread_stats_enable(struct k_obj_core *obj_core);
 #endif /* CONFIG_OBJ_CORE_STATS_THREAD */
