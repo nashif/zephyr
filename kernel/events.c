@@ -173,7 +173,7 @@ static uint32_t k_event_post_internal(struct k_event *event, uint32_t events,
 		} while (thread != NULL);
 	}
 
-	z_reschedule(&event->lock, key);
+	k_priv_reschedule(&event->lock, key);
 
 	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_event, post, event, events,
 				       events_mask);

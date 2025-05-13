@@ -179,7 +179,7 @@ int z_impl_k_msgq_put(struct k_msgq *msgq, const void *data, k_timeout_t timeout
 	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_msgq, put, msgq, timeout, result);
 
 	if (resched) {
-		z_reschedule(&msgq->lock, key);
+		k_priv_reschedule(&msgq->lock, key);
 	} else {
 		k_spin_unlock(&msgq->lock, key);
 	}
@@ -278,7 +278,7 @@ int z_impl_k_msgq_get(struct k_msgq *msgq, void *data, k_timeout_t timeout)
 	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_msgq, get, msgq, timeout, result);
 
 	if (resched) {
-		z_reschedule(&msgq->lock, key);
+		k_priv_reschedule(&msgq->lock, key);
 	} else {
 		k_spin_unlock(&msgq->lock, key);
 	}
@@ -401,7 +401,7 @@ void z_impl_k_msgq_purge(struct k_msgq *msgq)
 	msgq->read_ptr = msgq->write_ptr;
 
 	if (resched) {
-		z_reschedule(&msgq->lock, key);
+		k_priv_reschedule(&msgq->lock, key);
 	} else {
 		k_spin_unlock(&msgq->lock, key);
 	}

@@ -188,7 +188,7 @@ int z_impl_k_mutex_lock(struct k_mutex *mutex, k_timeout_t timeout)
 	}
 
 	if (resched) {
-		z_reschedule(&lock, key);
+		k_priv_reschedule(&lock, key);
 	} else {
 		k_spin_unlock(&lock, key);
 	}
@@ -270,7 +270,7 @@ int z_impl_k_mutex_unlock(struct k_mutex *mutex)
 		mutex->owner_orig_prio = new_owner->base.prio;
 		arch_thread_return_value_set(new_owner, 0);
 		z_ready_thread(new_owner);
-		z_reschedule(&lock, key);
+		k_priv_reschedule(&lock, key);
 	} else {
 		mutex->lock_count = 0U;
 		k_spin_unlock(&lock, key);

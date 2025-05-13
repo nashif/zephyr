@@ -163,7 +163,7 @@ void z_impl_k_thread_abort(k_tid_t thread)
 	}
 
 	/* The abort handler might have altered the ready queue. */
-	z_reschedule_irqlock(key);
+	k_priv_reschedule_irqlock(key);
 
 	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_thread, abort, thread);
 }

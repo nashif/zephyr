@@ -544,7 +544,7 @@ int z_impl_k_poll_signal_raise(struct k_poll_signal *sig, int result)
 
 	SYS_PORT_TRACING_FUNC(k_poll_api, signal_raise, sig, rc);
 
-	z_reschedule(&lock, key);
+	k_priv_reschedule(&lock, key);
 	return rc;
 }
 

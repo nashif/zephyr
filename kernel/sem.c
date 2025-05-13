@@ -112,7 +112,7 @@ void z_impl_k_sem_give(struct k_sem *sem)
 	}
 
 	if (unlikely(resched)) {
-		z_reschedule(&lock, key);
+		k_priv_reschedule(&lock, key);
 	} else {
 		k_spin_unlock(&lock, key);
 	}
@@ -185,7 +185,7 @@ void z_impl_k_sem_reset(struct k_sem *sem)
 	resched = handle_poll_events(sem) || resched;
 
 	if (resched) {
-		z_reschedule(&lock, key);
+		k_priv_reschedule(&lock, key);
 	} else {
 		k_spin_unlock(&lock, key);
 	}

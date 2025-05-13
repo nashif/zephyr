@@ -210,7 +210,7 @@ int z_impl_k_pipe_write(struct k_pipe *pipe, const uint8_t *data, size_t len, k_
 exit:
 	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_pipe, write, pipe, rc);
 	if (need_resched) {
-		z_reschedule(&pipe->lock, key);
+		k_priv_reschedule(&pipe->lock, key);
 	} else {
 		k_spin_unlock(&pipe->lock, key);
 	}
@@ -263,7 +263,7 @@ int z_impl_k_pipe_read(struct k_pipe *pipe, uint8_t *data, size_t len, k_timeout
 exit:
 	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_pipe, read, pipe, rc);
 	if (need_resched) {
-		z_reschedule(&pipe->lock, key);
+		k_priv_reschedule(&pipe->lock, key);
 	} else {
 		k_spin_unlock(&pipe->lock, key);
 	}

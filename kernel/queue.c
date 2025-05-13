@@ -114,7 +114,7 @@ void z_impl_k_queue_cancel_wait(struct k_queue *queue)
 	resched = handle_poll_events(queue, K_POLL_STATE_CANCELLED) || resched;
 
 	if (resched) {
-		z_reschedule(&queue->lock, key);
+		k_priv_reschedule(&queue->lock, key);
 	} else {
 		k_spin_unlock(&queue->lock, key);
 	}
@@ -175,7 +175,7 @@ static int32_t queue_insert(struct k_queue *queue, void *prev, void *data,
 
 out:
 	if (resched) {
-		z_reschedule(&queue->lock, key);
+		k_priv_reschedule(&queue->lock, key);
 	} else {
 		k_spin_unlock(&queue->lock, key);
 	}
@@ -289,7 +289,7 @@ int k_queue_append_list(struct k_queue *queue, void *head, void *tail)
 	resched = handle_poll_events(queue, K_POLL_STATE_DATA_AVAILABLE) || resched;
 
 	if (resched) {
-		z_reschedule(&queue->lock, key);
+		k_priv_reschedule(&queue->lock, key);
 	} else {
 		k_spin_unlock(&queue->lock, key);
 	}

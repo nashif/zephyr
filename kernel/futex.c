@@ -50,7 +50,7 @@ int z_impl_k_futex_wake(struct k_futex *futex, bool wake_all)
 	if (woken == 0) {
 		k_spin_unlock(&futex_data->lock, key);
 	} else {
-		z_reschedule(&futex_data->lock, key);
+		k_priv_reschedule(&futex_data->lock, key);
 	}
 
 	return woken;

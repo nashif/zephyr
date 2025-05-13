@@ -190,7 +190,7 @@ static void mbox_message_dispose(struct k_mbox_msg *rx_msg)
 	arch_thread_return_value_set(sending_thread, 0);
 	z_mark_thread_as_not_pending(sending_thread);
 	z_ready_thread(sending_thread);
-	z_reschedule_unlocked();
+	k_priv_reschedule_unlocked();
 }
 
 /**
@@ -248,7 +248,7 @@ static int mbox_message_put(struct k_mbox *mbox, struct k_mbox_msg *tx_msg,
 			 */
 			if ((sending_thread->base.thread_state & _THREAD_DUMMY)
 			    != 0U) {
-				z_reschedule(&mbox->lock, key);
+				k_priv_reschedule(&mbox->lock, key);
 				return 0;
 			}
 #endif /* CONFIG_NUM_MBOX_ASYNC_MSGS */

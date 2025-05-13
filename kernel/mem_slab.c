@@ -286,7 +286,7 @@ void k_mem_slab_free(struct k_mem_slab *slab, void *mem)
 
 			z_thread_return_value_set_with_data(pending_thread, 0, mem);
 			z_ready_thread(pending_thread);
-			z_reschedule(&slab->lock, key);
+			k_priv_reschedule(&slab->lock, key);
 			return;
 		}
 	}

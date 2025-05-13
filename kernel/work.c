@@ -400,7 +400,7 @@ int k_work_submit_to_queue(struct k_work_q *queue,
 	 * if the queue state changed.
 	 */
 	if (ret > 0) {
-		z_reschedule_unlocked();
+		k_priv_reschedule_unlocked();
 	}
 
 	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_work, submit_to_queue, queue, work, ret);

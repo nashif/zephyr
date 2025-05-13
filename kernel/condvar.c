@@ -54,7 +54,7 @@ int z_impl_k_condvar_signal(struct k_condvar *condvar)
 
 		arch_thread_return_value_set(thread, 0);
 		z_ready_thread(thread);
-		z_reschedule(&lock, key);
+		k_priv_reschedule(&lock, key);
 	} else {
 		k_spin_unlock(&lock, key);
 	}
@@ -97,7 +97,7 @@ int z_impl_k_condvar_broadcast(struct k_condvar *condvar)
 	if (woken == 0) {
 		k_spin_unlock(&lock, key);
 	} else {
-		z_reschedule(&lock, key);
+		k_priv_reschedule(&lock, key);
 	}
 
 	return woken;

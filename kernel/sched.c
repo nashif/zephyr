@@ -507,7 +507,7 @@ void z_impl_k_thread_resume(k_tid_t thread)
 	z_mark_thread_as_not_suspended(thread);
 	ready_thread(thread);
 
-	z_reschedule(&_sched_spinlock, key);
+	k_priv_reschedule(&_sched_spinlock, key);
 
 	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_thread, resume, thread);
 }
@@ -746,7 +746,7 @@ static inline bool need_swap(void)
 #endif /* CONFIG_SMP */
 }
 
-void z_reschedule(struct k_spinlock *lock, k_spinlock_key_t key)
+void k_priv_reschedule(struct k_spinlock *lock, k_spinlock_key_t key)
 {
 	if (resched(key.key) && need_swap()) {
 		z_swap(lock, key);
@@ -756,7 +756,7 @@ void z_reschedule(struct k_spinlock *lock, k_spinlock_key_t key)
 	}
 }
 
-void z_reschedule_irqlock(uint32_t key)
+void k_priv_reschedule_irqlock(uint32_t key)
 {
 	if (resched(key) && need_swap()) {
 		z_swap_irqlock(key);
@@ -790,7 +790,7 @@ void k_sched_unlock(void)
 
 	SYS_PORT_TRACING_FUNC(k_thread, sched_unlock);
 
-	z_reschedule_unlocked();
+	k_priv_reschedule_unlocked();
 }
 
 struct k_thread *z_swap_next_thread(void)
@@ -968,7 +968,7 @@ void z_impl_k_thread_priority_set(k_tid_t thread, int prio)
 
 	if ((need_sched) && (IS_ENABLED(CONFIG_SMP) ||
 			     (_current->base.sched_locked == 0U))) {
-		z_reschedule_unlocked();
+		k_priv_reschedule_unlocked();
 	}
 }
 
@@ -1038,7 +1038,7 @@ void z_impl_k_reschedule(void)
 
 	update_cache(0);
 
-	z_reschedule(&_sched_spinlock, key);
+	k_priv_reschedule(&_sched_spinlock, key);
 }
 
 #ifdef CONFIG_USERSPACE
@@ -1179,7 +1179,7 @@ void z_impl_k_wakeup(k_tid_t thread)
 		z_abort_thread_timeout(thread);
 		z_mark_thread_as_not_sleeping(thread);
 		ready_thread(thread);
-		z_reschedule(&_sched_spinlock, key);
+		k_priv_reschedule(&_sched_spinlock, key);
 	} else {
 		k_spin_unlock(&_sched_spinlock, key);
 	}

@@ -118,7 +118,7 @@ int z_impl_k_stack_push(struct k_stack *stack, stack_data_t data)
 						   0, (void *)data);
 
 		z_ready_thread(first_pending_thread);
-		z_reschedule(&stack->lock, key);
+		k_priv_reschedule(&stack->lock, key);
 		goto end;
 	} else {
 		*(stack->next) = data;

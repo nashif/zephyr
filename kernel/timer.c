@@ -215,7 +215,7 @@ void z_impl_k_timer_stop(struct k_timer *timer)
 
 		if (pending_thread != NULL) {
 			z_ready_thread(pending_thread);
-			z_reschedule_unlocked();
+			k_priv_reschedule_unlocked();
 		}
 	}
 }

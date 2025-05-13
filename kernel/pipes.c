@@ -484,7 +484,7 @@ int z_impl_k_pipe_put(struct k_pipe *pipe, const void *data,
 		/* The minimum amount of data has been copied */
 
 		if (reschedule_needed) {
-			z_reschedule(&pipe->lock, key);
+			k_priv_reschedule(&pipe->lock, key);
 		} else {
 			k_spin_unlock(&pipe->lock, key);
 		}
@@ -672,7 +672,7 @@ static int pipe_get_internal(k_spinlock_key_t key, struct k_pipe *pipe,
 
 		*bytes_read = num_bytes_read;
 		if (reschedule_needed) {
-			z_reschedule(&pipe->lock, key);
+			k_priv_reschedule(&pipe->lock, key);
 		} else {
 			k_spin_unlock(&pipe->lock, key);
 		}
