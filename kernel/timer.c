@@ -122,7 +122,7 @@ void k_timer_init(struct k_timer *timer,
 		k_priv_waitq_init(&timer->wait_q);
 	}
 
-	z_init_timeout(&timer->timeout);
+	k_priv_init_timeout(&timer->timeout);
 
 	SYS_PORT_TRACING_OBJ_INIT(k_timer, timer);
 

@@ -657,7 +657,7 @@ void k_work_poll_init(struct k_work_poll *work,
 	*work = (struct k_work_poll) {};
 	k_work_init(&work->work, triggered_work_handler);
 	work->real_handler = handler;
-	z_init_timeout(&work->timeout);
+	k_priv_init_timeout(&work->timeout);
 
 	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_work_poll, init, work);
 }

@@ -29,6 +29,6 @@ void rtio_sched_alarm(struct rtio_iodev_sqe *iodev_sqe, k_timeout_t timeout)
 {
 	struct rtio_sqe *sqe = &iodev_sqe->sqe;
 
-	z_init_timeout(&sqe->delay.to);
+	k_priv_init_timeout(&sqe->delay.to);
 	z_add_timeout(&sqe->delay.to, rtio_sched_alarm_expired, timeout);
 }

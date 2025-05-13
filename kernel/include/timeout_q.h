@@ -25,7 +25,7 @@ extern "C" {
 /* Value written to dticks when timeout is aborted. */
 #define TIMEOUT_DTICKS_ABORTED (IS_ENABLED(CONFIG_TIMEOUT_64BIT) ? INT64_MIN : INT32_MIN)
 
-static inline void z_init_timeout(struct _timeout *to)
+static inline void k_priv_init_timeout(struct _timeout *to)
 {
 	sys_dnode_init(&to->node);
 }
@@ -51,7 +51,7 @@ static inline bool z_is_aborted_timeout(const struct _timeout *to)
 
 static inline void z_init_thread_timeout(struct _thread_base *thread_base)
 {
-	z_init_timeout(&thread_base->timeout);
+	k_priv_init_timeout(&thread_base->timeout);
 }
 
 extern void z_thread_timeout(struct _timeout *timeout);

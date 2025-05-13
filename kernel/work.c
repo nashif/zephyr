@@ -896,7 +896,7 @@ void k_work_init_delayable(struct k_work_delayable *dwork,
 			.flags = K_WORK_DELAYABLE,
 		},
 	};
-	z_init_timeout(&dwork->timeout);
+	k_priv_init_timeout(&dwork->timeout);
 
 	SYS_PORT_TRACING_OBJ_INIT(k_work_delayable, dwork);
 }
