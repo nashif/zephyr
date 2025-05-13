@@ -451,7 +451,7 @@ int z_cpu_stats_raw(struct k_obj_core *obj_core, void *stats)
 	return 0;
 }
 
-int z_cpu_stats_query(struct k_obj_core *obj_core, void *stats)
+int k_priv_cpu_stats_query(struct k_obj_core *obj_core, void *stats)
 {
 	struct _cpu  *cpu;
 

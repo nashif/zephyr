@@ -269,7 +269,7 @@ int z_thread_stats_enable(struct k_obj_core *obj_core);
 
 #ifdef CONFIG_OBJ_CORE_STATS_SYSTEM
 int z_cpu_stats_raw(struct k_obj_core *obj_core, void *stats);
-int z_cpu_stats_query(struct k_obj_core *obj_core, void *stats);
+int k_priv_cpu_stats_query(struct k_obj_core *obj_core, void *stats);
 
 int z_kernel_stats_raw(struct k_obj_core *obj_core, void *stats);
 int z_kernel_stats_query(struct k_obj_core *obj_core, void *stats);
