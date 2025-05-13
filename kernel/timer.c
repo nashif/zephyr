@@ -100,7 +100,7 @@ void z_timer_expiration_handler(struct _timeout *t)
 		return;
 	}
 
-	z_unpend_thread_no_timeout(thread);
+	k_priv_unpend_thread_no_timeout(thread);
 
 	arch_thread_return_value_set(thread, 0);
 

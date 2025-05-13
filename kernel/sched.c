@@ -569,7 +569,7 @@ void z_pend_thread(struct k_thread *thread, _wait_q_t *wait_q,
 	}
 }
 
-void z_unpend_thread_no_timeout(struct k_thread *thread)
+void k_priv_unpend_thread_no_timeout(struct k_thread *thread)
 {
 	K_SPINLOCK(&_sched_spinlock) {
 		if (thread->base.pended_on != NULL) {
@@ -656,7 +656,7 @@ struct k_thread *z_unpend1_no_timeout(_wait_q_t *wait_q)
 
 void z_unpend_thread(struct k_thread *thread)
 {
-	z_unpend_thread_no_timeout(thread);
+	k_priv_unpend_thread_no_timeout(thread);
 	z_abort_thread_timeout(thread);
 }
 
