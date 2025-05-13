@@ -4136,7 +4136,7 @@ struct z_work_flusher {
  * When a cancelling work item goes idle any matching waiters are
  * removed from pending_cancels and are woken.
  */
-struct z_work_canceller {
+struct k_priv_work_canceller {
 	sys_snode_t node;
 	struct k_work *work;
 	struct k_sem sem;
@@ -4162,7 +4162,7 @@ struct z_work_canceller {
 struct k_work_sync {
 	union {
 		struct z_work_flusher flusher;
-		struct z_work_canceller canceller;
+		struct k_priv_work_canceller canceller;
 	};
 };
 

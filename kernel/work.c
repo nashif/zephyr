@@ -84,7 +84,7 @@ static sys_slist_t pending_cancels;
  * @param canceler the structure used to notify a waiting process.
  * @param work the work structure that is to be canceled
  */
-static inline void init_work_cancel(struct z_work_canceller *canceler,
+static inline void init_work_cancel(struct k_priv_work_canceller *canceler,
 				    struct k_work *work)
 {
 	k_sem_init(&canceler->sem, 0, 1);
@@ -124,7 +124,7 @@ static void finalize_flush_locked(struct k_work *work)
  */
 static void finalize_cancel_locked(struct k_work *work)
 {
-	struct z_work_canceller *wc, *tmp;
+	struct k_priv_work_canceller *wc, *tmp;
 	sys_snode_t *prev = NULL;
 
 	/* Clear this first, so released high-priority threads don't
@@ -532,7 +532,7 @@ static int cancel_async_locked(struct k_work *work)
  * @retval false if work was idle on entry.  The caller need not wait.
  */
 static bool cancel_sync_locked(struct k_work *work,
-			       struct z_work_canceller *canceller)
+			       struct k_priv_work_canceller *canceller)
 {
 	bool ret = flag_test(&work->flags, K_WORK_CANCELING_BIT);
 
@@ -577,7 +577,7 @@ bool k_work_cancel_sync(struct k_work *work,
 
 	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_work, cancel_sync, work, sync);
 
-	struct z_work_canceller *canceller = &sync->canceller;
+	struct k_priv_work_canceller *canceller = &sync->canceller;
 	k_spinlock_key_t key = k_spin_lock(&lock);
 	bool pending = (work_busy_get_locked(work) != 0U);
 	bool need_wait = false;
@@ -1105,7 +1105,7 @@ bool k_work_cancel_delayable_sync(struct k_work_delayable *dwork,
 
 	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_work, cancel_delayable_sync, dwork, sync);
 
-	struct z_work_canceller *canceller = &sync->canceller;
+	struct k_priv_work_canceller *canceller = &sync->canceller;
 	k_spinlock_key_t key = k_spin_lock(&lock);
 	bool pending = (work_delayable_busy_get_locked(dwork) != 0U);
 	bool need_wait = false;
