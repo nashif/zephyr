@@ -65,7 +65,7 @@ static void slice_timeout(struct _timeout *timeout)
 	}
 }
 
-void z_reset_time_slice(struct k_thread *thread)
+void k_priv_reset_time_slice(struct k_thread *thread)
 {
 	int cpu = _current_cpu->id;
 
@@ -82,7 +82,7 @@ void k_sched_time_slice_set(int32_t slice, int prio)
 	K_SPINLOCK(&_sched_spinlock) {
 		slice_ticks = k_ms_to_ticks_ceil32(slice);
 		slice_max_prio = prio;
-		z_reset_time_slice(_current);
+		k_priv_reset_time_slice(_current);
 	}
 }
 
@@ -94,7 +94,7 @@ void k_thread_time_slice_set(struct k_thread *thread, int32_t thread_slice_ticks
 		thread->base.slice_ticks = thread_slice_ticks;
 		thread->base.slice_expired = expired;
 		thread->base.slice_data = data;
-		z_reset_time_slice(thread);
+		k_priv_reset_time_slice(thread);
 	}
 }
 #endif
@@ -107,7 +107,7 @@ void z_time_slice(void)
 
 #ifdef CONFIG_SWAP_NONATOMIC
 	if (pending_current == curr) {
-		z_reset_time_slice(curr);
+		k_priv_reset_time_slice(curr);
 		k_spin_unlock(&_sched_spinlock, key);
 		return;
 	}
@@ -125,7 +125,7 @@ void z_time_slice(void)
 		if (!z_is_thread_prevented_from_running(curr)) {
 			move_thread_to_end_of_prio_q(curr);
 		}
-		z_reset_time_slice(curr);
+		k_priv_reset_time_slice(curr);
 	}
 	k_spin_unlock(&_sched_spinlock, key);
 }
