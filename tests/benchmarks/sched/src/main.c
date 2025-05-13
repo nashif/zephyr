@@ -117,7 +117,7 @@ int main(void)
 	}
 #endif /* (CONFIG_MP_MAX_NUM_CPUS > 1) */
 
-	z_waitq_init(&waitq);
+	k_priv_waitq_init(&waitq);
 
 	int main_prio = k_thread_priority_get(k_current_get());
 	int partner_prio = main_prio - 1;

@@ -133,7 +133,7 @@ int k_p4wq_wait(struct k_p4wq_work *work, k_timeout_t timeout)
 void k_p4wq_init(struct k_p4wq *queue)
 {
 	memset(queue, 0, sizeof(*queue));
-	z_waitq_init(&queue->waitq);
+	k_priv_waitq_init(&queue->waitq);
 	queue->queue.lessthan_fn = rb_lessthan;
 	sys_dlist_init(&queue->active);
 }

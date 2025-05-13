@@ -231,7 +231,7 @@ int main(void)
 	       IS_ENABLED(CONFIG_WAITQ_SIMPLE) ? "simple" : "scalable");
 	printk("Timing results: Clock frequency: %u MHz\n", freq);
 
-	z_waitq_init(&wait_q);
+	k_priv_waitq_init(&wait_q);
 
 	dummy_threads_init(CONFIG_BENCHMARK_NUM_THREADS);
 

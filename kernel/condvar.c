@@ -20,7 +20,7 @@ static struct k_spinlock lock;
 
 int z_impl_k_condvar_init(struct k_condvar *condvar)
 {
-	z_waitq_init(&condvar->wait_q);
+	k_priv_waitq_init(&condvar->wait_q);
 	k_object_init(condvar);
 
 #ifdef CONFIG_OBJ_CORE_CONDVAR

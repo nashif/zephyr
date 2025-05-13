@@ -119,7 +119,7 @@ void k_timer_init(struct k_timer *timer,
 	timer->status = 0U;
 
 	if (IS_ENABLED(CONFIG_MULTITHREADING)) {
-		z_waitq_init(&timer->wait_q);
+		k_priv_waitq_init(&timer->wait_q);
 	}
 
 	z_init_timeout(&timer->timeout);

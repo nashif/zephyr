@@ -57,7 +57,7 @@ int z_impl_k_mutex_init(struct k_mutex *mutex)
 	mutex->owner = NULL;
 	mutex->lock_count = 0U;
 
-	z_waitq_init(&mutex->wait_q);
+	k_priv_waitq_init(&mutex->wait_q);
 
 	k_object_init(mutex);
 

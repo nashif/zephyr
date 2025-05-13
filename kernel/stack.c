@@ -27,7 +27,7 @@ static struct k_obj_type obj_type_stack;
 void k_stack_init(struct k_stack *stack, stack_data_t *buffer,
 		  uint32_t num_entries)
 {
-	z_waitq_init(&stack->wait_q);
+	k_priv_waitq_init(&stack->wait_q);
 	stack->lock = (struct k_spinlock) {};
 	stack->next = buffer;
 	stack->base = buffer;

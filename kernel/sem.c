@@ -59,7 +59,7 @@ int z_impl_k_sem_init(struct k_sem *sem, unsigned int initial_count,
 
 	SYS_PORT_TRACING_OBJ_FUNC(k_sem, init, sem, 0);
 
-	z_waitq_init(&sem->wait_q);
+	k_priv_waitq_init(&sem->wait_q);
 #if defined(CONFIG_POLL)
 	sys_dlist_init(&sem->poll_events);
 #endif /* CONFIG_POLL */

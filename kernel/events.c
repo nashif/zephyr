@@ -58,7 +58,7 @@ void z_impl_k_event_init(struct k_event *event)
 
 	SYS_PORT_TRACING_OBJ_INIT(k_event, event);
 
-	z_waitq_init(&event->wait_q);
+	k_priv_waitq_init(&event->wait_q);
 
 	k_object_init(event);
 

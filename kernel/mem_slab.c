@@ -196,7 +196,7 @@ int k_mem_slab_init(struct k_mem_slab *slab, void *buffer,
 				  sizeof(struct k_mem_slab_info));
 #endif /* CONFIG_OBJ_CORE_STATS_MEM_SLAB */
 
-	z_waitq_init(&slab->wait_q);
+	k_priv_waitq_init(&slab->wait_q);
 	k_object_init(slab);
 out:
 	SYS_PORT_TRACING_OBJ_INIT(k_mem_slab, slab, rc);

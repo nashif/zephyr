@@ -736,8 +736,8 @@ void k_work_queue_start(struct k_work_q *queue,
 	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_work_queue, start, queue);
 
 	sys_slist_init(&queue->pending);
-	z_waitq_init(&queue->notifyq);
-	z_waitq_init(&queue->drainq);
+	k_priv_waitq_init(&queue->notifyq);
+	k_priv_waitq_init(&queue->drainq);
 
 	if ((cfg != NULL) && cfg->no_yield) {
 		flags |= K_WORK_QUEUE_NO_YIELD;

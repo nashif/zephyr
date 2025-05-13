@@ -86,8 +86,8 @@ SYS_INIT(init_mbox_module, PRE_KERNEL_1, CONFIG_KERNEL_INIT_PRIORITY_OBJECTS);
 
 void k_mbox_init(struct k_mbox *mbox)
 {
-	z_waitq_init(&mbox->tx_msg_queue);
-	z_waitq_init(&mbox->rx_msg_queue);
+	k_priv_waitq_init(&mbox->tx_msg_queue);
+	k_priv_waitq_init(&mbox->rx_msg_queue);
 	mbox->lock = (struct k_spinlock) {};
 
 #ifdef CONFIG_OBJ_CORE_MAILBOX

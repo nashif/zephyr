@@ -14,7 +14,7 @@
 
 void k_heap_init(struct k_heap *heap, void *mem, size_t bytes)
 {
-	z_waitq_init(&heap->wait_q);
+	k_priv_waitq_init(&heap->wait_q);
 	heap->lock = (struct k_spinlock) {};
 	sys_heap_init(&heap->heap, mem, bytes);
 
