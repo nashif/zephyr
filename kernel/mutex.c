@@ -176,7 +176,7 @@ int z_impl_k_mutex_lock(struct k_mutex *mutex, k_timeout_t timeout)
 	 * If so, skip adjusting owner's priority down.
 	 */
 	if (likely(mutex->owner != NULL)) {
-		struct k_thread *waiter = z_waitq_head(&mutex->wait_q);
+		struct k_thread *waiter = k_priv_waitq_head(&mutex->wait_q);
 
 		new_prio = (waiter != NULL) ?
 			new_prio_for_inheritance(waiter->base.prio, mutex->owner_orig_prio) :

@@ -71,7 +71,7 @@ ZTEST(events_api, test_k_event_init)
 	 */
 
 
-	thread = z_waitq_head(&event.wait_q);
+	thread = k_priv_waitq_head(&event.wait_q);
 
 	zassert_is_null(thread, NULL);
 	zassert_true(event.events == 0);

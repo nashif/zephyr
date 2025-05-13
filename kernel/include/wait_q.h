@@ -33,7 +33,7 @@ static inline void k_priv_waitq_init(_wait_q_t *w)
 	};
 }
 
-static inline struct k_thread *z_waitq_head(_wait_q_t *w)
+static inline struct k_thread *k_priv_waitq_head(_wait_q_t *w)
 {
 	return (struct k_thread *)rb_get_min(&w->waitq.tree);
 }
@@ -49,7 +49,7 @@ static inline void k_priv_waitq_init(_wait_q_t *w)
 	sys_dlist_init(&w->waitq);
 }
 
-static inline struct k_thread *z_waitq_head(_wait_q_t *w)
+static inline struct k_thread *k_priv_waitq_head(_wait_q_t *w)
 {
 	return (struct k_thread *)sys_dlist_peek_head(&w->waitq);
 }

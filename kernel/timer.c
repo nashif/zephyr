@@ -93,7 +93,7 @@ void z_timer_expiration_handler(struct _timeout *t)
 		return;
 	}
 
-	thread = z_waitq_head(&timer->wait_q);
+	thread = k_priv_waitq_head(&timer->wait_q);
 
 	if (thread == NULL) {
 		k_spin_unlock(&lock, key);

@@ -81,7 +81,7 @@ int k_stack_cleanup(struct k_stack *stack)
 {
 	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_stack, cleanup, stack);
 
-	CHECKIF(z_waitq_head(&stack->wait_q) != NULL) {
+	CHECKIF(k_priv_waitq_head(&stack->wait_q) != NULL) {
 		SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_stack, cleanup, stack, -EAGAIN);
 
 		return -EAGAIN;

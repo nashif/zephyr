@@ -172,8 +172,8 @@ int k_pipe_cleanup(struct k_pipe *pipe)
 
 	k_spinlock_key_t key = k_spin_lock(&pipe->lock);
 
-	CHECKIF((z_waitq_head(&pipe->wait_q.readers) != NULL) ||
-			(z_waitq_head(&pipe->wait_q.writers) != NULL)) {
+	CHECKIF((k_priv_waitq_head(&pipe->wait_q.readers) != NULL) ||
+			(k_priv_waitq_head(&pipe->wait_q.writers) != NULL)) {
 		k_spin_unlock(&pipe->lock, key);
 
 		SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_pipe, cleanup, pipe, -EAGAIN);

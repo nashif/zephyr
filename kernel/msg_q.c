@@ -108,7 +108,7 @@ int k_msgq_cleanup(struct k_msgq *msgq)
 {
 	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_msgq, cleanup, msgq);
 
-	CHECKIF(z_waitq_head(&msgq->wait_q) != NULL) {
+	CHECKIF(k_priv_waitq_head(&msgq->wait_q) != NULL) {
 		SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_msgq, cleanup, msgq, -EBUSY);
 
 		return -EBUSY;
