@@ -61,10 +61,10 @@
 -extra_definitions+="name(z_data_smem_footprint_mem_partition_part_size)"
 -extra_definitions+="name(z_data_smem_footprint_mem_partition_bss_start)"
 -extra_definitions+="name(z_data_smem_footprint_mem_partition_bss_size)"
--extra_definitions+="name(z_object_gperf_find)"
--extra_definitions+="name(z_object_gperf_wordlist_foreach)"
--extra_definitions+="name(_z_object_assignment_list_start)"
--extra_definitions+="name(_z_object_assignment_list_end)"
+-extra_definitions+="name(k_priv_object_gperf_find)"
+-extra_definitions+="name(k_priv_object_gperf_wordlist_foreach)"
+-extra_definitions+="name(_k_priv_object_assignment_list_start)"
+-extra_definitions+="name(_k_priv_object_assignment_list_end)"
 -doc_end
 
 -doc="Entities created with Z_LINK_ITERABLE in linker.ld"

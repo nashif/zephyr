@@ -174,8 +174,8 @@ struct dyn_obj {
 	void *data;
 };
 
-extern struct k_object *z_object_gperf_find(const void *obj);
-extern void z_object_gperf_wordlist_foreach(_wordlist_cb_func_t func,
+extern struct k_object *k_priv_object_gperf_find(const void *obj);
+extern void k_priv_object_gperf_wordlist_foreach(_wordlist_cb_func_t func,
 					     void *context);
 
 /*
@@ -393,7 +393,7 @@ struct k_object *k_object_create_dynamic_aligned(size_t align, size_t size)
 	return obj;
 }
 
-static void *z_object_alloc(enum k_objects otype, size_t size)
+static void *k_priv_object_alloc(enum k_objects otype, size_t size)
 {
 	struct k_object *zo;
 	uintptr_t tidx = 0;
@@ -449,12 +449,12 @@ static void *z_object_alloc(enum k_objects otype, size_t size)
 
 void *z_impl_k_object_alloc(enum k_objects otype)
 {
-	return z_object_alloc(otype, 0);
+	return k_priv_object_alloc(otype, 0);
 }
 
 void *z_impl_k_object_alloc_size(enum k_objects otype, size_t size)
 {
-	return z_object_alloc(otype, size);
+	return k_priv_object_alloc(otype, size);
 }
 
 void k_object_free(void *obj)
@@ -488,7 +488,7 @@ struct k_object *k_object_find(const void *obj)
 {
 	struct k_object *ret;
 
-	ret = z_object_gperf_find(obj);
+	ret = k_priv_object_gperf_find(obj);
 
 	if (ret == NULL) {
 		struct dyn_obj *dyn;
@@ -510,7 +510,7 @@ void k_object_wordlist_foreach(_wordlist_cb_func_t func, void *context)
 {
 	struct dyn_obj *obj, *next;
 
-	z_object_gperf_wordlist_foreach(func, context);
+	k_priv_object_gperf_wordlist_foreach(func, context);
 
 	k_spinlock_key_t key = k_spin_lock(&lists_lock);
 
@@ -528,12 +528,12 @@ void k_object_wordlist_foreach(_wordlist_cb_func_t func, void *context)
  */
 #ifdef CONFIG_DYNAMIC_OBJECTS
 Z_GENERIC_SECTION(.kobject_data.text.dummies)
-__weak struct k_object *z_object_gperf_find(const void *obj)
+__weak struct k_object *k_priv_object_gperf_find(const void *obj)
 {
 	return NULL;
 }
 Z_GENERIC_SECTION(.kobject_data.text.dummies)
-__weak void z_object_gperf_wordlist_foreach(_wordlist_cb_func_t func, void *context)
+__weak void k_priv_object_gperf_wordlist_foreach(_wordlist_cb_func_t func, void *context)
 {
 }
 #else
@@ -577,7 +577,7 @@ static void unref_check(struct k_object *ko, uintptr_t index)
 
 	struct dyn_obj *dyn = CONTAINER_OF(vko, struct dyn_obj, kobj);
 
-	__ASSERT(IS_PTR_ALIGNED(dyn, struct dyn_obj), "unaligned z_object");
+	__ASSERT(IS_PTR_ALIGNED(dyn, struct dyn_obj), "unaligned k_priv_object");
 
 	for (int i = 0; i < CONFIG_MAX_THREAD_BYTES; i++) {
 		if (ko->perms[i] != 0U) {

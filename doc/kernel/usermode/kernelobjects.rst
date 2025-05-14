@@ -116,7 +116,7 @@ be prevented. When a device struct is found, its API pointer is examined to
 determine what subsystem the driver belongs to.
 
 The table itself maps kernel object memory addresses to instances of
-:c:struct:`z_object`, which has all the metadata for that object. This
+:c:struct:`k_priv_object`, which has all the metadata for that object. This
 includes:
 
 * A bitfield indicating permissions on that object. All threads have a
@@ -129,7 +129,7 @@ includes:
 * A set of flags for that object. This is currently used to track
   initialization state and whether an object is public or not.
 * An extra data field. The semantics of this field vary by object type, see
-  the definition of :c:union:`z_object_data`.
+  the definition of :c:union:`k_priv_object_data`.
 
 Dynamic objects allocated at runtime are tracked in a runtime red/black tree
 which is used in parallel to the gperf table when validating object pointers.

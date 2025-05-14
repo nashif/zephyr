@@ -726,7 +726,7 @@ def get_symbols(elf):
 # -- GPERF generation logic
 
 header = """%compare-lengths
-%define lookup-function-name z_object_lookup
+%define lookup-function-name k_priv_object_lookup
 %language=ANSI-C
 %global-table
 %struct-type
@@ -744,12 +744,12 @@ struct k_object;
 # turned into a string, we told gperf to expect binary strings that are not
 # NULL-terminated.
 footer = """%%
-struct k_object *z_object_gperf_find(const void *obj)
+struct k_object *k_priv_object_gperf_find(const void *obj)
 {
-    return z_object_lookup((const char *)obj, sizeof(void *));
+    return k_priv_object_lookup((const char *)obj, sizeof(void *));
 }
 
-void z_object_gperf_wordlist_foreach(_wordlist_cb_func_t func, void *context)
+void k_priv_object_gperf_wordlist_foreach(_wordlist_cb_func_t func, void *context)
 {
     int i;
 
@@ -762,10 +762,10 @@ void z_object_gperf_wordlist_foreach(_wordlist_cb_func_t func, void *context)
 
 #ifndef CONFIG_DYNAMIC_OBJECTS
 struct k_object *k_object_find(const void *obj)
-	ALIAS_OF(z_object_gperf_find);
+	ALIAS_OF(k_priv_object_gperf_find);
 
 void k_object_wordlist_foreach(_wordlist_cb_func_t func, void *context)
-	ALIAS_OF(z_object_gperf_wordlist_foreach);
+	ALIAS_OF(k_priv_object_gperf_wordlist_foreach);
 #endif
 """
 

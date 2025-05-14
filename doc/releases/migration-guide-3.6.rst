@@ -681,19 +681,19 @@ Userspace
   * ``z_user_alloc_from_copy`` to :c:func:`k_usermode_alloc_from_copy`
   * ``z_user_string_nlen`` to :c:func:`k_usermode_string_nlen`
   * ``z_dump_object_error`` to :c:func:`k_object_dump_error`
-  * ``z_object_validate`` to :c:func:`k_object_validate`
-  * ``z_object_find`` to :c:func:`k_object_find`
-  * ``z_object_wordlist_foreach`` to :c:func:`k_object_wordlist_foreach`
+  * ``k_priv_object_validate`` to :c:func:`k_object_validate`
+  * ``k_priv_object_find`` to :c:func:`k_object_find`
+  * ``k_priv_object_wordlist_foreach`` to :c:func:`k_object_wordlist_foreach`
   * ``z_thread_perms_inherit`` to :c:func:`k_thread_perms_inherit`
   * ``z_thread_perms_set`` to :c:func:`k_thread_perms_set`
   * ``z_thread_perms_clear`` to :c:func:`k_thread_perms_clear`
   * ``z_thread_perms_all_clear`` to :c:func:`k_thread_perms_all_clear`
-  * ``z_object_uninit`` to :c:func:`k_object_uninit`
-  * ``z_object_recycle`` to :c:func:`k_object_recycle`
+  * ``k_priv_object_uninit`` to :c:func:`k_object_uninit`
+  * ``k_priv_object_recycle`` to :c:func:`k_object_recycle`
   * ``z_obj_validation_check`` to :c:func:`k_object_validation_check`
   * ``Z_SYSCALL_VERIFY_MSG`` to :c:macro:`K_SYSCALL_VERIFY_MSG`
-  * ``z_object`` to :c:struct:`k_object`
-  * ``z_object_init`` to :c:func:`k_object_init`
+  * ``k_priv_object`` to :c:struct:`k_object`
+  * ``k_priv_object_init`` to :c:func:`k_object_init`
   * ``z_dynamic_object_aligned_create`` to :c:func:`k_object_create_dynamic_aligned`
 
 Architectures

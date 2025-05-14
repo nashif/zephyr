@@ -35,8 +35,8 @@ Declarations in these files not necessarily have to be referenced."
 -doc="Function hash, that is automatically generated, does not use the parameter \"len\" in all its definitions."
 -config=MC3R1.R2.7,declarations+={relied,"context(^hash\\(const char\\*, size_t\\)$)&&name(len)"}
 
--doc="Function \"z_object_lookup\", that is automatically generated, uses single-statement bodies not enclosed in braces."
--config=MC3R1.R15.6,reports={relied, "all_area(context(^z_object_lookup\\(const char\\*, size_t\\)$))"}
+-doc="Function \"k_priv_object_lookup\", that is automatically generated, uses single-statement bodies not enclosed in braces."
+-config=MC3R1.R15.6,reports={relied, "all_area(context(^k_priv_object_lookup\\(const char\\*, size_t\\)$))"}
 
 -doc="The following declarations are in generated files: not in all configuration they are implemented.
     Chainging the generators could be dangerous and the advantages in enforcing the rule do not outweight these dangers."
