@@ -105,13 +105,13 @@ struct k_spinlock {
  * kernel code size, don't use on platforms known to be small.
  */
 #ifdef CONFIG_SPIN_VALIDATE
-bool z_spin_lock_valid(struct k_spinlock *l);
+bool k_priv_spin_lock_valid(struct k_spinlock *l);
 bool z_spin_unlock_valid(struct k_spinlock *l);
-void z_spin_lock_set_owner(struct k_spinlock *l);
+void k_priv_spin_lock_set_owner(struct k_spinlock *l);
 BUILD_ASSERT(CONFIG_MP_MAX_NUM_CPUS <= 4, "Too many CPUs for mask");
 
 # ifdef CONFIG_KERNEL_COHERENCE
-bool z_spin_lock_mem_coherent(struct k_spinlock *l);
+bool k_priv_spin_lock_mem_coherent(struct k_spinlock *l);
 # endif /* CONFIG_KERNEL_COHERENCE */
 
 #endif /* CONFIG_SPIN_VALIDATE */
@@ -133,9 +133,9 @@ static ALWAYS_INLINE void z_spinlock_validate_pre(struct k_spinlock *l)
 {
 	ARG_UNUSED(l);
 #ifdef CONFIG_SPIN_VALIDATE
-	__ASSERT(z_spin_lock_valid(l), "Invalid spinlock %p", l);
+	__ASSERT(k_priv_spin_lock_valid(l), "Invalid spinlock %p", l);
 #ifdef CONFIG_KERNEL_COHERENCE
-	__ASSERT_NO_MSG(z_spin_lock_mem_coherent(l));
+	__ASSERT_NO_MSG(k_priv_spin_lock_mem_coherent(l));
 #endif
 #endif
 }
@@ -144,7 +144,7 @@ static ALWAYS_INLINE void z_spinlock_validate_post(struct k_spinlock *l)
 {
 	ARG_UNUSED(l);
 #ifdef CONFIG_SPIN_VALIDATE
-	z_spin_lock_set_owner(l);
+	k_priv_spin_lock_set_owner(l);
 #if defined(CONFIG_SPIN_LOCK_TIME_LIMIT) && (CONFIG_SPIN_LOCK_TIME_LIMIT != 0)
 	l->lock_time = sys_clock_cycle_get_32();
 #endif /* CONFIG_SPIN_LOCK_TIME_LIMIT */

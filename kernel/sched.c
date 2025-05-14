@@ -889,7 +889,7 @@ void *z_get_next_switch_handle(void *interrupted)
 			 * confused when the "wrong" thread tries to
 			 * release the lock.
 			 */
-			z_spin_lock_set_owner(&_sched_spinlock);
+			k_priv_spin_lock_set_owner(&_sched_spinlock);
 #endif /* CONFIG_SPIN_VALIDATE */
 
 			/* A queued (runnable) old/current thread

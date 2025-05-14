@@ -2054,7 +2054,7 @@ release:
 * :github:`30162` - Build zephyr with Metaware toolchain for HSDK fails
 * :github:`30121` - Make log subsystem power aware
 * :github:`30101` - tests should not be silently skipped due to insufficient RAM
-* :github:`30074` - Occasional Spinlocks on zephyr 2.4.0 (ASSERTION FAIL [z_spin_lock_valid(l)] @ WEST_TOPDIR/zephyr/include/spinlock.h:92)
+* :github:`30074` - Occasional Spinlocks on zephyr 2.4.0 (ASSERTION FAIL [k_priv_spin_lock_valid(l)] @ WEST_TOPDIR/zephyr/include/spinlock.h:92)
 * :github:`30055` - Memory corruption for newlib-nano with float printf and disabled heap
 * :github:`29946` - SD card initialization is wrong
 * :github:`29915` - eth: stm32h747i_disco: sem timeout and hang on debug build

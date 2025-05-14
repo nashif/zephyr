@@ -139,7 +139,7 @@ static ALWAYS_INLINE unsigned int do_swap(unsigned int key,
 #endif /* CONFIG_TIMESLICING */
 
 #ifdef CONFIG_SPIN_VALIDATE
-		z_spin_lock_set_owner(&_sched_spinlock);
+		k_priv_spin_lock_set_owner(&_sched_spinlock);
 #endif /* CONFIG_SPIN_VALIDATE */
 
 		arch_cohere_stacks(old_thread, NULL, new_thread);

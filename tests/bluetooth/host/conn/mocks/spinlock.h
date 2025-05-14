@@ -9,10 +9,10 @@
 
 /* List of fakes used by this unit tester */
 #define SPINLOCK_MOCKS_FFF_FAKES_LIST(FAKE)                                                        \
-	FAKE(z_spin_lock_valid)                                                                    \
+	FAKE(k_priv_spin_lock_valid)                                                                    \
 	FAKE(z_spin_unlock_valid)                                                                  \
-	FAKE(z_spin_lock_set_owner)
+	FAKE(k_priv_spin_lock_set_owner)
 
-DECLARE_FAKE_VALUE_FUNC(bool, z_spin_lock_valid, struct k_spinlock *);
+DECLARE_FAKE_VALUE_FUNC(bool, k_priv_spin_lock_valid, struct k_spinlock *);
 DECLARE_FAKE_VALUE_FUNC(bool, z_spin_unlock_valid, struct k_spinlock *);
-DECLARE_FAKE_VOID_FUNC(z_spin_lock_set_owner, struct k_spinlock *);
+DECLARE_FAKE_VOID_FUNC(k_priv_spin_lock_set_owner, struct k_spinlock *);

@@ -8,6 +8,6 @@
 
 #include "spinlock.h"
 
-DEFINE_FAKE_VALUE_FUNC(bool, z_spin_lock_valid, struct k_spinlock *);
+DEFINE_FAKE_VALUE_FUNC(bool, k_priv_spin_lock_valid, struct k_spinlock *);
 DEFINE_FAKE_VALUE_FUNC(bool, z_spin_unlock_valid, struct k_spinlock *);
-DEFINE_FAKE_VOID_FUNC(z_spin_lock_set_owner, struct k_spinlock *);
+DEFINE_FAKE_VOID_FUNC(k_priv_spin_lock_set_owner, struct k_spinlock *);

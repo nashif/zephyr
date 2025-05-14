@@ -7,7 +7,7 @@
 #include <zephyr/spinlock.h>
 #include <zephyr/llext/symbol.h>
 
-bool z_spin_lock_valid(struct k_spinlock *l)
+bool k_priv_spin_lock_valid(struct k_spinlock *l)
 {
 	uintptr_t thread_cpu = l->thread_cpu;
 
@@ -18,7 +18,7 @@ bool z_spin_lock_valid(struct k_spinlock *l)
 	}
 	return true;
 }
-EXPORT_SYMBOL(z_spin_lock_valid);
+EXPORT_SYMBOL(k_priv_spin_lock_valid);
 
 bool z_spin_unlock_valid(struct k_spinlock *l)
 {
@@ -37,16 +37,16 @@ bool z_spin_unlock_valid(struct k_spinlock *l)
 }
 EXPORT_SYMBOL(z_spin_unlock_valid);
 
-void z_spin_lock_set_owner(struct k_spinlock *l)
+void k_priv_spin_lock_set_owner(struct k_spinlock *l)
 {
 	l->thread_cpu = _current_cpu->id | (uintptr_t)_current;
 }
-EXPORT_SYMBOL(z_spin_lock_set_owner);
+EXPORT_SYMBOL(k_priv_spin_lock_set_owner);
 
 #ifdef CONFIG_KERNEL_COHERENCE
-bool z_spin_lock_mem_coherent(struct k_spinlock *l)
+bool k_priv_spin_lock_mem_coherent(struct k_spinlock *l)
 {
 	return arch_mem_coherent((void *)l);
 }
-EXPORT_SYMBOL(z_spin_lock_mem_coherent);
+EXPORT_SYMBOL(k_priv_spin_lock_mem_coherent);
 #endif /* CONFIG_KERNEL_COHERENCE */

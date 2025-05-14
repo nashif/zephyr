@@ -1551,7 +1551,7 @@ release:
 * :github:`13422` - Can't use GPIO 2, 3 and 4
 * :github:`13421` - tests/drivers/watchdog/wdt_basic_api: test_wdt_no_callback() repeats indefinitely
 * :github:`13413` - x86 reports incorrect stack pointer for user mode exceptions
-* :github:`13411` - kernel: ASSERTION FAIL [z_spin_lock_valid(l)]
+* :github:`13411` - kernel: ASSERTION FAIL [k_priv_spin_lock_valid(l)]
 * :github:`13410` - qemu_x86 transient build errors for mmu_tables.o
 * :github:`13408` - DT_FLASH_AREA generated seems to be different for Zephyr and MCUBootloader
 * :github:`13397` - Function documentation is missing for BSD sockets
