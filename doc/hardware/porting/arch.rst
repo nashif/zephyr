@@ -83,7 +83,7 @@ Some examples of architecture-specific steps that have to be taken:
   in an unknown or broken state.
 * Initialize a board-specific watchdog on Cortex-M3/4.
 * Switch stacks from MSP to PSP on Cortex-M.
-* Use a different approach than calling into z_swap() on Cortex-M to prevent
+* Use a different approach than calling into k_priv_swap() on Cortex-M to prevent
   race conditions.
 * Setup FIRQ and regular IRQ handling on ARCv2.
 
@@ -226,7 +226,7 @@ There are two types of context switches: :dfn:`cooperative` and :dfn:`preemptive
   running thread.
 
 A cooperative context switch is always done by having a thread call the
-internal kernel routine :code:`z_swap` (or one of its variants). This in turn
+internal kernel routine :code:`k_priv_swap` (or one of its variants). This in turn
 will call either :code:`arch_switch` or :code:`arch_swap` as appropriate.
 When these are called, no checks are done to determine if the context switch is
 to happen--the context switch must happen.
@@ -238,7 +238,7 @@ to happen--the context switch must happen.
   the context switch. This should not be taken as a rule, since
   neither the ARM Cortex-M nor ARCv2 port do this.
 
-Since :code:`z_swap` is cooperative, the caller-saved registers from the ABI are
+Since :code:`k_priv_swap` is cooperative, the caller-saved registers from the ABI are
 already on the stack. There is no need to save them in the k_thread structure.
 
 A context switch can also be performed preemptively. This happens upon exiting

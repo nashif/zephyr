@@ -323,7 +323,7 @@ static inline int z_vrfy_k_thread_name_copy(k_tid_t thread,
  *
  * 1) In k_yield() if the current thread is not swapped out
  * 2) After servicing a non-nested interrupt
- * 3) In z_swap(), check the sentinel in the outgoing thread
+ * 3) In k_priv_swap(), check the sentinel in the outgoing thread
  *
  * Item 2 requires support in arch/ code.
  *
@@ -568,7 +568,7 @@ char *z_setup_new_thread(struct k_thread *new_thread,
 	new_thread->init_data = NULL;
 
 #ifdef CONFIG_USE_SWITCH
-	/* switch_handle must be non-null except when inside z_swap()
+	/* switch_handle must be non-null except when inside k_priv_swap()
 	 * for synchronization reasons.  Historically some notional
 	 * USE_SWITCH architectures have actually ignored the field
 	 */

@@ -717,7 +717,7 @@ static FUNC_NORETURN void switch_to_main_thread(char *stack_ptr)
 	 * current fake thread is not on a wait queue or ready queue, so it
 	 * will never be rescheduled in.
 	 */
-	z_swap_unlocked();
+	k_priv_swap_unlocked();
 #endif /* CONFIG_ARCH_HAS_CUSTOM_SWAP_TO_MAIN */
 	CODE_UNREACHABLE; /* LCOV_EXCL_LINE */
 }

@@ -82,7 +82,7 @@ void z_smp_global_unlock(unsigned int key)
 	arch_irq_unlock(key);
 }
 
-/* Called from within z_swap(), so assumes lock already held */
+/* Called from within k_priv_swap(), so assumes lock already held */
 void z_smp_release_global_lock(struct k_thread *thread)
 {
 	if (!thread->base.global_lock_count) {
@@ -143,7 +143,7 @@ static inline void smp_init_top(void *arg)
 	}
 
 	/* Let scheduler decide what thread to run next. */
-	z_swap_unlocked();
+	k_priv_swap_unlocked();
 
 	CODE_UNREACHABLE; /* LCOV_EXCL_LINE */
 }

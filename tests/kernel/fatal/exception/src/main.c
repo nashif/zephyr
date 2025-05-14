@@ -249,7 +249,7 @@ void stack_sentinel_swap(void *p1, void *p2, void *p3)
 	/* Test that stack overflow check due to swap works */
 	blow_up_stack();
 	TC_PRINT("swapping...\n");
-	z_swap_unlocked();
+	k_priv_swap_unlocked();
 	TC_ERROR("should never see this\n");
 	rv = TC_FAIL;
 }

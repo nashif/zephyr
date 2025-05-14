@@ -14,7 +14,7 @@ static struct _timeout slice_timeouts[CONFIG_MP_MAX_NUM_CPUS];
 static bool slice_expired[CONFIG_MP_MAX_NUM_CPUS];
 
 #ifdef CONFIG_SWAP_NONATOMIC
-/* If z_swap() isn't atomic, then it's possible for a timer interrupt
+/* If k_priv_swap() isn't atomic, then it's possible for a timer interrupt
  * to try to timeslice away _current after it has already pended
  * itself but before the corresponding context switch.  Treat that as
  * a noop condition in z_time_slice().

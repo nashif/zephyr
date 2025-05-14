@@ -229,7 +229,7 @@ struct _thread_arch {
 #if defined(CONFIG_LAZY_FPU_SHARING)
 	/*
 	 * Nested exception count to maintain setting of EXC_ACTIVE flag across
-	 * outermost exception.  EXC_ACTIVE is used by z_swap() lazy FP
+	 * outermost exception.  EXC_ACTIVE is used by k_priv_swap() lazy FP
 	 * save/restore and by debug tools.
 	 */
 	unsigned excNestCount; /* nested exception count */

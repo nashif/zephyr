@@ -376,8 +376,8 @@ CROHandlingDone:
  * an invalid access to address zero and returns an error, which causes the
  * GDB stack unwinder to stop somewhat gracefully.
  *
- * The initial EFLAGS cannot be overwritten until after z_swap() has swapped in
- * the new thread for the first time.  This routine is called by z_swap() the
+ * The initial EFLAGS cannot be overwritten until after k_priv_swap() has swapped in
+ * the new thread for the first time.  This routine is called by k_priv_swap() the
  * first time that the new thread is swapped in, and it jumps to
  * z_thread_entry after it has done its work.
  *
@@ -390,7 +390,7 @@ CROHandlingDone:
  *      |__________________|
  *      |      pEntry      |
  *      |__________________|
- *      | initial EFLAGS   |  <----   ESP when invoked by z_swap()
+ *      | initial EFLAGS   |  <----   ESP when invoked by k_priv_swap()
  *      |__________________|             (Zeroed by this routine)
  *
  * The address of the thread entry function needs to be in %edi when this is

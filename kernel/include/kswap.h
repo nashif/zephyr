@@ -22,7 +22,7 @@ extern struct k_spinlock _sched_spinlock;
 /* In SMP, the irq_lock() is a spinlock which is implicitly released
  * and reacquired on context switch to preserve the existing
  * semantics.  This means that whenever we are about to return to a
- * thread (via either z_swap() or interrupt/exception return!) we need
+ * thread (via either k_priv_swap() or interrupt/exception return!) we need
  * to restore the lock state to whatever the thread's counter
  * expects.
  */
@@ -118,7 +118,7 @@ static ALWAYS_INLINE unsigned int do_swap(unsigned int key,
 		(void) k_spin_lock(&_sched_spinlock);
 	}
 
-	new_thread = z_swap_next_thread();
+	new_thread = k_priv_swap_next_thread();
 
 	if (new_thread != old_thread) {
 		k_priv_sched_usage_switch(new_thread);
@@ -176,17 +176,17 @@ static ALWAYS_INLINE unsigned int do_swap(unsigned int key,
 	return _current->swap_retval;
 }
 
-static inline int z_swap_irqlock(unsigned int key)
+static inline int k_priv_swap_irqlock(unsigned int key)
 {
 	return do_swap(key, NULL, false);
 }
 
-static inline int z_swap(struct k_spinlock *lock, k_spinlock_key_t key)
+static inline int k_priv_swap(struct k_spinlock *lock, k_spinlock_key_t key)
 {
 	return do_swap(key.key, lock, true);
 }
 
-static inline void z_swap_unlocked(void)
+static inline void k_priv_swap_unlocked(void)
 {
 	(void) do_swap(arch_irq_lock(), NULL, true);
 }
@@ -200,7 +200,7 @@ static inline void k_priv_sched_switch_spin(struct k_thread *thread)
 	ARG_UNUSED(thread);
 }
 
-static inline int z_swap_irqlock(unsigned int key)
+static inline int k_priv_swap_irqlock(unsigned int key)
 {
 	int ret;
 	z_check_stack_sentinel();
@@ -212,15 +212,15 @@ static inline int z_swap_irqlock(unsigned int key)
  * can't be in SMP.  The k_spin_release() call is just for validation
  * handling.
  */
-static ALWAYS_INLINE int z_swap(struct k_spinlock *lock, k_spinlock_key_t key)
+static ALWAYS_INLINE int k_priv_swap(struct k_spinlock *lock, k_spinlock_key_t key)
 {
 	k_spin_release(lock);
-	return z_swap_irqlock(key.key);
+	return k_priv_swap_irqlock(key.key);
 }
 
-static inline void z_swap_unlocked(void)
+static inline void k_priv_swap_unlocked(void)
 {
-	(void) z_swap_irqlock(arch_irq_lock());
+	(void) k_priv_swap_irqlock(arch_irq_lock());
 }
 
 #endif /* !CONFIG_USE_SWITCH */

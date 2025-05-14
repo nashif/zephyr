@@ -396,7 +396,7 @@ int k_work_submit_to_queue(struct k_work_q *queue,
 
 	/* submit_to_queue_locked() won't reschedule on its own
 	 * (really it should, otherwise this process will result in
-	 * spurious calls to z_swap() due to the race), so do it here
+	 * spurious calls to k_priv_swap() due to the race), so do it here
 	 * if the queue state changed.
 	 */
 	if (ret > 0) {

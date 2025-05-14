@@ -284,7 +284,7 @@ static inline void arch_isr_direct_header(void)
 }
 
 /*
- * FIXME: z_swap_irqlock is an inline function declared in a private header and
+ * FIXME: k_priv_swap_irqlock is an inline function declared in a private header and
  *	  cannot be referenced from a public header, so we move it to an
  *	  external function.
  */
@@ -308,7 +308,7 @@ static inline void arch_isr_direct_footer(int swap)
 	    _kernel.ready_q.cache != _current) {
 		unsigned int flags;
 
-		/* Fetch EFLAGS argument to z_swap() */
+		/* Fetch EFLAGS argument to k_priv_swap() */
 		__asm__ volatile (
 			"pushfl\n\t"
 			"popl %0\n\t"

@@ -21,7 +21,7 @@
 /* forward declaration */
 
 /* Initial thread stack frame, such that everything is laid out as expected
- * for when z_swap() switches to it for the first time.
+ * for when k_priv_swap() switches to it for the first time.
  */
 struct _x86_initial_frame {
 	uint32_t swap_retval;
@@ -92,7 +92,7 @@ void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack,
 	swap_entry = z_thread_entry;
 #endif
 
-	/* Create an initial context on the stack expected by z_swap() */
+	/* Create an initial context on the stack expected by k_priv_swap() */
 	initial_frame = Z_STACK_PTR_TO_FRAME(struct _x86_initial_frame,
 					     stack_ptr);
 

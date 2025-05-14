@@ -139,7 +139,7 @@ SECTION_FUNC(PINNED_TEXT, _exception_enter)
 
 	/*
 	 * Set X86_THREAD_FLAG_EXC in the current thread. This enables
-	 * z_swap() to preserve the thread's FP registers (where needed)
+	 * k_priv_swap() to preserve the thread's FP registers (where needed)
 	 * if the exception handler causes a context switch. It also
 	 * indicates to debug tools that an exception is being handled
 	 * in the event of a context switch.

@@ -6383,7 +6383,7 @@ __syscall int k_float_disable(struct k_thread *thread);
 
  * Invoking this routine initializes the thread's floating point context info
  * to that of an FPU that has been reset. The next time the thread is scheduled
- * by z_swap() it will either inherit an FPU that is guaranteed to be in a
+ * by k_priv_swap() it will either inherit an FPU that is guaranteed to be in a
  * "sane" state (if the most recent user of the FPU was cooperatively swapped
  * out) or the thread's own floating point context will be loaded (if the most
  * recent user of the FPU was preempted, or if this thread is the first user

@@ -342,7 +342,7 @@ struct k_thread {
 	 * become part of the core OS
 	 */
 
-	/** z_swap() return value */
+	/** k_priv_swap() return value */
 	int swap_retval;
 
 	/** Context handle returned via arch_switch() */

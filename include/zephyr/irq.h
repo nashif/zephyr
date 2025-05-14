@@ -152,11 +152,11 @@ irq_disconnect_dynamic(unsigned int irq, unsigned int priority,
  * minimal architecture-specific tasks like EOI. It has no return value.
  *
  * In a normal interrupt, a check is done at end of interrupt to invoke
- * z_swap() logic if the current thread is preemptible and there is another
+ * k_priv_swap() logic if the current thread is preemptible and there is another
  * thread ready to run in the kernel's ready queue cache. This is now optional
  * and controlled by the check_reschedule argument. If unsure, set to nonzero.
  * On systems that do stack switching and nested interrupt tracking in software,
- * z_swap() should only be called if this was a non-nested interrupt.
+ * k_priv_swap() should only be called if this was a non-nested interrupt.
  *
  * @param check_reschedule If nonzero, additionally invoke scheduling logic
  */
@@ -193,7 +193,7 @@ irq_disconnect_dynamic(unsigned int irq, unsigned int priority,
  *             bool done = do_stuff();
  *             ISR_DIRECT_PM(); // done after do_stuff() due to latency concerns
  *             if (!done) {
- *                 return 0; // don't bother checking if we have to z_swap()
+ *                 return 0; // don't bother checking if we have to k_priv_swap()
  *             }
  *
  *             k_sem_give(some_sem);

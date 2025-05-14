@@ -242,7 +242,7 @@ skip_callee_saved_reg:
 
 	/*
 	 * Save stack pointer of current thread and set the default return value
-	 * of z_swap to _k_neg_eagain for the thread.
+	 * of k_priv_swap to _k_neg_eagain for the thread.
 	 */
 	OP_STOREREG sp, _thread_offset_to_sp(t1)
 	la t2, _k_neg_eagain

@@ -40,7 +40,7 @@ void idle(void *unused1, void *unused2, void *unused3)
 			for (volatile int i = 0; i < 100000; i++) {
 				/* Empty loop */
 			}
-			z_swap_unlocked();
+			k_priv_swap_unlocked();
 		}
 
 		/* Note weird API: k_cpu_idle() is called with local
@@ -87,7 +87,7 @@ void idle(void *unused1, void *unused2, void *unused3)
 		 * nothing else will run once it starts.
 		 */
 		if (_kernel.ready_q.cache != _current) {
-			z_swap_unlocked();
+			k_priv_swap_unlocked();
 		}
 # endif /* !defined(CONFIG_USE_SWITCH) || defined(CONFIG_SPARC) */
 #endif /* !defined(CONFIG_PREEMPT_ENABLED) */

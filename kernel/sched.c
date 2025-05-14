@@ -128,7 +128,7 @@ static ALWAYS_INLINE void dequeue_thread(struct k_thread *thread)
 	}
 }
 
-/* Called out of z_swap() when CONFIG_SMP.  The current thread can
+/* Called out of k_priv_swap() when CONFIG_SMP.  The current thread can
  * never live in the run queue until we are inexorably on the context
  * switch path on SMP, otherwise there is a deadlock condition where a
  * set of CPUs pick a cycle of threads to run and wait for them all to
@@ -200,7 +200,7 @@ static ALWAYS_INLINE struct k_thread *next_up(void)
 	/* In uniprocessor mode, we can leave the current thread in
 	 * the queue (actually we have to, otherwise the assembly
 	 * context switch code for all architectures would be
-	 * responsible for putting it back in z_swap and ISR return!),
+	 * responsible for putting it back in k_priv_swap and ISR return!),
 	 * which makes this choice simple.
 	 */
 	return (thread != NULL) ? thread : _current_cpu->idle_thread;
@@ -428,7 +428,7 @@ static ALWAYS_INLINE void z_thread_halt(struct k_thread *thread, k_spinlock_key_
 			thread_halt_spin(thread, key);
 		} else  {
 			add_to_waitq_locked(_current, wq);
-			z_swap(&_sched_spinlock, key);
+			k_priv_swap(&_sched_spinlock, key);
 		}
 	} else {
 		halt_thread(thread, terminate ? _THREAD_DEAD : _THREAD_SUSPENDED);
@@ -438,7 +438,7 @@ static ALWAYS_INLINE void z_thread_halt(struct k_thread *thread, k_spinlock_key_
 				k_panic();
 				key = k_spin_lock(&_sched_spinlock);
 			}
-			z_swap(&_sched_spinlock, key);
+			k_priv_swap(&_sched_spinlock, key);
 			__ASSERT(!terminate, "aborted _current back from dead");
 		} else {
 			k_spin_unlock(&_sched_spinlock, key);
@@ -464,7 +464,7 @@ void z_impl_k_thread_suspend(k_tid_t thread)
 		z_mark_thread_as_suspended(thread);
 		dequeue_thread(thread);
 		update_cache(1);
-		z_swap(&_sched_spinlock, key);
+		k_priv_swap(&_sched_spinlock, key);
 		return;
 	}
 
@@ -625,10 +625,10 @@ int z_pend_curr(struct k_spinlock *lock, k_spinlock_key_t key,
 #endif /* CONFIG_TIMESLICING && CONFIG_SWAP_NONATOMIC */
 	__ASSERT_NO_MSG(sizeof(_sched_spinlock) == 0 || lock != &_sched_spinlock);
 
-	/* We do a "lock swap" prior to calling z_swap(), such that
+	/* We do a "lock swap" prior to calling k_priv_swap(), such that
 	 * the caller's lock gets released as desired.  But we ensure
 	 * that we hold the scheduler lock and leave local interrupts
-	 * masked until we reach the context switch.  z_swap() itself
+	 * masked until we reach the context switch.  k_priv_swap() itself
 	 * has similar code; the duplication is because it's a legacy
 	 * API that doesn't expect to be called with scheduler lock
 	 * held.
@@ -636,7 +636,7 @@ int z_pend_curr(struct k_spinlock *lock, k_spinlock_key_t key,
 	(void) k_spin_lock(&_sched_spinlock);
 	pend_locked(_current, wait_q, timeout);
 	k_spin_release(lock);
-	return z_swap(&_sched_spinlock, key);
+	return k_priv_swap(&_sched_spinlock, key);
 }
 
 struct k_thread *z_unpend1_no_timeout(_wait_q_t *wait_q)
@@ -734,7 +734,7 @@ static inline bool resched(uint32_t key)
  */
 static inline bool need_swap(void)
 {
-	/* the SMP case will be handled in C based z_swap() */
+	/* the SMP case will be handled in C based k_priv_swap() */
 #ifdef CONFIG_SMP
 	return true;
 #else
@@ -749,7 +749,7 @@ static inline bool need_swap(void)
 void k_priv_reschedule(struct k_spinlock *lock, k_spinlock_key_t key)
 {
 	if (resched(key.key) && need_swap()) {
-		z_swap(lock, key);
+		k_priv_swap(lock, key);
 	} else {
 		k_spin_unlock(lock, key);
 		signal_pending_ipi();
@@ -759,7 +759,7 @@ void k_priv_reschedule(struct k_spinlock *lock, k_spinlock_key_t key)
 void k_priv_reschedule_irqlock(uint32_t key)
 {
 	if (resched(key) && need_swap()) {
-		z_swap_irqlock(key);
+		k_priv_swap_irqlock(key);
 	} else {
 		irq_unlock(key);
 		signal_pending_ipi();
@@ -793,7 +793,7 @@ void k_sched_unlock(void)
 	k_priv_reschedule_unlocked();
 }
 
-struct k_thread *z_swap_next_thread(void)
+struct k_thread *k_priv_swap_next_thread(void)
 {
 #ifdef CONFIG_SMP
 	struct k_thread *ret = next_up();
@@ -1066,7 +1066,7 @@ void z_impl_k_yield(void)
 	runq_yield();
 
 	update_cache(1);
-	z_swap(&_sched_spinlock, key);
+	k_priv_swap(&_sched_spinlock, key);
 }
 
 #ifdef CONFIG_USERSPACE
@@ -1100,7 +1100,7 @@ static int32_t z_tick_sleep(k_timeout_t timeout)
 	expected_wakeup_ticks = (uint32_t)z_add_thread_timeout(_current, timeout);
 	z_mark_thread_as_sleeping(_current);
 
-	(void)z_swap(&_sched_spinlock, key);
+	(void)k_priv_swap(&_sched_spinlock, key);
 
 	if (!z_is_aborted_thread_timeout(_current)) {
 		return 0;
@@ -1377,7 +1377,7 @@ int z_impl_k_thread_join(struct k_thread *thread, k_timeout_t timeout)
 		add_thread_timeout(_current, timeout);
 
 		SYS_PORT_TRACING_OBJ_FUNC_BLOCKING(k_thread, join, thread, timeout);
-		ret = z_swap(&_sched_spinlock, key);
+		ret = k_priv_swap(&_sched_spinlock, key);
 		SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_thread, join, thread, timeout, ret);
 
 		return ret;

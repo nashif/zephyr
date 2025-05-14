@@ -40,7 +40,7 @@ void *__attribute__((section(".spurNoErrIsr")))
 __pinned_func
 void arch_isr_direct_footer_swap(unsigned int key)
 {
-	(void)z_swap_irqlock(key);
+	(void)k_priv_swap_irqlock(key);
 }
 
 #if CONFIG_X86_DYNAMIC_IRQ_STUBS > 0

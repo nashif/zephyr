@@ -1853,7 +1853,7 @@ release:
 * :github:`32835` - twister: integration_platforms stopped working as it should
 * :github:`32828` - tests: posix: Test case portability.posix.common.tls.newlib.posix_realtime fails on nrf9160dk_nrf9160
 * :github:`32827` - question: Specify size of malloc arena
-* :github:`32818` - Function z_swap_next_thread() missing coverage in sched.c
+* :github:`32818` - Function k_priv_swap_next_thread() missing coverage in sched.c
 * :github:`32817` - Supporting fedora in the getting started docs
 * :github:`32816` - ehl_crb: tests/kernel/timer/timer_api/timer_api/test_sleep_abs (kernel.timer.tickless) failed.
 * :github:`32809` - Fail to build ARC zephyr with MetaWare toolchain

@@ -927,7 +927,7 @@ static inline bool arch_mem_coherent(void *ptr)
  * @param old_switch_handle The switch handle to be stored into
  *                          old_thread (it will not be valid until the
  *                          cache is flushed so is not present yet).
- *                          This will be NULL if inside z_swap()
+ *                          This will be NULL if inside k_priv_swap()
  *                          (because the arch_switch() has not saved it
  *                          yet).
  * @param new_thread The new thread to be invalidated before it runs locally.

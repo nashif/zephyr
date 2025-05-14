@@ -30,7 +30,7 @@ static inline void arch_kernel_init(void)
 static ALWAYS_INLINE void
 arch_thread_return_value_set(struct k_thread *thread, unsigned int value)
 {
-	/* write into 'eax' slot created in z_swap() entry */
+	/* write into 'eax' slot created in k_priv_swap() entry */
 
 	*(unsigned int *)(thread->callee_saved.esp) = value;
 }

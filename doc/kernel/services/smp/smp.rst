@@ -147,7 +147,7 @@ many architectures the timer is a per-CPU device and needs to be
 configured specially on auxiliary CPUs.  Then it waits (spinning) for
 the atomic "start flag" to be released in the main thread, to
 guarantee that all SMP initialization is complete before any Zephyr
-application code runs, and finally calls :c:func:`z_swap` to transfer
+application code runs, and finally calls :c:func:`k_priv_swap` to transfer
 control to the appropriate runnable thread via the standard scheduler
 API.
 
@@ -306,7 +306,7 @@ a separate field in the thread struct.
 Switch-based context switching
 ==============================
 
-The traditional Zephyr context switch primitive has been :c:func:`z_swap`.
+The traditional Zephyr context switch primitive has been :c:func:`k_priv_swap`.
 Unfortunately, this function takes no argument specifying a thread to
 switch to.  The expectation has always been that the scheduler has
 already made its preemption decision when its state was last modified
@@ -326,7 +326,7 @@ exactly two arguments.  The first is an opaque (architecture defined)
 handle to the context to which it should switch, and the second is a
 pointer to such a handle into which it should store the handle
 resulting from the thread that is being switched out.
-The kernel then implements a portable :c:func:`z_swap` implementation on top
+The kernel then implements a portable :c:func:`k_priv_swap` implementation on top
 of this primitive which includes the relevant scheduler logic in a
 location where the architecture doesn't need to understand it.
 

@@ -137,7 +137,7 @@ void posix_irq_handler(void)
 		&& (CPU_will_be_awaken_from_WFE == false)
 		&& (_kernel.ready_q.cache) && (_kernel.ready_q.cache != _current)) {
 
-		z_swap_irqlock(irq_lock);
+		k_priv_swap_irqlock(irq_lock);
 	}
 }
 

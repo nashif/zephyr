@@ -110,7 +110,7 @@ void *z_thread_malloc(size_t size);
 
 #ifdef CONFIG_USE_SWITCH
 /* This is a arch function traditionally, but when the switch-based
- * z_swap() is in use it's a simple inline provided by the kernel.
+ * k_priv_swap() is in use it's a simple inline provided by the kernel.
  */
 static ALWAYS_INLINE void
 arch_thread_return_value_set(struct k_thread *thread, unsigned int value)
