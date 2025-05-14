@@ -57,7 +57,7 @@ static uint64_t last_ticks;
 static uint32_t last_elapsed;
 
 #if defined(CONFIG_TEST)
-const int32_t z_sys_timer_irq_for_test = TIMER_IRQN;
+const int32_t sys_priv_timer_irq_for_test = TIMER_IRQN;
 #endif
 
 static uintptr_t get_hart_mtimecmp(void)

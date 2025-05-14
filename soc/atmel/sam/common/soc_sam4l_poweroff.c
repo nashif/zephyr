@@ -23,7 +23,7 @@ static void soc_core_sleepdeep_wait(void)
 	__WFI();
 }
 
-void z_sys_poweroff(void)
+void sys_priv_poweroff(void)
 {
 	soc_core_sleepdeep_enable();
 	BPM->PMCON |= BPM_PMCON_BKUP;

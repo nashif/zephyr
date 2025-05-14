@@ -10,7 +10,7 @@
 
 static const uint32_t exclude_from_pd[] = {0, 0, 0, 0};
 
-void z_sys_poweroff(void)
+void sys_priv_poweroff(void)
 {
 	/* Disable ISP Pin pull-ups and input buffers to avoid current leakage */
 	IOPCTL->PIO[1][15] = 0;

@@ -48,7 +48,7 @@ LOG_MODULE_REGISTER(gecko_burtc_timer);
 
 #if defined(CONFIG_TEST)
 /* See tests/kernel/context */
-const int32_t z_sys_timer_irq_for_test = TIMER_IRQ;
+const int32_t sys_priv_timer_irq_for_test = TIMER_IRQ;
 #endif
 
 /* With CONFIG_TIMER_READS_ITS_FREQUENCY_AT_RUNTIME, that's where we

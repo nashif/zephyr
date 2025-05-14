@@ -23,7 +23,7 @@ GTEXT(k_priv_early_memset)
 GDATA(z_interrupt_stacks)
 GDATA(z_main_stack)
 #if defined(CONFIG_DEBUG_THREAD_INFO)
-GDATA(z_sys_post_kernel)
+GDATA(sys_priv_post_kernel)
 #endif
 #if defined(CONFIG_SOC_RESET_HOOK)
 GTEXT(soc_reset_hook)
@@ -121,15 +121,15 @@ SECTION_SUBSEC_FUNC(TEXT,_reset_section,__start)
     ldr r0, =z_main_stack + CONFIG_MAIN_STACK_SIZE
     msr msp, r0
 
-    /* Note: Make sure that variables like z_sys_post_kernel
+    /* Note: Make sure that variables like sys_priv_post_kernel
      *       are set after the call to arch_pm_s2ram_resume
      *       to avoid any issues with suspend/resume path.
      *       Refer issue #83660 for more details.
      */
 #if defined(CONFIG_DEBUG_THREAD_INFO)
-    /* Clear z_sys_post_kernel flag for RTOS aware debuggers */
+    /* Clear sys_priv_post_kernel flag for RTOS aware debuggers */
     movs.n r0, #0
-    ldr r1, =z_sys_post_kernel
+    ldr r1, =sys_priv_post_kernel
     strb r0, [r1]
 #endif /* CONFIG_DEBUG_THREAD_INFO */
 

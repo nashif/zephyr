@@ -80,7 +80,7 @@ static volatile cycle_t announced_cycle_count;
 static struct k_spinlock lock;
 
 #if defined(CONFIG_TEST)
-const int32_t z_sys_timer_irq_for_test = CMT0_IRQ_NUM;
+const int32_t sys_priv_timer_irq_for_test = CMT0_IRQ_NUM;
 #endif
 
 static cycle_t cmt1_elapsed(void)

@@ -9,7 +9,7 @@
 #include <hal/rtc_io_hal.h>
 #include <soc/rtc_io_channel.h>
 
-void z_sys_poweroff(void)
+void sys_priv_poweroff(void)
 {
 	/*
 	 * Isolate GPIO12 pin from external circuits. This is needed for modules

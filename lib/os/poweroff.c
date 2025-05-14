@@ -10,5 +10,5 @@ void sys_poweroff(void)
 {
 	(void)irq_lock();
 
-	z_sys_poweroff();
+	sys_priv_poweroff();
 }

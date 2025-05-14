@@ -74,10 +74,10 @@ static inline void sys_mutex_init(struct sys_mutex *mutex)
 	 */
 }
 
-__syscall int z_sys_mutex_kernel_lock(struct sys_mutex *mutex,
+__syscall int sys_priv_mutex_kernel_lock(struct sys_mutex *mutex,
 				      k_timeout_t timeout);
 
-__syscall int z_sys_mutex_kernel_unlock(struct sys_mutex *mutex);
+__syscall int sys_priv_mutex_kernel_unlock(struct sys_mutex *mutex);
 
 /**
  * @brief Lock a mutex.
@@ -102,7 +102,7 @@ __syscall int z_sys_mutex_kernel_unlock(struct sys_mutex *mutex);
 static inline int sys_mutex_lock(struct sys_mutex *mutex, k_timeout_t timeout)
 {
 	/* For now, make the syscall unconditionally */
-	return z_sys_mutex_kernel_lock(mutex, timeout);
+	return sys_priv_mutex_kernel_lock(mutex, timeout);
 }
 
 /**
@@ -125,7 +125,7 @@ static inline int sys_mutex_lock(struct sys_mutex *mutex, k_timeout_t timeout)
 static inline int sys_mutex_unlock(struct sys_mutex *mutex)
 {
 	/* For now, make the syscall unconditionally */
-	return z_sys_mutex_kernel_unlock(mutex);
+	return sys_priv_mutex_kernel_unlock(mutex);
 }
 
 #include <zephyr/syscalls/mutex.h>

@@ -27,7 +27,7 @@ extern "C" {
  * This function needs to be implemented in platform code. It must only
  * perform an immediate power off of the system.
  */
-FUNC_NORETURN void z_sys_poweroff(void);
+FUNC_NORETURN void sys_priv_poweroff(void);
 
 /** @endcond */
 

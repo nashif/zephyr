@@ -9,7 +9,7 @@
 #include <zephyr/sys/poweroff.h>
 #include <NuMicro.h>
 
-void z_sys_poweroff(void)
+void sys_priv_poweroff(void)
 {
 	SYS_UnlockReg();
 

@@ -29,12 +29,12 @@ static int statics_init(void)
 		 * paging mechanism to be initialized before we can initialize
 		 * each heap.
 		 */
-		extern bool z_sys_post_kernel;
-		bool do_clear = z_sys_post_kernel;
+		extern bool sys_priv_post_kernel;
+		bool do_clear = sys_priv_post_kernel;
 
-		/* During pre-kernel init, z_sys_post_kernel == false,
+		/* During pre-kernel init, sys_priv_post_kernel == false,
 		 * initialize if within pinned region. Otherwise skip.
-		 * In post-kernel init, z_sys_post_kernel == true, skip those in
+		 * In post-kernel init, sys_priv_post_kernel == true, skip those in
 		 * pinned region as they have already been initialized and
 		 * possibly already in use. Otherwise initialize.
 		 */

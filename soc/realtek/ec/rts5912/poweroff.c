@@ -9,7 +9,7 @@
 #include <zephyr/toolchain.h>
 #include "rts5912_ulpm.h"
 
-void z_sys_poweroff(void)
+void sys_priv_poweroff(void)
 {
 	if (IS_ENABLED(CONFIG_SOC_RTS5912_ULPM)) {
 		rts5912_ulpm_enable();

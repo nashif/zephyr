@@ -14,7 +14,7 @@
 #include <stm32_ll_cortex.h>
 #include <stm32_ll_pwr.h>
 
-void z_sys_poweroff(void)
+void sys_priv_poweroff(void)
 {
 #ifdef CONFIG_STM32_WKUP_PINS
 	LL_PWR_ClearFlag_WU();

@@ -27,7 +27,7 @@
 #define MIN_DELAY 1
 
 #if defined(CONFIG_TEST)
-const int32_t z_sys_timer_irq_for_test = DT_IRQN(DT_NODELABEL(systimer0));
+const int32_t sys_priv_timer_irq_for_test = DT_IRQN(DT_NODELABEL(systimer0));
 #endif
 
 #define TICKLESS IS_ENABLED(CONFIG_TICKLESS_KERNEL)

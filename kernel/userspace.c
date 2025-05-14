@@ -971,12 +971,12 @@ static int app_shmem_bss_zero(void)
 		/* When BSS sections are not present at boot, we need to wait for
 		 * paging mechanism to be initialized before we can zero out BSS.
 		 */
-		extern bool z_sys_post_kernel;
-		bool do_clear = z_sys_post_kernel;
+		extern bool sys_priv_post_kernel;
+		bool do_clear = sys_priv_post_kernel;
 
-		/* During pre-kernel init, z_sys_post_kernel == false, but
+		/* During pre-kernel init, sys_priv_post_kernel == false, but
 		 * with pinned rodata region, so clear. Otherwise skip.
-		 * In post-kernel init, z_sys_post_kernel == true,
+		 * In post-kernel init, sys_priv_post_kernel == true,
 		 * skip those in pinned rodata region as they have already
 		 * been cleared and possibly already in use. Otherwise clear.
 		 */

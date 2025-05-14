@@ -67,8 +67,8 @@
 #endif /* defined(CONFIG_ARCH_POSIX) */
 #else
 
-extern const int32_t z_sys_timer_irq_for_test;
-#define TICK_IRQ (z_sys_timer_irq_for_test)
+extern const int32_t sys_priv_timer_irq_for_test;
+#define TICK_IRQ (sys_priv_timer_irq_for_test)
 
 #endif
 

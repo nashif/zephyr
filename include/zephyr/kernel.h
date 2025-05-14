@@ -1225,9 +1225,9 @@ __syscall int k_is_preempt_thread(void);
  */
 static inline bool k_is_pre_kernel(void)
 {
-	extern bool z_sys_post_kernel; /* in init.c */
+	extern bool sys_priv_post_kernel; /* in init.c */
 
-	return !z_sys_post_kernel;
+	return !sys_priv_post_kernel;
 }
 
 /**

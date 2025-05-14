@@ -30,7 +30,7 @@ static bool check_sys_mutex_addr(struct sys_mutex *addr)
 	return K_SYSCALL_MEMORY_WRITE(addr, sizeof(struct sys_mutex));
 }
 
-int z_impl_z_sys_mutex_kernel_lock(struct sys_mutex *mutex, k_timeout_t timeout)
+int z_impl_sys_priv_mutex_kernel_lock(struct sys_mutex *mutex, k_timeout_t timeout)
 {
 	struct k_mutex *kernel_mutex = get_k_mutex(mutex);
 
@@ -41,18 +41,18 @@ int z_impl_z_sys_mutex_kernel_lock(struct sys_mutex *mutex, k_timeout_t timeout)
 	return k_mutex_lock(kernel_mutex, timeout);
 }
 
-static inline int z_vrfy_z_sys_mutex_kernel_lock(struct sys_mutex *mutex,
+static inline int z_vrfy_sys_priv_mutex_kernel_lock(struct sys_mutex *mutex,
 						 k_timeout_t timeout)
 {
 	if (check_sys_mutex_addr(mutex)) {
 		return -EACCES;
 	}
 
-	return z_impl_z_sys_mutex_kernel_lock(mutex, timeout);
+	return z_impl_sys_priv_mutex_kernel_lock(mutex, timeout);
 }
-#include <zephyr/syscalls/z_sys_mutex_kernel_lock_mrsh.c>
+#include <zephyr/syscalls/sys_priv_mutex_kernel_lock_mrsh.c>
 
-int z_impl_z_sys_mutex_kernel_unlock(struct sys_mutex *mutex)
+int z_impl_sys_priv_mutex_kernel_unlock(struct sys_mutex *mutex)
 {
 	struct k_mutex *kernel_mutex = get_k_mutex(mutex);
 
@@ -63,12 +63,12 @@ int z_impl_z_sys_mutex_kernel_unlock(struct sys_mutex *mutex)
 	return k_mutex_unlock(kernel_mutex);
 }
 
-static inline int z_vrfy_z_sys_mutex_kernel_unlock(struct sys_mutex *mutex)
+static inline int z_vrfy_sys_priv_mutex_kernel_unlock(struct sys_mutex *mutex)
 {
 	if (check_sys_mutex_addr(mutex)) {
 		return -EACCES;
 	}
 
-	return z_impl_z_sys_mutex_kernel_unlock(mutex);
+	return z_impl_sys_priv_mutex_kernel_unlock(mutex);
 }
-#include <zephyr/syscalls/z_sys_mutex_kernel_unlock_mrsh.c>
+#include <zephyr/syscalls/sys_priv_mutex_kernel_unlock_mrsh.c>

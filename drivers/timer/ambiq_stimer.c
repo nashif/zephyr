@@ -48,7 +48,7 @@
 #define TIMER_CLKSRC (DT_INST_PROP(0, clk_source))
 
 #if defined(CONFIG_TEST)
-const int32_t z_sys_timer_irq_for_test = COMPAREA_IRQ;
+const int32_t sys_priv_timer_irq_for_test = COMPAREA_IRQ;
 #endif
 
 /* Elapsed ticks since the previous kernel tick was announced, It will get accumulated every time

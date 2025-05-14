@@ -22,7 +22,7 @@
 #include <helpers/nrfx_ram_ctrl.h>
 #endif
 
-void z_sys_poweroff(void)
+void sys_priv_poweroff(void)
 {
 #if defined(CONFIG_HAS_NORDIC_RAM_CTRL)
 	uint8_t *ram_start;

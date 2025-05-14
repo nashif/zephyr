@@ -23,7 +23,7 @@ static void soc_core_sleepdeep_wait(void)
 	__WFI();
 }
 
-void z_sys_poweroff(void)
+void sys_priv_poweroff(void)
 {
 	soc_core_sleepdeep_enable();
 	soc_supc_core_voltage_regulator_off();

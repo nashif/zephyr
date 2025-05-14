@@ -1149,7 +1149,7 @@ release:
 * :github:`15204` - lwm2m engine hangs on native_posix
 * :github:`15198` - tests/booting: Considering remove it
 * :github:`15197` - Socket-based DNS API will hang device if DNS query is not answered
-* :github:`15184` - Fix build issue with z_sys_trace_thread_switched_in
+* :github:`15184` - Fix build issue with sys_priv_trace_thread_switched_in
 * :github:`15183` - BLE HID sample often asserts on Windows 10 reconnection
 * :github:`15178` - samples/mpu/mem_domain_apis_test:  Did not get to "destroy app0 domain", went into indefinite loop
 * :github:`15177` - samples/drivers/crypto:  CBC and CTR mode not supported

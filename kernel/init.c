@@ -305,7 +305,7 @@ extern volatile uintptr_t __stack_chk_guard;
 /* LCOV_EXCL_STOP */
 
 __pinned_bss
-bool z_sys_post_kernel;
+bool sys_priv_post_kernel;
 
 static int do_device_init(const struct device *dev)
 {
@@ -348,7 +348,7 @@ static int do_device_init(const struct device *dev)
  *
  * @param level init level to run.
  */
-static void z_sys_init_run_level(enum init_level level)
+static void sys_priv_init_run_level(enum init_level level)
 {
 	static const struct init_entry *levels[] = {
 		__init_EARLY_start,
@@ -532,12 +532,12 @@ static void bg_thread_main(void *unused1, void *unused2, void *unused3)
 	 */
 	k_priv_mem_manage_init();
 #endif /* CONFIG_MMU */
-	z_sys_post_kernel = true;
+	sys_priv_post_kernel = true;
 
 #if CONFIG_IRQ_OFFLOAD
 	arch_irq_offload_init();
 #endif
-	z_sys_init_run_level(INIT_LEVEL_POST_KERNEL);
+	sys_priv_init_run_level(INIT_LEVEL_POST_KERNEL);
 #if CONFIG_SOC_LATE_INIT_HOOK
 	soc_late_init_hook();
 #endif
@@ -555,7 +555,7 @@ static void bg_thread_main(void *unused1, void *unused2, void *unused3)
 #endif /* CONFIG_STATIC_INIT_GNU */
 
 	/* Final init level before app starts */
-	z_sys_init_run_level(INIT_LEVEL_APPLICATION);
+	sys_priv_init_run_level(INIT_LEVEL_APPLICATION);
 
 	z_init_static_threads();
 
@@ -567,7 +567,7 @@ static void bg_thread_main(void *unused1, void *unused2, void *unused3)
 	if (!IS_ENABLED(CONFIG_SMP_BOOT_DELAY)) {
 		z_smp_init();
 	}
-	z_sys_init_run_level(INIT_LEVEL_SMP);
+	sys_priv_init_run_level(INIT_LEVEL_SMP);
 #endif /* CONFIG_SMP */
 
 #ifdef CONFIG_MMU
@@ -774,7 +774,7 @@ FUNC_NORETURN void z_cstart(void)
 	gcov_static_init();
 
 	/* initialize early init calls */
-	z_sys_init_run_level(INIT_LEVEL_EARLY);
+	sys_priv_init_run_level(INIT_LEVEL_EARLY);
 
 	/* perform any architecture-specific initialization */
 	arch_kernel_init();
@@ -794,11 +794,11 @@ FUNC_NORETURN void z_cstart(void)
 	board_early_init_hook();
 #endif
 	/* perform basic hardware initialization */
-	z_sys_init_run_level(INIT_LEVEL_PRE_KERNEL_1);
+	sys_priv_init_run_level(INIT_LEVEL_PRE_KERNEL_1);
 #if defined(CONFIG_SMP)
 	arch_smp_init();
 #endif
-	z_sys_init_run_level(INIT_LEVEL_PRE_KERNEL_2);
+	sys_priv_init_run_level(INIT_LEVEL_PRE_KERNEL_2);
 
 #ifdef CONFIG_REQUIRES_STACK_CANARIES
 	uintptr_t stack_guard;

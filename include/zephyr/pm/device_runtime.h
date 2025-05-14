@@ -27,7 +27,7 @@ extern "C" {
  * @brief Automatically enable device runtime based on devicetree properties
  *
  * @note Must not be called from application code. See the
- * zephyr,pm-device-runtime-auto property in pm.yaml and z_sys_init_run_level.
+ * zephyr,pm-device-runtime-auto property in pm.yaml and sys_priv_init_run_level.
  *
  * @param dev Device instance.
  *

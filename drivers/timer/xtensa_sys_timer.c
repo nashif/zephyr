@@ -22,7 +22,7 @@ static struct k_spinlock lock;
 static unsigned int last_count;
 
 #if defined(CONFIG_TEST)
-const int32_t z_sys_timer_irq_for_test = UTIL_CAT(XCHAL_TIMER,
+const int32_t sys_priv_timer_irq_for_test = UTIL_CAT(XCHAL_TIMER,
 					 UTIL_CAT(CONFIG_XTENSA_TIMER_ID, _INTERRUPT));
 #endif
 

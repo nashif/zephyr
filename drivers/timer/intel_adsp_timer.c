@@ -57,7 +57,7 @@ static uint64_t last_count;
 #define DSPWC_HI_ADDR (SYSCON_REG_ADDR + ADSP_DSPWC_OFFSET + 4)
 
 #if defined(CONFIG_TEST)
-const int32_t z_sys_timer_irq_for_test = TIMER_IRQ; /* See tests/kernel/context */
+const int32_t sys_priv_timer_irq_for_test = TIMER_IRQ; /* See tests/kernel/context */
 #endif
 
 static void set_compare(uint64_t time)

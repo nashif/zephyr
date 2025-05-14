@@ -26,7 +26,7 @@
 #define CYCLES_PER_TICK		(CYCLES_PER_SEC / TICKS_PER_SEC)
 
 #if defined(CONFIG_TEST)
-const int32_t z_sys_timer_irq_for_test = DT_IRQN(DT_INST(0, xlnx_ttcps));
+const int32_t sys_priv_timer_irq_for_test = DT_IRQN(DT_INST(0, xlnx_ttcps));
 #endif
 /*
  * CYCLES_NEXT_MIN must be large enough to ensure that the timer does not miss

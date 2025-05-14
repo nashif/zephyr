@@ -57,7 +57,7 @@
 #define LFCLK_FREQUENCY_HZ DT_PROP(LFCLK_NODE, clock_frequency)
 
 #if defined(CONFIG_TEST)
-const int32_t z_sys_timer_irq_for_test = DT_IRQN(GRTC_NODE);
+const int32_t sys_priv_timer_irq_for_test = DT_IRQN(GRTC_NODE);
 #endif
 
 static void sys_clock_timeout_handler(int32_t id, uint64_t cc_val, void *p_context);

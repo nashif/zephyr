@@ -75,7 +75,7 @@ int pm_cpu_on(unsigned long cpuid,
 }
 
 #ifdef CONFIG_POWEROFF
-void z_sys_poweroff(void)
+void sys_priv_poweroff(void)
 {
 	int ret;
 

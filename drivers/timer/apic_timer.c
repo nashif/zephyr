@@ -37,7 +37,7 @@ BUILD_ASSERT(!IS_ENABLED(CONFIG_TICKLESS_KERNEL), "this is a tickfull driver");
 #define LVT_MODE		0x00020000	/* periodic mode */
 
 #if defined(CONFIG_TEST)
-const int32_t z_sys_timer_irq_for_test = CONFIG_APIC_TIMER_IRQ;
+const int32_t sys_priv_timer_irq_for_test = CONFIG_APIC_TIMER_IRQ;
 #endif
 
 #define CYCLES_PER_TICK \

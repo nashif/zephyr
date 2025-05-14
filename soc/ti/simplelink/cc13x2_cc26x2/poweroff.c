@@ -8,7 +8,7 @@
 
 #include <ti/drivers/Power.h>
 
-void z_sys_poweroff(void)
+void sys_priv_poweroff(void)
 {
 	Power_shutdown(0, 0);
 

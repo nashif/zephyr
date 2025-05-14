@@ -24,7 +24,7 @@
 #define CYCLES_PER_TICK        (CYCLES_PER_SEC / CONFIG_SYS_CLOCK_TICKS_PER_SEC)
 
 #if defined(CONFIG_TEST)
-const int32_t z_sys_timer_irq_for_test = DT_IRQN(DT_INST(0, renesas_rcar_cmt));
+const int32_t sys_priv_timer_irq_for_test = DT_IRQN(DT_INST(0, renesas_rcar_cmt));
 #endif
 static struct rcar_cpg_clk mod_clk = {
 	.module = DT_INST_CLOCKS_CELL(0, module),

@@ -144,12 +144,12 @@ unsigned int sys_sem_count_get(struct sys_sem *sem);
  */
 
 #if defined(__GNUC__)
-static ALWAYS_INLINE void z_sys_sem_lock_onexit(__maybe_unused int *rc)
+static ALWAYS_INLINE void sys_priv_sem_lock_onexit(__maybe_unused int *rc)
 {
 	__ASSERT(*rc == 1, "SYS_SEM_LOCK exited with goto, break or return, "
 			   "use SYS_SEM_LOCK_BREAK instead.");
 }
-#define SYS_SEM_LOCK_ONEXIT __attribute__((__cleanup__(z_sys_sem_lock_onexit)))
+#define SYS_SEM_LOCK_ONEXIT __attribute__((__cleanup__(sys_priv_sem_lock_onexit)))
 #else
 #define SYS_SEM_LOCK_ONEXIT
 #endif
