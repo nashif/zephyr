@@ -1077,7 +1077,7 @@ static inline void z_vrfy_k_yield(void)
 #include <zephyr/syscalls/k_yield_mrsh.c>
 #endif /* CONFIG_USERSPACE */
 
-static int32_t z_tick_sleep(k_timeout_t timeout)
+static int32_t _tick_sleep(k_timeout_t timeout)
 {
 	uint32_t expected_wakeup_ticks;
 
@@ -1127,7 +1127,7 @@ int32_t z_impl_k_sleep(k_timeout_t timeout)
 
 	SYS_PORT_TRACING_FUNC_ENTER(k_thread, sleep, timeout);
 
-	ticks = z_tick_sleep(timeout);
+	ticks = _tick_sleep(timeout);
 
 	/* k_sleep() still returns 32 bit milliseconds for compatibility */
 	int64_t ms = K_TIMEOUT_EQ(timeout, K_FOREVER) ? K_TICKS_FOREVER :
@@ -1152,7 +1152,7 @@ int32_t z_impl_k_usleep(int32_t us)
 	SYS_PORT_TRACING_FUNC_ENTER(k_thread, usleep, us);
 
 	ticks = k_us_to_ticks_ceil64(us);
-	ticks = z_tick_sleep(Z_TIMEOUT_TICKS(ticks));
+	ticks = _tick_sleep(Z_TIMEOUT_TICKS(ticks));
 
 	int32_t ret = k_ticks_to_us_ceil64(ticks);
 
