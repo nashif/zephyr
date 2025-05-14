@@ -372,7 +372,7 @@ static int submit_to_queue_locked(struct k_work *work,
  *
  * @retval see submit_to_queue_locked()
  */
-int z_work_submit_to_queue(struct k_work_q *queue,
+int k_priv_work_submit_to_queue(struct k_work_q *queue,
 		  struct k_work *work)
 {
 	__ASSERT_NO_MSG(work != NULL);
@@ -392,7 +392,7 @@ int k_work_submit_to_queue(struct k_work_q *queue,
 {
 	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_work, submit_to_queue, queue, work);
 
-	int ret = z_work_submit_to_queue(queue, work);
+	int ret = k_priv_work_submit_to_queue(queue, work);
 
 	/* submit_to_queue_locked() won't reschedule on its own
 	 * (really it should, otherwise this process will result in

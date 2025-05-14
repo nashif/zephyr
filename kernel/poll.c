@@ -599,7 +599,7 @@ static void triggered_work_expiration_handler(struct _timeout *timeout)
 	k_work_submit_to_queue(twork->workq, &twork->work);
 }
 
-extern int z_work_submit_to_queue(struct k_work_q *queue,
+extern int k_priv_work_submit_to_queue(struct k_work_q *queue,
 			 struct k_work *work);
 
 static int signal_triggered_work(struct k_poll_event *event, uint32_t status)
@@ -613,7 +613,7 @@ static int signal_triggered_work(struct k_poll_event *event, uint32_t status)
 
 		k_priv_abort_timeout(&twork->timeout);
 		twork->poll_result = 0;
-		z_work_submit_to_queue(work_q, &twork->work);
+		k_priv_work_submit_to_queue(work_q, &twork->work);
 	}
 
 	return 0;
