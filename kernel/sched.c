@@ -108,7 +108,7 @@ static inline bool should_queue_thread(struct k_thread *thread)
 
 static ALWAYS_INLINE void queue_thread(struct k_thread *thread)
 {
-	z_mark_thread_as_queued(thread);
+	k_priv_mark_thread_as_queued(thread);
 	if (should_queue_thread(thread)) {
 		runq_add(thread);
 	}
@@ -122,7 +122,7 @@ static ALWAYS_INLINE void queue_thread(struct k_thread *thread)
 
 static ALWAYS_INLINE void dequeue_thread(struct k_thread *thread)
 {
-	z_mark_thread_as_not_queued(thread);
+	k_priv_mark_thread_as_not_queued(thread);
 	if (should_queue_thread(thread)) {
 		runq_remove(thread);
 	}
@@ -461,7 +461,7 @@ void z_impl_k_thread_suspend(k_tid_t thread)
 	if (!IS_ENABLED(CONFIG_SMP) && (thread == _current) && !arch_is_in_isr()) {
 		k_spinlock_key_t key = k_spin_lock(&_sched_spinlock);
 
-		z_mark_thread_as_suspended(thread);
+		k_priv_mark_thread_as_suspended(thread);
 		dequeue_thread(thread);
 		update_cache(1);
 		k_priv_swap(&_sched_spinlock, key);
@@ -504,7 +504,7 @@ void z_impl_k_thread_resume(k_tid_t thread)
 		return;
 	}
 
-	z_mark_thread_as_not_suspended(thread);
+	k_priv_mark_thread_as_not_suspended(thread);
 	ready_thread(thread);
 
 	k_priv_reschedule(&_sched_spinlock, key);
@@ -533,7 +533,7 @@ static void unready_thread(struct k_thread *thread)
 static void add_to_waitq_locked(struct k_thread *thread, _wait_q_t *wait_q)
 {
 	unready_thread(thread);
-	z_mark_thread_as_pending(thread);
+	k_priv_mark_thread_as_pending(thread);
 
 	SYS_PORT_TRACING_FUNC(k_thread, sched_pend, thread);
 
@@ -599,7 +599,7 @@ void k_priv_sched_wake_thread(struct k_thread *thread, bool is_timeout)
 			if (thread->base.pended_on != NULL) {
 				unpend_thread_no_timeout(thread);
 			}
-			z_mark_thread_as_not_sleeping(thread);
+			k_priv_mark_thread_as_not_sleeping(thread);
 			ready_thread(thread);
 		}
 	}
@@ -1098,7 +1098,7 @@ static int32_t z_tick_sleep(k_timeout_t timeout)
 #endif /* CONFIG_TIMESLICING && CONFIG_SWAP_NONATOMIC */
 	unready_thread(_current);
 	expected_wakeup_ticks = (uint32_t)z_add_thread_timeout(_current, timeout);
-	z_mark_thread_as_sleeping(_current);
+	k_priv_mark_thread_as_sleeping(_current);
 
 	(void)k_priv_swap(&_sched_spinlock, key);
 
@@ -1177,7 +1177,7 @@ void z_impl_k_wakeup(k_tid_t thread)
 
 	if (k_priv_is_thread_sleeping(thread)) {
 		k_priv_abort_thread_timeout(thread);
-		z_mark_thread_as_not_sleeping(thread);
+		k_priv_mark_thread_as_not_sleeping(thread);
 		ready_thread(thread);
 		k_priv_reschedule(&_sched_spinlock, key);
 	} else {

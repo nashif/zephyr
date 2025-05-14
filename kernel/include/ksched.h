@@ -159,7 +159,7 @@ static ALWAYS_INLINE _wait_q_t *pended_on_thread(struct k_thread *thread)
 static inline void unpend_thread_no_timeout(struct k_thread *thread)
 {
 	_priq_wait_remove(&pended_on_thread(thread)->waitq, thread);
-	z_mark_thread_as_not_pending(thread);
+	k_priv_mark_thread_as_not_pending(thread);
 	thread->base.pended_on = NULL;
 }
 

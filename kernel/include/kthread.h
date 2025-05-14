@@ -121,36 +121,36 @@ static inline bool k_priv_is_thread_queued(struct k_thread *thread)
 	return z_is_thread_state_set(thread, _THREAD_QUEUED);
 }
 
-static inline void z_mark_thread_as_queued(struct k_thread *thread)
+static inline void k_priv_mark_thread_as_queued(struct k_thread *thread)
 {
 	thread->base.thread_state |= _THREAD_QUEUED;
 }
 
-static inline void z_mark_thread_as_not_queued(struct k_thread *thread)
+static inline void k_priv_mark_thread_as_not_queued(struct k_thread *thread)
 {
 	thread->base.thread_state &= ~_THREAD_QUEUED;
 }
 
-static inline void z_mark_thread_as_suspended(struct k_thread *thread)
+static inline void k_priv_mark_thread_as_suspended(struct k_thread *thread)
 {
 	thread->base.thread_state |= _THREAD_SUSPENDED;
 
 	SYS_PORT_TRACING_FUNC(k_thread, sched_suspend, thread);
 }
 
-static inline void z_mark_thread_as_not_suspended(struct k_thread *thread)
+static inline void k_priv_mark_thread_as_not_suspended(struct k_thread *thread)
 {
 	thread->base.thread_state &= ~_THREAD_SUSPENDED;
 
 	SYS_PORT_TRACING_FUNC(k_thread, sched_resume, thread);
 }
 
-static inline void z_mark_thread_as_pending(struct k_thread *thread)
+static inline void k_priv_mark_thread_as_pending(struct k_thread *thread)
 {
 	thread->base.thread_state |= _THREAD_PENDING;
 }
 
-static inline void z_mark_thread_as_not_pending(struct k_thread *thread)
+static inline void k_priv_mark_thread_as_not_pending(struct k_thread *thread)
 {
 	thread->base.thread_state &= ~_THREAD_PENDING;
 }
@@ -160,12 +160,12 @@ static inline bool k_priv_is_thread_sleeping(struct k_thread *thread)
 	return (thread->base.thread_state & _THREAD_SLEEPING) != 0U;
 }
 
-static inline void z_mark_thread_as_sleeping(struct k_thread *thread)
+static inline void k_priv_mark_thread_as_sleeping(struct k_thread *thread)
 {
 	thread->base.thread_state |= _THREAD_SLEEPING;
 }
 
-static inline void z_mark_thread_as_not_sleeping(struct k_thread *thread)
+static inline void k_priv_mark_thread_as_not_sleeping(struct k_thread *thread)
 {
 	thread->base.thread_state &= ~_THREAD_SLEEPING;
 }

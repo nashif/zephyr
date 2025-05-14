@@ -188,7 +188,7 @@ static void mbox_message_dispose(struct k_mbox_msg *rx_msg)
 
 	/* synchronous send: wake up sending thread */
 	arch_thread_return_value_set(sending_thread, 0);
-	z_mark_thread_as_not_pending(sending_thread);
+	k_priv_mark_thread_as_not_pending(sending_thread);
 	z_ready_thread(sending_thread);
 	k_priv_reschedule_unlocked();
 }
