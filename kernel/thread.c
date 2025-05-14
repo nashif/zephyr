@@ -622,7 +622,7 @@ char *z_setup_new_thread(struct k_thread *new_thread,
 	}
 #endif /* CONFIG_ARCH_HAS_CUSTOM_SWAP_TO_MAIN */
 #ifdef CONFIG_USERSPACE
-	z_mem_domain_init_thread(new_thread);
+	k_priv_mem_domain_init_thread(new_thread);
 
 	if ((options & K_INHERIT_PERMS) != 0U) {
 		k_thread_perms_inherit(_current, new_thread);

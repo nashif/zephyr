@@ -126,7 +126,7 @@ void k_mem_page_in(void *addr, size_t size);
  *
  * After the function completes, all the page frames associated with this
  * region will be resident in memory and pinned such that they stay that way.
- * This is a stronger version of z_mem_page_in().
+ * This is a stronger version of k_priv_mem_page_in().
  *
  * If CONFIG_DEMAND_PAGING_ALLOW_IRQ is enabled, this function may not be
  * called by ISRs as the backing store may be in-use.
@@ -141,7 +141,7 @@ void k_mem_pin(void *addr, size_t size);
  *
  * After the function completes, all the page frames associated with this
  * region will be no longer marked as pinned. This does not evict the region,
- * follow this with z_mem_page_out() if you need that.
+ * follow this with k_priv_mem_page_out() if you need that.
  *
  * @param addr Base page-aligned virtual address
  * @param size Page-aligned data region size

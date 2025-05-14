@@ -1290,7 +1290,7 @@ static ALWAYS_INLINE void halt_thread(struct k_thread *thread, uint8_t new_state
 #endif /* CONFIG_OBJ_CORE_THREAD */
 
 #ifdef CONFIG_USERSPACE
-		z_mem_domain_exit_thread(thread);
+		k_priv_mem_domain_exit_thread(thread);
 		k_thread_perms_all_clear(thread);
 		k_object_uninit(thread->stack_obj);
 		k_object_uninit(thread);

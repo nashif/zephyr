@@ -444,7 +444,7 @@ static inline void __arch_mem_map(void *va, uintptr_t pa, uint32_t xtensa_flags,
 		struct arch_mem_domain *domain;
 		k_spinlock_key_t key;
 
-		key = k_spin_lock(&z_mem_domain_lock);
+		key = k_spin_lock(&k_priv_mem_domain_lock);
 		SYS_SLIST_FOR_EACH_NODE(&xtensa_domain_list, node) {
 			domain = CONTAINER_OF(node, struct arch_mem_domain, node);
 
@@ -461,7 +461,7 @@ static inline void __arch_mem_map(void *va, uintptr_t pa, uint32_t xtensa_flags,
 					 vaddr_uc, domain);
 			}
 		}
-		k_spin_unlock(&z_mem_domain_lock, key);
+		k_spin_unlock(&k_priv_mem_domain_lock, key);
 	}
 #endif /* CONFIG_USERSPACE */
 }
@@ -599,7 +599,7 @@ static inline void __arch_mem_unmap(void *va)
 	struct arch_mem_domain *domain;
 	k_spinlock_key_t key;
 
-	key = k_spin_lock(&z_mem_domain_lock);
+	key = k_spin_lock(&k_priv_mem_domain_lock);
 	SYS_SLIST_FOR_EACH_NODE(&xtensa_domain_list, node) {
 		domain = CONTAINER_OF(node, struct arch_mem_domain, node);
 
@@ -609,7 +609,7 @@ static inline void __arch_mem_unmap(void *va)
 			(void)l2_page_table_unmap(domain->ptables, (void *)vaddr_uc);
 		}
 	}
-	k_spin_unlock(&z_mem_domain_lock, key);
+	k_spin_unlock(&k_priv_mem_domain_lock, key);
 #endif /* CONFIG_USERSPACE */
 }
 

@@ -1028,7 +1028,7 @@ static void sync_domains(uintptr_t virt, size_t size, const char *name)
 	k_spinlock_key_t key;
 	int ret;
 
-	key = k_spin_lock(&z_mem_domain_lock);
+	key = k_spin_lock(&k_priv_mem_domain_lock);
 	SYS_SLIST_FOR_EACH_NODE(&domain_list, node) {
 		domain = CONTAINER_OF(node, struct arch_mem_domain, node);
 		domain_ptables = &domain->ptables;
@@ -1038,7 +1038,7 @@ static void sync_domains(uintptr_t virt, size_t size, const char *name)
 			LOG_ERR("globalize_page_range() returned %d", ret);
 		}
 	}
-	k_spin_unlock(&z_mem_domain_lock, key);
+	k_spin_unlock(&k_priv_mem_domain_lock, key);
 #endif
 }
 

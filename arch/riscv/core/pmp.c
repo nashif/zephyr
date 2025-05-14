@@ -606,7 +606,7 @@ static void resync_pmp_domain(struct k_thread *thread,
 	int p_idx, remaining_partitions;
 	bool ok;
 
-	k_spinlock_key_t key = k_spin_lock(&z_mem_domain_lock);
+	k_spinlock_key_t key = k_spin_lock(&k_priv_mem_domain_lock);
 
 	remaining_partitions = domain->num_partitions;
 	for (p_idx = 0; remaining_partitions > 0; p_idx++) {
@@ -636,7 +636,7 @@ static void resync_pmp_domain(struct k_thread *thread,
 	thread->arch.u_mode_pmp_end_index = index;
 	thread->arch.u_mode_pmp_update_nr = domain->arch.pmp_update_nr;
 
-	k_spin_unlock(&z_mem_domain_lock, key);
+	k_spin_unlock(&k_priv_mem_domain_lock, key);
 }
 
 /**
@@ -770,7 +770,7 @@ int arch_buffer_validate(const void *addr, size_t size, int write)
 	/* Look for a matching partition in our memory domain */
 	struct k_mem_domain *domain = _current->mem_domain_info.mem_domain;
 	int p_idx, remaining_partitions;
-	k_spinlock_key_t key = k_spin_lock(&z_mem_domain_lock);
+	k_spinlock_key_t key = k_spin_lock(&k_priv_mem_domain_lock);
 
 	remaining_partitions = domain->num_partitions;
 	for (p_idx = 0; remaining_partitions > 0; p_idx++) {
@@ -795,7 +795,7 @@ int arch_buffer_validate(const void *addr, size_t size, int write)
 		break;
 	}
 
-	k_spin_unlock(&z_mem_domain_lock, key);
+	k_spin_unlock(&k_priv_mem_domain_lock, key);
 	return ret;
 }
 

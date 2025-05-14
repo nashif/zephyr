@@ -1080,7 +1080,7 @@ static void z_paging_ondemand_section_map(void)
 }
 #endif /* CONFIG_LINKER_USE_ONDEMAND_SECTION */
 
-void z_mem_manage_init(void)
+void k_priv_mem_manage_init(void)
 {
 	uintptr_t phys;
 	uint8_t *addr;
@@ -1180,7 +1180,7 @@ void z_mem_manage_init(void)
 #endif /* CONFIG_LINKER_GENERIC_SECTIONS_PRESENT_AT_BOOT */
 }
 
-void z_mem_manage_boot_finish(void)
+void k_priv_mem_manage_boot_finish(void)
 {
 #ifdef CONFIG_LINKER_USE_BOOT_SECTION
 	/* At the end of boot process, unpin the boot sections

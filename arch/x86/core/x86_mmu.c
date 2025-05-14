@@ -1545,7 +1545,7 @@ void z_x86_swap_update_common_page_table(struct k_thread *incoming)
 	 * them. If the incoming thread's memory domain is different,
 	 * update the page tables
 	 */
-	key = k_spin_lock(&z_mem_domain_lock);
+	key = k_spin_lock(&k_priv_mem_domain_lock);
 	if (incoming->mem_domain_info.mem_domain == current_domain) {
 		/* The incoming thread's domain is already applied */
 		goto out_unlock;
@@ -1576,7 +1576,7 @@ void z_x86_swap_update_common_page_table(struct k_thread *incoming)
 	}
 	current_domain = incoming->mem_domain_info.mem_domain;
 out_unlock:
-	k_spin_unlock(&z_mem_domain_lock, key);
+	k_spin_unlock(&k_priv_mem_domain_lock, key);
 }
 
 /* If a partition was added or removed in the cached domain, update the

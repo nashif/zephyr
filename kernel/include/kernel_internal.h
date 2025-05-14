@@ -162,10 +162,10 @@ int z_stack_space_get(const uint8_t *stack_start, size_t size, size_t *unused_pt
 bool z_stack_is_user_capable(k_thread_stack_t *stack);
 
 /* Memory domain setup hook, called from z_setup_new_thread() */
-void z_mem_domain_init_thread(struct k_thread *thread);
+void k_priv_mem_domain_init_thread(struct k_thread *thread);
 
 /* Memory domain teardown hook, called from k_priv_thread_abort() */
-void z_mem_domain_exit_thread(struct k_thread *thread);
+void k_priv_mem_domain_exit_thread(struct k_thread *thread);
 
 /* This spinlock:
  *
@@ -177,7 +177,7 @@ void z_mem_domain_exit_thread(struct k_thread *thread);
  * Uniprocessor systems can get away with just locking interrupts but this is
  * not recommended.
  */
-extern struct k_spinlock z_mem_domain_lock;
+extern struct k_spinlock k_priv_mem_domain_lock;
 #endif /* CONFIG_USERSPACE */
 
 #ifdef CONFIG_GDBSTUB
@@ -210,12 +210,12 @@ void k_priv_thread_mark_switched_out(void);
 /* Init hook for page frame management, invoked immediately upon entry of
  * main thread, before POST_KERNEL tasks
  */
-void z_mem_manage_init(void);
+void k_priv_mem_manage_init(void);
 
 /**
  * @brief Finalize page frame management at the end of boot process.
  */
-void z_mem_manage_boot_finish(void);
+void k_priv_mem_manage_boot_finish(void);
 
 
 bool z_handle_obj_poll_events(sys_dlist_t *events, uint32_t state);

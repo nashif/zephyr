@@ -83,7 +83,7 @@ void soc_reset_hook(void)
 	 *   - [A] Enforce strict alignment enable
 	 *   [I] and [C] will be enabled during the MMU init -> disable them
 	 *   until then. [Z] is probably not harmful. [A] will cause a crash
-	 *   as early as z_mem_manage_init when an unaligned access is performed
+	 *   as early as k_priv_mem_manage_init when an unaligned access is performed
 	 *   -> clear [A].
 	 */
 

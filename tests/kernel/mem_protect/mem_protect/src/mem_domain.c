@@ -409,7 +409,7 @@ ZTEST(mem_protect_domain, test_mem_part_overlap)
 		0, "should fail to add memory partition");
 }
 
-extern struct k_spinlock z_mem_domain_lock;
+extern struct k_spinlock k_priv_mem_domain_lock;
 
 static struct k_mem_domain test_domain_fail;
 

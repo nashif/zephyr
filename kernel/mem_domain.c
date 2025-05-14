@@ -16,7 +16,7 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(os, CONFIG_KERNEL_LOG_LEVEL);
 
-struct k_spinlock z_mem_domain_lock;
+struct k_spinlock k_priv_mem_domain_lock;
 static uint8_t max_partitions;
 
 struct k_mem_domain k_mem_domain_default;
@@ -109,7 +109,7 @@ int k_mem_domain_init(struct k_mem_domain *domain, uint8_t num_parts,
 		goto out;
 	}
 
-	key = k_spin_lock(&z_mem_domain_lock);
+	key = k_spin_lock(&k_priv_mem_domain_lock);
 
 	domain->num_partitions = 0U;
 	(void)memset(domain->partitions, 0, sizeof(domain->partitions));
@@ -150,7 +150,7 @@ int k_mem_domain_init(struct k_mem_domain *domain, uint8_t num_parts,
 	}
 
 unlock_out:
-	k_spin_unlock(&z_mem_domain_lock, key);
+	k_spin_unlock(&k_priv_mem_domain_lock, key);
 
 out:
 	return ret;
@@ -174,7 +174,7 @@ int k_mem_domain_add_partition(struct k_mem_domain *domain,
 		goto out;
 	}
 
-	key = k_spin_lock(&z_mem_domain_lock);
+	key = k_spin_lock(&k_priv_mem_domain_lock);
 
 	for (p_idx = 0; p_idx < max_partitions; p_idx++) {
 		/* A zero-sized partition denotes it's a free partition */
@@ -203,7 +203,7 @@ int k_mem_domain_add_partition(struct k_mem_domain *domain,
 #endif /* CONFIG_ARCH_MEM_DOMAIN_SYNCHRONOUS_API */
 
 unlock_out:
-	k_spin_unlock(&z_mem_domain_lock, key);
+	k_spin_unlock(&k_priv_mem_domain_lock, key);
 
 out:
 	return ret;
@@ -221,7 +221,7 @@ int k_mem_domain_remove_partition(struct k_mem_domain *domain,
 		goto out;
 	}
 
-	key = k_spin_lock(&z_mem_domain_lock);
+	key = k_spin_lock(&k_priv_mem_domain_lock);
 
 	/* find a partition that matches the given start and size */
 	for (p_idx = 0; p_idx < max_partitions; p_idx++) {
@@ -250,7 +250,7 @@ int k_mem_domain_remove_partition(struct k_mem_domain *domain,
 	domain->num_partitions--;
 
 unlock_out:
-	k_spin_unlock(&z_mem_domain_lock, key);
+	k_spin_unlock(&k_priv_mem_domain_lock, key);
 
 out:
 	return ret;
@@ -293,31 +293,31 @@ static int remove_thread_locked(struct k_thread *thread)
 }
 
 /* Called from thread object initialization */
-void z_mem_domain_init_thread(struct k_thread *thread)
+void k_priv_mem_domain_init_thread(struct k_thread *thread)
 {
 	int ret;
-	k_spinlock_key_t key = k_spin_lock(&z_mem_domain_lock);
+	k_spinlock_key_t key = k_spin_lock(&k_priv_mem_domain_lock);
 
 	/* New threads inherit memory domain configuration from parent */
 	ret = add_thread_locked(_current->mem_domain_info.mem_domain, thread);
 	__ASSERT_NO_MSG(ret == 0);
 	ARG_UNUSED(ret);
 
-	k_spin_unlock(&z_mem_domain_lock, key);
+	k_spin_unlock(&k_priv_mem_domain_lock, key);
 }
 
 /* Called when thread aborts during teardown tasks. _sched_spinlock is held */
-void z_mem_domain_exit_thread(struct k_thread *thread)
+void k_priv_mem_domain_exit_thread(struct k_thread *thread)
 {
 	int ret;
 
-	k_spinlock_key_t key = k_spin_lock(&z_mem_domain_lock);
+	k_spinlock_key_t key = k_spin_lock(&k_priv_mem_domain_lock);
 
 	ret = remove_thread_locked(thread);
 	__ASSERT_NO_MSG(ret == 0);
 	ARG_UNUSED(ret);
 
-	k_spin_unlock(&z_mem_domain_lock, key);
+	k_spin_unlock(&k_priv_mem_domain_lock, key);
 }
 
 int k_mem_domain_add_thread(struct k_mem_domain *domain, k_tid_t thread)
@@ -325,7 +325,7 @@ int k_mem_domain_add_thread(struct k_mem_domain *domain, k_tid_t thread)
 	int ret = 0;
 	k_spinlock_key_t key;
 
-	key = k_spin_lock(&z_mem_domain_lock);
+	key = k_spin_lock(&k_priv_mem_domain_lock);
 	if (thread->mem_domain_info.mem_domain != domain) {
 		ret = remove_thread_locked(thread);
 
@@ -333,7 +333,7 @@ int k_mem_domain_add_thread(struct k_mem_domain *domain, k_tid_t thread)
 			ret = add_thread_locked(domain, thread);
 		}
 	}
-	k_spin_unlock(&z_mem_domain_lock, key);
+	k_spin_unlock(&k_priv_mem_domain_lock, key);
 
 	return ret;
 }

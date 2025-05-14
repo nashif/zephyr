@@ -530,7 +530,7 @@ static void bg_thread_main(void *unused1, void *unused2, void *unused3)
 	 * may perform memory management tasks (except for
 	 * k_mem_map_phys_bare() which is allowed at any time)
 	 */
-	z_mem_manage_init();
+	k_priv_mem_manage_init();
 #endif /* CONFIG_MMU */
 	z_sys_post_kernel = true;
 
@@ -571,7 +571,7 @@ static void bg_thread_main(void *unused1, void *unused2, void *unused3)
 #endif /* CONFIG_SMP */
 
 #ifdef CONFIG_MMU
-	z_mem_manage_boot_finish();
+	k_priv_mem_manage_boot_finish();
 #endif /* CONFIG_MMU */
 
 #ifdef CONFIG_BOOTARGS
