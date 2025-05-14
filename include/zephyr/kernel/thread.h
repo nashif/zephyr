@@ -250,7 +250,7 @@ typedef struct k_thread_runtime_stats {
 #endif
 }  k_thread_runtime_stats_t;
 
-struct z_poller {
+struct k_priv_poller {
 	bool is_polling;
 	uint8_t mode;
 };
@@ -273,7 +273,7 @@ struct k_thread {
 	_wait_q_t join_queue;
 
 #if defined(CONFIG_POLL)
-	struct z_poller poller;
+	struct k_priv_poller poller;
 #endif /* CONFIG_POLL */
 
 #if defined(CONFIG_EVENTS)

@@ -4448,7 +4448,7 @@ static inline k_tid_t k_work_user_queue_thread_get(struct k_work_user_q *work_q)
 struct k_work_poll {
 	struct k_work work;
 	struct k_work_q *workq;
-	struct z_poller poller;
+	struct k_priv_poller poller;
 	struct k_poll_event *events;
 	int num_events;
 	k_work_handler_t real_handler;
@@ -6040,7 +6040,7 @@ struct k_poll_event {
 	sys_dnode_t _node;
 
 	/** PRIVATE - DO NOT TOUCH */
-	struct z_poller *poller;
+	struct k_priv_poller *poller;
 
 	/** optional user-specified tag, opaque, untouched by the API */
 	uint32_t tag:8;
