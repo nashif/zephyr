@@ -639,7 +639,7 @@ int k_priv_pend_curr(struct k_spinlock *lock, k_spinlock_key_t key,
 	return k_priv_swap(&_sched_spinlock, key);
 }
 
-struct k_thread *z_unpend1_no_timeout(_wait_q_t *wait_q)
+struct k_thread *k_priv_unpend1_no_timeout(_wait_q_t *wait_q)
 {
 	struct k_thread *thread = NULL;
 

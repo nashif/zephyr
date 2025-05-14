@@ -974,7 +974,7 @@ release:
 * :github:`32151` - Use of deprecated macro's in icm42605
 * :github:`32143` - AArch64 idle loop corrupts IRQ state with CONFIG_TRACING
 * :github:`32142` - dtc: Unrecognized check name "unique_unit_address_if_enabled"
-* :github:`32136` - z_unpend1_no_timeout non-atomic
+* :github:`32136` - k_priv_unpend1_no_timeout non-atomic
 * :github:`32095` - guiconfig search fails
 * :github:`32078` - build error with llvm: samples/subsys/fs/littlefs
 * :github:`32070` - How to manage power consumption when working with peripheral_hr sample on NRF52832

@@ -211,7 +211,7 @@ void z_impl_k_timer_stop(struct k_timer *timer)
 	}
 
 	if (IS_ENABLED(CONFIG_MULTITHREADING)) {
-		struct k_thread *pending_thread = z_unpend1_no_timeout(&timer->wait_q);
+		struct k_thread *pending_thread = k_priv_unpend1_no_timeout(&timer->wait_q);
 
 		if (pending_thread != NULL) {
 			k_priv_ready_thread(pending_thread);
