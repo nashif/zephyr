@@ -363,7 +363,7 @@ void k_priv_ready_thread(struct k_thread *thread)
 	}
 }
 
-void z_move_thread_to_end_of_prio_q(struct k_thread *thread)
+void k_priv_move_thread_to_end_of_prio_q(struct k_thread *thread)
 {
 	K_SPINLOCK(&_sched_spinlock) {
 		move_thread_to_end_of_prio_q(thread);

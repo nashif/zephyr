@@ -90,7 +90,7 @@ void arm_isr_handler(const void *args)
 
 		/* Trigger thread yield() manually */
 		(void)irq_lock();
-		z_move_thread_to_end_of_prio_q(_current);
+		k_priv_move_thread_to_end_of_prio_q(_current);
 		SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
 		irq_unlock(0);
 
