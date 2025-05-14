@@ -54,7 +54,7 @@ static struct cpu_start_cb {
 
 static struct k_spinlock cpu_start_lock;
 
-unsigned int z_smp_global_lock(void)
+unsigned int k_priv_smp_global_lock(void)
 {
 	unsigned int key = arch_irq_lock();
 
@@ -69,7 +69,7 @@ unsigned int z_smp_global_lock(void)
 	return key;
 }
 
-void z_smp_global_unlock(unsigned int key)
+void k_priv_smp_global_unlock(unsigned int key)
 {
 	if (_current->base.global_lock_count != 0U) {
 		_current->base.global_lock_count--;
@@ -83,7 +83,7 @@ void z_smp_global_unlock(unsigned int key)
 }
 
 /* Called from within k_priv_swap(), so assumes lock already held */
-void z_smp_release_global_lock(struct k_thread *thread)
+void k_priv_smp_release_global_lock(struct k_thread *thread)
 {
 	if (!thread->base.global_lock_count) {
 		(void)atomic_clear(&global_lock);
@@ -219,7 +219,7 @@ void k_smp_cpu_resume(int id, smp_init_fn fn, void *arg,
 	k_spin_unlock(&cpu_start_lock, key);
 }
 
-void z_smp_init(void)
+void k_priv_smp_init(void)
 {
 	/* We are powering up all CPUs and we want to synchronize their
 	 * entry into scheduler. So set the start flag to 0 here.
@@ -240,7 +240,7 @@ void z_smp_init(void)
 	(void)atomic_set(&cpu_start_flag, 1);
 }
 
-bool z_smp_cpu_mobile(void)
+bool k_priv_smp_cpu_mobile(void)
 {
 	unsigned int k = arch_irq_lock();
 	bool pinned = arch_is_in_isr() || !arch_irq_unlocked(k);
@@ -249,7 +249,7 @@ bool z_smp_cpu_mobile(void)
 	return !pinned;
 }
 
-__attribute_const__ struct k_thread *z_smp_current_get(void)
+__attribute_const__ struct k_thread *k_priv_smp_current_get(void)
 {
 	/*
 	 * _current is a field read from _current_cpu, which can race

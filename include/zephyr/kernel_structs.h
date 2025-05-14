@@ -245,12 +245,12 @@ extern atomic_t _cpus_active;
 /* True if the current context can be preempted and migrated to
  * another SMP CPU.
  */
-bool z_smp_cpu_mobile(void);
-#define _current_cpu ({ __ASSERT_NO_MSG(!z_smp_cpu_mobile()); \
+bool k_priv_smp_cpu_mobile(void);
+#define _current_cpu ({ __ASSERT_NO_MSG(!k_priv_smp_cpu_mobile()); \
 			arch_curr_cpu(); })
 
-__attribute_const__ struct k_thread *z_smp_current_get(void);
-#define _current z_smp_current_get()
+__attribute_const__ struct k_thread *k_priv_smp_current_get(void);
+#define _current k_priv_smp_current_get()
 
 #else
 #define _current_cpu (&_kernel.cpus[0])

@@ -565,7 +565,7 @@ static void bg_thread_main(void *unused1, void *unused2, void *unused3)
 
 #ifdef CONFIG_SMP
 	if (!IS_ENABLED(CONFIG_SMP_BOOT_DELAY)) {
-		z_smp_init();
+		k_priv_smp_init();
 	}
 	sys_priv_init_run_level(INIT_LEVEL_SMP);
 #endif /* CONFIG_SMP */

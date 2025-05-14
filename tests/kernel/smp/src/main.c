@@ -882,7 +882,7 @@ static void t2_mutex_lock(void *p1, void *p2, void *p3)
 
 	k_mutex_unlock((struct k_mutex *)p1);
 
-	/**TESTPOINT: z_smp_release_global_lock() has been call during
+	/**TESTPOINT: k_priv_smp_release_global_lock() has been call during
 	 * context switch but global_lock_cnt has not been decrease
 	 * because no irq_lock() was called.
 	 */
@@ -897,7 +897,7 @@ static void t2_mutex_lock(void *p1, void *p2, void *p3)
  * @ingroup kernel_smp_tests
  *
  * @details Validate the scenario that make the internal APIs of SMP
- * z_smp_release_global_lock() to be called.
+ * k_priv_smp_release_global_lock() to be called.
  */
 ZTEST(smp, test_smp_release_global_lock)
 {

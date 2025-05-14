@@ -129,7 +129,7 @@ k_priv_thread_return_value_set_with_data(struct k_thread *thread,
 }
 
 #ifdef CONFIG_SMP
-extern void z_smp_init(void);
+extern void k_priv_smp_init(void);
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 extern void smp_timer_init(void);
 #endif /* CONFIG_SYS_CLOCK_EXISTS */

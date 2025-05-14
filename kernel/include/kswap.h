@@ -26,7 +26,7 @@ extern struct k_spinlock _sched_spinlock;
  * to restore the lock state to whatever the thread's counter
  * expects.
  */
-void z_smp_release_global_lock(struct k_thread *thread);
+void k_priv_smp_release_global_lock(struct k_thread *thread);
 
 /* context switching and scheduling-related routines */
 #ifdef CONFIG_USE_SWITCH
@@ -127,7 +127,7 @@ static ALWAYS_INLINE unsigned int do_swap(unsigned int key,
 		new_thread->base.cpu = arch_curr_cpu()->id;
 
 		if (!is_spinlock) {
-			z_smp_release_global_lock(new_thread);
+			k_priv_smp_release_global_lock(new_thread);
 		}
 #endif /* CONFIG_SMP */
 		k_priv_thread_mark_switched_out();

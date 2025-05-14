@@ -1657,7 +1657,7 @@ release:
 * :github:`33303` - __ASSERT does not display message or register info in v2.5.0
 * :github:`33291` - Using both NET_SOCKETS_SOCKOPT_TLS and POSIX_API fails build
 * :github:`33280` - drivers: serial: nrf uarte: The application receives one more byte that was received over UART
-* :github:`33273` - The z_smp_reacquire_global_lock() internal API is not used any where inside zephyr code base
+* :github:`33273` - The k_priv_smp_reacquire_global_lock() internal API is not used any where inside zephyr code base
 * :github:`33269` - ILI9341 (ILI9XXX) set orientation function fails to update the display area correctly
 * :github:`33265` - Power Management Overhaul
 * :github:`33261` - gatt_notify too slow on Broadcast
