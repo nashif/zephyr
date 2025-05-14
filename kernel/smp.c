@@ -185,7 +185,7 @@ void k_smp_cpu_start(int id, smp_init_fn fn, void *arg)
 	(void)atomic_set(&cpu_start_flag, 1); /* async, don't care */
 
 	/* Initialize various CPU structs related to this CPU. */
-	z_init_cpu(id);
+	k_priv_init_cpu(id);
 
 	/* Start the CPU! */
 	start_cpu(id, &cpu_start_fn);
@@ -230,7 +230,7 @@ void k_priv_smp_init(void)
 	unsigned int num_cpus = arch_num_cpus();
 
 	for (int i = 1; i < num_cpus; i++) {
-		z_init_cpu(i);
+		k_priv_init_cpu(i);
 		start_cpu(i, NULL);
 	}
 

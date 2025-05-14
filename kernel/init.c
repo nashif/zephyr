@@ -627,7 +627,7 @@ static void init_idle_thread(int i)
 #endif /* CONFIG_SMP */
 }
 
-void z_init_cpu(int id)
+void k_priv_init_cpu(int id)
 {
 	init_idle_thread(id);
 	_kernel.cpus[id].idle_thread = &z_idle_threads[id];
@@ -700,7 +700,7 @@ static char *prepare_multithreading(void)
 	k_priv_mark_thread_as_not_sleeping(&z_main_thread);
 	k_priv_ready_thread(&z_main_thread);
 
-	z_init_cpu(0);
+	k_priv_init_cpu(0);
 
 	return stack_ptr;
 }
