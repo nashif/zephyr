@@ -65,7 +65,7 @@ static struct k_spinlock lock;
 /* Invoked by work thread */
 static void handle_flush(struct k_work *work) { }
 
-static inline void init_flusher(struct z_work_flusher *flusher)
+static inline void init_flusher(struct k_priv_work_flusher *flusher)
 {
 	struct k_work *work = &flusher->work;
 	k_sem_init(&flusher->sem, 0, 1);
@@ -104,8 +104,8 @@ static inline void init_work_cancel(struct k_priv_work_canceller *canceler,
  */
 static void finalize_flush_locked(struct k_work *work)
 {
-	struct z_work_flusher *flusher
-		= CONTAINER_OF(work, struct z_work_flusher, work);
+	struct k_priv_work_flusher *flusher
+		= CONTAINER_OF(work, struct k_priv_work_flusher, work);
 
 	flag_clear(&work->flags, K_WORK_FLUSHING_BIT);
 
@@ -186,7 +186,7 @@ int k_work_busy_get(const struct k_work *work)
  */
 static void queue_flusher_locked(struct k_work_q *queue,
 				 struct k_work *work,
-				 struct z_work_flusher *flusher)
+				 struct k_priv_work_flusher *flusher)
 {
 	init_flusher(flusher);
 
@@ -435,7 +435,7 @@ int k_work_submit(struct k_work *work)
  * @retval false otherwise.  No wait required.
  */
 static bool work_flush_locked(struct k_work *work,
-			      struct z_work_flusher *flusher)
+			      struct k_priv_work_flusher *flusher)
 {
 	bool need_flush = (flags_get(&work->flags)
 			   & (K_WORK_QUEUED | K_WORK_RUNNING)) != 0U;
@@ -465,7 +465,7 @@ bool k_work_flush(struct k_work *work,
 
 	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_work, flush, work);
 
-	struct z_work_flusher *flusher = &sync->flusher;
+	struct k_priv_work_flusher *flusher = &sync->flusher;
 	k_spinlock_key_t key = k_spin_lock(&lock);
 
 	bool need_flush = work_flush_locked(work, flusher);
@@ -1138,7 +1138,7 @@ bool k_work_flush_delayable(struct k_work_delayable *dwork,
 	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_work, flush_delayable, dwork, sync);
 
 	struct k_work *work = &dwork->work;
-	struct z_work_flusher *flusher = &sync->flusher;
+	struct k_priv_work_flusher *flusher = &sync->flusher;
 	k_spinlock_key_t key = k_spin_lock(&lock);
 
 	/* If it's idle release the lock and return immediately. */

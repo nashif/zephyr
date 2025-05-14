@@ -4125,7 +4125,7 @@ struct k_work_delayable {
  * completes.  When the flusher is processed the semaphore will be
  * signaled, releasing the thread waiting for the flush.
  */
-struct z_work_flusher {
+struct k_priv_work_flusher {
 	struct k_work work;
 	struct k_sem sem;
 };
@@ -4161,7 +4161,7 @@ struct k_priv_work_canceller {
  */
 struct k_work_sync {
 	union {
-		struct z_work_flusher flusher;
+		struct k_priv_work_flusher flusher;
 		struct k_priv_work_canceller canceller;
 	};
 };
