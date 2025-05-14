@@ -60,7 +60,7 @@
  */
 #define K_APP_BMEM(id) Z_GENERIC_SECTION(K_APP_BMEM_SECTION(id))
 
-struct z_app_region {
+struct k_priv_app_region {
 	void *bss_start;
 	size_t bss_size;
 };
@@ -135,7 +135,7 @@ struct z_app_region {
 	extern char Z_APP_BSS_START(name)[]; \
 	extern char Z_APP_BSS_SIZE(name)[]; \
 	Z_GENERIC_SECTION(.app_regions.name) \
-	const struct z_app_region name##_region = { \
+	const struct k_priv_app_region name##_region = { \
 		.bss_start = &Z_APP_BSS_START(name)[0], \
 		.bss_size = (size_t) &Z_APP_BSS_SIZE(name)[0] \
 	}; \

@@ -960,11 +960,11 @@ extern char __app_shmem_regions_end[];
 
 static int app_shmem_bss_zero(void)
 {
-	struct z_app_region *region, *end;
+	struct k_priv_app_region *region, *end;
 
 
-	end = (struct z_app_region *)&__app_shmem_regions_end[0];
-	region = (struct z_app_region *)&__app_shmem_regions_start[0];
+	end = (struct k_priv_app_region *)&__app_shmem_regions_end[0];
+	region = (struct k_priv_app_region *)&__app_shmem_regions_start[0];
 
 	for ( ; region < end; region++) {
 #if defined(CONFIG_DEMAND_PAGING) && !defined(CONFIG_LINKER_GENERIC_SECTIONS_PRESENT_AT_BOOT)
