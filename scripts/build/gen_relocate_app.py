@@ -208,7 +208,7 @@ MEMCPY_TEMPLATE = """
 """
 
 MEMSET_TEMPLATE = """
-	z_early_memset(&__{0}_bss_reloc_start, 0,
+	k_priv_early_memset(&__{0}_bss_reloc_start, 0,
 		           (size_t) &__{0}_bss_reloc_size);
 """
 

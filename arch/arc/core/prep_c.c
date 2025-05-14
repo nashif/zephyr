@@ -110,7 +110,7 @@ extern char __device_states_end[];
  */
 static void dev_state_zero(void)
 {
-	z_early_memset(__device_states_start, 0, __device_states_end - __device_states_start);
+	k_priv_early_memset(__device_states_start, 0, __device_states_end - __device_states_start);
 }
 #endif
 
