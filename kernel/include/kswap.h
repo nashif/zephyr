@@ -132,7 +132,7 @@ static ALWAYS_INLINE unsigned int do_swap(unsigned int key,
 #endif /* CONFIG_SMP */
 		k_priv_thread_mark_switched_out();
 		k_priv_sched_switch_spin(new_thread);
-		z_current_thread_set(new_thread);
+		k_priv_current_thread_set(new_thread);
 
 #ifdef CONFIG_TIMESLICING
 		k_priv_reset_time_slice(new_thread);

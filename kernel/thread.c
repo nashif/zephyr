@@ -1149,5 +1149,5 @@ void z_dummy_thread_init(struct k_thread *dummy_thread)
 	dummy_thread->base.slice_ticks = 0;
 #endif /* CONFIG_TIMESLICE_PER_THREAD */
 
-	z_current_thread_set(dummy_thread);
+	k_priv_current_thread_set(dummy_thread);
 }

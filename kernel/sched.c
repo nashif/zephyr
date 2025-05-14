@@ -812,11 +812,11 @@ struct k_thread *k_priv_swap_next_thread(void)
 }
 
 #ifdef CONFIG_USE_SWITCH
-/* Just a wrapper around z_current_thread_set(xxx) with tracing */
+/* Just a wrapper around k_priv_current_thread_set(xxx) with tracing */
 static inline void set_current(struct k_thread *new_thread)
 {
 	k_priv_thread_mark_switched_out();
-	z_current_thread_set(new_thread);
+	k_priv_current_thread_set(new_thread);
 }
 
 /**

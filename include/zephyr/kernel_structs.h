@@ -260,13 +260,13 @@ __attribute_const__ struct k_thread *z_smp_current_get(void);
 #define CPU_ID ((CONFIG_MP_MAX_NUM_CPUS == 1) ? 0 : _current_cpu->id)
 
 /* This is always invoked from a context where preemption is disabled */
-#define z_current_thread_set(thread) ({ _current_cpu->current = (thread); })
+#define k_priv_current_thread_set(thread) ({ _current_cpu->current = (thread); })
 
 #ifdef CONFIG_ARCH_HAS_CUSTOM_CURRENT_IMPL
 #undef _current
 #define _current arch_current_thread()
-#undef z_current_thread_set
-#define z_current_thread_set(thread) \
+#undef k_priv_current_thread_set
+#define k_priv_current_thread_set(thread) \
 	arch_current_thread_set(({ _current_cpu->current = (thread); }))
 #endif
 
