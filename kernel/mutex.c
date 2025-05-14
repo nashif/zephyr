@@ -81,7 +81,7 @@ static inline int z_vrfy_k_mutex_init(struct k_mutex *mutex)
 
 static int32_t new_prio_for_inheritance(int32_t target, int32_t limit)
 {
-	int new_prio = z_is_prio_higher(target, limit) ? target : limit;
+	int new_prio = k_priv_is_prio_higher(target, limit) ? target : limit;
 
 	new_prio = z_get_new_prio_with_ceiling(new_prio);
 
@@ -149,7 +149,7 @@ int z_impl_k_mutex_lock(struct k_mutex *mutex, k_timeout_t timeout)
 
 	LOG_DBG("adjusting prio up on mutex %p", mutex);
 
-	if (z_is_prio_higher(new_prio, mutex->owner->base.prio)) {
+	if (k_priv_is_prio_higher(new_prio, mutex->owner->base.prio)) {
 		resched = adjust_owner_prio(mutex, new_prio);
 	}
 

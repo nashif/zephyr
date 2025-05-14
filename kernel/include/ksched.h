@@ -94,7 +94,7 @@ static inline bool z_is_prio1_higher_than_or_equal_to_prio2(int prio1, int prio2
 	return prio1 <= prio2;
 }
 
-static inline bool z_is_prio_higher_or_equal(int prio1, int prio2)
+static inline bool k_priv_is_prio_higher_or_equal(int prio1, int prio2)
 {
 	return z_is_prio1_higher_than_or_equal_to_prio2(prio1, prio2);
 }
@@ -109,7 +109,7 @@ static inline bool z_is_prio1_higher_than_prio2(int prio1, int prio2)
 	return prio1 < prio2;
 }
 
-static inline bool z_is_prio_higher(int prio, int test_prio)
+static inline bool k_priv_is_prio_higher(int prio, int test_prio)
 {
 	return z_is_prio1_higher_than_prio2(prio, test_prio);
 }
@@ -125,7 +125,7 @@ static inline bool _is_valid_prio(int prio, k_thread_entry_t entry_point)
 		return true;
 	}
 
-	if (!z_is_prio_higher_or_equal(prio,
+	if (!k_priv_is_prio_higher_or_equal(prio,
 				       K_LOWEST_APPLICATION_THREAD_PRIO)) {
 		return false;
 	}
