@@ -271,7 +271,7 @@ static int signal_poller(struct k_poll_event *event, uint32_t state)
 		return 0;
 	}
 
-	z_unpend_thread(thread);
+	k_priv_unpend_thread(thread);
 	arch_thread_return_value_set(thread,
 		state == K_POLL_STATE_CANCELLED ? -EINTR : 0);
 

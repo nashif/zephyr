@@ -58,8 +58,8 @@ void z_pend_thread(struct k_thread *thread, _wait_q_t *wait_q,
 		   k_timeout_t timeout);
 void k_priv_reschedule(struct k_spinlock *lock, k_spinlock_key_t key);
 void k_priv_reschedule_irqlock(uint32_t key);
-void z_unpend_thread(struct k_thread *thread);
-int z_unpend_all(_wait_q_t *wait_q);
+void k_priv_unpend_thread(struct k_thread *thread);
+int k_priv_unpend_all(_wait_q_t *wait_q);
 bool k_priv_thread_prio_set(struct k_thread *thread, int prio);
 void *z_get_next_switch_handle(void *interrupted);
 
@@ -164,12 +164,12 @@ static inline void unpend_thread_no_timeout(struct k_thread *thread)
 }
 
 /*
- * In a multiprocessor system, z_unpend_first_thread() must lock the scheduler
+ * In a multiprocessor system, k_priv_unpend_first_thread() must lock the scheduler
  * spinlock _sched_spinlock. However, in a uniprocessor system, that is not
  * necessary as the caller has already taken precautions (in the form of
  * locking interrupts).
  */
-static ALWAYS_INLINE struct k_thread *z_unpend_first_thread(_wait_q_t *wait_q)
+static ALWAYS_INLINE struct k_thread *k_priv_unpend_first_thread(_wait_q_t *wait_q)
 {
 	struct k_thread *thread = NULL;
 

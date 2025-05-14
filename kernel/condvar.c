@@ -47,7 +47,7 @@ int z_impl_k_condvar_signal(struct k_condvar *condvar)
 
 	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_condvar, signal, condvar);
 
-	struct k_thread *thread = z_unpend_first_thread(&condvar->wait_q);
+	struct k_thread *thread = k_priv_unpend_first_thread(&condvar->wait_q);
 
 	if (unlikely(thread != NULL)) {
 		SYS_PORT_TRACING_OBJ_FUNC_BLOCKING(k_condvar, signal, condvar, K_FOREVER);
@@ -84,8 +84,8 @@ int z_impl_k_condvar_broadcast(struct k_condvar *condvar)
 	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_condvar, broadcast, condvar);
 
 	/* wake up any threads that are waiting to write */
-	for (pending_thread = z_unpend_first_thread(&condvar->wait_q); pending_thread != NULL;
-		 pending_thread = z_unpend_first_thread(&condvar->wait_q)) {
+	for (pending_thread = k_priv_unpend_first_thread(&condvar->wait_q); pending_thread != NULL;
+		 pending_thread = k_priv_unpend_first_thread(&condvar->wait_q)) {
 		woken++;
 		arch_thread_return_value_set(pending_thread, 0);
 		z_ready_thread(pending_thread);

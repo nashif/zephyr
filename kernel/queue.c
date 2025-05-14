@@ -104,7 +104,7 @@ void z_impl_k_queue_cancel_wait(struct k_queue *queue)
 	struct k_thread *first_pending_thread;
 	bool resched = false;
 
-	first_pending_thread = z_unpend_first_thread(&queue->wait_q);
+	first_pending_thread = k_priv_unpend_first_thread(&queue->wait_q);
 
 	if (first_pending_thread != NULL) {
 		resched = true;
@@ -142,7 +142,7 @@ static int32_t queue_insert(struct k_queue *queue, void *prev, void *data,
 	if (is_append) {
 		prev = sys_sflist_peek_tail(&queue->data_q);
 	}
-	first_pending_thread = z_unpend_first_thread(&queue->wait_q);
+	first_pending_thread = k_priv_unpend_first_thread(&queue->wait_q);
 
 	if (unlikely(first_pending_thread != NULL)) {
 		SYS_PORT_TRACING_OBJ_FUNC_BLOCKING(k_queue, queue_insert, queue, alloc, K_FOREVER);
@@ -270,14 +270,14 @@ int k_queue_append_list(struct k_queue *queue, void *head, void *tail)
 	struct k_thread *thread = NULL;
 
 	if (head != NULL) {
-		thread = z_unpend_first_thread(&queue->wait_q);
+		thread = k_priv_unpend_first_thread(&queue->wait_q);
 	}
 
 	while ((head != NULL) && (thread != NULL)) {
 		resched = true;
 		prepare_thread_to_run(thread, head);
 		head = *(void **)head;
-		thread = z_unpend_first_thread(&queue->wait_q);
+		thread = k_priv_unpend_first_thread(&queue->wait_q);
 	}
 
 	if (head != NULL) {

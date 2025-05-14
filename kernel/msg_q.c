@@ -140,7 +140,7 @@ int z_impl_k_msgq_put(struct k_msgq *msgq, const void *data, k_timeout_t timeout
 
 	if (msgq->used_msgs < msgq->max_msgs) {
 		/* message queue isn't full */
-		pending_thread = z_unpend_first_thread(&msgq->wait_q);
+		pending_thread = k_priv_unpend_first_thread(&msgq->wait_q);
 		if (unlikely(pending_thread != NULL)) {
 			resched = true;
 
@@ -240,7 +240,7 @@ int z_impl_k_msgq_get(struct k_msgq *msgq, void *data, k_timeout_t timeout)
 		msgq->used_msgs--;
 
 		/* handle first thread waiting to write (if any) */
-		pending_thread = z_unpend_first_thread(&msgq->wait_q);
+		pending_thread = k_priv_unpend_first_thread(&msgq->wait_q);
 		if (unlikely(pending_thread != NULL)) {
 			SYS_PORT_TRACING_OBJ_FUNC_BLOCKING(k_msgq, get, msgq, timeout);
 
@@ -389,9 +389,9 @@ void z_impl_k_msgq_purge(struct k_msgq *msgq)
 	SYS_PORT_TRACING_OBJ_FUNC(k_msgq, purge, msgq);
 
 	/* wake up any threads that are waiting to write */
-	for (pending_thread = z_unpend_first_thread(&msgq->wait_q);
+	for (pending_thread = k_priv_unpend_first_thread(&msgq->wait_q);
 	     pending_thread != NULL;
-	     pending_thread = z_unpend_first_thread(&msgq->wait_q)) {
+	     pending_thread = k_priv_unpend_first_thread(&msgq->wait_q)) {
 		arch_thread_return_value_set(pending_thread, -ENOMSG);
 		z_ready_thread(pending_thread);
 		resched = true;

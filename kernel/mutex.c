@@ -254,7 +254,7 @@ int z_impl_k_mutex_unlock(struct k_mutex *mutex)
 	adjust_owner_prio(mutex, mutex->owner_orig_prio);
 
 	/* Get the new owner, if any */
-	new_owner = z_unpend_first_thread(&mutex->wait_q);
+	new_owner = k_priv_unpend_first_thread(&mutex->wait_q);
 
 	mutex->owner = new_owner;
 

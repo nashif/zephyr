@@ -654,7 +654,7 @@ struct k_thread *z_unpend1_no_timeout(_wait_q_t *wait_q)
 	return thread;
 }
 
-void z_unpend_thread(struct k_thread *thread)
+void k_priv_unpend_thread(struct k_thread *thread)
 {
 	k_priv_unpend_thread_no_timeout(thread);
 	k_priv_abort_thread_timeout(thread);
@@ -926,13 +926,13 @@ void *z_get_next_switch_handle(void *interrupted)
 }
 #endif /* CONFIG_USE_SWITCH */
 
-int z_unpend_all(_wait_q_t *wait_q)
+int k_priv_unpend_all(_wait_q_t *wait_q)
 {
 	int need_sched = 0;
 	struct k_thread *thread;
 
 	for (thread = k_priv_waitq_head(wait_q); thread != NULL; thread = k_priv_waitq_head(wait_q)) {
-		z_unpend_thread(thread);
+		k_priv_unpend_thread(thread);
 		z_ready_thread(thread);
 		need_sched = 1;
 	}

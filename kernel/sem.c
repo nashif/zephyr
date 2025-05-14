@@ -100,7 +100,7 @@ void z_impl_k_sem_give(struct k_sem *sem)
 
 	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_sem, give, sem);
 
-	thread = z_unpend_first_thread(&sem->wait_q);
+	thread = k_priv_unpend_first_thread(&sem->wait_q);
 
 	if (unlikely(thread != NULL)) {
 		arch_thread_return_value_set(thread, 0);
@@ -170,7 +170,7 @@ void z_impl_k_sem_reset(struct k_sem *sem)
 	bool resched = false;
 
 	while (true) {
-		thread = z_unpend_first_thread(&sem->wait_q);
+		thread = k_priv_unpend_first_thread(&sem->wait_q);
 		if (thread == NULL) {
 			break;
 		}

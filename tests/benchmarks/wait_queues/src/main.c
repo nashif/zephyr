@@ -86,7 +86,7 @@ static void test_decreasing_priority(_wait_q_t *q, unsigned int num_threads)
 
 	for (i = 0; i < num_threads; i++) {
 		start = timing_counter_get();
-		z_unpend_thread((struct k_thread *)&dummy_thread[i]);
+		k_priv_unpend_thread((struct k_thread *)&dummy_thread[i]);
 		finish = timing_counter_get();
 
 		remove_cycles[i] += timing_cycles_get(&start, &finish);
@@ -118,7 +118,7 @@ static void test_increasing_priority(_wait_q_t *q, unsigned int num_threads)
 		start = timing_counter_get();
 		thread = (struct k_thread *)
 			 &dummy_thread[num_threads - i - 1];
-		z_unpend_thread(thread);
+		k_priv_unpend_thread(thread);
 		finish = timing_counter_get();
 
 		remove_cycles[i] += timing_cycles_get(&start, &finish);

@@ -279,7 +279,7 @@ void k_mem_slab_free(struct k_mem_slab *slab, void *mem)
 
 	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_mem_slab, free, slab);
 	if (unlikely(slab->free_list == NULL) && IS_ENABLED(CONFIG_MULTITHREADING)) {
-		struct k_thread *pending_thread = z_unpend_first_thread(&slab->wait_q);
+		struct k_thread *pending_thread = k_priv_unpend_first_thread(&slab->wait_q);
 
 		if (unlikely(pending_thread != NULL)) {
 			SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_mem_slab, free, slab);

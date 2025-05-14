@@ -111,7 +111,7 @@ int z_impl_k_stack_push(struct k_stack *stack, stack_data_t data)
 		goto out;
 	}
 
-	first_pending_thread = z_unpend_first_thread(&stack->wait_q);
+	first_pending_thread = k_priv_unpend_first_thread(&stack->wait_q);
 
 	if (unlikely(first_pending_thread != NULL)) {
 		k_priv_thread_return_value_set_with_data(first_pending_thread,
