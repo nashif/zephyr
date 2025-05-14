@@ -389,7 +389,7 @@ static sys_sflist_t free_page_frame_list;
 /* Number of unused and available free page frames.
  * This information may go stale immediately.
  */
-static size_t z_free_page_count;
+static size_t _free_page_count;
 
 #define PF_ASSERT(pf, expr, fmt, ...) \
 	__ASSERT(expr, "page frame 0x%lx: " fmt, k_mem_page_frame_to_phys(pf), \
@@ -403,7 +403,7 @@ static struct k_mem_page_frame *free_page_frame_list_get(void)
 
 	node = sys_sflist_get(&free_page_frame_list);
 	if (node != NULL) {
-		z_free_page_count--;
+		_free_page_count--;
 		pf = CONTAINER_OF(node, struct k_mem_page_frame, node);
 		PF_ASSERT(pf, k_mem_page_frame_is_free(pf),
 			 "on free list but not free");
@@ -421,7 +421,7 @@ static void free_page_frame_list_put(struct k_mem_page_frame *pf)
 
 	sys_sfnode_init(&pf->node, K_MEM_PAGE_FRAME_FREE);
 	sys_sflist_append(&free_page_frame_list, &pf->node);
-	z_free_page_count++;
+	_free_page_count++;
 }
 
 static void free_page_frame_list_init(void)
@@ -854,13 +854,13 @@ size_t k_mem_free_get(void)
 
 	key = k_spin_lock(&_mm_lock);
 #ifdef CONFIG_DEMAND_PAGING
-	if (z_free_page_count > CONFIG_DEMAND_PAGING_PAGE_FRAMES_RESERVE) {
-		ret = z_free_page_count - CONFIG_DEMAND_PAGING_PAGE_FRAMES_RESERVE;
+	if (_free_page_count > CONFIG_DEMAND_PAGING_PAGE_FRAMES_RESERVE) {
+		ret = _free_page_count - CONFIG_DEMAND_PAGING_PAGE_FRAMES_RESERVE;
 	} else {
 		ret = 0;
 	}
 #else
-	ret = z_free_page_count;
+	ret = _free_page_count;
 #endif /* CONFIG_DEMAND_PAGING */
 	k_spin_unlock(&_mm_lock, key);
 
@@ -1141,7 +1141,7 @@ void k_priv_mem_manage_init(void)
 			free_page_frame_list_put(pf);
 		}
 	}
-	LOG_DBG("free page frames: %zu", z_free_page_count);
+	LOG_DBG("free page frames: %zu", _free_page_count);
 
 #ifdef CONFIG_DEMAND_PAGING
 #ifdef CONFIG_DEMAND_PAGING_TIMING_HISTOGRAM
