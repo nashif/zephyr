@@ -28,7 +28,7 @@ extern "C" {
 void z_init_cpu(int id);
 
 /* Initialize a thread */
-void z_init_thread_base(struct _thread_base *thread_base, int priority,
+void k_priv_init_thread_base(struct _thread_base *thread_base, int priority,
 			uint32_t initial_state, unsigned int options);
 
 /* Early boot functions */

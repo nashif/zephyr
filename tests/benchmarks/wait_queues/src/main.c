@@ -45,7 +45,7 @@ static void dummy_threads_init(unsigned int num_threads)
 	bucket_size = (num_threads / CONFIG_NUM_PREEMPT_PRIORITIES) + 1;
 
 	for (i = 0; i < num_threads; i++) {
-		z_init_thread_base(&dummy_thread[i], i / bucket_size,
+		k_priv_init_thread_base(&dummy_thread[i], i / bucket_size,
 				   _THREAD_DUMMY, 0);
 	}
 }

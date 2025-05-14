@@ -544,7 +544,7 @@ char *z_setup_new_thread(struct k_thread *new_thread,
 	k_priv_waitq_init(&new_thread->join_queue);
 
 	/* Initialize various struct k_thread members */
-	z_init_thread_base(&new_thread->base, prio, _THREAD_SLEEPING, options);
+	k_priv_init_thread_base(&new_thread->base, prio, _THREAD_SLEEPING, options);
 	stack_ptr = setup_thread_stack(new_thread, stack, stack_size);
 
 #ifdef CONFIG_KERNEL_COHERENCE
@@ -740,7 +740,7 @@ k_tid_t z_vrfy_k_thread_create(struct k_thread *new_thread,
 #include <zephyr/syscalls/k_thread_create_mrsh.c>
 #endif /* CONFIG_USERSPACE */
 
-void z_init_thread_base(struct _thread_base *thread_base, int priority,
+void k_priv_init_thread_base(struct _thread_base *thread_base, int priority,
 		       uint32_t initial_state, unsigned int options)
 {
 	/* k_q_node is initialized upon first insertion in a list */

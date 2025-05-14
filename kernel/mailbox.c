@@ -71,7 +71,7 @@ static int init_mbox_module(void)
 	int i;
 
 	for (i = 0; i < CONFIG_NUM_MBOX_ASYNC_MSGS; i++) {
-		z_init_thread_base(&async_msg[i].thread, 0, _THREAD_DUMMY, 0);
+		k_priv_init_thread_base(&async_msg[i].thread, 0, _THREAD_DUMMY, 0);
 		k_stack_push(&async_msg_free, (stack_data_t)&async_msg[i]);
 	}
 
