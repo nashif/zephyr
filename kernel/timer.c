@@ -56,7 +56,7 @@ void z_timer_expiration_handler(struct _timeout *t)
 	    !K_TIMEOUT_EQ(timer->period, K_FOREVER)) {
 		k_timeout_t next = timer->period;
 
-		/* see note about z_add_timeout() in z_impl_k_timer_start() */
+		/* see note about k_priv_add_timeout() in z_impl_k_timer_start() */
 		next.ticks = MAX(next.ticks - 1, 0);
 
 #ifdef CONFIG_TIMEOUT_64BIT
@@ -73,7 +73,7 @@ void z_timer_expiration_handler(struct _timeout *t)
 		 */
 		next = K_TIMEOUT_ABS_TICKS(k_uptime_ticks() + 1 + next.ticks);
 #endif /* CONFIG_TIMEOUT_64BIT */
-		z_add_timeout(&timer->timeout, z_timer_expiration_handler,
+		k_priv_add_timeout(&timer->timeout, z_timer_expiration_handler,
 			      next);
 	}
 
@@ -153,7 +153,7 @@ void z_impl_k_timer_start(struct k_timer *timer, k_timeout_t duration,
 		return;
 	}
 
-	/* z_add_timeout() always adds one to the incoming tick count
+	/* k_priv_add_timeout() always adds one to the incoming tick count
 	 * to round up to the next tick (by convention it waits for
 	 * "at least as long as the specified timeout"), but the
 	 * period interval is always guaranteed to be reset from
@@ -175,11 +175,11 @@ void z_impl_k_timer_start(struct k_timer *timer, k_timeout_t duration,
 		duration.ticks = duration.ticks - 1;
 	}
 
-	(void)z_abort_timeout(&timer->timeout);
+	(void)k_priv_abort_timeout(&timer->timeout);
 	timer->period = period;
 	timer->status = 0U;
 
-	z_add_timeout(&timer->timeout, z_timer_expiration_handler,
+	k_priv_add_timeout(&timer->timeout, z_timer_expiration_handler,
 		     duration);
 
 	k_spin_unlock(&lock, key);
@@ -200,7 +200,7 @@ void z_impl_k_timer_stop(struct k_timer *timer)
 {
 	SYS_PORT_TRACING_OBJ_FUNC(k_timer, stop, timer);
 
-	bool inactive = (z_abort_timeout(&timer->timeout) != 0);
+	bool inactive = (k_priv_abort_timeout(&timer->timeout) != 0);
 
 	if (inactive) {
 		return;

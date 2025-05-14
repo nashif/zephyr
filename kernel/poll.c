@@ -611,7 +611,7 @@ static int signal_triggered_work(struct k_poll_event *event, uint32_t status)
 	if (poller->is_polling && twork->workq != NULL) {
 		struct k_work_q *work_q = twork->workq;
 
-		z_abort_timeout(&twork->timeout);
+		k_priv_abort_timeout(&twork->timeout);
 		twork->poll_result = 0;
 		z_work_submit_to_queue(work_q, &twork->work);
 	}
@@ -625,7 +625,7 @@ static int triggered_work_cancel(struct k_work_poll *work,
 	/* Check if the work waits for event. */
 	if (work->poller.is_polling && work->poller.mode != MODE_NONE) {
 		/* Remove timeout associated with the work. */
-		z_abort_timeout(&work->timeout);
+		k_priv_abort_timeout(&work->timeout);
 
 		/*
 		 * Prevent work execution if event arrives while we will be
@@ -731,7 +731,7 @@ int k_work_poll_submit_to_queue(struct k_work_q *work_q,
 
 		/* Setup timeout if such action is requested */
 		if (!K_TIMEOUT_EQ(timeout, K_FOREVER)) {
-			z_add_timeout(&work->timeout,
+			k_priv_add_timeout(&work->timeout,
 				      triggered_work_expiration_handler,
 				      timeout);
 		}

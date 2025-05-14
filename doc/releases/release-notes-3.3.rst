@@ -2878,7 +2878,7 @@ Addressed issues
 * :github:`54573` - gpio_hogs test uses an incorrect GPIO spec handle
 * :github:`54572` - QEMU networking breakage (Updating nrf-sdk 2.1->2.2 , implies zephyr 3.1 -> 3.2)
 * :github:`54569` - MMC subsys shares sdmmc kconfigs
-* :github:`54567` - Assertion in z_add_timeout() fails in drivers.uart.uart_mix_poll_async_api test
+* :github:`54567` - Assertion in k_priv_add_timeout() fails in drivers.uart.uart_mix_poll_async_api test
 * :github:`54563` - Variable uninitialised in flash_stm32_page_layout
 * :github:`54558` - LPTIM Kconfig-related build failures for nucleo_g431rb
 * :github:`54557` - sample.drivers.flash.shell fails to build for adafruit_kb2040

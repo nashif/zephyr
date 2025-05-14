@@ -124,7 +124,7 @@ static int event_walk_op(struct k_thread *thread, void *data)
 		 */
 		thread->next_event_link = event_data->head;
 		event_data->head = thread;
-		z_abort_timeout(&thread->base.timeout);
+		k_priv_abort_timeout(&thread->base.timeout);
 	}
 
 	return 0;

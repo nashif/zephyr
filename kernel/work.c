@@ -955,7 +955,7 @@ static int schedule_for_queue_locked(struct k_work_q **queuep,
 	dwork->queue = *queuep;
 
 	/* Add timeout */
-	z_add_timeout(&dwork->timeout, work_timeout, delay);
+	k_priv_add_timeout(&dwork->timeout, work_timeout, delay);
 
 	return ret;
 }
@@ -983,7 +983,7 @@ static inline bool unschedule_locked(struct k_work_delayable *dwork)
 	 * false.
 	 */
 	if (flag_test_and_clear(&work->flags, K_WORK_DELAYED_BIT)) {
-		ret = z_abort_timeout(&dwork->timeout) == 0;
+		ret = k_priv_abort_timeout(&dwork->timeout) == 0;
 	}
 
 	return ret;

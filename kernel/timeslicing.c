@@ -69,10 +69,10 @@ void k_priv_reset_time_slice(struct k_thread *thread)
 {
 	int cpu = _current_cpu->id;
 
-	z_abort_timeout(&slice_timeouts[cpu]);
+	k_priv_abort_timeout(&slice_timeouts[cpu]);
 	slice_expired[cpu] = false;
 	if (thread_is_sliceable(thread)) {
-		z_add_timeout(&slice_timeouts[cpu], slice_timeout,
+		k_priv_add_timeout(&slice_timeouts[cpu], slice_timeout,
 			      K_TICKS(slice_time(thread) - 1));
 	}
 }
