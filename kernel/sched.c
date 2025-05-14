@@ -1467,7 +1467,7 @@ bool z_sched_wake(_wait_q_t *wait_q, int swap_retval, void *swap_data)
 	return ret;
 }
 
-int z_sched_wait(struct k_spinlock *lock, k_spinlock_key_t key,
+int k_priv_sched_wait(struct k_spinlock *lock, k_spinlock_key_t key,
 		 _wait_q_t *wait_q, k_timeout_t timeout, void **data)
 {
 	int ret = z_pend_curr(lock, key, wait_q, timeout);
@@ -1478,7 +1478,7 @@ int z_sched_wait(struct k_spinlock *lock, k_spinlock_key_t key,
 	return ret;
 }
 
-int z_sched_waitq_walk(_wait_q_t  *wait_q,
+int k_priv_sched_waitq_walk(_wait_q_t  *wait_q,
 		       int (*func)(struct k_thread *, void *), void *data)
 {
 	struct k_thread *thread;

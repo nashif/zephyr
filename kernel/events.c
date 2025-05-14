@@ -159,7 +159,7 @@ static uint32_t k_event_post_internal(struct k_event *event, uint32_t events,
 	 * 3. Ready each of the threads in the linked list
 	 */
 
-	z_sched_waitq_walk(&event->wait_q, event_walk_op, &data);
+	k_priv_sched_waitq_walk(&event->wait_q, event_walk_op, &data);
 
 	if (data.head != NULL) {
 		thread = data.head;

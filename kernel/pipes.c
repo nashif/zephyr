@@ -264,7 +264,7 @@ static size_t pipe_waiter_list_populate(sys_dlist_t  *list,
 	walk_data.bytes_requested = bytes_to_xfer;
 	walk_data.bytes_available = 0;
 
-	(void) z_sched_waitq_walk(wait_q, pipe_walk_op, &walk_data);
+	(void) k_priv_sched_waitq_walk(wait_q, pipe_walk_op, &walk_data);
 
 	return walk_data.bytes_available;
 }
@@ -500,7 +500,7 @@ int z_impl_k_pipe_put(struct k_pipe *pipe, const void *data,
 
 	_current->base.swap_data = src_desc;
 
-	z_sched_wait(&pipe->lock, key, &pipe->wait_q.writers, timeout, NULL);
+	k_priv_sched_wait(&pipe->lock, key, &pipe->wait_q.writers, timeout, NULL);
 
 	/*
 	 * On SMP systems, threads in the processing list may timeout before
@@ -686,7 +686,7 @@ static int pipe_get_internal(k_spinlock_key_t key, struct k_pipe *pipe,
 
 	_current->base.swap_data = dest_desc;
 
-	z_sched_wait(&pipe->lock, key, &pipe->wait_q.readers, timeout, NULL);
+	k_priv_sched_wait(&pipe->lock, key, &pipe->wait_q.readers, timeout, NULL);
 
 	/*
 	 * On SMP systems, threads in the processing list may timeout before

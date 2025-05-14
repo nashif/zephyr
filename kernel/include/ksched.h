@@ -282,7 +282,7 @@ static inline bool k_priv_sched_wake_all(_wait_q_t *wait_q, int swap_retval,
  * @retval Return value set by whatever woke us up, or -EAGAIN if the timeout
  *         expired without being woken up.
  */
-int z_sched_wait(struct k_spinlock *lock, k_spinlock_key_t key,
+int k_priv_sched_wait(struct k_spinlock *lock, k_spinlock_key_t key,
 		 _wait_q_t *wait_q, k_timeout_t timeout, void **data);
 
 /**
@@ -303,7 +303,7 @@ int z_sched_wait(struct k_spinlock *lock, k_spinlock_key_t key,
  *
  * @retval non-zero if walk is terminated by the callback; otherwise 0
  */
-int z_sched_waitq_walk(_wait_q_t *wait_q,
+int k_priv_sched_waitq_walk(_wait_q_t *wait_q,
 		       int (*func)(struct k_thread *, void *), void *data);
 
 /** @brief Halt thread cycle usage accounting.

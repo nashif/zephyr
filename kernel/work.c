@@ -646,7 +646,7 @@ static void work_queue_main(void *workq_ptr, void *p2, void *p3)
 			/* Not busy and draining: move threads waiting for
 			 * drain to ready state.  The held spinlock inhibits
 			 * immediate reschedule; released threads get their
-			 * chance when this invokes z_sched_wait() below.
+			 * chance when this invokes k_priv_sched_wait() below.
 			 *
 			 * We don't touch K_WORK_QUEUE_PLUGGABLE, so getting
 			 * here doesn't mean that the queue will allow new
@@ -673,7 +673,7 @@ static void work_queue_main(void *workq_ptr, void *p2, void *p3)
 			 * work thread will be woken and we can check again.
 			 */
 
-			(void)z_sched_wait(&lock, key, &queue->notifyq,
+			(void)k_priv_sched_wait(&lock, key, &queue->notifyq,
 					   K_FOREVER, NULL);
 			continue;
 		}
@@ -787,7 +787,7 @@ int k_work_queue_drain(struct k_work_q *queue,
 		}
 
 		notify_queue_locked(queue);
-		ret = z_sched_wait(&lock, key, &queue->drainq,
+		ret = k_priv_sched_wait(&lock, key, &queue->drainq,
 				   K_FOREVER, NULL);
 	} else {
 		k_spin_unlock(&lock, key);
