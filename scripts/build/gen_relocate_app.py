@@ -202,7 +202,7 @@ void bss_zeroing_relocation(void)
 """
 
 MEMCPY_TEMPLATE = """
-	z_early_memcpy(&__{0}_{1}_reloc_start, &__{0}_{1}_rom_start,
+	k_priv_early_memcpy(&__{0}_{1}_reloc_start, &__{0}_{1}_rom_start,
 		           (size_t) &__{0}_{1}_reloc_size);
 
 """

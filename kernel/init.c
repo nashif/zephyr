@@ -205,7 +205,7 @@ void __weak k_priv_early_memset(void *dst, int c, size_t n)
  * may override this with their own safe implementation.
  */
 __boot_func
-void __weak z_early_memcpy(void *dst, const void *src, size_t n)
+void __weak k_priv_early_memcpy(void *dst, const void *src, size_t n)
 {
 	(void) memcpy(dst, src, n);
 }
@@ -749,7 +749,7 @@ void __weak z_early_rand_get(uint8_t *buf, size_t length)
 		state = state * 2862933555777941757ULL + 3037000493ULL;
 		val = (uint32_t)(state >> 32);
 		rc = MIN(length, sizeof(val));
-		z_early_memcpy((void *)buf, &val, rc);
+		k_priv_early_memcpy((void *)buf, &val, rc);
 
 		length -= rc;
 		buf += rc;

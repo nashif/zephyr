@@ -33,7 +33,7 @@ void k_priv_init_thread_base(struct _thread_base *thread_base, int priority,
 
 /* Early boot functions */
 void k_priv_early_memset(void *dst, int c, size_t n);
-void z_early_memcpy(void *dst, const void *src, size_t n);
+void k_priv_early_memcpy(void *dst, const void *src, size_t n);
 
 void z_bss_zero(void);
 #ifdef CONFIG_XIP
