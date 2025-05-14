@@ -38,7 +38,7 @@ static struct k_thread test_thread[CONFIG_BENCHMARK_NUM_THREADS];
 static uint64_t add_cycles[CONFIG_BENCHMARK_NUM_THREADS];
 static uint64_t remove_cycles[CONFIG_BENCHMARK_NUM_THREADS];
 
-extern void z_unready_thread(struct k_thread *thread);
+extern void k_priv_unready_thread(struct k_thread *thread);
 
 static void busy_entry(void *p1, void *p2, void *p3)
 {
@@ -105,7 +105,7 @@ static void test_decreasing_priority(unsigned int num_threads)
 
 	for (i = num_threads; i > 0; i--) {
 		start = timing_counter_get();
-		z_unready_thread(&test_thread[i - 1]);
+		k_priv_unready_thread(&test_thread[i - 1]);
 		finish = timing_counter_get();
 		remove_cycles[i - 1] += timing_cycles_get(&start, &finish);
 	}
@@ -126,7 +126,7 @@ static void test_increasing_priority(unsigned int num_threads)
 
 	for (i = num_threads; i > 0; i--) {
 		start = timing_counter_get();
-		z_unready_thread(&test_thread[num_threads - i]);
+		k_priv_unready_thread(&test_thread[num_threads - i]);
 		finish = timing_counter_get();
 		remove_cycles[i - 1] += timing_cycles_get(&start, &finish);
 	}
