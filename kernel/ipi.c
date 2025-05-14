@@ -102,7 +102,7 @@ void k_priv_sched_ipi(void)
 
 #ifdef CONFIG_TIMESLICING
 	if (thread_is_sliceable(_current)) {
-		z_time_slice();
+		k_priv_time_slice();
 	}
 #endif /* CONFIG_TIMESLICING */
 }

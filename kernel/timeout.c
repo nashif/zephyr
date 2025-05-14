@@ -277,7 +277,7 @@ void sys_clock_announce(int32_t ticks)
 	k_spin_unlock(&timeout_lock, key);
 
 #ifdef CONFIG_TIMESLICING
-	z_time_slice();
+	k_priv_time_slice();
 #endif /* CONFIG_TIMESLICING */
 }
 

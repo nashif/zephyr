@@ -17,7 +17,7 @@ static bool slice_expired[CONFIG_MP_MAX_NUM_CPUS];
 /* If k_priv_swap() isn't atomic, then it's possible for a timer interrupt
  * to try to timeslice away _current after it has already pended
  * itself but before the corresponding context switch.  Treat that as
- * a noop condition in z_time_slice().
+ * a noop condition in k_priv_time_slice().
  */
 struct k_thread *pending_current;
 #endif
@@ -100,7 +100,7 @@ void k_thread_time_slice_set(struct k_thread *thread, int32_t thread_slice_ticks
 #endif
 
 /* Called out of each timer interrupt */
-void z_time_slice(void)
+void k_priv_time_slice(void)
 {
 	k_spinlock_key_t key = k_spin_lock(&_sched_spinlock);
 	struct k_thread *curr = _current;
