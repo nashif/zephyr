@@ -1053,7 +1053,7 @@ static void mark_linker_section_pinned(void *start_addr, void *end_addr,
 #endif /* CONFIG_LINKER_USE_BOOT_SECTION) || CONFIG_LINKER_USE_PINNED_SECTION */
 
 #ifdef CONFIG_LINKER_USE_ONDEMAND_SECTION
-static void z_paging_ondemand_section_map(void)
+static void k_priv_paging_ondemand_section_map(void)
 {
 	uint8_t *addr;
 	size_t size;
@@ -1145,7 +1145,7 @@ void k_priv_mem_manage_init(void)
 
 #ifdef CONFIG_DEMAND_PAGING
 #ifdef CONFIG_DEMAND_PAGING_TIMING_HISTOGRAM
-	z_paging_histogram_init();
+	k_priv_paging_histogram_init();
 #endif /* CONFIG_DEMAND_PAGING_TIMING_HISTOGRAM */
 	k_mem_paging_backing_store_init();
 	k_mem_paging_eviction_init();
@@ -1161,7 +1161,7 @@ void k_priv_mem_manage_init(void)
 #endif /* CONFIG_DEMAND_PAGING */
 
 #ifdef CONFIG_LINKER_USE_ONDEMAND_SECTION
-	z_paging_ondemand_section_map();
+	k_priv_paging_ondemand_section_map();
 #endif
 
 #if __ASSERT_ON
@@ -1194,9 +1194,9 @@ void k_priv_mem_manage_boot_finish(void)
 
 #ifdef CONFIG_DEMAND_PAGING_STATS
 struct k_mem_paging_stats_t paging_stats;
-extern struct k_mem_paging_histogram_t z_paging_histogram_eviction;
-extern struct k_mem_paging_histogram_t z_paging_histogram_backing_store_page_in;
-extern struct k_mem_paging_histogram_t z_paging_histogram_backing_store_page_out;
+extern struct k_mem_paging_histogram_t k_priv_paging_histogram_eviction;
+extern struct k_mem_paging_histogram_t k_priv_paging_histogram_backing_store_page_in;
+extern struct k_mem_paging_histogram_t k_priv_paging_histogram_backing_store_page_out;
 #endif /* CONFIG_DEMAND_PAGING_STATS */
 
 static inline void do_backing_store_page_in(uintptr_t location)
@@ -1239,7 +1239,7 @@ static inline void do_backing_store_page_in(uintptr_t location)
 	time_diff = k_cycle_get_32() - time_start;
 #endif /* CONFIG_DEMAND_PAGING_STATS_USING_TIMING_FUNCTIONS */
 
-	z_paging_histogram_inc(&z_paging_histogram_backing_store_page_in,
+	k_priv_paging_histogram_inc(&k_priv_paging_histogram_backing_store_page_in,
 			       time_diff);
 #endif /* CONFIG_DEMAND_PAGING_TIMING_HISTOGRAM */
 }
@@ -1270,7 +1270,7 @@ static inline void do_backing_store_page_out(uintptr_t location)
 	time_diff = k_cycle_get_32() - time_start;
 #endif /* CONFIG_DEMAND_PAGING_STATS_USING_TIMING_FUNCTIONS */
 
-	z_paging_histogram_inc(&z_paging_histogram_backing_store_page_out,
+	k_priv_paging_histogram_inc(&k_priv_paging_histogram_backing_store_page_out,
 			       time_diff);
 #endif /* CONFIG_DEMAND_PAGING_TIMING_HISTOGRAM */
 }
@@ -1604,7 +1604,7 @@ static inline struct k_mem_page_frame *do_eviction_select(bool *dirty)
 	time_diff = k_cycle_get_32() - time_start;
 #endif /* CONFIG_DEMAND_PAGING_STATS_USING_TIMING_FUNCTIONS */
 
-	z_paging_histogram_inc(&z_paging_histogram_eviction, time_diff);
+	k_priv_paging_histogram_inc(&k_priv_paging_histogram_eviction, time_diff);
 #endif /* CONFIG_DEMAND_PAGING_TIMING_HISTOGRAM */
 
 	return pf;

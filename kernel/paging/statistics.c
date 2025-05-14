@@ -13,9 +13,9 @@
 extern struct k_mem_paging_stats_t paging_stats;
 
 #ifdef CONFIG_DEMAND_PAGING_TIMING_HISTOGRAM
-struct k_mem_paging_histogram_t z_paging_histogram_eviction;
-struct k_mem_paging_histogram_t z_paging_histogram_backing_store_page_in;
-struct k_mem_paging_histogram_t z_paging_histogram_backing_store_page_out;
+struct k_mem_paging_histogram_t k_priv_paging_histogram_eviction;
+struct k_mem_paging_histogram_t k_priv_paging_histogram_backing_store_page_in;
+struct k_mem_paging_histogram_t k_priv_paging_histogram_backing_store_page_out;
 
 #ifdef CONFIG_DEMAND_PAGING_STATS_USING_TIMING_FUNCTIONS
 
@@ -135,7 +135,7 @@ void z_vrfy_k_mem_paging_thread_stats_get(struct k_thread *thread,
 #endif /* CONFIG_DEMAND_PAGING_THREAD_STATS */
 
 #ifdef CONFIG_DEMAND_PAGING_TIMING_HISTOGRAM
-void z_paging_histogram_init(void)
+void k_priv_paging_histogram_init(void)
 {
 	/*
 	 * Zero out the histogram structs and copy the bounds.
@@ -144,22 +144,22 @@ void z_paging_histogram_init(void)
 	 * the source bound array may not be pinned.
 	 */
 
-	memset(&z_paging_histogram_eviction, 0, sizeof(z_paging_histogram_eviction));
-	memcpy(z_paging_histogram_eviction.bounds,
+	memset(&k_priv_paging_histogram_eviction, 0, sizeof(k_priv_paging_histogram_eviction));
+	memcpy(k_priv_paging_histogram_eviction.bounds,
 	       k_mem_paging_eviction_histogram_bounds,
-	       sizeof(z_paging_histogram_eviction.bounds));
+	       sizeof(k_priv_paging_histogram_eviction.bounds));
 
-	memset(&z_paging_histogram_backing_store_page_in, 0,
-	       sizeof(z_paging_histogram_backing_store_page_in));
-	memcpy(z_paging_histogram_backing_store_page_in.bounds,
+	memset(&k_priv_paging_histogram_backing_store_page_in, 0,
+	       sizeof(k_priv_paging_histogram_backing_store_page_in));
+	memcpy(k_priv_paging_histogram_backing_store_page_in.bounds,
 	       k_mem_paging_backing_store_histogram_bounds,
-	       sizeof(z_paging_histogram_backing_store_page_in.bounds));
+	       sizeof(k_priv_paging_histogram_backing_store_page_in.bounds));
 
-	memset(&z_paging_histogram_backing_store_page_out, 0,
-	       sizeof(z_paging_histogram_backing_store_page_out));
-	memcpy(z_paging_histogram_backing_store_page_out.bounds,
+	memset(&k_priv_paging_histogram_backing_store_page_out, 0,
+	       sizeof(k_priv_paging_histogram_backing_store_page_out));
+	memcpy(k_priv_paging_histogram_backing_store_page_out.bounds,
 	       k_mem_paging_backing_store_histogram_bounds,
-	       sizeof(z_paging_histogram_backing_store_page_out.bounds));
+	       sizeof(k_priv_paging_histogram_backing_store_page_out.bounds));
 }
 
 /**
@@ -168,7 +168,7 @@ void z_paging_histogram_init(void)
  * @param hist The timing histogram to be updated.
  * @param cycles Time spent in measured operation.
  */
-void z_paging_histogram_inc(struct k_mem_paging_histogram_t *hist,
+void k_priv_paging_histogram_inc(struct k_mem_paging_histogram_t *hist,
 			    uint32_t cycles)
 {
 	int idx;
@@ -191,8 +191,8 @@ void z_impl_k_mem_paging_histogram_eviction_get(
 	}
 
 	/* Copy statistics */
-	memcpy(hist, &z_paging_histogram_eviction,
-	       sizeof(z_paging_histogram_eviction));
+	memcpy(hist, &k_priv_paging_histogram_eviction,
+	       sizeof(k_priv_paging_histogram_eviction));
 }
 
 void z_impl_k_mem_paging_histogram_backing_store_page_in_get(
@@ -203,8 +203,8 @@ void z_impl_k_mem_paging_histogram_backing_store_page_in_get(
 	}
 
 	/* Copy histogram */
-	memcpy(hist, &z_paging_histogram_backing_store_page_in,
-	       sizeof(z_paging_histogram_backing_store_page_in));
+	memcpy(hist, &k_priv_paging_histogram_backing_store_page_in,
+	       sizeof(k_priv_paging_histogram_backing_store_page_in));
 }
 
 void z_impl_k_mem_paging_histogram_backing_store_page_out_get(
@@ -215,8 +215,8 @@ void z_impl_k_mem_paging_histogram_backing_store_page_out_get(
 	}
 
 	/* Copy histogram */
-	memcpy(hist, &z_paging_histogram_backing_store_page_out,
-	       sizeof(z_paging_histogram_backing_store_page_out));
+	memcpy(hist, &k_priv_paging_histogram_backing_store_page_out,
+	       sizeof(k_priv_paging_histogram_backing_store_page_out));
 }
 
 #ifdef CONFIG_USERSPACE
