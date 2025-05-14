@@ -130,7 +130,7 @@ static size_t copy_to_pending_readers(struct k_pipe *pipe, bool *need_resched,
 				 * the scheduler lock still held.
 				 */
 				unpend_thread_no_timeout(reader);
-				z_abort_thread_timeout(reader);
+				k_priv_abort_thread_timeout(reader);
 			}
 		}
 		if (reader != NULL) {

@@ -61,7 +61,7 @@ static inline k_ticks_t z_add_thread_timeout(struct k_thread *thread, k_timeout_
 	return k_priv_add_timeout(&thread->base.timeout, z_thread_timeout, ticks);
 }
 
-static inline void z_abort_thread_timeout(struct k_thread *thread)
+static inline void k_priv_abort_thread_timeout(struct k_thread *thread)
 {
 	k_priv_abort_timeout(&thread->base.timeout);
 }
@@ -80,7 +80,7 @@ k_ticks_t k_priv_timeout_remaining(const struct _timeout *timeout);
 
 /* Stubs when !CONFIG_SYS_CLOCK_EXISTS */
 #define z_init_thread_timeout(thread_base) do {} while (false)
-#define z_abort_thread_timeout(to) do {} while (false)
+#define k_priv_abort_thread_timeout(to) do {} while (false)
 #define z_is_aborted_thread_timeout(to) false
 #define k_priv_is_inactive_timeout(to) 1
 #define z_is_aborted_timeout(to) false

@@ -657,7 +657,7 @@ struct k_thread *z_unpend1_no_timeout(_wait_q_t *wait_q)
 void z_unpend_thread(struct k_thread *thread)
 {
 	k_priv_unpend_thread_no_timeout(thread);
-	z_abort_thread_timeout(thread);
+	k_priv_abort_thread_timeout(thread);
 }
 
 /* Priority set utility that does no rescheduling, it just changes the
@@ -1176,7 +1176,7 @@ void z_impl_k_wakeup(k_tid_t thread)
 	k_spinlock_key_t  key = k_spin_lock(&_sched_spinlock);
 
 	if (z_is_thread_sleeping(thread)) {
-		z_abort_thread_timeout(thread);
+		k_priv_abort_thread_timeout(thread);
 		z_mark_thread_as_not_sleeping(thread);
 		ready_thread(thread);
 		k_priv_reschedule(&_sched_spinlock, key);
@@ -1213,7 +1213,7 @@ static inline void unpend_all(_wait_q_t *wait_q)
 
 	for (thread = k_priv_waitq_head(wait_q); thread != NULL; thread = k_priv_waitq_head(wait_q)) {
 		unpend_thread_no_timeout(thread);
-		z_abort_thread_timeout(thread);
+		k_priv_abort_thread_timeout(thread);
 		arch_thread_return_value_set(thread, 0);
 		ready_thread(thread);
 	}
@@ -1248,7 +1248,7 @@ static ALWAYS_INLINE void halt_thread(struct k_thread *thread, uint8_t new_state
 			if (thread->base.pended_on != NULL) {
 				unpend_thread_no_timeout(thread);
 			}
-			z_abort_thread_timeout(thread);
+			k_priv_abort_thread_timeout(thread);
 			unpend_all(&thread->join_queue);
 
 			/* Edge case: aborting _current from within an
@@ -1458,7 +1458,7 @@ bool k_priv_sched_wake(_wait_q_t *wait_q, int swap_retval, void *swap_data)
 							    swap_retval,
 							    swap_data);
 			unpend_thread_no_timeout(thread);
-			z_abort_thread_timeout(thread);
+			k_priv_abort_thread_timeout(thread);
 			ready_thread(thread);
 			ret = true;
 		}
