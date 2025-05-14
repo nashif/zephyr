@@ -617,7 +617,7 @@ void k_priv_thread_timeout(struct _timeout *timeout)
 }
 #endif /* CONFIG_SYS_CLOCK_EXISTS */
 
-int z_pend_curr(struct k_spinlock *lock, k_spinlock_key_t key,
+int k_priv_pend_curr(struct k_spinlock *lock, k_spinlock_key_t key,
 	       _wait_q_t *wait_q, k_timeout_t timeout)
 {
 #if defined(CONFIG_TIMESLICING) && defined(CONFIG_SWAP_NONATOMIC)
@@ -1470,7 +1470,7 @@ bool k_priv_sched_wake(_wait_q_t *wait_q, int swap_retval, void *swap_data)
 int k_priv_sched_wait(struct k_spinlock *lock, k_spinlock_key_t key,
 		 _wait_q_t *wait_q, k_timeout_t timeout, void **data)
 {
-	int ret = z_pend_curr(lock, key, wait_q, timeout);
+	int ret = k_priv_pend_curr(lock, key, wait_q, timeout);
 
 	if (data != NULL) {
 		*data = _current->base.swap_data;

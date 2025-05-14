@@ -331,7 +331,7 @@ int z_impl_k_poll(struct k_poll_event *events, int num_events,
 
 	static _wait_q_t wait_q = Z_WAIT_Q_INIT(&wait_q);
 
-	int swap_rc = z_pend_curr(&lock, key, &wait_q, timeout);
+	int swap_rc = k_priv_pend_curr(&lock, key, &wait_q, timeout);
 
 	/*
 	 * Clear all event registrations. If events happen while we're in this

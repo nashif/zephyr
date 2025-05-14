@@ -114,7 +114,7 @@ static FUNC_NORETURN void p4wq_loop(void *p0, void *p1, void *p2)
 				}
 			}
 		} else {
-			z_pend_curr(&queue->lock, k, &queue->waitq, K_FOREVER);
+			k_priv_pend_curr(&queue->lock, k, &queue->waitq, K_FOREVER);
 			k = k_spin_lock(&queue->lock);
 		}
 	}

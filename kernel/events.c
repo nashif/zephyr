@@ -293,7 +293,7 @@ static uint32_t k_event_wait_internal(struct k_event *event, uint32_t events,
 	SYS_PORT_TRACING_OBJ_FUNC_BLOCKING(k_event, wait, event, events,
 					   options, timeout);
 
-	if (z_pend_curr(&event->lock, key, &event->wait_q, timeout) == 0) {
+	if (k_priv_pend_curr(&event->lock, key, &event->wait_q, timeout) == 0) {
 		/* Retrieve the set of events that woke the thread */
 		rv = thread->events;
 	}

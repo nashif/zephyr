@@ -250,7 +250,7 @@ int k_mem_slab_alloc(struct k_mem_slab *slab, void **mem, k_timeout_t timeout)
 		SYS_PORT_TRACING_OBJ_FUNC_BLOCKING(k_mem_slab, alloc, slab, timeout);
 
 		/* wait for a free block or timeout */
-		result = z_pend_curr(&slab->lock, key, &slab->wait_q, timeout);
+		result = k_priv_pend_curr(&slab->lock, key, &slab->wait_q, timeout);
 		if (result == 0) {
 			*mem = _current->base.swap_data;
 		}

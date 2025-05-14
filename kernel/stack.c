@@ -175,7 +175,7 @@ int z_impl_k_stack_pop(struct k_stack *stack, stack_data_t *data,
 		return -EBUSY;
 	}
 
-	result = z_pend_curr(&stack->lock, key, &stack->wait_q, timeout);
+	result = k_priv_pend_curr(&stack->lock, key, &stack->wait_q, timeout);
 	if (result == -EAGAIN) {
 		SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_stack, pop, stack, timeout, -EAGAIN);
 

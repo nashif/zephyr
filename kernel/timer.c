@@ -285,7 +285,7 @@ uint32_t z_impl_k_timer_status_sync(struct k_timer *timer)
 			SYS_PORT_TRACING_OBJ_FUNC_BLOCKING(k_timer, status_sync, timer, K_FOREVER);
 
 			/* wait for timer to expire or stop */
-			(void)z_pend_curr(&lock, key, &timer->wait_q, K_FOREVER);
+			(void)k_priv_pend_curr(&lock, key, &timer->wait_q, K_FOREVER);
 
 			/* get updated timer status */
 			key = k_spin_lock(&lock);

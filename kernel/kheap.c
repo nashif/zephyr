@@ -97,7 +97,7 @@ static void *z_heap_alloc_helper(struct k_heap *heap, size_t align, size_t bytes
 		}
 
 		timeout = sys_timepoint_timeout(end);
-		(void) z_pend_curr(&heap->lock, key, &heap->wait_q, timeout);
+		(void) k_priv_pend_curr(&heap->lock, key, &heap->wait_q, timeout);
 		key = k_spin_lock(&heap->lock);
 	}
 
@@ -178,7 +178,7 @@ void *k_heap_realloc(struct k_heap *heap, void *ptr, size_t bytes, k_timeout_t t
 		}
 
 		timeout = sys_timepoint_timeout(end);
-		(void) z_pend_curr(&heap->lock, key, &heap->wait_q, timeout);
+		(void) k_priv_pend_curr(&heap->lock, key, &heap->wait_q, timeout);
 		key = k_spin_lock(&heap->lock);
 	}
 

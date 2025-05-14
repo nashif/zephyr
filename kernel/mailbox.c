@@ -258,7 +258,7 @@ static int mbox_message_put(struct k_mbox *mbox, struct k_mbox_msg *tx_msg,
 			 * synchronous send: pend current thread (unqueued)
 			 * until the receiver consumes the message
 			 */
-			int ret = z_pend_curr(&mbox->lock, key, NULL, K_FOREVER);
+			int ret = k_priv_pend_curr(&mbox->lock, key, NULL, K_FOREVER);
 
 			SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_mbox, message_put, mbox, timeout, ret);
 
@@ -285,7 +285,7 @@ static int mbox_message_put(struct k_mbox *mbox, struct k_mbox_msg *tx_msg,
 	SYS_PORT_TRACING_OBJ_FUNC_BLOCKING(k_mbox, message_put, mbox, timeout);
 
 	/* synchronous send: sender waits on tx queue for receiver or timeout */
-	int ret = z_pend_curr(&mbox->lock, key, &mbox->tx_msg_queue, timeout);
+	int ret = k_priv_pend_curr(&mbox->lock, key, &mbox->tx_msg_queue, timeout);
 
 	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_mbox, message_put, mbox, timeout, ret);
 
@@ -426,7 +426,7 @@ int k_mbox_get(struct k_mbox *mbox, struct k_mbox_msg *rx_msg, void *buffer,
 
 	/* wait until a matching sender appears or a timeout occurs */
 	_current->base.swap_data = rx_msg;
-	result = z_pend_curr(&mbox->lock, key, &mbox->rx_msg_queue, timeout);
+	result = k_priv_pend_curr(&mbox->lock, key, &mbox->rx_msg_queue, timeout);
 
 	/* consume message data immediately, if needed */
 	if (result == 0) {

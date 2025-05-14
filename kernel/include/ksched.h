@@ -52,7 +52,7 @@ void k_priv_sched_init(void);
 void z_move_thread_to_end_of_prio_q(struct k_thread *thread);
 void k_priv_unpend_thread_no_timeout(struct k_thread *thread);
 struct k_thread *z_unpend1_no_timeout(_wait_q_t *wait_q);
-int z_pend_curr(struct k_spinlock *lock, k_spinlock_key_t key,
+int k_priv_pend_curr(struct k_spinlock *lock, k_spinlock_key_t key,
 	       _wait_q_t *wait_q, k_timeout_t timeout);
 void z_pend_thread(struct k_thread *thread, _wait_q_t *wait_q,
 		   k_timeout_t timeout);

@@ -155,7 +155,7 @@ int z_impl_k_sem_take(struct k_sem *sem, k_timeout_t timeout)
 
 	SYS_PORT_TRACING_OBJ_FUNC_BLOCKING(k_sem, take, sem, timeout);
 
-	ret = z_pend_curr(&lock, key, &sem->wait_q, timeout);
+	ret = k_priv_pend_curr(&lock, key, &sem->wait_q, timeout);
 
 out:
 	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_sem, take, sem, timeout, ret);

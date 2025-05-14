@@ -153,7 +153,7 @@ int z_impl_k_mutex_lock(struct k_mutex *mutex, k_timeout_t timeout)
 		resched = adjust_owner_prio(mutex, new_prio);
 	}
 
-	int got_mutex = z_pend_curr(&lock, key, &mutex->wait_q, timeout);
+	int got_mutex = k_priv_pend_curr(&lock, key, &mutex->wait_q, timeout);
 
 	LOG_DBG("on mutex %p got_mutex value: %d", mutex, got_mutex);
 
