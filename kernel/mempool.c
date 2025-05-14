@@ -172,7 +172,7 @@ void k_thread_system_pool_assign(struct k_thread *thread)
 #define _SYSTEM_HEAP	NULL
 #endif /* K_HEAP_MEM_POOL_SIZE */
 
-static void *z_thread_alloc_helper(size_t align, size_t size,
+static void *k_priv_thread_alloc_helper(size_t align, size_t size,
 				   sys_heap_allocator_t sys_heap_allocator)
 {
 	void *ret;
@@ -193,12 +193,12 @@ static void *z_thread_alloc_helper(size_t align, size_t size,
 	return ret;
 }
 
-void *z_thread_aligned_alloc(size_t align, size_t size)
+void *k_priv_thread_aligned_alloc(size_t align, size_t size)
 {
-	return z_thread_alloc_helper(align, size, sys_heap_aligned_alloc);
+	return k_priv_thread_alloc_helper(align, size, sys_heap_aligned_alloc);
 }
 
-void *z_thread_malloc(size_t size)
+void *k_priv_thread_malloc(size_t size)
 {
-	return z_thread_alloc_helper(0, size, sys_heap_noalign_alloc);
+	return k_priv_thread_alloc_helper(0, size, sys_heap_noalign_alloc);
 }

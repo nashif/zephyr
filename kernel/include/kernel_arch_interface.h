@@ -51,7 +51,7 @@ void arch_busy_wait(uint32_t usec_to_wait);
  *
  * The stack and arch-specific thread state variables must be set up
  * such that a later attempt to switch to this thread will succeed
- * and we will enter z_thread_entry with the requested thread and
+ * and we will enter k_priv_thread_entry with the requested thread and
  * arguments as its parameters.
  *
  * At some point in this function's implementation, z_setup_new_thread() must

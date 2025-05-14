@@ -476,7 +476,7 @@ be copied. Typically this is done by allocating copies on the stack:
 
 In some cases the amount of data isn't known at compile time or may be too
 large to allocate on the stack. In this scenario, it may be necessary to draw
-memory from the caller's resource pool via :c:func:`z_thread_malloc()`. This
+memory from the caller's resource pool via :c:func:`k_priv_thread_malloc()`. This
 should always be considered last resort. Functional safety programming
 guidelines heavily discourage usage of heap and the fact that a resource pool is
 used must be clearly documented. Any issues with allocation must be
@@ -512,7 +512,7 @@ should never be used to verify if resource allocation has been successful.
         /* Allocate RAM for the bar_list, replace the pointer in
          * foo_copy */
         bar_list_bytes = foo_copy.count * sizeof(struct_bar);
-        bar_list_copy = z_thread_malloc(bar_list_bytes);
+        bar_list_copy = k_priv_thread_malloc(bar_list_bytes);
         if (bar_list_copy == NULL) {
             return -ENOMEM;
         }
@@ -581,7 +581,7 @@ conventions are as follows:
    invoke :c:macro:`K_OOPS()`.
 
 #. Any error resulting from a failed memory heap allocation, often from
-   invoking :c:func:`z_thread_malloc()`, should propagate ``-ENOMEM`` to the
+   invoking :c:func:`k_priv_thread_malloc()`, should propagate ``-ENOMEM`` to the
    caller.
 
 #. General parameter checks should be done in the implementation function,

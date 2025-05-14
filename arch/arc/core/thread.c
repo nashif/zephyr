@@ -147,7 +147,7 @@ static inline void arch_setup_callee_saved_regs(struct k_thread *thread,
 
 /*
  * The initial context is a basic stack frame that contains arguments for
- * z_thread_entry() return address, that points at z_thread_entry()
+ * k_priv_thread_entry() return address, that points at k_priv_thread_entry()
  * and status register.
  */
 void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack,
@@ -172,11 +172,11 @@ void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack,
 	if (is_user(thread)) {
 		iframe->pc = (uint32_t)z_user_thread_entry_wrapper;
 	} else {
-		iframe->pc = (uint32_t)z_thread_entry_wrapper;
+		iframe->pc = (uint32_t)k_priv_thread_entry_wrapper;
 	}
 #else
 	iframe->status32 = _ARC_V2_STATUS32_DZ;
-	iframe->pc = ((uintptr_t)z_thread_entry_wrapper);
+	iframe->pc = ((uintptr_t)k_priv_thread_entry_wrapper);
 #endif /* CONFIG_USERSPACE */
 #ifdef CONFIG_ARC_SECURE_FIRMWARE
 	iframe->sec_stat = z_arc_v2_aux_reg_read(_ARC_V2_SEC_STAT);

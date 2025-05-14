@@ -494,8 +494,8 @@
 <text  x="1010.05" y="111.5" >arch_cpu_idle</text>
 </g>
 <g >
-<title>z_thread_entry (258 samples, 100.00%)</title><rect x="10.0" y="133" width="1180.0" height="15.0" fill="rgb(234,137,32)" rx="2" ry="2" />
-<text  x="13.00" y="143.5" >z_thread_entry</text>
+<title>k_priv_thread_entry (258 samples, 100.00%)</title><rect x="10.0" y="133" width="1180.0" height="15.0" fill="rgb(234,137,32)" rx="2" ry="2" />
+<text  x="13.00" y="143.5" >k_priv_thread_entry</text>
 </g>
 <g >
 <title>bg_thread_main (218 samples, 84.50%)</title><rect x="10.0" y="117" width="997.1" height="15.0" fill="rgb(235,140,33)" rx="2" ry="2" />

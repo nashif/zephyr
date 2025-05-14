@@ -684,10 +684,10 @@ Userspace
   * ``k_priv_object_validate`` to :c:func:`k_object_validate`
   * ``k_priv_object_find`` to :c:func:`k_object_find`
   * ``k_priv_object_wordlist_foreach`` to :c:func:`k_object_wordlist_foreach`
-  * ``z_thread_perms_inherit`` to :c:func:`k_thread_perms_inherit`
-  * ``z_thread_perms_set`` to :c:func:`k_thread_perms_set`
-  * ``z_thread_perms_clear`` to :c:func:`k_thread_perms_clear`
-  * ``z_thread_perms_all_clear`` to :c:func:`k_thread_perms_all_clear`
+  * ``k_priv_thread_perms_inherit`` to :c:func:`k_thread_perms_inherit`
+  * ``k_priv_thread_perms_set`` to :c:func:`k_thread_perms_set`
+  * ``k_priv_thread_perms_clear`` to :c:func:`k_thread_perms_clear`
+  * ``k_priv_thread_perms_all_clear`` to :c:func:`k_thread_perms_all_clear`
   * ``k_priv_object_uninit`` to :c:func:`k_object_uninit`
   * ``k_priv_object_recycle`` to :c:func:`k_object_recycle`
   * ``z_obj_validation_check`` to :c:func:`k_object_validation_check`

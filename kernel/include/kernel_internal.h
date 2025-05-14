@@ -67,7 +67,7 @@ FUNC_NORETURN void z_cstart(void);
 
 void z_device_state_init(void);
 
-extern FUNC_NORETURN void z_thread_entry(k_thread_entry_t entry,
+extern FUNC_NORETURN void k_priv_thread_entry(k_thread_entry_t entry,
 			  void *p1, void *p2, void *p3);
 
 extern char *z_setup_new_thread(struct k_thread *new_thread,
@@ -90,7 +90,7 @@ extern char *z_setup_new_thread(struct k_thread *new_thread,
  * @return A pointer to the allocated memory, or NULL if there is insufficient
  * RAM in the pool or there is no pool to draw memory from
  */
-void *z_thread_aligned_alloc(size_t align, size_t size);
+void *k_priv_thread_aligned_alloc(size_t align, size_t size);
 
 /**
  * @brief Allocate some memory from the current thread's resource pool
@@ -105,7 +105,7 @@ void *z_thread_aligned_alloc(size_t align, size_t size);
  * @return A pointer to the allocated memory, or NULL if there is insufficient
  * RAM in the pool or there is no pool to draw memory from
  */
-void *z_thread_malloc(size_t size);
+void *k_priv_thread_malloc(size_t size);
 
 
 #ifdef CONFIG_USE_SWITCH
@@ -120,7 +120,7 @@ arch_thread_return_value_set(struct k_thread *thread, unsigned int value)
 #endif
 
 static ALWAYS_INLINE void
-z_thread_return_value_set_with_data(struct k_thread *thread,
+k_priv_thread_return_value_set_with_data(struct k_thread *thread,
 				   unsigned int value,
 				   void *data)
 {
@@ -190,20 +190,20 @@ extern int z_gdb_main_loop(struct gdb_ctx *ctx);
 #endif /* CONFIG_GDBSTUB */
 
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
-void z_thread_mark_switched_in(void);
-void z_thread_mark_switched_out(void);
+void k_priv_thread_mark_switched_in(void);
+void k_priv_thread_mark_switched_out(void);
 #else
 
 /**
  * @brief Called after a thread has been selected to run
  */
-#define z_thread_mark_switched_in()
+#define k_priv_thread_mark_switched_in()
 
 /**
  * @brief Called before a thread has been selected to run
  */
 
-#define z_thread_mark_switched_out()
+#define k_priv_thread_mark_switched_out()
 
 #endif /* CONFIG_INSTRUMENT_THREAD_SWITCHING */
 
@@ -260,11 +260,11 @@ void z_paging_histogram_inc(struct k_mem_paging_histogram_t *hist,
 #endif /* CONFIG_DEMAND_PAGING_TIMING_HISTOGRAM */
 
 #ifdef CONFIG_OBJ_CORE_STATS_THREAD
-int z_thread_stats_raw(struct k_obj_core *obj_core, void *stats);
-int z_thread_stats_query(struct k_obj_core *obj_core, void *stats);
+int k_priv_thread_stats_raw(struct k_obj_core *obj_core, void *stats);
+int k_priv_thread_stats_query(struct k_obj_core *obj_core, void *stats);
 int k_priv_thread_stats_reset(struct k_obj_core *obj_core);
-int z_thread_stats_disable(struct k_obj_core *obj_core);
-int z_thread_stats_enable(struct k_obj_core *obj_core);
+int k_priv_thread_stats_disable(struct k_obj_core *obj_core);
+int k_priv_thread_stats_enable(struct k_obj_core *obj_core);
 #endif /* CONFIG_OBJ_CORE_STATS_THREAD */
 
 #ifdef CONFIG_OBJ_CORE_STATS_SYSTEM

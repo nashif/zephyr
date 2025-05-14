@@ -97,7 +97,7 @@ static bool adjust_owner_prio(struct k_mutex *mutex, int32_t new_prio)
 			'y' : 'n',
 			new_prio, mutex->owner->base.prio);
 
-		return z_thread_prio_set(mutex->owner, new_prio);
+		return k_priv_thread_prio_set(mutex->owner, new_prio);
 	}
 	return false;
 }

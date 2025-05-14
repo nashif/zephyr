@@ -100,7 +100,7 @@ kobjects = OrderedDict([
     ("k_stack", (None, False, True)),
     ("k_thread", (None, False, True)), # But see #
     ("k_timer", (None, False, True)),
-    ("z_thread_stack_element", (None, False, False)),
+    ("k_priv_thread_stack_element", (None, False, False)),
     ("device", (None, False, False)),
     ("NET_SOCKET", (None, False, False)),
     ("net_if", (None, False, False)),
@@ -176,7 +176,7 @@ def debug_die(die, text):
 DW_OP_addr = 0x3
 DW_OP_plus_uconst = 0x23
 DW_OP_fbreg = 0x91
-STACK_TYPE = "z_thread_stack_element"
+STACK_TYPE = "k_priv_thread_stack_element"
 thread_counter = 0
 sys_mutex_counter = 0
 futex_counter = 0

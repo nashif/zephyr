@@ -82,7 +82,7 @@ SECTION_FUNC(TEXT, z_arm_context_switch)
 
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
 	push {lr}
-	bl z_thread_mark_switched_in
+	bl k_priv_thread_mark_switched_in
 	pop {lr}
 #endif
 

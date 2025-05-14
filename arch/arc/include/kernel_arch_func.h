@@ -61,7 +61,7 @@ static inline bool arch_is_in_isr(void)
 	return z_arc_v2_irq_unit_is_in_isr();
 }
 
-extern void z_thread_entry_wrapper(void);
+extern void k_priv_thread_entry_wrapper(void);
 extern void z_user_thread_entry_wrapper(void);
 
 extern void z_arc_userspace_enter(k_thread_entry_t user_entry, void *p1,

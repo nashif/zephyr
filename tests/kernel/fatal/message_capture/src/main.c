@@ -10,7 +10,7 @@
 
 static volatile int expected_reason = -1;
 
-void z_thread_essential_clear(struct k_thread *thread);
+void k_priv_thread_essential_clear(struct k_thread *thread);
 
 void k_sys_fatal_error_handler(unsigned int reason, const struct arch_esf *pEsf)
 {
@@ -86,7 +86,7 @@ int main(void)
 	 * panic and not an oops).  Set the thread non-essential as a
 	 * workaround.
 	 */
-	z_thread_essential_clear(_current);
+	k_priv_thread_essential_clear(_current);
 
 	test_message_capture();
 	return 0;

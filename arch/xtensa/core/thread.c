@@ -75,11 +75,11 @@ static void *init_stack(struct k_thread *thread, int *stack_top,
 	if ((thread->base.user_options & K_USER) == K_USER) {
 		frame->bsa.pc = (uintptr_t)arch_user_mode_enter;
 	} else {
-		frame->bsa.pc = (uintptr_t)z_thread_entry;
+		frame->bsa.pc = (uintptr_t)k_priv_thread_entry;
 	}
 #else
 	frame->bsa.ps = PS_WOE | PS_UM | PS_CALLINC(1);
-	frame->bsa.pc = (uintptr_t)z_thread_entry;
+	frame->bsa.pc = (uintptr_t)k_priv_thread_entry;
 #endif
 
 #if XCHAL_HAVE_THREADPTR
@@ -90,7 +90,7 @@ static void *init_stack(struct k_thread *thread, int *stack_top,
 #endif
 #endif
 
-	/* Arguments to z_thread_entry().  Remember these start at A6,
+	/* Arguments to k_priv_thread_entry().  Remember these start at A6,
 	 * which will be rotated into A2 by the ENTRY instruction that
 	 * begins the C function.  And A4-A7 and A8-A11 are optional
 	 * quads that live below the BSA!

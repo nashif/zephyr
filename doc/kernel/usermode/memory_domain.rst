@@ -102,7 +102,7 @@ allocations. This memory is used only by the kernel and is not accessible
 directly by user mode. In order to use these system calls, invoking threads
 must assign themselves to a resource pool, which is a :c:struct:`k_heap`
 object. Memory is drawn from a thread's resource pool using
-:c:func:`z_thread_malloc` and freed with :c:func:`k_free`.
+:c:func:`k_priv_thread_malloc` and freed with :c:func:`k_free`.
 
 The APIs which use resource pools are as follows, with any alternatives
 noted for users who do not want heap allocations within their application:

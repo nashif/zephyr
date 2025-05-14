@@ -80,7 +80,7 @@ static inline void z_vrfy_k_queue_init(struct k_queue *queue)
 
 static void prepare_thread_to_run(struct k_thread *thread, void *data)
 {
-	z_thread_return_value_set_with_data(thread, 0, data);
+	k_priv_thread_return_value_set_with_data(thread, 0, data);
 	z_ready_thread(thread);
 }
 
@@ -156,7 +156,7 @@ static int32_t queue_insert(struct k_queue *queue, void *prev, void *data,
 	if (alloc) {
 		struct alloc_node *anode;
 
-		anode = z_thread_malloc(sizeof(*anode));
+		anode = k_priv_thread_malloc(sizeof(*anode));
 		if (anode == NULL) {
 			result = -ENOMEM;
 			goto out;

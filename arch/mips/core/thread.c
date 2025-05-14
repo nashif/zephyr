@@ -10,7 +10,7 @@
 
 extern uint32_t mips_cp0_status_int_mask;
 
-void z_thread_entry(k_thread_entry_t thread,
+void k_priv_thread_entry(k_thread_entry_t thread,
 			    void *arg1,
 			    void *arg2,
 			    void *arg3);
@@ -35,7 +35,7 @@ void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack,
 	stack_init->status = CP0_STATUS_DEF_RESTORE
 			| mips_cp0_status_int_mask;
 
-	stack_init->epc = (unsigned long)z_thread_entry;
+	stack_init->epc = (unsigned long)k_priv_thread_entry;
 
 	thread->callee_saved.sp = (unsigned long)stack_init;
 }

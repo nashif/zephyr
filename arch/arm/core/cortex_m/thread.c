@@ -90,10 +90,10 @@ void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack, char *sta
 	if ((thread->base.user_options & K_USER) != 0) {
 		iframe->pc = (uint32_t)arch_user_mode_enter;
 	} else {
-		iframe->pc = (uint32_t)z_thread_entry;
+		iframe->pc = (uint32_t)k_priv_thread_entry;
 	}
 #else
-	iframe->pc = (uint32_t)z_thread_entry;
+	iframe->pc = (uint32_t)k_priv_thread_entry;
 #endif
 
 	/* force ARM mode by clearing LSB of address */
@@ -508,7 +508,7 @@ void arch_switch_to_main_thread(struct k_thread *main_thread, char *stack_ptr,
 #endif
 
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
-	z_thread_mark_switched_in();
+	k_priv_thread_mark_switched_in();
 #endif
 
 	/* the ready queue cache already contains the main thread */
@@ -541,7 +541,7 @@ void arch_switch_to_main_thread(struct k_thread *main_thread, char *stack_ptr,
 	 * with the thread entry process.
 	 *
 	 * When calling arch_irq_unlock_outlined, LR is lost which is fine since
-	 * we do not intend to return after calling z_thread_entry.
+	 * we do not intend to return after calling k_priv_thread_entry.
 	 */
 	__asm__ volatile("mov   r4,  %0\n" /* force _main to be stored in a register */
 			 "msr   PSP, %1\n" /* __set_PSP(stack_ptr) */
@@ -550,11 +550,11 @@ void arch_switch_to_main_thread(struct k_thread *main_thread, char *stack_ptr,
 			 "ldr   r3, =arch_irq_unlock_outlined\n"
 			 "blx   r3\n"
 
-			 "mov   r0, r4\n" /* z_thread_entry(_main, NULL, NULL, NULL) */
+			 "mov   r0, r4\n" /* k_priv_thread_entry(_main, NULL, NULL, NULL) */
 			 "movs  r1, #0\n"
 			 "movs  r2, #0\n"
 			 "movs  r3, #0\n"
-			 "ldr   r4, =z_thread_entry\n"
+			 "ldr   r4, =k_priv_thread_entry\n"
 			 /* We don’t intend to return, so there is no need to link. */
 			 "bx    r4\n"
 			 :

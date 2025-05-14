@@ -69,8 +69,8 @@
 GTEXT(z_mips_fault)
 
 GTEXT(_k_neg_eagain)
-GTEXT(z_thread_mark_switched_in)
-GTEXT(z_thread_mark_switched_out)
+GTEXT(k_priv_thread_mark_switched_in)
+GTEXT(k_priv_thread_mark_switched_out)
 
 /* exports */
 GTEXT(__isr_vec)
@@ -211,7 +211,7 @@ on_thread_stack:
 
 reschedule:
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
-	jal z_thread_mark_switched_out
+	jal k_priv_thread_mark_switched_out
 #endif
 	/*
 	 * Check if the current thread is the same as the thread on the ready Q. If
@@ -264,7 +264,7 @@ skip_callee_saved_reg:
 	LOAD_CALLEE_SAVED(t1)
 
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
-	jal z_thread_mark_switched_in
+	jal k_priv_thread_mark_switched_in
 #endif
 
 	/* fallthrough */

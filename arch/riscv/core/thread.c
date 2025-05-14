@@ -53,13 +53,13 @@ void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack,
 	 * path, initially set:
 	 * 1) MSTATUS to MSTATUS_DEF_RESTORE in the thread stack to enable
 	 *    interrupts when the newly created thread will be scheduled;
-	 * 2) MEPC to the address of the z_thread_entry in the thread
+	 * 2) MEPC to the address of the k_priv_thread_entry in the thread
 	 *    stack.
 	 * Hence, when going out of an interrupt/exception/context-switch,
 	 * after scheduling the newly created thread:
 	 * 1) interrupts will be enabled, as the MSTATUS register will be
 	 *    restored following the MSTATUS value set within the thread stack;
-	 * 2) the core will jump to z_thread_entry, as the program
+	 * 2) the core will jump to k_priv_thread_entry, as the program
 	 *    counter will be restored following the MEPC value set within the
 	 *    thread stack.
 	 */
@@ -87,7 +87,7 @@ void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack,
 
 	} else {
 		/* Supervisor thread */
-		stack_init->mepc = (unsigned long)z_thread_entry;
+		stack_init->mepc = (unsigned long)k_priv_thread_entry;
 
 #if defined(CONFIG_PMP_STACK_GUARD)
 		/* Enable PMP in mstatus.MPRV mode for RISC-V machine mode
@@ -174,7 +174,7 @@ FUNC_NORETURN void arch_user_mode_enter(k_thread_entry_t user_entry,
 	status = INSERT_FIELD(status, MSTATUS_MIE, 0);
 
 	csr_write(mstatus, status);
-	csr_write(mepc, z_thread_entry);
+	csr_write(mepc, k_priv_thread_entry);
 
 #ifdef CONFIG_PMP_STACK_GUARD
 	/* reconfigure as the kernel mode stack will be different */

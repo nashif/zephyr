@@ -111,7 +111,7 @@ void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack,
 
 	/*
 	 * - ELR_ELn: to be used by eret in z_arm64_exit_exc() to return
-	 *   to z_thread_entry() with entry in x0(entry_point) and the
+	 *   to k_priv_thread_entry() with entry in x0(entry_point) and the
 	 *   parameters already in place in x1(arg1), x2(arg2), x3(arg3).
 	 * - SPSR_ELn: to enable IRQs (we are masking FIQs).
 	 */
@@ -123,11 +123,11 @@ void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack,
 	if (is_user(thread)) {
 		pInitCtx->elr = (uint64_t)arch_user_mode_enter;
 	} else {
-		pInitCtx->elr = (uint64_t)z_thread_entry;
+		pInitCtx->elr = (uint64_t)k_priv_thread_entry;
 	}
 
 #else
-	pInitCtx->elr = (uint64_t)z_thread_entry;
+	pInitCtx->elr = (uint64_t)k_priv_thread_entry;
 #endif
 
 	/* Keep using SP_EL1 */
@@ -190,7 +190,7 @@ FUNC_NORETURN void arch_user_mode_enter(k_thread_entry_t user_entry,
 	: [tmp] "=&r" (tmpreg)
 	: "r" (x0), "r" (x1), "r" (x2), "r" (x3),
 	  [is_usermode_flag] "i" (TPIDRROEL0_IN_EL0),
-	  [elr] "r" (z_thread_entry),
+	  [elr] "r" (k_priv_thread_entry),
 	  [spsr] "r" (DAIF_FIQ_BIT | SPSR_MODE_EL0T),
 	  [sp_el0] "r" (stack_el0),
 	  [sp_el1] "r" (stack_el1)

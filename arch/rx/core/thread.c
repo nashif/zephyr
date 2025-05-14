@@ -27,9 +27,9 @@ void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack, char *sta
 
 	/* initial value for the PSW (bits U and I are set) */
 	iframe->psw = 0x30000;
-	/* the initial entry point is the function z_thread_entry */
-	iframe->entry_point = (uint32_t)z_thread_entry;
-	/* arguments for the call of z_thread_entry (to be written to r1-r4) */
+	/* the initial entry point is the function k_priv_thread_entry */
+	iframe->entry_point = (uint32_t)k_priv_thread_entry;
+	/* arguments for the call of k_priv_thread_entry (to be written to r1-r4) */
 	iframe->r1 = (uint32_t)entry;
 	iframe->r2 = (uint32_t)arg1;
 	iframe->r3 = (uint32_t)arg2;

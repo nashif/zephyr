@@ -27,7 +27,7 @@
  * initial _kernel.threads pointer and the linked list made up of
  * thread->next_thread (until NULL)
  */
-extern struct k_spinlock z_thread_monitor_lock;
+extern struct k_spinlock k_priv_thread_monitor_lock;
 #endif /* CONFIG_THREAD_MONITOR */
 
 void idle(void *unused1, void *unused2, void *unused3);
@@ -35,9 +35,9 @@ void idle(void *unused1, void *unused2, void *unused3);
 /* clean up when a thread is aborted */
 
 #if defined(CONFIG_THREAD_MONITOR)
-void z_thread_monitor_exit(struct k_thread *thread);
+void k_priv_thread_monitor_exit(struct k_thread *thread);
 #else
-#define z_thread_monitor_exit(thread) \
+#define k_priv_thread_monitor_exit(thread) \
 	do {/* nothing */    \
 	} while (false)
 #endif /* CONFIG_THREAD_MONITOR */
@@ -174,7 +174,7 @@ static inline void z_mark_thread_as_not_sleeping(struct k_thread *thread)
  * This function tags the current thread as essential to system operation.
  * Exceptions raised by this thread will be treated as a fatal system error.
  */
-static inline void z_thread_essential_set(struct k_thread *thread)
+static inline void k_priv_thread_essential_set(struct k_thread *thread)
 {
 	thread->base.user_options |= K_ESSENTIAL;
 }
@@ -184,7 +184,7 @@ static inline void z_thread_essential_set(struct k_thread *thread)
  * Exceptions raised by this thread may be recoverable.
  * (This is the default tag for a thread.)
  */
-static inline void z_thread_essential_clear(struct k_thread *thread)
+static inline void k_priv_thread_essential_clear(struct k_thread *thread)
 {
 	thread->base.user_options &= ~K_ESSENTIAL;
 }

@@ -290,7 +290,7 @@ xtensa_userspace_enter:
 #endif
 #endif /* XCHAL_HAVE_THREADPTR */
 
-	/* Set now z_thread_entry parameters, we are simulating a call4
+	/* Set now k_priv_thread_entry parameters, we are simulating a call4
 	 * call, so parameters start at a6, a7, ...
 	 */
 	l32i a6, a1, 20
@@ -304,7 +304,7 @@ xtensa_userspace_enter:
 	/* Disabling interrupts as we need to use ZSR_EPC and ZSR_EPS */
 	rsil a0, 0xf
 
-	movi a0, z_thread_entry
+	movi a0, k_priv_thread_entry
 	wsr.ZSR_EPC a0
 
 	/* Configuring PS register.

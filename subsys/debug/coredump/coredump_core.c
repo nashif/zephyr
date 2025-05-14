@@ -162,7 +162,7 @@ void process_memory_region_list(void)
 #ifdef CONFIG_DEBUG_COREDUMP_MEMORY_DUMP_THREADS
 	/*
 	 * Content of _kernel.threads not being modified during dump
-	 * capture so no need to lock z_thread_monitor_lock.
+	 * capture so no need to lock k_priv_thread_monitor_lock.
 	 */
 	struct k_thread *current;
 

@@ -48,7 +48,7 @@ int32_t z_impl_k_stack_alloc_init(struct k_stack *stack, uint32_t num_entries)
 
 	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_stack, alloc_init, stack);
 
-	buffer = z_thread_malloc(num_entries * sizeof(stack_data_t));
+	buffer = k_priv_thread_malloc(num_entries * sizeof(stack_data_t));
 	if (buffer != NULL) {
 		k_stack_init(stack, buffer, num_entries);
 		stack->flags = K_STACK_FLAG_ALLOC;
@@ -114,7 +114,7 @@ int z_impl_k_stack_push(struct k_stack *stack, stack_data_t data)
 	first_pending_thread = z_unpend_first_thread(&stack->wait_q);
 
 	if (unlikely(first_pending_thread != NULL)) {
-		z_thread_return_value_set_with_data(first_pending_thread,
+		k_priv_thread_return_value_set_with_data(first_pending_thread,
 						   0, (void *)data);
 
 		z_ready_thread(first_pending_thread);

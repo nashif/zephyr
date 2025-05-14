@@ -118,7 +118,7 @@ _switch_return_from_coop:
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
 	PUSHR blink
 
-	bl z_thread_mark_switched_in
+	bl k_priv_thread_mark_switched_in
 
 	POPR blink
 #endif
@@ -154,7 +154,7 @@ _switch_return_from_firq:
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
 	PUSHR blink
 
-	bl z_thread_mark_switched_in
+	bl k_priv_thread_mark_switched_in
 
 	POPR blink
 #endif

@@ -21,7 +21,7 @@ static int cmd_kernel_thread_mask_clear(const struct shell *sh, size_t argc, cha
 		return err;
 	}
 
-	if (!z_thread_is_valid(thread)) {
+	if (!k_priv_thread_is_valid(thread)) {
 		shell_error(sh, "Invalid thread id %p", (void *)thread);
 		return -EINVAL;
 	}
@@ -50,7 +50,7 @@ static int cmd_kernel_thread_mask_enable_all(const struct shell *sh, size_t argc
 		return err;
 	}
 
-	if (!z_thread_is_valid(thread)) {
+	if (!k_priv_thread_is_valid(thread)) {
 		shell_error(sh, "Invalid thread id %p", (void *)thread);
 		return -EINVAL;
 	}
@@ -79,7 +79,7 @@ static int cmd_kernel_thread_mask_enable(const struct shell *sh, size_t argc, ch
 		return err;
 	}
 
-	if (!z_thread_is_valid(thread)) {
+	if (!k_priv_thread_is_valid(thread)) {
 		shell_error(sh, "Invalid thread id %p", (void *)thread);
 		return -EINVAL;
 	}
@@ -114,7 +114,7 @@ static int cmd_kernel_thread_mask_disable(const struct shell *sh, size_t argc, c
 		return err;
 	}
 
-	if (!z_thread_is_valid(thread)) {
+	if (!k_priv_thread_is_valid(thread)) {
 		shell_error(sh, "Invalid thread id %p", (void *)thread);
 		return -EINVAL;
 	}

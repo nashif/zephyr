@@ -1323,7 +1323,7 @@ struct k_sem sem;
 struct k_stack s;
 struct k_thread t;
 struct k_timer timer;
-struct z_thread_stack_element zs;
+struct k_priv_thread_stack_element zs;
 struct k_futex f;
 struct k_condvar condvar;
 

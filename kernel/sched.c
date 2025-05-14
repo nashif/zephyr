@@ -397,7 +397,7 @@ static void thread_halt_spin(struct k_thread *thread, k_spinlock_key_t key)
  * (aborting _current will not return, obviously), which may be after
  * a context switch.
  */
-static ALWAYS_INLINE void z_thread_halt(struct k_thread *thread, k_spinlock_key_t key,
+static ALWAYS_INLINE void k_priv_thread_halt(struct k_thread *thread, k_spinlock_key_t key,
 					bool terminate)
 {
 	_wait_q_t *wq = &thread->join_queue;
@@ -478,7 +478,7 @@ void z_impl_k_thread_suspend(k_tid_t thread)
 		return;
 	}
 
-	z_thread_halt(thread, key, false);
+	k_priv_thread_halt(thread, key, false);
 
 	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_thread, suspend, thread);
 }
@@ -608,7 +608,7 @@ void k_priv_sched_wake_thread(struct k_thread *thread, bool is_timeout)
 
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 /* Timeout handler for *_thread_timeout() APIs */
-void z_thread_timeout(struct _timeout *timeout)
+void k_priv_thread_timeout(struct _timeout *timeout)
 {
 	struct k_thread *thread = CONTAINER_OF(timeout,
 					       struct k_thread, base.timeout);
@@ -663,7 +663,7 @@ void z_unpend_thread(struct k_thread *thread)
 /* Priority set utility that does no rescheduling, it just changes the
  * run queue state, returning true if a reschedule is needed later.
  */
-bool z_thread_prio_set(struct k_thread *thread, int prio)
+bool k_priv_thread_prio_set(struct k_thread *thread, int prio)
 {
 	bool need_sched = 0;
 	int old_prio = thread->base.prio;
@@ -815,7 +815,7 @@ struct k_thread *k_priv_swap_next_thread(void)
 /* Just a wrapper around z_current_thread_set(xxx) with tracing */
 static inline void set_current(struct k_thread *new_thread)
 {
-	z_thread_mark_switched_out();
+	k_priv_thread_mark_switched_out();
 	z_current_thread_set(new_thread);
 }
 
@@ -964,7 +964,7 @@ void z_impl_k_thread_priority_set(k_tid_t thread, int prio)
 	 */
 	Z_ASSERT_VALID_PRIO(prio, NULL);
 
-	bool need_sched = z_thread_prio_set((struct k_thread *)thread, prio);
+	bool need_sched = k_priv_thread_prio_set((struct k_thread *)thread, prio);
 
 	if ((need_sched) && (IS_ENABLED(CONFIG_SMP) ||
 			     (_current->base.sched_locked == 0U))) {
@@ -1277,7 +1277,7 @@ static ALWAYS_INLINE void halt_thread(struct k_thread *thread, uint8_t new_state
 
 		SYS_PORT_TRACING_FUNC(k_thread, sched_abort, thread);
 
-		z_thread_monitor_exit(thread);
+		k_priv_thread_monitor_exit(thread);
 #ifdef CONFIG_THREAD_ABORT_HOOK
 		thread_abort_hook(thread);
 #endif /* CONFIG_THREAD_ABORT_HOOK */
@@ -1335,7 +1335,7 @@ void k_priv_thread_abort(struct k_thread *thread)
 		return;
 	}
 
-	z_thread_halt(thread, key, true);
+	k_priv_thread_halt(thread, key, true);
 
 	if (essential) {
 		__ASSERT(!essential, "aborted essential thread %p", thread);
@@ -1454,7 +1454,7 @@ bool k_priv_sched_wake(_wait_q_t *wait_q, int swap_retval, void *swap_data)
 		thread = _priq_wait_best(&wait_q->waitq);
 
 		if (thread != NULL) {
-			z_thread_return_value_set_with_data(thread,
+			k_priv_thread_return_value_set_with_data(thread,
 							    swap_retval,
 							    swap_data);
 			unpend_thread_no_timeout(thread);

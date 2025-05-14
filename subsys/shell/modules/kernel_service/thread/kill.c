@@ -16,7 +16,7 @@ static int cmd_kernel_thread_kill(const struct shell *sh, size_t argc, char **ar
 	/* thread_id is converetd from hex to decimal */
 	k_tid_t thread_id = (k_tid_t)strtoul(argv[1], NULL, 16);
 
-	if (!z_thread_is_valid(thread_id)) {
+	if (!k_priv_thread_is_valid(thread_id)) {
 		shell_error(sh, "Thread ID %p is not valid", thread_id);
 		return -EINVAL;
 	}

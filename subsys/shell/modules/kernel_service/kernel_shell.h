@@ -24,6 +24,6 @@
 	KERNEL_THREAD_CMD_ARG_ADD(_syntax, _subcmd, _help, _handler, 0, 0);
 
 /* Internal function to check if a thread pointer is valid */
-bool z_thread_is_valid(const struct k_thread *thread);
+bool k_priv_thread_is_valid(const struct k_thread *thread);
 
 #endif /* ZEPHYR_SUBSYS_SHELL_MODULES_KERNEL_SERVICE_KERNEL_SHELL_H_ */

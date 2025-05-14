@@ -26,7 +26,7 @@ static void thread_valid_cb(const struct k_thread *cthread, void *user_data)
 	}
 }
 
-bool z_thread_is_valid(const struct k_thread *thread)
+bool k_priv_thread_is_valid(const struct k_thread *thread)
 {
 	struct thread_entry entry = {
 		.thread = thread,

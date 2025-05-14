@@ -57,7 +57,7 @@ SECTION_FUNC(TEXT, z_arm_pendsv)
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
     /* Register the context switch */
     push {r0, lr}
-    bl z_thread_mark_switched_out
+    bl k_priv_thread_mark_switched_out
 #if defined(CONFIG_ARMV6_M_ARMV8_M_BASELINE)
     pop {r0, r1}
     mov lr, r1
@@ -333,7 +333,7 @@ SECTION_FUNC(TEXT, z_arm_pendsv)
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
     /* Register the context switch */
     push {r0, lr}
-    bl z_thread_mark_switched_in
+    bl k_priv_thread_mark_switched_in
 #if defined(CONFIG_ARMV6_M_ARMV8_M_BASELINE)
     pop {r0, r1}
     mov lr, r1

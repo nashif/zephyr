@@ -27,7 +27,7 @@ static void thread_entry(void *p1, void *p2, void *p3)
 	ARG_UNUSED(p2);
 	ARG_UNUSED(p3);
 
-	z_thread_essential_set(_current);
+	k_priv_thread_essential_set(_current);
 
 	if (z_is_thread_essential(_current)) {
 		k_busy_wait(100);
@@ -35,7 +35,7 @@ static void thread_entry(void *p1, void *p2, void *p3)
 		zassert_unreachable("The thread is not set as essential");
 	}
 
-	z_thread_essential_clear(_current);
+	k_priv_thread_essential_clear(_current);
 	zassert_false(z_is_thread_essential(_current),
 		      "Essential flag of the thread is not cleared");
 

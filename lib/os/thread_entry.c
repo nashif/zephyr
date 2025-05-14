@@ -32,7 +32,7 @@ extern Z_THREAD_LOCAL volatile uintptr_t __stack_chk_guard;
  * This routine does not return, and is marked as such so the compiler won't
  * generate preamble code that is only used by functions that actually return.
  */
-FUNC_NORETURN void z_thread_entry(k_thread_entry_t entry,
+FUNC_NORETURN void k_priv_thread_entry(k_thread_entry_t entry,
 				 void *p1, void *p2, void *p3)
 {
 #ifdef CONFIG_CURRENT_THREAD_USE_TLS

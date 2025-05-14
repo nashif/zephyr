@@ -135,7 +135,7 @@ static size_t copy_to_pending_readers(struct k_pipe *pipe, bool *need_resched,
 		}
 		if (reader != NULL) {
 			/* rest of thread wake-up outside the scheduler lock */
-			z_thread_return_value_set_with_data(reader, 0, NULL);
+			k_priv_thread_return_value_set_with_data(reader, 0, NULL);
 			z_ready_thread(reader);
 			*need_resched = true;
 		}

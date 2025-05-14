@@ -130,7 +130,7 @@ static ALWAYS_INLINE unsigned int do_swap(unsigned int key,
 			z_smp_release_global_lock(new_thread);
 		}
 #endif /* CONFIG_SMP */
-		z_thread_mark_switched_out();
+		k_priv_thread_mark_switched_out();
 		k_priv_sched_switch_spin(new_thread);
 		z_current_thread_set(new_thread);
 

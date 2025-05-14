@@ -131,7 +131,7 @@ _z_rx_context_switch_isr:
 	mvtc r2,usp	/* set USP to the new thread stack */
 
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
-	bsr _z_thread_mark_switched_in
+	bsr _k_priv_thread_mark_switched_in
 #endif
 
 	rts

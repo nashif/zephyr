@@ -269,7 +269,7 @@ _firq_switch_from_coop:
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
 	push_s blink
 
-	bl z_thread_mark_switched_in
+	bl k_priv_thread_mark_switched_in
 
 	pop_s blink
 #endif
@@ -290,7 +290,7 @@ _firq_switch_from_firq:
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
 	push_s blink
 
-	bl z_thread_mark_switched_in
+	bl k_priv_thread_mark_switched_in
 
 	pop_s blink
 #endif

@@ -44,15 +44,15 @@ extern "C" {
  *
  * Stacks should always be created with K_THREAD_STACK_DEFINE().
  */
-struct __packed z_thread_stack_element {
+struct __packed k_priv_thread_stack_element {
 	char data;
 };
 
 /**
  * @typedef k_thread_stack_t
- * @brief Typedef of struct z_thread_stack_element
+ * @brief Typedef of struct k_priv_thread_stack_element
  *
- * @see z_thread_stack_element
+ * @see k_priv_thread_stack_element
  */
 
 
@@ -122,7 +122,7 @@ static inline char *z_stack_ptr_align(char *ptr)
  * @param size Size of the stack memory region
  */
 #define K_KERNEL_STACK_DECLARE(sym, size) \
-	extern struct z_thread_stack_element \
+	extern struct k_priv_thread_stack_element \
 		sym[K_KERNEL_STACK_LEN(size)]
 
 /**
@@ -136,7 +136,7 @@ static inline char *z_stack_ptr_align(char *ptr)
  * @param size Size of the stack memory region
  */
 #define K_KERNEL_STACK_ARRAY_DECLARE(sym, nmemb, size) \
-	extern struct z_thread_stack_element \
+	extern struct k_priv_thread_stack_element \
 		sym[nmemb][K_KERNEL_STACK_LEN(size)]
 
 /**
@@ -150,7 +150,7 @@ static inline char *z_stack_ptr_align(char *ptr)
  * @param size Size of the stack memory region
  */
 #define K_KERNEL_PINNED_STACK_ARRAY_DECLARE(sym, nmemb, size) \
-	extern struct z_thread_stack_element \
+	extern struct k_priv_thread_stack_element \
 		sym[nmemb][K_KERNEL_STACK_LEN(size)]
 
 /**
@@ -173,7 +173,7 @@ static inline char *z_stack_ptr_align(char *ptr)
  * @param lsect Linker section for this stack
  */
 #define Z_KERNEL_STACK_DEFINE_IN(sym, size, lsect) \
-	struct z_thread_stack_element lsect \
+	struct k_priv_thread_stack_element lsect \
 		__aligned(Z_KERNEL_STACK_OBJ_ALIGN) \
 		sym[K_KERNEL_STACK_LEN(size)]
 
@@ -186,7 +186,7 @@ static inline char *z_stack_ptr_align(char *ptr)
  * @param lsect Linker section for this array of stacks
  */
 #define Z_KERNEL_STACK_ARRAY_DEFINE_IN(sym, nmemb, size, lsect) \
-	struct z_thread_stack_element lsect \
+	struct k_priv_thread_stack_element lsect \
 		__aligned(Z_KERNEL_STACK_OBJ_ALIGN) \
 		sym[nmemb][K_KERNEL_STACK_LEN(size)]
 
@@ -402,7 +402,7 @@ static inline char *K_KERNEL_STACK_BUFFER(k_thread_stack_t *sym)
  * @param size Size of the stack memory region
  */
 #define K_THREAD_STACK_DECLARE(sym, size) \
-	extern struct z_thread_stack_element \
+	extern struct k_priv_thread_stack_element \
 		sym[K_THREAD_STACK_LEN(size)]
 
 /**
@@ -416,7 +416,7 @@ static inline char *K_KERNEL_STACK_BUFFER(k_thread_stack_t *sym)
  * @param size Size of the stack memory region
  */
 #define K_THREAD_STACK_ARRAY_DECLARE(sym, nmemb, size) \
-	extern struct z_thread_stack_element \
+	extern struct k_priv_thread_stack_element \
 		sym[nmemb][K_THREAD_STACK_LEN(size)]
 
 /**
@@ -464,7 +464,7 @@ static inline char *K_KERNEL_STACK_BUFFER(k_thread_stack_t *sym)
  * @param lsect Linker section for this stack
  */
 #define Z_THREAD_STACK_DEFINE_IN(sym, size, lsect) \
-	struct z_thread_stack_element lsect \
+	struct k_priv_thread_stack_element lsect \
 		__aligned(Z_THREAD_STACK_OBJ_ALIGN(size)) \
 		sym[K_THREAD_STACK_LEN(size)]
 
@@ -483,7 +483,7 @@ static inline char *K_KERNEL_STACK_BUFFER(k_thread_stack_t *sym)
  * @param lsect Linker section for this stack
  */
 #define Z_THREAD_STACK_ARRAY_DEFINE_IN(sym, nmemb, size, lsect) \
-	struct z_thread_stack_element lsect \
+	struct k_priv_thread_stack_element lsect \
 		__aligned(Z_THREAD_STACK_OBJ_ALIGN(size)) \
 		sym[nmemb][K_THREAD_STACK_LEN(size)]
 

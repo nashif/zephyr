@@ -30,7 +30,7 @@
 	RV_I(	op s11, _thread_offset_to_s11(reg)	)
 
 GTEXT(z_riscv_switch)
-GTEXT(z_thread_mark_switched_in)
+GTEXT(k_priv_thread_mark_switched_in)
 GTEXT(z_riscv_configure_stack_guard)
 GTEXT(z_riscv_fpu_thread_context_switch)
 
@@ -83,7 +83,7 @@ not_user_task:
 
 #if CONFIG_INSTRUMENT_THREAD_SWITCHING
 	mv s0, a0
-	call z_thread_mark_switched_in
+	call k_priv_thread_mark_switched_in
 	mv a0, s0
 #endif
 

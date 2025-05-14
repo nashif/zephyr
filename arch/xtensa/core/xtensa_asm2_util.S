@@ -339,7 +339,7 @@ noflush:
 	 l32i a1, a2, ___xtensa_irq_bsa_t_a2_OFFSET
 
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
-	call4 z_thread_mark_switched_in
+	call4 k_priv_thread_mark_switched_in
 #endif
 	j _restore_context
 _switch_restore_pc:

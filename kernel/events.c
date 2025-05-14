@@ -112,7 +112,7 @@ static int event_walk_op(struct k_thread *thread, void *data)
 
 		/*
 		 * Events create a list of threads to wake up. We do
-		 * not want z_thread_timeout to wake these threads; they
+		 * not want k_priv_thread_timeout to wake these threads; they
 		 * will be woken up by k_event_post_internal once they
 		 * have been processed.
 		 */

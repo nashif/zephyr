@@ -38,7 +38,7 @@ static int cmd_kernel_thread_unwind(const struct shell *sh, size_t argc, char **
 			return err;
 		}
 
-		if (!z_thread_is_valid(thread)) {
+		if (!k_priv_thread_is_valid(thread)) {
 			shell_error(sh, "Invalid thread id %p", (void *)thread);
 			return -EINVAL;
 		}

@@ -45,7 +45,7 @@ void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack,
 	thread->arch.cs = X86_KERNEL_CS;
 	thread->arch.ss = X86_KERNEL_DS;
 #else
-	switch_entry = z_thread_entry;
+	switch_entry = k_priv_thread_entry;
 #endif
 	iframe = Z_STACK_PTR_TO_FRAME(struct x86_initial_frame, stack_ptr);
 	iframe->rip = 0U;

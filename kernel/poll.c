@@ -374,7 +374,7 @@ static inline int z_vrfy_k_poll(struct k_poll_event *events,
 		ret = -EINVAL;
 		goto out;
 	}
-	events_copy = z_thread_malloc(bounds);
+	events_copy = k_priv_thread_malloc(bounds);
 	if (!events_copy) {
 		ret = -ENOMEM;
 		goto out;

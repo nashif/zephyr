@@ -13,4 +13,4 @@ int arch_irq_connect_dynamic(unsigned int irq, unsigned int priority,
 int arch_irq_disconnect_dynamic(unsigned int irq, unsigned int priority,
 		       void (*routine)(const void *parameter),
 		       const void *parameter, uint32_t flags);
-typedef struct z_thread_stack_element k_thread_stack_t;
+typedef struct k_priv_thread_stack_element k_thread_stack_t;

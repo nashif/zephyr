@@ -68,7 +68,7 @@
 SECTION_FUNC(PINNED_TEXT, arch_swap)
 #if defined(CONFIG_INSTRUMENT_THREAD_SWITCHING)
 	pushl	%eax
-	call	z_thread_mark_switched_out
+	call	k_priv_thread_mark_switched_out
 	popl	%eax
 #endif
 	/*
@@ -346,7 +346,7 @@ CROHandlingDone:
 
 #if defined(CONFIG_INSTRUMENT_THREAD_SWITCHING)
 	pushl	%eax
-	call	z_thread_mark_switched_in
+	call	k_priv_thread_mark_switched_in
 	popl	%eax
 #endif
 	ret
@@ -367,7 +367,7 @@ CROHandlingDone:
  *
  * Given the initial thread created by arch_new_thread(), GDB expects to find
  * a return address on the stack immediately above the thread entry routine
- * z_thread_entry, in the location occupied by the initial EFLAGS.  GDB
+ * k_priv_thread_entry, in the location occupied by the initial EFLAGS.  GDB
  * attempts to examine the memory at this return address, which typically
  * results in an invalid access to page 0 of memory.
  *
@@ -379,7 +379,7 @@ CROHandlingDone:
  * The initial EFLAGS cannot be overwritten until after k_priv_swap() has swapped in
  * the new thread for the first time.  This routine is called by k_priv_swap() the
  * first time that the new thread is swapped in, and it jumps to
- * z_thread_entry after it has done its work.
+ * k_priv_thread_entry after it has done its work.
  *
  *       __________________
  *      |      param3      |   <------ Top of the stack
@@ -394,7 +394,7 @@ CROHandlingDone:
  *      |__________________|             (Zeroed by this routine)
  *
  * The address of the thread entry function needs to be in %edi when this is
- * invoked. It will either be z_thread_entry, or if userspace is enabled,
+ * invoked. It will either be k_priv_thread_entry, or if userspace is enabled,
  * _arch_drop_to_user_mode if this is a user thread.
  *
  * @return this routine does NOT return.

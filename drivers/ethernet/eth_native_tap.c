@@ -60,7 +60,7 @@ struct eth_context {
 	struct net_if *iface;
 	const char *if_name;
 	k_tid_t rx_thread;
-	struct z_thread_stack_element *rx_stack;
+	struct k_priv_thread_stack_element *rx_stack;
 	size_t rx_stack_size;
 	int dev_fd;
 	bool init_done;

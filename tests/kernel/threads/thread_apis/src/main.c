@@ -249,7 +249,7 @@ static void umode_entry(void *thread_id, void *p2, void *p3)
  */
 static void enter_user_mode_entry(void *p1, void *p2, void *p3)
 {
-	z_thread_essential_set(_current);
+	k_priv_thread_essential_set(_current);
 
 	zassert_true(z_is_thread_essential(_current), "Thread isn't set"
 		     " as essential\n");

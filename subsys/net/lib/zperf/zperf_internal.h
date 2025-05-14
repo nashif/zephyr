@@ -119,7 +119,7 @@ extern void connect_ap(char *ssid);
 
 struct zperf_work {
 	struct k_work_q *queue;
-	struct z_thread_stack_element *stack;
+	struct k_priv_thread_stack_element *stack;
 	struct k_event *start_event;
 	size_t stack_size;
 };

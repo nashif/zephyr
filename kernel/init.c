@@ -587,7 +587,7 @@ static void bg_thread_main(void *unused1, void *unused2, void *unused3)
 #endif /* CONFIG_BOOTARGS */
 
 	/* Mark non-essential since main() has no more work to do */
-	z_thread_essential_clear(&z_main_thread);
+	k_priv_thread_essential_clear(&z_main_thread);
 
 #ifdef CONFIG_COVERAGE_DUMP
 	/* Dump coverage data once the main() has exited. */

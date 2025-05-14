@@ -418,7 +418,7 @@ __resume:
 	call z_x86_swap_update_page_tables
 #endif
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
-	call z_thread_mark_switched_in
+	call k_priv_thread_mark_switched_in
 #endif
 	popq %rdi
 #endif /* (!CONFIG_X86_KPTI && CONFIG_USERSPACE) || \

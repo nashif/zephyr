@@ -323,7 +323,7 @@ static struct k_object *dynamic_object_create(enum k_objects otype, size_t align
 {
 	struct dyn_obj *dyn;
 
-	dyn = z_thread_aligned_alloc(align, sizeof(struct dyn_obj));
+	dyn = k_priv_thread_aligned_alloc(align, sizeof(struct dyn_obj));
 	if (dyn == NULL) {
 		return NULL;
 	}
@@ -337,7 +337,7 @@ static struct k_object *dynamic_object_create(enum k_objects otype, size_t align
 		}
 
 		adjusted_size = STACK_ELEMENT_DATA_SIZE(size);
-		dyn->data = z_thread_aligned_alloc(DYN_OBJ_DATA_ALIGN_K_THREAD_STACK,
+		dyn->data = k_priv_thread_aligned_alloc(DYN_OBJ_DATA_ALIGN_K_THREAD_STACK,
 						     adjusted_size);
 		if (dyn->data == NULL) {
 			k_free(dyn);
@@ -362,7 +362,7 @@ static struct k_object *dynamic_object_create(enum k_objects otype, size_t align
 		dyn->kobj.data.stack_size = adjusted_size;
 #endif /* CONFIG_GEN_PRIV_STACKS */
 	} else {
-		dyn->data = z_thread_aligned_alloc(align, obj_size_get(otype) + size);
+		dyn->data = k_priv_thread_aligned_alloc(align, obj_size_get(otype) + size);
 		if (dyn->data == NULL) {
 			k_free(dyn->data);
 			return NULL;
@@ -851,7 +851,7 @@ void *k_usermode_alloc_from_copy(const void *src, size_t size)
 		goto out_err;
 	}
 
-	dst = z_thread_malloc(size);
+	dst = k_priv_thread_malloc(size);
 	if (dst == NULL) {
 		LOG_ERR("out of thread resource pool memory (%zu)", size);
 		goto out_err;

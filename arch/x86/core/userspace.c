@@ -118,7 +118,7 @@ void *z_x86_userspace_prepare_thread(struct k_thread *thread)
 #endif
 
 	} else {
-		initial_entry = z_thread_entry;
+		initial_entry = k_priv_thread_entry;
 	}
 
 	return initial_entry;

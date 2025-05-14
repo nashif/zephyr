@@ -89,14 +89,14 @@ void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack,
 #ifdef CONFIG_USERSPACE
 	swap_entry = z_x86_userspace_prepare_thread(thread);
 #else
-	swap_entry = z_thread_entry;
+	swap_entry = k_priv_thread_entry;
 #endif
 
 	/* Create an initial context on the stack expected by k_priv_swap() */
 	initial_frame = Z_STACK_PTR_TO_FRAME(struct _x86_initial_frame,
 					     stack_ptr);
 
-	/* z_thread_entry() arguments */
+	/* k_priv_thread_entry() arguments */
 	initial_frame->entry = entry;
 	initial_frame->p1 = p1;
 	initial_frame->p2 = p2;
@@ -109,7 +109,7 @@ void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack,
 	initial_frame->thread_entry = swap_entry;
 #endif /* _THREAD_WRAPPER_REQUIRED */
 
-	/* Remaining _x86_initial_frame members can be garbage, z_thread_entry()
+	/* Remaining _x86_initial_frame members can be garbage, k_priv_thread_entry()
 	 * doesn't care about their state when execution begins
 	 */
 	thread->callee_saved.esp = (unsigned long)initial_frame;

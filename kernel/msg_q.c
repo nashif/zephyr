@@ -78,7 +78,7 @@ int z_impl_k_msgq_alloc_init(struct k_msgq *msgq, size_t msg_size,
 	if (size_mul_overflow(msg_size, max_msgs, &total_size)) {
 		ret = -EINVAL;
 	} else {
-		buffer = z_thread_malloc(total_size);
+		buffer = k_priv_thread_malloc(total_size);
 		if (buffer != NULL) {
 			k_msgq_init(msgq, buffer, msg_size, max_msgs);
 			msgq->flags = K_MSGQ_FLAG_ALLOC;

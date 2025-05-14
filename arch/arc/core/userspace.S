@@ -54,7 +54,7 @@ GTEXT(z_arc_user_string_nlen_fault_end)
 GTEXT(z_arc_user_string_nlen_fixup)
 
 /**
- * @brief Wrapper for z_thread_entry in the case of user thread
+ * @brief Wrapper for k_priv_thread_entry in the case of user thread
  *
  * The init parameters are in privileged stack
  */
@@ -144,7 +144,7 @@ _arc_go_to_user_space:
 	lr r0, [_ARC_V2_STATUS32]
 	bset r0, r0, _ARC_V2_STATUS32_U_BIT
 
-	mov_s r1, z_thread_entry_wrapper1
+	mov_s r1, k_priv_thread_entry_wrapper1
 
 	sr r0, [_ARC_V2_ERSTATUS]
 	sr r1, [_ARC_V2_ERET]

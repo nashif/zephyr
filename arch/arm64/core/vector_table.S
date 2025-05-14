@@ -351,7 +351,7 @@ SECTION_FUNC(TEXT, z_arm64_exit_exc)
 	 * - The address of ret in z_arm64_call_svc()
 	 * - The address of the next instruction at the time of the IRQ when the
 	 *   thread was switched out.
-	 * - The address of z_thread_entry() for new threads (see thread.c).
+	 * - The address of k_priv_thread_entry() for new threads (see thread.c).
 	 */
 	eret
 

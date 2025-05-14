@@ -46,7 +46,7 @@ SECTION_FUNC(TEXT, z_arm_do_swap)
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
     /* Register the context switch */
     push {r0, lr}
-    bl z_thread_mark_switched_out
+    bl k_priv_thread_mark_switched_out
     pop {r0, lr}
 #endif /* CONFIG_INSTRUMENT_THREAD_SWITCHING */
 
@@ -180,7 +180,7 @@ in_fp_inactive:
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
     /* Register the context switch */
     push {r0, lr}
-    bl z_thread_mark_switched_in
+    bl k_priv_thread_mark_switched_in
     pop {r0, lr}
 #endif /* CONFIG_INSTRUMENT_THREAD_SWITCHING */
 

@@ -310,7 +310,7 @@ _rirq_switch_from_coop:
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
 	PUSHR blink
 
-	bl z_thread_mark_switched_in
+	bl k_priv_thread_mark_switched_in
 
 	POPR blink
 #endif
@@ -327,7 +327,7 @@ _rirq_switch_from_rirq:
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
 	PUSHR blink
 
-	bl z_thread_mark_switched_in
+	bl k_priv_thread_mark_switched_in
 
 	POPR blink
 #endif

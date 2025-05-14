@@ -32,7 +32,7 @@ int arch_swap(unsigned int key)
 	 * threads => those are all nicely kept by the native OS kernel
 	 */
 #if CONFIG_INSTRUMENT_THREAD_SWITCHING
-	z_thread_mark_switched_out();
+	k_priv_thread_mark_switched_out();
 #endif
 	_current->callee_saved.key = key;
 	_current->callee_saved.retval = -EAGAIN;
@@ -52,7 +52,7 @@ int arch_swap(unsigned int key)
 
 	z_current_thread_set(_kernel.ready_q.cache);
 #if CONFIG_INSTRUMENT_THREAD_SWITCHING
-	z_thread_mark_switched_in();
+	k_priv_thread_mark_switched_in();
 #endif
 
 	/*
@@ -91,13 +91,13 @@ void arch_switch_to_main_thread(struct k_thread *main_thread, char *stack_ptr,
 			_kernel.ready_q.cache->callee_saved.thread_status;
 
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
-	z_thread_mark_switched_out();
+	k_priv_thread_mark_switched_out();
 #endif
 
 	z_current_thread_set(_kernel.ready_q.cache);
 
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
-	z_thread_mark_switched_in();
+	k_priv_thread_mark_switched_in();
 #endif
 
 	posix_main_thread_start(ready_thread_ptr->thread_idx);

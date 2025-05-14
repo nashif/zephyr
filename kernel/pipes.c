@@ -68,7 +68,7 @@ int z_impl_k_pipe_alloc_init(struct k_pipe *pipe, size_t size)
 	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_pipe, alloc_init, pipe);
 
 	if (size != 0U) {
-		buffer = z_thread_malloc(size);
+		buffer = k_priv_thread_malloc(size);
 		if (buffer != NULL) {
 			k_pipe_init(pipe, buffer, size);
 			pipe->flags = K_PIPE_FLAG_ALLOC;

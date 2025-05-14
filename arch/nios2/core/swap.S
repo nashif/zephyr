@@ -10,7 +10,7 @@
 
 /* exports */
 GTEXT(arch_swap)
-GTEXT(z_thread_entry_wrapper)
+GTEXT(k_priv_thread_entry_wrapper)
 
 /* imports */
 GTEXT(_k_neg_eagain)
@@ -28,7 +28,7 @@ SECTION_FUNC(exception.other, arch_swap)
 	stw fp, 4(sp)
 	stw r4, 0(sp)
 
-	call z_thread_mark_switched_out
+	call k_priv_thread_mark_switched_out
 
 	ldw r4, 0(sp)
 	ldw fp, 4(sp)
@@ -131,7 +131,7 @@ no_unlock:
 	stw r3, 4(sp)
 	stw r2, 0(sp)
 
-	call z_thread_mark_switched_in
+	call k_priv_thread_mark_switched_in
 
 	ldw r2, 0(sp)
 	ldw r3, 4(sp)
@@ -143,9 +143,9 @@ no_unlock:
 	ret
 
 
-/* void z_thread_entry_wrapper(void)
+/* void k_priv_thread_entry_wrapper(void)
  */
-SECTION_FUNC(TEXT, z_thread_entry_wrapper)
+SECTION_FUNC(TEXT, k_priv_thread_entry_wrapper)
 	/* This all corresponds to struct init_stack_frame defined in
 	 * thread.c. We need to take this stuff off the stack and put
 	 * it in the appropriate registers
@@ -163,5 +163,5 @@ SECTION_FUNC(TEXT, z_thread_entry_wrapper)
 	/* pop all the stuff that we just loaded into registers */
 	addi sp, sp, 16
 
-	call z_thread_entry
+	call k_priv_thread_entry
 

@@ -41,7 +41,7 @@ void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack,
 	 */
 	thread_status = Z_STACK_PTR_TO_FRAME(posix_thread_status_t, stack_ptr);
 
-	/* z_thread_entry() arguments */
+	/* k_priv_thread_entry() arguments */
 	thread_status->entry_point = entry;
 	thread_status->arg1 = p1;
 	thread_status->arg2 = p2;
@@ -93,7 +93,7 @@ void posix_arch_thread_entry(void *pa_thread_status)
 {
 	posix_thread_status_t *ptr = pa_thread_status;
 	posix_irq_full_unlock();
-	z_thread_entry(ptr->entry_point, ptr->arg1, ptr->arg2, ptr->arg3);
+	k_priv_thread_entry(ptr->entry_point, ptr->arg1, ptr->arg2, ptr->arg3);
 }
 
 #if defined(CONFIG_FPU) && defined(CONFIG_FPU_SHARING)

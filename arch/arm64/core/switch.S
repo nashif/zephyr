@@ -123,7 +123,7 @@ SECTION_FUNC(TEXT, z_arm64_context_switch)
 
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
 	str	lr, [sp, #-16]!
-	bl	z_thread_mark_switched_in
+	bl	k_priv_thread_mark_switched_in
 	ldr	lr, [sp], #16
 #endif
 

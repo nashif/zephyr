@@ -41,11 +41,11 @@ static struct k_obj_type  obj_type_thread;
 static struct k_obj_core_stats_desc  thread_stats_desc = {
 	.raw_size = sizeof(struct k_cycle_stats),
 	.query_size = sizeof(struct k_thread_runtime_stats),
-	.raw   = z_thread_stats_raw,
-	.query = z_thread_stats_query,
+	.raw   = k_priv_thread_stats_raw,
+	.query = k_priv_thread_stats_query,
 	.reset = k_priv_thread_stats_reset,
-	.disable = z_thread_stats_disable,
-	.enable  = z_thread_stats_enable,
+	.disable = k_priv_thread_stats_disable,
+	.enable  = k_priv_thread_stats_enable,
 };
 #endif /* CONFIG_OBJ_CORE_STATS_THREAD */
 
@@ -588,11 +588,11 @@ char *z_setup_new_thread(struct k_thread *new_thread,
 	new_thread->entry.parameter2 = p2;
 	new_thread->entry.parameter3 = p3;
 
-	k_spinlock_key_t key = k_spin_lock(&z_thread_monitor_lock);
+	k_spinlock_key_t key = k_spin_lock(&k_priv_thread_monitor_lock);
 
 	new_thread->next_thread = _kernel.threads;
 	_kernel.threads = new_thread;
-	k_spin_unlock(&z_thread_monitor_lock, key);
+	k_spin_unlock(&k_priv_thread_monitor_lock, key);
 #endif /* CONFIG_THREAD_MONITOR */
 #ifdef CONFIG_THREAD_NAME
 	if (name != NULL) {
@@ -772,7 +772,7 @@ FUNC_NORETURN void k_thread_user_mode_enter(k_thread_entry_t entry,
 	SYS_PORT_TRACING_FUNC(k_thread, user_mode_enter);
 
 	_current->base.user_options |= K_USER;
-	z_thread_essential_clear(_current);
+	k_priv_thread_essential_clear(_current);
 #ifdef CONFIG_THREAD_MONITOR
 	_current->entry.pEntry = entry;
 	_current->entry.parameter1 = p1;
@@ -794,7 +794,7 @@ FUNC_NORETURN void k_thread_user_mode_enter(k_thread_entry_t entry,
 	arch_user_mode_enter(entry, p1, p2, p3);
 #else
 	/* XXX In this case we do not reset the stack */
-	z_thread_entry(entry, p1, p2, p3);
+	k_priv_thread_entry(entry, p1, p2, p3);
 #endif /* CONFIG_USERSPACE */
 }
 
@@ -914,7 +914,7 @@ static inline k_ticks_t z_vrfy_k_thread_timeout_expires_ticks(
 #endif /* CONFIG_USERSPACE */
 
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
-void z_thread_mark_switched_in(void)
+void k_priv_thread_mark_switched_in(void)
 {
 #if defined(CONFIG_SCHED_THREAD_USAGE) && !defined(CONFIG_USE_SWITCH)
 	k_priv_sched_usage_start(_current);
@@ -925,7 +925,7 @@ void z_thread_mark_switched_in(void)
 #endif /* CONFIG_TRACING */
 }
 
-void z_thread_mark_switched_out(void)
+void k_priv_thread_mark_switched_out(void)
 {
 #if defined(CONFIG_SCHED_THREAD_USAGE) && !defined(CONFIG_USE_SWITCH)
 	k_priv_sched_usage_stop();

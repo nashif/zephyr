@@ -41,7 +41,7 @@ extern "C" {
 /*
  * INIT_IRQ_LOCK_KEY is init interrupt level setting of a thread.
  * It's configured by seti instruction when a thread starts to run
- *, i.e., z_thread_entry_wrapper and z_user_thread_entry_wrapper
+ *, i.e., k_priv_thread_entry_wrapper and z_user_thread_entry_wrapper
  */
 #define _ARC_V2_INIT_IRQ_LOCK_KEY (0x10 | _ARC_V2_DEF_IRQ_LEVEL)
 

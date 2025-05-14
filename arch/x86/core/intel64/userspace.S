@@ -266,7 +266,7 @@ z_x86_user_string_nlen_fixup:
 z_x86_userspace_landing_site:
 	/* Place argument 4 in the correct position */
 	movq	%r10, %rcx
-	call	z_thread_entry
+	call	k_priv_thread_entry
 
 /* FUNC_NORETURN void z_x86_userspace_enter(
  *		k_thread_entry_t user_entry,	<- RDI

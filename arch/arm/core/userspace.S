@@ -289,15 +289,15 @@ SECTION_FUNC(TEXT,z_arm_userspace_enter)
     pop {r0, r1}
 #endif
 
-    /* jump to z_thread_entry entry */
+    /* jump to k_priv_thread_entry entry */
 #if defined(CONFIG_ARMV6_M_ARMV8_M_BASELINE)
     push {r0, r1}
-    ldr r0, =z_thread_entry
+    ldr r0, =k_priv_thread_entry
     mov ip, r0
     pop {r0, r1}
 #elif defined(CONFIG_ARMV7_M_ARMV8_M_MAINLINE) \
     || defined(CONFIG_CPU_AARCH32_CORTEX_R)
-    ldr ip, =z_thread_entry
+    ldr ip, =k_priv_thread_entry
 #endif
     bx ip
 

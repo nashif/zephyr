@@ -77,7 +77,7 @@ static void tIsr_malloc_and_free(void *data)
 	ARG_UNUSED(data);
 	void *ptr;
 
-	ptr = (char *)z_thread_malloc(BLK_SIZE_MIN);
+	ptr = (char *)k_priv_thread_malloc(BLK_SIZE_MIN);
 	zassert_not_null(ptr, "bytes allocation failed from system pool");
 	k_free(ptr);
 }
@@ -88,7 +88,7 @@ static void malloc_in_thread_handler(void *p1, void *p2, void *p3)
 
 	k_current_get()->resource_pool = NULL;
 
-	ptr = (char *)z_thread_malloc(BLK_SIZE_MIN);
+	ptr = (char *)k_priv_thread_malloc(BLK_SIZE_MIN);
 	zassert_is_null(ptr, "bytes allocation failed from system pool");
 
 	k_sem_give(&malloc_in_thread_sem);
@@ -301,7 +301,7 @@ ZTEST(mheap_api, test_k_aligned_alloc)
  *
  * @ingroup k_heap_api_tests
  *
- * @see k_thread_system_pool_assign(), z_thread_malloc(), k_free()
+ * @see k_thread_system_pool_assign(), k_priv_thread_malloc(), k_free()
  */
 ZTEST(mheap_api, test_sys_heap_mem_pool_assign)
 {
@@ -312,11 +312,11 @@ ZTEST(mheap_api, test_sys_heap_mem_pool_assign)
 	void *ptr;
 
 	k_thread_system_pool_assign(k_current_get());
-	ptr = (char *)z_thread_malloc(BLK_SIZE_MIN/2);
+	ptr = (char *)k_priv_thread_malloc(BLK_SIZE_MIN/2);
 	zassert_not_null(ptr, "bytes allocation failed from system pool");
 	k_free(ptr);
 
-	zassert_is_null((char *)z_thread_malloc(K_HEAP_MEM_POOL_SIZE * 2),
+	zassert_is_null((char *)k_priv_thread_malloc(K_HEAP_MEM_POOL_SIZE * 2),
 						"overflow check failed");
 }
 
@@ -330,7 +330,7 @@ ZTEST(mheap_api, test_sys_heap_mem_pool_assign)
  *
  * @ingroup k_heap_api_tests
  *
- * @see z_thread_malloc(), k_free()
+ * @see k_priv_thread_malloc(), k_free()
  */
 ZTEST(mheap_api, test_malloc_in_isr)
 {
@@ -349,7 +349,7 @@ ZTEST(mheap_api, test_malloc_in_isr)
  *
  * @ingroup k_heap_api_tests
  *
- * @see z_thread_malloc()
+ * @see k_priv_thread_malloc()
  */
 ZTEST(mheap_api, test_malloc_in_thread)
 {

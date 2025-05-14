@@ -83,10 +83,10 @@ void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack,
 	if ((thread->base.user_options & K_USER) != 0) {
 		iframe->pc = (uint32_t)arch_user_mode_enter;
 	} else {
-		iframe->pc = (uint32_t)z_thread_entry;
+		iframe->pc = (uint32_t)k_priv_thread_entry;
 	}
 #else
-	iframe->pc = (uint32_t)z_thread_entry;
+	iframe->pc = (uint32_t)k_priv_thread_entry;
 #endif
 
 	iframe->a1 = (uint32_t)entry;

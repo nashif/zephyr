@@ -11,7 +11,7 @@
 
 GTEXT(z_sparc_arch_switch)
 GTEXT(z_sparc_context_switch)
-GTEXT(z_thread_entry_wrapper)
+GTEXT(k_priv_thread_entry_wrapper)
 
 /*
  * The routine z_sparc_context_switch() is called from arch_switch(), or from
@@ -148,11 +148,11 @@ SECTION_FUNC(TEXT, z_sparc_context_switch)
 	jmp	%o7 + 8
 	 nop
 
-SECTION_FUNC(TEXT, z_thread_entry_wrapper)
+SECTION_FUNC(TEXT, k_priv_thread_entry_wrapper)
 	mov	%g0, %o7
 	mov	%i0, %o0
 	mov	%i1, %o1
 	mov	%i2, %o2
 	mov	%i3, %o3
-	call	z_thread_entry
+	call	k_priv_thread_entry
 	 nop

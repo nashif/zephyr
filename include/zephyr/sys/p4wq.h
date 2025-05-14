@@ -93,7 +93,7 @@ struct k_p4wq_initparam {
 	uintptr_t stack_size;
 	struct k_p4wq *queue;
 	struct k_thread *threads;
-	struct z_thread_stack_element *stacks;
+	struct k_priv_thread_stack_element *stacks;
 	uint32_t flags;
 	k_p4wq_done_handler_t done_handler;
 };

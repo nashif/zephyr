@@ -9,7 +9,7 @@
 
 extern struct k_thread my_thread;
 #define MY_THREAD_STACK_SIZE 1024
-extern struct z_thread_stack_element my_thread_stack[];
+extern struct k_priv_thread_stack_element my_thread_stack[];
 
 extern struct k_sem my_sem;
 

@@ -344,7 +344,7 @@ void k_sys_runtime_stats_disable(void)
 #endif /* CONFIG_SCHED_THREAD_USAGE_ALL */
 
 #ifdef CONFIG_OBJ_CORE_STATS_THREAD
-int z_thread_stats_raw(struct k_obj_core *obj_core, void *stats)
+int k_priv_thread_stats_raw(struct k_obj_core *obj_core, void *stats)
 {
 	k_spinlock_key_t  key;
 
@@ -355,7 +355,7 @@ int z_thread_stats_raw(struct k_obj_core *obj_core, void *stats)
 	return 0;
 }
 
-int z_thread_stats_query(struct k_obj_core *obj_core, void *stats)
+int k_priv_thread_stats_query(struct k_obj_core *obj_core, void *stats)
 {
 	struct k_thread *thread;
 
@@ -412,7 +412,7 @@ int k_priv_thread_stats_reset(struct k_obj_core *obj_core)
 	return 0;
 }
 
-int z_thread_stats_disable(struct k_obj_core *obj_core)
+int k_priv_thread_stats_disable(struct k_obj_core *obj_core)
 {
 #ifdef CONFIG_SCHED_THREAD_USAGE_ANALYSIS
 	struct k_thread *thread;
@@ -425,7 +425,7 @@ int z_thread_stats_disable(struct k_obj_core *obj_core)
 #endif /* CONFIG_SCHED_THREAD_USAGE_ANALYSIS */
 }
 
-int z_thread_stats_enable(struct k_obj_core *obj_core)
+int k_priv_thread_stats_enable(struct k_obj_core *obj_core)
 {
 #ifdef CONFIG_SCHED_THREAD_USAGE_ANALYSIS
 	struct k_thread *thread;

@@ -54,11 +54,11 @@ static inline void z_init_thread_timeout(struct _thread_base *thread_base)
 	k_priv_init_timeout(&thread_base->timeout);
 }
 
-extern void z_thread_timeout(struct _timeout *timeout);
+extern void k_priv_thread_timeout(struct _timeout *timeout);
 
 static inline k_ticks_t z_add_thread_timeout(struct k_thread *thread, k_timeout_t ticks)
 {
-	return k_priv_add_timeout(&thread->base.timeout, z_thread_timeout, ticks);
+	return k_priv_add_timeout(&thread->base.timeout, k_priv_thread_timeout, ticks);
 }
 
 static inline void k_priv_abort_thread_timeout(struct k_thread *thread)

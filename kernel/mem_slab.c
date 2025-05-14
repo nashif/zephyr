@@ -284,7 +284,7 @@ void k_mem_slab_free(struct k_mem_slab *slab, void *mem)
 		if (unlikely(pending_thread != NULL)) {
 			SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_mem_slab, free, slab);
 
-			z_thread_return_value_set_with_data(pending_thread, 0, mem);
+			k_priv_thread_return_value_set_with_data(pending_thread, 0, mem);
 			z_ready_thread(pending_thread);
 			k_priv_reschedule(&slab->lock, key);
 			return;
