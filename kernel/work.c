@@ -229,7 +229,7 @@ static inline bool notify_queue_locked(struct k_work_q *queue)
 	bool rv = false;
 
 	if (queue != NULL) {
-		rv = z_sched_wake(&queue->notifyq, 0, NULL);
+		rv = k_priv_sched_wake(&queue->notifyq, 0, NULL);
 	}
 
 	return rv;

@@ -578,7 +578,7 @@ void k_priv_unpend_thread_no_timeout(struct k_thread *thread)
 	}
 }
 
-void z_sched_wake_thread(struct k_thread *thread, bool is_timeout)
+void k_priv_sched_wake_thread(struct k_thread *thread, bool is_timeout)
 {
 	K_SPINLOCK(&_sched_spinlock) {
 		bool killed = (thread->base.thread_state &
@@ -613,7 +613,7 @@ void z_thread_timeout(struct _timeout *timeout)
 	struct k_thread *thread = CONTAINER_OF(timeout,
 					       struct k_thread, base.timeout);
 
-	z_sched_wake_thread(thread, true);
+	k_priv_sched_wake_thread(thread, true);
 }
 #endif /* CONFIG_SYS_CLOCK_EXISTS */
 
@@ -1445,7 +1445,7 @@ static inline void z_vrfy_k_thread_abort(k_tid_t thread)
 /*
  * future scheduler.h API implementations
  */
-bool z_sched_wake(_wait_q_t *wait_q, int swap_retval, void *swap_data)
+bool k_priv_sched_wake(_wait_q_t *wait_q, int swap_retval, void *swap_data)
 {
 	struct k_thread *thread;
 	bool ret = false;

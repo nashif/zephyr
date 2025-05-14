@@ -223,7 +223,7 @@ static ALWAYS_INLINE struct k_thread *z_unpend_first_thread(_wait_q_t *wait_q)
  * @retval true If a thread was woken up
  * @retval false If the wait_q was empty
  */
-bool z_sched_wake(_wait_q_t *wait_q, int swap_retval, void *swap_data);
+bool k_priv_sched_wake(_wait_q_t *wait_q, int swap_retval, void *swap_data);
 
 /**
  * Wakes the specified thread.
@@ -235,12 +235,12 @@ bool z_sched_wake(_wait_q_t *wait_q, int swap_retval, void *swap_data);
  * @param is_timeout True if called from the timer ISR; false otherwise.
  *
  */
-void z_sched_wake_thread(struct k_thread *thread, bool is_timeout);
+void k_priv_sched_wake_thread(struct k_thread *thread, bool is_timeout);
 
 /**
  * Wake up all threads pending on the provided wait queue
  *
- * Convenience function to invoke z_sched_wake() on all threads in the queue
+ * Convenience function to invoke k_priv_sched_wake() on all threads in the queue
  * until there are no more to wake up.
  *
  * @param wait_q Wait queue to wake up the highest prio thread
@@ -254,7 +254,7 @@ static inline bool k_priv_sched_wake_all(_wait_q_t *wait_q, int swap_retval,
 {
 	bool woken = false;
 
-	while (z_sched_wake(wait_q, swap_retval, swap_data)) {
+	while (k_priv_sched_wake(wait_q, swap_retval, swap_data)) {
 		woken = true;
 	}
 
@@ -270,7 +270,7 @@ static inline bool k_priv_sched_wake_all(_wait_q_t *wait_q, int swap_retval,
  * completely done and we have swapped out.
  *
  * The return value and data pointer is set by whoever woke us up via
- * z_sched_wake.
+ * k_priv_sched_wake.
  *
  * @param lock Address of spinlock to release when we swap out
  * @param key Key to the provided spinlock when it was locked

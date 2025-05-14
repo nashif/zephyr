@@ -168,7 +168,7 @@ static uint32_t k_event_post_internal(struct k_event *event, uint32_t events,
 			arch_thread_return_value_set(thread, 0);
 			thread->events = events;
 			next = thread->next_event_link;
-			z_sched_wake_thread(thread, false);
+			k_priv_sched_wake_thread(thread, false);
 			thread = next;
 		} while (thread != NULL);
 	}
