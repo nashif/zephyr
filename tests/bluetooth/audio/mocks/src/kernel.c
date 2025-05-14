@@ -19,13 +19,13 @@
 
 /* List of fakes used by this unit tester */
 #define FFF_FAKES_LIST(FAKE)                                                                       \
-	FAKE(z_timeout_remaining)                                                                  \
+	FAKE(k_priv_timeout_remaining)                                                                  \
 	FAKE(k_work_cancel_delayable_sync)                                                         \
 
 /* List of k_work items to be worked. */
 static sys_slist_t work_pending;
 
-DEFINE_FAKE_VALUE_FUNC(k_ticks_t, z_timeout_remaining, const struct _timeout *);
+DEFINE_FAKE_VALUE_FUNC(k_ticks_t, k_priv_timeout_remaining, const struct _timeout *);
 DEFINE_FAKE_VALUE_FUNC(bool, k_work_cancel_delayable_sync, struct k_work_delayable *,
 		       struct k_work_sync *);
 DEFINE_FAKE_VALUE_FUNC(int, k_sem_take, struct k_sem *, k_timeout_t);

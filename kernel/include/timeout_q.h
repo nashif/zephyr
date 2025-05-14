@@ -74,7 +74,7 @@ static inline bool z_is_aborted_thread_timeout(struct k_thread *thread)
 
 int32_t z_get_next_timeout_expiry(void);
 
-k_ticks_t z_timeout_remaining(const struct _timeout *timeout);
+k_ticks_t k_priv_timeout_remaining(const struct _timeout *timeout);
 
 #else
 

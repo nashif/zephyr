@@ -1562,7 +1562,7 @@ release:
 * :github:`13378` - Missing Documentation for Networking subsystem
 * :github:`13361` - nucleo_f103rb blinky example cannot run
 * :github:`13357` - Tracing hooks problem on POSIX
-* :github:`13353` - z_timeout_remaining should subtract z_clock_elapsed
+* :github:`13353` - k_priv_timeout_remaining should subtract z_clock_elapsed
 * :github:`13342` - arm: user thread stack overflows do not report _NANO_ERR_STACK_CHK_FAIL
 * :github:`13341` - arc: user thread stack overflows do not report _NANO_ERR_STACK_CHK_FAIL
 * :github:`13340` - NRF52 pca10040 boards open the "Flash hardware support" option, the BT Mesh example does not work properly

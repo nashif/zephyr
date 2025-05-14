@@ -1408,7 +1408,7 @@ release:
 * :github:`13783` - tests/kernel/mem_protect/stackprot failure in frdm_k64f due to limited privilege stack size
 * :github:`13569` - ZTEST: Add optional float/double comparison support
 * :github:`13468` - tests/drivers/watchdog/wdt_basic_api/testcase.yaml: Various version of "Waiting to restart MCU"
-* :github:`13353` - z_timeout_remaining should subtract z_clock_elapsed
+* :github:`13353` - k_priv_timeout_remaining should subtract z_clock_elapsed
 * :github:`12872` - Update uart api tests with configure/configure_get apis
 * :github:`12775` - USB audio isochronous endpoints
 * :github:`12553` - List of tests that keep failing sporadically

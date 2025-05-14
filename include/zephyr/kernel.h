@@ -708,7 +708,7 @@ static inline k_tid_t k_current_get(void)
 __syscall void k_thread_abort(k_tid_t thread);
 
 k_ticks_t z_timeout_expires(const struct _timeout *timeout);
-k_ticks_t z_timeout_remaining(const struct _timeout *timeout);
+k_ticks_t k_priv_timeout_remaining(const struct _timeout *timeout);
 
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 
@@ -739,7 +739,7 @@ __syscall k_ticks_t k_thread_timeout_remaining_ticks(const struct k_thread *thre
 static inline k_ticks_t z_impl_k_thread_timeout_remaining_ticks(
 						const struct k_thread *thread)
 {
-	return z_timeout_remaining(&thread->base.timeout);
+	return k_priv_timeout_remaining(&thread->base.timeout);
 }
 
 #endif /* CONFIG_SYS_CLOCK_EXISTS */
@@ -1791,7 +1791,7 @@ __syscall k_ticks_t k_timer_remaining_ticks(const struct k_timer *timer);
 static inline k_ticks_t z_impl_k_timer_remaining_ticks(
 				       const struct k_timer *timer)
 {
-	return z_timeout_remaining(&timer->timeout);
+	return k_priv_timeout_remaining(&timer->timeout);
 }
 
 /**
@@ -4249,7 +4249,7 @@ static inline k_ticks_t k_work_delayable_expires_get(
 static inline k_ticks_t k_work_delayable_remaining_get(
 	const struct k_work_delayable *dwork)
 {
-	return z_timeout_remaining(&dwork->timeout);
+	return k_priv_timeout_remaining(&dwork->timeout);
 }
 
 static inline k_tid_t k_work_queue_thread_get(struct k_work_q *queue)
