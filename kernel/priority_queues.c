@@ -17,7 +17,7 @@ bool z_priq_rb_lessthan(struct rbnode *a, struct rbnode *b)
 	thread_a = CONTAINER_OF(a, struct k_thread, base.qnode_rb);
 	thread_b = CONTAINER_OF(b, struct k_thread, base.qnode_rb);
 
-	cmp = z_sched_prio_cmp(thread_a, thread_b);
+	cmp = k_priv_sched_prio_cmp(thread_a, thread_b);
 
 	if (cmp > 0) {
 		return true;

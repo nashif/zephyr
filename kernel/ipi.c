@@ -56,7 +56,7 @@ atomic_val_t ipi_mask_create(struct k_thread *thread)
 
 		cpu_thread = _kernel.cpus[i].current;
 		if ((cpu_thread != NULL) &&
-		    (((z_sched_prio_cmp(cpu_thread, thread) < 0) &&
+		    (((k_priv_sched_prio_cmp(cpu_thread, thread) < 0) &&
 		      (thread_is_preemptible(cpu_thread))) ||
 		     thread_is_metairq(thread)) && executable_on_cpu) {
 			ipi_mask |= BIT(i);
@@ -91,7 +91,7 @@ void signal_pending_ipi(void)
 #endif /* CONFIG_SCHED_IPI_SUPPORTED */
 }
 
-void z_sched_ipi(void)
+void k_priv_sched_ipi(void)
 {
 	/* NOTE: When adding code to this, make sure this is called
 	 * at appropriate location when !CONFIG_SCHED_IPI_SUPPORTED.

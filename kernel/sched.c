@@ -224,7 +224,7 @@ static ALWAYS_INLINE struct k_thread *next_up(void)
 	}
 
 	if (active) {
-		int32_t cmp = z_sched_prio_cmp(_current, thread);
+		int32_t cmp = k_priv_sched_prio_cmp(_current, thread);
 
 		/* Ties only switch if state says we yielded */
 		if ((cmp > 0) || ((cmp == 0) && !_current_cpu->swap_ok)) {
@@ -771,7 +771,7 @@ void k_sched_lock(void)
 	K_SPINLOCK(&_sched_spinlock) {
 		SYS_PORT_TRACING_FUNC(k_thread, sched_lock);
 
-		z_sched_lock();
+		k_priv_sched_lock();
 	}
 }
 
@@ -865,13 +865,13 @@ void *z_get_next_switch_handle(void *interrupted)
 		}
 		new_thread = next_up();
 
-		z_sched_usage_switch(new_thread);
+		k_priv_sched_usage_switch(new_thread);
 
 		if (old_thread != new_thread) {
 			uint8_t  cpu_id;
 
 			update_metairq_preempt(new_thread);
-			z_sched_switch_spin(new_thread);
+			k_priv_sched_switch_spin(new_thread);
 			arch_cohere_stacks(old_thread, interrupted, new_thread);
 
 			_current_cpu->swap_ok = 0;
@@ -918,7 +918,7 @@ void *z_get_next_switch_handle(void *interrupted)
 	signal_pending_ipi();
 	return ret;
 #else
-	z_sched_usage_switch(_kernel.ready_q.cache);
+	k_priv_sched_usage_switch(_kernel.ready_q.cache);
 	_current->switch_handle = interrupted;
 	set_current(_kernel.ready_q.cache);
 	return _current->switch_handle;
@@ -945,7 +945,7 @@ void init_ready_q(struct _ready_q *ready_q)
 	_priq_run_init(&ready_q->runq);
 }
 
-void z_sched_init(void)
+void k_priv_sched_init(void)
 {
 #ifdef CONFIG_SCHED_CPU_MASK_PIN_ONLY
 	for (int i = 0; i < CONFIG_MP_MAX_NUM_CPUS; i++) {
@@ -1364,7 +1364,7 @@ int z_impl_k_thread_join(struct k_thread *thread, k_timeout_t timeout)
 	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_thread, join, thread, timeout);
 
 	if ((thread->base.thread_state & _THREAD_DEAD) != 0U) {
-		z_sched_switch_spin(thread);
+		k_priv_sched_switch_spin(thread);
 		ret = 0;
 	} else if (K_TIMEOUT_EQ(timeout, K_NO_WAIT)) {
 		ret = -EBUSY;

@@ -153,7 +153,7 @@ void idc_isr(const void *param)
 
 #ifdef CONFIG_SMP
 	/* Right now this interrupt is only used for IPIs */
-	z_sched_ipi();
+	k_priv_sched_ipi();
 #endif
 
 	/* ACK the interrupt to all the possible sources.  This is a

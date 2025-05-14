@@ -134,7 +134,7 @@ static void sched_ipi_handler(const void *unused)
 	ARG_UNUSED(unused);
 
 	z_arc_connect_ici_clear();
-	z_sched_ipi();
+	k_priv_sched_ipi();
 }
 
 void arch_sched_directed_ipi(uint32_t cpu_bitmap)

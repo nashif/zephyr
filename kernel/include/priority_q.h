@@ -70,7 +70,7 @@ static ALWAYS_INLINE void z_priq_simple_init(sys_dlist_t *pq)
  * Do not rely on the actual value returned aside from the above.
  * (Again, like memcmp.)
  */
-static ALWAYS_INLINE int32_t z_sched_prio_cmp(struct k_thread *thread_1, struct k_thread *thread_2)
+static ALWAYS_INLINE int32_t k_priv_sched_prio_cmp(struct k_thread *thread_1, struct k_thread *thread_2)
 {
 	/* `prio` is <32b, so the below cannot overflow. */
 	int32_t b1 = thread_1->base.prio;
@@ -108,7 +108,7 @@ static ALWAYS_INLINE void z_priq_simple_add(sys_dlist_t *pq, struct k_thread *th
 	struct k_thread *t;
 
 	SYS_DLIST_FOR_EACH_CONTAINER(pq, t, base.qnode_dlist) {
-		if (z_sched_prio_cmp(thread, t) > 0) {
+		if (k_priv_sched_prio_cmp(thread, t) > 0) {
 			sys_dlist_insert(&t->base.qnode_dlist, &thread->base.qnode_dlist);
 			return;
 		}
@@ -143,7 +143,7 @@ static ALWAYS_INLINE void z_priq_simple_yield(sys_dlist_t *pq)
 
 	while (n != NULL) {
 		t = CONTAINER_OF(n, struct k_thread, base.qnode_dlist);
-		if (z_sched_prio_cmp(_current, t) > 0) {
+		if (k_priv_sched_prio_cmp(_current, t) > 0) {
 			sys_dlist_insert(&t->base.qnode_dlist,
 					 &_current->base.qnode_dlist);
 			return;

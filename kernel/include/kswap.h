@@ -50,7 +50,7 @@ void z_smp_release_global_lock(struct k_thread *thread);
  * switched-to thread, which is going to (obviously) be running its
  * own code and doesn't know it was switched out.
  */
-static inline void z_sched_switch_spin(struct k_thread *thread)
+static inline void k_priv_sched_switch_spin(struct k_thread *thread)
 {
 #ifdef CONFIG_SMP
 	volatile void **shp = (void *)&thread->switch_handle;
@@ -121,7 +121,7 @@ static ALWAYS_INLINE unsigned int do_swap(unsigned int key,
 	new_thread = z_swap_next_thread();
 
 	if (new_thread != old_thread) {
-		z_sched_usage_switch(new_thread);
+		k_priv_sched_usage_switch(new_thread);
 
 #ifdef CONFIG_SMP
 		new_thread->base.cpu = arch_curr_cpu()->id;
@@ -131,7 +131,7 @@ static ALWAYS_INLINE unsigned int do_swap(unsigned int key,
 		}
 #endif /* CONFIG_SMP */
 		z_thread_mark_switched_out();
-		z_sched_switch_spin(new_thread);
+		k_priv_sched_switch_spin(new_thread);
 		z_current_thread_set(new_thread);
 
 #ifdef CONFIG_TIMESLICING
@@ -147,7 +147,7 @@ static ALWAYS_INLINE unsigned int do_swap(unsigned int key,
 #ifdef CONFIG_SMP
 		/* Now add _current back to the run queue, once we are
 		 * guaranteed to reach the context switch in finite
-		 * time.  See z_sched_switch_spin().
+		 * time.  See k_priv_sched_switch_spin().
 		 */
 		z_requeue_current(old_thread);
 #endif /* CONFIG_SMP */
@@ -195,7 +195,7 @@ static inline void z_swap_unlocked(void)
 
 extern int arch_swap(unsigned int key);
 
-static inline void z_sched_switch_spin(struct k_thread *thread)
+static inline void k_priv_sched_switch_spin(struct k_thread *thread)
 {
 	ARG_UNUSED(thread);
 }

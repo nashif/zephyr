@@ -694,7 +694,7 @@ void z_trace_sched_ipi(void)
  * Test Objective:
  * - To verify architecture layer provides a mechanism to issue an interprocessor
  *   interrupt to all other CPUs in the system that calls the scheduler IPI.
- *   We simply add a hook in z_sched_ipi(), in order to check if it has been
+ *   We simply add a hook in k_priv_sched_ipi(), in order to check if it has been
  *   called once in another CPU except the caller, when arch_sched_broadcast_ipi()
  *   is called.
  *
@@ -712,7 +712,7 @@ void z_trace_sched_ipi(void)
  * Test Procedure:
  * -# In main thread, given a global variable sched_ipi_has_called equaled zero.
  * -# Call arch_sched_broadcast_ipi() then sleep for 100ms.
- * -# In z_sched_ipi() handler, increment the sched_ipi_has_called.
+ * -# In k_priv_sched_ipi() handler, increment the sched_ipi_has_called.
  * -# In main thread, check the sched_ipi_has_called is not equaled to zero.
  * -# Repeat step 1 to 4 for 3 times.
  *

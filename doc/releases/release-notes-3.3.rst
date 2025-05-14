@@ -373,7 +373,7 @@ Architectures
   * Secondary boot code is no longer included when
     :kconfig:option:`CONFIG_MP_MAX_NUM_CPUS` equals ``1``.
 
-  * IPIs are no longer hardcoded to :c:func:`z_sched_ipi`.
+  * IPIs are no longer hardcoded to :c:func:`k_priv_sched_ipi`.
 
   * Implemented an on-demand context switching algorithm for thread FPU
     accesses.

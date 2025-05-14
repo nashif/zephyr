@@ -63,8 +63,8 @@ static void ipc_isr(void *arg)
 	IDC[cpu_id].agents[0].ipc.tda = 0;
 
 #ifdef CONFIG_SMP
-	void z_sched_ipi(void);
-	z_sched_ipi();
+	void k_priv_sched_ipi(void);
+	k_priv_sched_ipi();
 #endif
 }
 

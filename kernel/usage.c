@@ -71,7 +71,7 @@ static void sched_thread_update_usage(struct k_thread *thread, uint32_t cycles)
 #endif /* CONFIG_SCHED_THREAD_USAGE_ANALYSIS */
 }
 
-void z_sched_usage_start(struct k_thread *thread)
+void k_priv_sched_usage_start(struct k_thread *thread)
 {
 #ifdef CONFIG_SCHED_THREAD_USAGE_ANALYSIS
 	k_spinlock_key_t  key;
@@ -96,7 +96,7 @@ void z_sched_usage_start(struct k_thread *thread)
 #endif /* CONFIG_SCHED_THREAD_USAGE_ANALYSIS */
 }
 
-void z_sched_usage_stop(void)
+void k_priv_sched_usage_stop(void)
 {
 	k_spinlock_key_t k   = k_spin_lock(&usage_lock);
 
@@ -119,7 +119,7 @@ void z_sched_usage_stop(void)
 }
 
 #ifdef CONFIG_SCHED_THREAD_USAGE_ALL
-void z_sched_cpu_usage(uint8_t cpu_id, struct k_thread_runtime_stats *stats)
+void k_priv_sched_cpu_usage(uint8_t cpu_id, struct k_thread_runtime_stats *stats)
 {
 	k_spinlock_key_t  key;
 	struct _cpu *cpu;
@@ -170,7 +170,7 @@ void z_sched_cpu_usage(uint8_t cpu_id, struct k_thread_runtime_stats *stats)
 }
 #endif /* CONFIG_SCHED_THREAD_USAGE_ALL */
 
-void z_sched_thread_usage(struct k_thread *thread,
+void k_priv_sched_thread_usage(struct k_thread *thread,
 			  struct k_thread_runtime_stats *stats)
 {
 	struct _cpu *cpu;
@@ -361,7 +361,7 @@ int z_thread_stats_query(struct k_obj_core *obj_core, void *stats)
 
 	thread = CONTAINER_OF(obj_core, struct k_thread, obj_core);
 
-	z_sched_thread_usage(thread, stats);
+	k_priv_sched_thread_usage(thread, stats);
 
 	return 0;
 }
@@ -457,7 +457,7 @@ int k_priv_cpu_stats_query(struct k_obj_core *obj_core, void *stats)
 
 	cpu = CONTAINER_OF(obj_core, struct _cpu, obj_core);
 
-	z_sched_cpu_usage(cpu->id, stats);
+	k_priv_sched_cpu_usage(cpu->id, stats);
 
 	return 0;
 }

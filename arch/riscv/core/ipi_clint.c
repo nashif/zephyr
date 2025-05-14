@@ -53,7 +53,7 @@ static void sched_ipi_handler(const void *unused)
 	atomic_val_t pending_ipi = atomic_clear(&cpu_pending_ipi[_current_cpu->id]);
 
 	if (pending_ipi & ATOMIC_MASK(IPI_SCHED)) {
-		z_sched_ipi();
+		k_priv_sched_ipi();
 	}
 #ifdef CONFIG_FPU_SHARING
 	if (pending_ipi & ATOMIC_MASK(IPI_FPU_FLUSH)) {

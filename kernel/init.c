@@ -677,7 +677,7 @@ static char *prepare_multithreading(void)
 	char *stack_ptr;
 
 	/* _kernel.ready_q is all zeroes */
-	z_sched_init();
+	k_priv_sched_init();
 
 #ifndef CONFIG_SMP
 	/*

@@ -804,7 +804,7 @@ irq_enter_unnested: /* Not nested: dump state to thread struct for __resume */
 irq_dispatch:
 #ifdef CONFIG_SCHED_THREAD_USAGE
 	pushq %rcx
-	call z_sched_usage_stop
+	call k_priv_sched_usage_stop
 	popq %rcx
 #endif
 	movq x86_irq_funcs(,%rcx,8), %rax

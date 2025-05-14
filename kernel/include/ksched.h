@@ -48,7 +48,7 @@ extern struct k_spinlock _sched_spinlock;
 
 extern struct k_thread _thread_dummy;
 
-void z_sched_init(void);
+void k_priv_sched_init(void);
 void z_move_thread_to_end_of_prio_q(struct k_thread *thread);
 void k_priv_unpend_thread_no_timeout(struct k_thread *thread);
 struct k_thread *z_unpend1_no_timeout(_wait_q_t *wait_q);
@@ -65,8 +65,8 @@ void *z_get_next_switch_handle(void *interrupted);
 
 void z_time_slice(void);
 void k_priv_reset_time_slice(struct k_thread *curr);
-void z_sched_ipi(void);
-void z_sched_start(struct k_thread *thread);
+void k_priv_sched_ipi(void);
+void k_priv_sched_start(struct k_thread *thread);
 void z_ready_thread(struct k_thread *thread);
 void z_requeue_current(struct k_thread *curr);
 struct k_thread *z_swap_next_thread(void);
@@ -138,7 +138,7 @@ static inline bool _is_valid_prio(int prio, k_thread_entry_t entry_point)
 	return true;
 }
 
-static inline void z_sched_lock(void)
+static inline void k_priv_sched_lock(void)
 {
 	__ASSERT(!arch_is_in_isr(), "");
 	__ASSERT(_current->base.sched_locked != 1U, "");
@@ -323,27 +323,27 @@ int k_priv_sched_waitq_walk(_wait_q_t *wait_q,
  * requires no other synchronization.  Architecture layers don't need
  * to do anything more.
  */
-void z_sched_usage_stop(void);
+void k_priv_sched_usage_stop(void);
 
-void z_sched_usage_start(struct k_thread *thread);
+void k_priv_sched_usage_start(struct k_thread *thread);
 
 /**
  * @brief Retrieves CPU cycle usage data for specified core
  */
-void z_sched_cpu_usage(uint8_t core_id, struct k_thread_runtime_stats *stats);
+void k_priv_sched_cpu_usage(uint8_t core_id, struct k_thread_runtime_stats *stats);
 
 /**
  * @brief Retrieves thread cycle usage data for specified thread
  */
-void z_sched_thread_usage(struct k_thread *thread,
+void k_priv_sched_thread_usage(struct k_thread *thread,
 			  struct k_thread_runtime_stats *stats);
 
-static inline void z_sched_usage_switch(struct k_thread *thread)
+static inline void k_priv_sched_usage_switch(struct k_thread *thread)
 {
 	ARG_UNUSED(thread);
 #ifdef CONFIG_SCHED_THREAD_USAGE
-	z_sched_usage_stop();
-	z_sched_usage_start(thread);
+	k_priv_sched_usage_stop();
+	k_priv_sched_usage_start(thread);
 #endif /* CONFIG_SCHED_THREAD_USAGE */
 }
 

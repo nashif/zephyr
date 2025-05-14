@@ -19,12 +19,12 @@ extern const void *x86_irq_args[NR_IRQ_VECTORS];
 int arch_smp_init(void)
 {
 	/*
-	 * z_sched_ipi() doesn't have the same signature as a typical ISR, so
+	 * k_priv_sched_ipi() doesn't have the same signature as a typical ISR, so
 	 * we fudge it with a cast. the argument is ignored, no harm done.
 	 */
 
 	x86_irq_funcs[CONFIG_SCHED_IPI_VECTOR - IV_IRQS] =
-		(void *) z_sched_ipi;
+		(void *) k_priv_sched_ipi;
 
 	/* TLB shootdown handling */
 	x86_irq_funcs[CONFIG_TLB_IPI_VECTOR - IV_IRQS] = z_x86_tlb_ipi;

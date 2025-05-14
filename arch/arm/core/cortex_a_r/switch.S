@@ -50,7 +50,7 @@ SECTION_FUNC(TEXT, z_arm_context_switch)
 	strb r3, [r2, #_cpu_offset_to_exc_depth]
 
 	/* save old thread into switch handle which is required by
-	 * z_sched_switch_spin().
+	 * k_priv_sched_switch_spin().
 	 *
 	 * Note that this step must be done after all relevant state is
 	 * saved.

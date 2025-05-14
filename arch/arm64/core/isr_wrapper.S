@@ -50,7 +50,7 @@ SECTION_FUNC(TEXT, _isr_wrapper)
 #endif
 1:
 #ifdef CONFIG_SCHED_THREAD_USAGE
-	bl	z_sched_usage_stop
+	bl	k_priv_sched_usage_stop
 #endif
 
 #ifdef CONFIG_TRACING

@@ -917,7 +917,7 @@ static inline k_ticks_t z_vrfy_k_thread_timeout_expires_ticks(
 void z_thread_mark_switched_in(void)
 {
 #if defined(CONFIG_SCHED_THREAD_USAGE) && !defined(CONFIG_USE_SWITCH)
-	z_sched_usage_start(_current);
+	k_priv_sched_usage_start(_current);
 #endif /* CONFIG_SCHED_THREAD_USAGE && !CONFIG_USE_SWITCH */
 
 #ifdef CONFIG_TRACING
@@ -928,7 +928,7 @@ void z_thread_mark_switched_in(void)
 void z_thread_mark_switched_out(void)
 {
 #if defined(CONFIG_SCHED_THREAD_USAGE) && !defined(CONFIG_USE_SWITCH)
-	z_sched_usage_stop();
+	k_priv_sched_usage_stop();
 #endif /*CONFIG_SCHED_THREAD_USAGE && !CONFIG_USE_SWITCH */
 
 #ifdef CONFIG_TRACING
@@ -952,7 +952,7 @@ int k_thread_runtime_stats_get(k_tid_t thread,
 	}
 
 #ifdef CONFIG_SCHED_THREAD_USAGE
-	z_sched_thread_usage(thread, stats);
+	k_priv_sched_thread_usage(thread, stats);
 #else
 	*stats = (k_thread_runtime_stats_t) {};
 #endif /* CONFIG_SCHED_THREAD_USAGE */
@@ -978,7 +978,7 @@ int k_thread_runtime_stats_all_get(k_thread_runtime_stats_t *stats)
 	unsigned int num_cpus = arch_num_cpus();
 
 	for (uint8_t i = 0; i < num_cpus; i++) {
-		z_sched_cpu_usage(i, &tmp_stats);
+		k_priv_sched_cpu_usage(i, &tmp_stats);
 
 		stats->execution_cycles += tmp_stats.execution_cycles;
 		stats->total_cycles     += tmp_stats.total_cycles;
@@ -1004,11 +1004,11 @@ int k_thread_runtime_stats_cpu_get(int cpu, k_thread_runtime_stats_t *stats)
 
 #ifdef CONFIG_SCHED_THREAD_USAGE_ALL
 #ifdef CONFIG_SMP
-	z_sched_cpu_usage(cpu, stats);
+	k_priv_sched_cpu_usage(cpu, stats);
 #else
 	__ASSERT(cpu == 0, "cpu filter out of bounds");
 	ARG_UNUSED(cpu);
-	z_sched_cpu_usage(0, stats);
+	k_priv_sched_cpu_usage(0, stats);
 #endif
 #endif
 

@@ -265,7 +265,7 @@ static void print_fatal_exception(void *print_stack, int cause,
 static ALWAYS_INLINE void usage_stop(void)
 {
 #ifdef CONFIG_SCHED_THREAD_USAGE
-	z_sched_usage_stop();
+	k_priv_sched_usage_stop();
 #endif
 }
 

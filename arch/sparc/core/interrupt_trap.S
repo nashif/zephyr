@@ -146,7 +146,7 @@ __sparc_trap_interrupt:
 	nop
 
 #ifdef CONFIG_SCHED_THREAD_USAGE
-	call	z_sched_usage_stop
+	call	k_priv_sched_usage_stop
 	nop
 #endif
 

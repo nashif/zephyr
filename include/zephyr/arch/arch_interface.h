@@ -499,14 +499,14 @@ static inline uint32_t arch_proc_id(void);
 /**
  * Broadcast an interrupt to all CPUs
  *
- * This will invoke z_sched_ipi() on all other CPUs in the system.
+ * This will invoke k_priv_sched_ipi() on all other CPUs in the system.
  */
 void arch_sched_broadcast_ipi(void);
 
 /**
  * Direct IPIs to the specified CPUs
  *
- * This will invoke z_sched_ipi() on the CPUs identified by @a cpu_bitmap.
+ * This will invoke k_priv_sched_ipi() on the CPUs identified by @a cpu_bitmap.
  *
  * @param cpu_bitmap A bitmap indicating which CPUs need the IPI
  */

@@ -50,7 +50,7 @@ config SCHED_IPI_SUPPORTED
 	bool
 	help
 	  True if the architecture supports a call to arch_sched_broadcast_ipi()
-	  to broadcast an interrupt that will call z_sched_ipi() on other CPUs
+	  to broadcast an interrupt that will call k_priv_sched_ipi() on other CPUs
 	  in the system.  Required for k_thread_abort() to operate with
 	  reasonable latency (otherwise we might have to wait for the other
 	  thread to take an interrupt, which can be arbitrarily far in the
@@ -71,7 +71,7 @@ config SCHED_IPI_CASCADE
 config TRACE_SCHED_IPI
 	bool "Test IPI"
 	help
-	  When true, it will add a hook into z_sched_ipi(), in order
+	  When true, it will add a hook into k_priv_sched_ipi(), in order
 	  to check if schedule IPI has called or not, for testing
 	  purpose.
 	depends on SCHED_IPI_SUPPORTED

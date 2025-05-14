@@ -216,7 +216,7 @@ void sched_ipi_handler(const void *unused)
 {
 	ARG_UNUSED(unused);
 
-	z_sched_ipi();
+	k_priv_sched_ipi();
 }
 
 void arch_sched_broadcast_ipi(void)

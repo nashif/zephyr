@@ -219,7 +219,7 @@ IRAM_ATTR static void esp_crosscore_isr(void *arg)
 	ARG_UNUSED(arg);
 
 	/* Right now this interrupt is only used for IPIs */
-	z_sched_ipi();
+	k_priv_sched_ipi();
 
 	const int core_id = esp_core_id();
 
