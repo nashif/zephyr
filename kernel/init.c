@@ -785,7 +785,7 @@ FUNC_NORETURN void z_cstart(void)
 	z_dummy_thread_init(&_thread_dummy);
 #endif /* CONFIG_MULTITHREADING */
 	/* do any necessary initialization of static devices */
-	z_device_state_init();
+	k_priv_device_state_init();
 
 #if CONFIG_SOC_EARLY_INIT_HOOK
 	soc_early_init_hook();

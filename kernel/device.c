@@ -20,7 +20,7 @@
  * The state object is always zero-initialized, but this may not be
  * sufficient.
  */
-void z_device_state_init(void)
+void k_priv_device_state_init(void)
 {
 	STRUCT_SECTION_FOREACH(device, dev) {
 		k_object_init(dev);
