@@ -220,7 +220,7 @@ k_ticks_t k_priv_timeout_expires(const struct _timeout *timeout)
 	return ticks;
 }
 
-int32_t z_get_next_timeout_expiry(void)
+int32_t k_priv_get_next_timeout_expiry(void)
 {
 	int32_t ret = (int32_t) K_TICKS_FOREVER;
 

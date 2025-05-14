@@ -51,7 +51,7 @@ void idle(void *unused1, void *unused2, void *unused3)
 		(void) arch_irq_lock();
 
 #ifdef CONFIG_PM
-		_kernel.idle = z_get_next_timeout_expiry();
+		_kernel.idle = k_priv_get_next_timeout_expiry();
 
 		/*
 		 * Call the suspend hook function of the soc interface
