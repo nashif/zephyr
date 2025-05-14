@@ -279,7 +279,7 @@ static int signal_poller(struct k_poll_event *event, uint32_t state)
 		return 0;
 	}
 
-	z_ready_thread(thread);
+	k_priv_ready_thread(thread);
 
 	return 0;
 }

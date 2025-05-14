@@ -354,7 +354,7 @@ static void ready_thread(struct k_thread *thread)
 	}
 }
 
-void z_ready_thread(struct k_thread *thread)
+void k_priv_ready_thread(struct k_thread *thread)
 {
 	K_SPINLOCK(&_sched_spinlock) {
 		if (thread_active_elsewhere(thread) == NULL) {
@@ -933,7 +933,7 @@ int k_priv_unpend_all(_wait_q_t *wait_q)
 
 	for (thread = k_priv_waitq_head(wait_q); thread != NULL; thread = k_priv_waitq_head(wait_q)) {
 		k_priv_unpend_thread(thread);
-		z_ready_thread(thread);
+		k_priv_ready_thread(thread);
 		need_sched = 1;
 	}
 

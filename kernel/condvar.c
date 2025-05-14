@@ -53,7 +53,7 @@ int z_impl_k_condvar_signal(struct k_condvar *condvar)
 		SYS_PORT_TRACING_OBJ_FUNC_BLOCKING(k_condvar, signal, condvar, K_FOREVER);
 
 		arch_thread_return_value_set(thread, 0);
-		z_ready_thread(thread);
+		k_priv_ready_thread(thread);
 		k_priv_reschedule(&lock, key);
 	} else {
 		k_spin_unlock(&lock, key);
@@ -88,7 +88,7 @@ int z_impl_k_condvar_broadcast(struct k_condvar *condvar)
 		 pending_thread = k_priv_unpend_first_thread(&condvar->wait_q)) {
 		woken++;
 		arch_thread_return_value_set(pending_thread, 0);
-		z_ready_thread(pending_thread);
+		k_priv_ready_thread(pending_thread);
 	}
 
 	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_condvar, broadcast, condvar, woken);

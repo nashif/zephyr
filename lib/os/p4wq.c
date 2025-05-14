@@ -292,7 +292,7 @@ void k_p4wq_submit(struct k_p4wq *queue, struct k_p4wq_work *item)
 	}
 
 	set_prio(th, item);
-	z_ready_thread(th);
+	k_priv_ready_thread(th);
 	k_priv_reschedule(&queue->lock, k);
 
 	return;

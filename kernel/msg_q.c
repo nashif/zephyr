@@ -148,7 +148,7 @@ int z_impl_k_msgq_put(struct k_msgq *msgq, const void *data, k_timeout_t timeout
 			(void)memcpy(pending_thread->base.swap_data, data, msgq->msg_size);
 			/* wake up waiting thread */
 			arch_thread_return_value_set(pending_thread, 0);
-			z_ready_thread(pending_thread);
+			k_priv_ready_thread(pending_thread);
 		} else {
 			/* put message in queue */
 			__ASSERT_NO_MSG(msgq->write_ptr >= msgq->buffer_start &&
@@ -257,7 +257,7 @@ int z_impl_k_msgq_get(struct k_msgq *msgq, void *data, k_timeout_t timeout)
 
 			/* wake up waiting thread */
 			arch_thread_return_value_set(pending_thread, 0);
-			z_ready_thread(pending_thread);
+			k_priv_ready_thread(pending_thread);
 			resched = true;
 		}
 		result = 0;
@@ -393,7 +393,7 @@ void z_impl_k_msgq_purge(struct k_msgq *msgq)
 	     pending_thread != NULL;
 	     pending_thread = k_priv_unpend_first_thread(&msgq->wait_q)) {
 		arch_thread_return_value_set(pending_thread, -ENOMSG);
-		z_ready_thread(pending_thread);
+		k_priv_ready_thread(pending_thread);
 		resched = true;
 	}
 

@@ -112,7 +112,7 @@ static void test_decreasing_priority(unsigned int num_threads)
 
 	for (i = 0; i < num_threads; i++) {
 		start = timing_counter_get();
-		z_ready_thread(&test_thread[i]);
+		k_priv_ready_thread(&test_thread[i]);
 		finish = timing_counter_get();
 		add_cycles[i] += timing_cycles_get(&start, &finish);
 	}
@@ -133,7 +133,7 @@ static void test_increasing_priority(unsigned int num_threads)
 
 	for (i = num_threads; i > 0; i--) {
 		start = timing_counter_get();
-		z_ready_thread(&test_thread[i - 1]);
+		k_priv_ready_thread(&test_thread[i - 1]);
 		finish = timing_counter_get();
 		add_cycles[num_threads - i] += timing_cycles_get(&start, &finish);
 	}

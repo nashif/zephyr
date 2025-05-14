@@ -106,7 +106,7 @@ void z_timer_expiration_handler(struct _timeout *t)
 
 	k_spin_unlock(&lock, key);
 
-	z_ready_thread(thread);
+	k_priv_ready_thread(thread);
 }
 
 
@@ -214,7 +214,7 @@ void z_impl_k_timer_stop(struct k_timer *timer)
 		struct k_thread *pending_thread = z_unpend1_no_timeout(&timer->wait_q);
 
 		if (pending_thread != NULL) {
-			z_ready_thread(pending_thread);
+			k_priv_ready_thread(pending_thread);
 			k_priv_reschedule_unlocked();
 		}
 	}

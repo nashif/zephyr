@@ -67,7 +67,7 @@ void z_time_slice(void);
 void k_priv_reset_time_slice(struct k_thread *curr);
 void k_priv_sched_ipi(void);
 void k_priv_sched_start(struct k_thread *thread);
-void z_ready_thread(struct k_thread *thread);
+void k_priv_ready_thread(struct k_thread *thread);
 void z_requeue_current(struct k_thread *curr);
 struct k_thread *k_priv_swap_next_thread(void);
 void k_priv_thread_abort(struct k_thread *thread);

@@ -81,7 +81,7 @@ static inline void z_vrfy_k_queue_init(struct k_queue *queue)
 static void prepare_thread_to_run(struct k_thread *thread, void *data)
 {
 	k_priv_thread_return_value_set_with_data(thread, 0, data);
-	z_ready_thread(thread);
+	k_priv_ready_thread(thread);
 }
 
 static inline bool handle_poll_events(struct k_queue *queue, uint32_t state)

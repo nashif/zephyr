@@ -104,7 +104,7 @@ void z_impl_k_sem_give(struct k_sem *sem)
 
 	if (unlikely(thread != NULL)) {
 		arch_thread_return_value_set(thread, 0);
-		z_ready_thread(thread);
+		k_priv_ready_thread(thread);
 		resched = true;
 	} else {
 		sem->count += (sem->count != sem->limit) ? 1U : 0U;
@@ -176,7 +176,7 @@ void z_impl_k_sem_reset(struct k_sem *sem)
 		}
 		resched = true;
 		arch_thread_return_value_set(thread, -EAGAIN);
-		z_ready_thread(thread);
+		k_priv_ready_thread(thread);
 	}
 	sem->count = 0;
 

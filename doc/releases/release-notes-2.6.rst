@@ -1857,7 +1857,7 @@ release:
 * :github:`32817` - Supporting fedora in the getting started docs
 * :github:`32816` - ehl_crb: tests/kernel/timer/timer_api/timer_api/test_sleep_abs (kernel.timer.tickless) failed.
 * :github:`32809` - Fail to build ARC zephyr with MetaWare toolchain
-* :github:`32800` - Race conditions with setting thread attributes after ``z_ready_thread``?
+* :github:`32800` - Race conditions with setting thread attributes after ``k_priv_ready_thread``?
 * :github:`32798` - west flash fails for reel board
 * :github:`32778` - Cannot support both HID boot report keyboard and mouse on a USB HID device
 * :github:`32774` - Sensor BMI160: set of undersampling mode is not working

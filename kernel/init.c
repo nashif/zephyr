@@ -698,7 +698,7 @@ static char *prepare_multithreading(void)
 				       CONFIG_MAIN_THREAD_PRIORITY,
 				       K_ESSENTIAL, "main");
 	k_priv_mark_thread_as_not_sleeping(&z_main_thread);
-	z_ready_thread(&z_main_thread);
+	k_priv_ready_thread(&z_main_thread);
 
 	z_init_cpu(0);
 

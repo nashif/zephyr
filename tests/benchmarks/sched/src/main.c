@@ -17,7 +17,7 @@
  * state:
  *
  * 1. The main thread calls k_priv_unpend_first_thread()
- * 2. The main thread calls z_ready_thread()
+ * 2. The main thread calls k_priv_ready_thread()
  * 3. The main thread calls k_yield()
  *    (the kernel switches to the partner thread)
  * 4. The partner thread then runs and calls z_pend_curr() again
@@ -141,10 +141,10 @@ int main(void)
 		k_priv_unpend_first_thread(&waitq);
 		arch_irq_unlock(key);
 		stamp(UNPENDED_READYING);
-		z_ready_thread(th);
+		k_priv_ready_thread(th);
 		stamp(READIED_YIELDING);
 
-		/* z_ready_thread() does not reschedule, so this is
+		/* k_priv_ready_thread() does not reschedule, so this is
 		 * guaranteed to be the point where we will yield to
 		 * the new thread, which (being higher priority) will
 		 * run immediately, and we'll wake up synchronously as
