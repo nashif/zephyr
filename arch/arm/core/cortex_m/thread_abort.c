@@ -50,7 +50,7 @@ void z_impl_k_thread_abort(k_tid_t thread)
 		}
 	}
 
-	z_thread_abort(thread);
+	k_priv_thread_abort(thread);
 
 	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_thread, abort, thread);
 }

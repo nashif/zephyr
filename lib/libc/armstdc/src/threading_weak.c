@@ -59,7 +59,7 @@ int32_t __weak z_impl_k_usleep(int us)
 	return 0;
 }
 
-void __weak z_thread_abort(struct k_thread *thread)
+void __weak k_priv_thread_abort(struct k_thread *thread)
 {
 }
 

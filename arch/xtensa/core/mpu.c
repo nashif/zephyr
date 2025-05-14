@@ -978,7 +978,7 @@ int arch_mem_domain_thread_remove(struct k_thread *thread)
 	if ((thread->base.thread_state & _THREAD_DEAD) == 0) {
 		/* Thread is migrating to another memory domain and not
 		 * exiting for good; we weren't called from
-		 * z_thread_abort().  Resetting the stack region will
+		 * k_priv_thread_abort().  Resetting the stack region will
 		 * take place in the forthcoming thread_add() call.
 		 */
 		ret = 0;

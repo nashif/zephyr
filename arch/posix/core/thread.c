@@ -144,7 +144,7 @@ void z_impl_k_thread_abort(k_tid_t thread)
 		posix_abort_thread(thread_idx);
 	}
 
-	z_thread_abort(thread);
+	k_priv_thread_abort(thread);
 
 	if (tstatus->aborted == 0) {
 		PC_DEBUG("%s aborting now [%i] %i\n",

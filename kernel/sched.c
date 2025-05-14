@@ -1325,7 +1325,7 @@ static ALWAYS_INLINE void halt_thread(struct k_thread *thread, uint8_t new_state
 	}
 }
 
-void z_thread_abort(struct k_thread *thread)
+void k_priv_thread_abort(struct k_thread *thread)
 {
 	bool essential = z_is_thread_essential(thread);
 	k_spinlock_key_t key = k_spin_lock(&_sched_spinlock);
@@ -1348,7 +1348,7 @@ void z_impl_k_thread_abort(k_tid_t thread)
 {
 	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_thread, abort, thread);
 
-	z_thread_abort(thread);
+	k_priv_thread_abort(thread);
 
 	__ASSERT_NO_MSG((thread->base.thread_state & _THREAD_DEAD) != 0);
 
