@@ -206,7 +206,7 @@ k_ticks_t k_priv_timeout_remaining(const struct _timeout *timeout)
 	return ticks;
 }
 
-k_ticks_t z_timeout_expires(const struct _timeout *timeout)
+k_ticks_t k_priv_timeout_expires(const struct _timeout *timeout)
 {
 	k_ticks_t ticks = 0;
 
