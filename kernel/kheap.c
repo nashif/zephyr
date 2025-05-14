@@ -65,7 +65,7 @@ SYS_INIT_NAMED(statics_init_post, statics_init, POST_KERNEL, 0);
 
 typedef void * (sys_heap_allocator_t)(struct sys_heap *heap, size_t align, size_t bytes);
 
-static void *z_heap_alloc_helper(struct k_heap *heap, size_t align, size_t bytes,
+static void *_heap_alloc_helper(struct k_heap *heap, size_t align, size_t bytes,
 				 k_timeout_t timeout,
 				 sys_heap_allocator_t *sys_heap_allocator)
 {
@@ -109,7 +109,7 @@ void *k_heap_alloc(struct k_heap *heap, size_t bytes, k_timeout_t timeout)
 {
 	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_heap, alloc, heap, timeout);
 
-	void *ret = z_heap_alloc_helper(heap, 0, bytes, timeout,
+	void *ret = _heap_alloc_helper(heap, 0, bytes, timeout,
 					sys_heap_noalign_alloc);
 
 	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_heap, alloc, heap, timeout, ret);
@@ -122,7 +122,7 @@ void *k_heap_aligned_alloc(struct k_heap *heap, size_t align, size_t bytes,
 {
 	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_heap, aligned_alloc, heap, timeout);
 
-	void *ret = z_heap_alloc_helper(heap, align, bytes, timeout,
+	void *ret = _heap_alloc_helper(heap, align, bytes, timeout,
 					sys_heap_aligned_alloc);
 
 	/*
