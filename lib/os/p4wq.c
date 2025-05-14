@@ -18,7 +18,7 @@ struct device;
 
 static void set_prio(struct k_thread *th, struct k_p4wq_work *item)
 {
-	__ASSERT_NO_MSG(!IS_ENABLED(CONFIG_SMP) || !z_is_thread_queued(th));
+	__ASSERT_NO_MSG(!IS_ENABLED(CONFIG_SMP) || !k_priv_is_thread_queued(th));
 	th->base.prio = item->priority;
 	th->base.prio_deadline = item->deadline;
 }

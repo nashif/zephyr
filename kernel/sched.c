@@ -136,7 +136,7 @@ static ALWAYS_INLINE void dequeue_thread(struct k_thread *thread)
  */
 void z_requeue_current(struct k_thread *thread)
 {
-	if (z_is_thread_queued(thread)) {
+	if (k_priv_is_thread_queued(thread)) {
 		runq_add(thread);
 	}
 	signal_pending_ipi();
@@ -216,7 +216,7 @@ static ALWAYS_INLINE struct k_thread *next_up(void)
 	 * "ready", it means "is _current already added back to the
 	 * queue such that we don't want to re-add it".
 	 */
-	bool queued = z_is_thread_queued(_current);
+	bool queued = k_priv_is_thread_queued(_current);
 	bool active = !k_priv_is_thread_prevented_from_running(_current);
 
 	if (thread == NULL) {
@@ -243,7 +243,7 @@ static ALWAYS_INLINE struct k_thread *next_up(void)
 	}
 
 	/* Take the new _current out of the queue */
-	if (z_is_thread_queued(thread)) {
+	if (k_priv_is_thread_queued(thread)) {
 		dequeue_thread(thread);
 	}
 
@@ -254,7 +254,7 @@ static ALWAYS_INLINE struct k_thread *next_up(void)
 
 void move_thread_to_end_of_prio_q(struct k_thread *thread)
 {
-	if (z_is_thread_queued(thread)) {
+	if (k_priv_is_thread_queued(thread)) {
 		dequeue_thread(thread);
 	}
 	queue_thread(thread);
@@ -344,7 +344,7 @@ static void ready_thread(struct k_thread *thread)
 	/* If thread is queued already, do not try and added it to the
 	 * run queue again
 	 */
-	if (!z_is_thread_queued(thread) && z_is_thread_ready(thread)) {
+	if (!k_priv_is_thread_queued(thread) && z_is_thread_ready(thread)) {
 		SYS_PORT_TRACING_OBJ_FUNC(k_thread, sched_ready, thread);
 
 		queue_thread(thread);
@@ -523,7 +523,7 @@ static inline void z_vrfy_k_thread_resume(k_tid_t thread)
 
 static void unready_thread(struct k_thread *thread)
 {
-	if (z_is_thread_queued(thread)) {
+	if (k_priv_is_thread_queued(thread)) {
 		dequeue_thread(thread);
 	}
 	update_cache(thread == _current);
@@ -672,7 +672,7 @@ bool z_thread_prio_set(struct k_thread *thread, int prio)
 		need_sched = z_is_thread_ready(thread);
 
 		if (need_sched) {
-			if (!IS_ENABLED(CONFIG_SMP) || z_is_thread_queued(thread)) {
+			if (!IS_ENABLED(CONFIG_SMP) || k_priv_is_thread_queued(thread)) {
 				dequeue_thread(thread);
 				thread->base.prio = prio;
 				queue_thread(thread);
@@ -898,7 +898,7 @@ void *z_get_next_switch_handle(void *interrupted)
 			 * being set below.  This is safe now, as we
 			 * will not return into it.
 			 */
-			if (z_is_thread_queued(old_thread)) {
+			if (k_priv_is_thread_queued(old_thread)) {
 #ifdef CONFIG_SCHED_IPI_CASCADE
 				if ((new_thread->base.cpu_mask != -1) &&
 				    (old_thread->base.cpu_mask != BIT(cpu_id))) {
@@ -1004,7 +1004,7 @@ void z_impl_k_thread_deadline_set(k_tid_t tid, int deadline)
 	 * sorting!)
 	 */
 	K_SPINLOCK(&_sched_spinlock) {
-		if (z_is_thread_queued(thread)) {
+		if (k_priv_is_thread_queued(thread)) {
 			dequeue_thread(thread);
 			thread->base.prio_deadline = newdl;
 			queue_thread(thread);
@@ -1240,7 +1240,7 @@ static ALWAYS_INLINE void halt_thread(struct k_thread *thread, uint8_t new_state
 	 */
 	if ((thread->base.thread_state & new_state) == 0U) {
 		thread->base.thread_state |= new_state;
-		if (z_is_thread_queued(thread)) {
+		if (k_priv_is_thread_queued(thread)) {
 			dequeue_thread(thread);
 		}
 

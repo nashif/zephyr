@@ -116,7 +116,7 @@ static inline bool z_is_thread_state_set(struct k_thread *thread, uint32_t state
 	return (thread->base.thread_state & state) != 0U;
 }
 
-static inline bool z_is_thread_queued(struct k_thread *thread)
+static inline bool k_priv_is_thread_queued(struct k_thread *thread)
 {
 	return z_is_thread_state_set(thread, _THREAD_QUEUED);
 }
