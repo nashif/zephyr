@@ -546,7 +546,7 @@ static void bg_thread_main(void *unused1, void *unused2, void *unused3)
 #endif
 
 #if defined(CONFIG_STACK_POINTER_RANDOM) && (CONFIG_STACK_POINTER_RANDOM != 0)
-	z_stack_adjust_initialized = 1;
+	k_priv_stack_adjust_initialized = 1;
 #endif /* CONFIG_STACK_POINTER_RANDOM */
 	boot_banner();
 

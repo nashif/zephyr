@@ -485,7 +485,7 @@ void z_riscv_pmp_stackguard_prepare(struct k_thread *thread)
 #ifdef CONFIG_USERSPACE
 	if (thread->arch.priv_stack_start != 0) {
 		stack_bottom = thread->arch.priv_stack_start;
-	} else if (z_stack_is_user_capable(thread->stack_obj)) {
+	} else if (k_priv_stack_is_user_capable(thread->stack_obj)) {
 		stack_bottom = thread->stack_info.start - K_THREAD_STACK_RESERVED;
 	}
 #endif

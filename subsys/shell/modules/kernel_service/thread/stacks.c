@@ -74,7 +74,7 @@ static int cmd_kernel_thread_stacks(const struct shell *sh, size_t argc, char **
 		size_t unused;
 		const uint8_t *buf = K_KERNEL_STACK_BUFFER(z_interrupt_stacks[i]);
 		size_t size = K_KERNEL_STACK_SIZEOF(z_interrupt_stacks[i]);
-		int err = z_stack_space_get(buf, size, &unused);
+		int err = k_priv_stack_space_get(buf, size, &unused);
 
 		(void)err;
 		__ASSERT_NO_MSG(err == 0);

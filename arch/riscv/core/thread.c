@@ -213,7 +213,7 @@ int arch_thread_priv_stack_space_get(const struct k_thread *thread, size_t *stac
 
 	*stack_size = Z_STACK_PTR_ALIGN(K_KERNEL_STACK_RESERVED + CONFIG_PRIVILEGED_STACK_SIZE);
 
-	return z_stack_space_get((void *)thread->arch.priv_stack_start, *stack_size, unused_ptr);
+	return k_priv_stack_space_get((void *)thread->arch.priv_stack_start, *stack_size, unused_ptr);
 }
 
 #endif /* CONFIG_USERSPACE */

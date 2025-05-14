@@ -164,7 +164,7 @@ static bool bad_stack_pointer(struct arch_esf *esf)
 		return true;
 	}
 
-	if (z_stack_is_user_capable(_current->stack_obj) &&
+	if (k_priv_stack_is_user_capable(_current->stack_obj) &&
 	    sp >= _current->stack_info.start - K_THREAD_STACK_RESERVED &&
 	    sp <  _current->stack_info.start - K_THREAD_STACK_RESERVED
 		  + Z_RISCV_STACK_GUARD_SIZE) {

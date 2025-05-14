@@ -57,7 +57,7 @@ void arch_new_thread(struct k_thread *thread, k_thread_stack_t *stack,
 
 #ifdef CONFIG_MPU_STACK_GUARD
 #if defined(CONFIG_USERSPACE)
-	if (z_stack_is_user_capable(stack)) {
+	if (k_priv_stack_is_user_capable(stack)) {
 		/* Guard area is carved-out of the buffer instead of reserved
 		 * for stacks that can host user threads
 		 */

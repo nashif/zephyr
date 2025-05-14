@@ -66,11 +66,11 @@ struct __packed k_priv_thread_stack_element {
  * @param ptr Proposed stack pointer address
  * @return Properly aligned stack pointer address
  */
-static inline char *z_stack_ptr_align(char *ptr)
+static inline char *k_priv_stack_ptr_align(char *ptr)
 {
 	return (char *)ROUND_DOWN(ptr, ARCH_STACK_PTR_ALIGN);
 }
-#define Z_STACK_PTR_ALIGN(ptr) ((uintptr_t)z_stack_ptr_align((char *)(ptr)))
+#define Z_STACK_PTR_ALIGN(ptr) ((uintptr_t)k_priv_stack_ptr_align((char *)(ptr)))
 
 /**
  * @brief Helper macro for getting a stack frame struct

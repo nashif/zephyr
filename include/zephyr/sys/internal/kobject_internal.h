@@ -19,7 +19,7 @@ extern "C" {
 #if defined(CONFIG_USERSPACE) || defined(__DOXYGEN__)
 #if defined(CONFIG_GEN_PRIV_STACKS) || defined(__DOXYGEN__)
 /* Metadata struct for K_OBJ_THREAD_STACK_ELEMENT */
-struct z_stack_data {
+struct k_priv_stack_data {
 	/* Size of the entire stack object, including reserved areas */
 	size_t size;
 
@@ -38,7 +38,7 @@ union k_object_data {
 
 #if defined(CONFIG_GEN_PRIV_STACKS) || defined(__DOXYGEN__)
 	/* Metadata for K_OBJ_THREAD_STACK_ELEMENT */
-	const struct z_stack_data *stack_data;
+	const struct k_priv_stack_data *stack_data;
 #else
 	/* Stack buffer size for K_OBJ_THREAD_STACK_ELEMENT */
 	size_t stack_size;

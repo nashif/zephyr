@@ -196,7 +196,7 @@ int arch_thread_priv_stack_space_get(const struct k_thread *thread, size_t *stac
 
 	hdr_stack_obj = (struct xtensa_thread_stack_header *)thread->stack_obj;
 
-	return z_stack_space_get(&hdr_stack_obj->privilege_stack[0],
+	return k_priv_stack_space_get(&hdr_stack_obj->privilege_stack[0],
 				 sizeof(hdr_stack_obj->privilege_stack),
 				 unused_ptr);
 }

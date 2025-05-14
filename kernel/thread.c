@@ -348,13 +348,13 @@ void z_check_stack_sentinel(void)
 #endif /* CONFIG_STACK_SENTINEL */
 
 #if defined(CONFIG_STACK_POINTER_RANDOM) && (CONFIG_STACK_POINTER_RANDOM != 0)
-int z_stack_adjust_initialized;
+int k_priv_stack_adjust_initialized;
 
 static size_t random_offset(size_t stack_size)
 {
 	size_t random_val;
 
-	if (!z_stack_adjust_initialized) {
+	if (!k_priv_stack_adjust_initialized) {
 		z_early_rand_get((uint8_t *)&random_val, sizeof(random_val));
 	} else {
 		sys_rand_get((uint8_t *)&random_val, sizeof(random_val));
@@ -388,7 +388,7 @@ static char *setup_thread_stack(struct k_thread *new_thread,
 	size_t delta = 0;
 
 #ifdef CONFIG_USERSPACE
-	if (z_stack_is_user_capable(stack)) {
+	if (k_priv_stack_is_user_capable(stack)) {
 		stack_obj_size = K_THREAD_STACK_LEN(stack_size);
 		stack_buf_start = K_THREAD_STACK_BUFFER(stack);
 		stack_buf_size = stack_obj_size - K_THREAD_STACK_RESERVED;
@@ -428,7 +428,7 @@ static char *setup_thread_stack(struct k_thread *new_thread,
 	__ASSERT_NO_MSG((uintptr_t)stack_mapped != 0);
 
 #ifdef CONFIG_USERSPACE
-	if (z_stack_is_user_capable(stack)) {
+	if (k_priv_stack_is_user_capable(stack)) {
 		stack_buf_start = K_THREAD_STACK_BUFFER(stack_mapped);
 	} else
 #endif /* CONFIG_USERSPACE */
@@ -530,7 +530,7 @@ char *z_setup_new_thread(struct k_thread *new_thread,
 #endif /* CONFIG_OBJ_CORE_THREAD */
 
 #ifdef CONFIG_USERSPACE
-	__ASSERT((options & K_USER) == 0U || z_stack_is_user_capable(stack),
+	__ASSERT((options & K_USER) == 0U || k_priv_stack_is_user_capable(stack),
 		 "user thread %p with kernel-only stack %p",
 		 new_thread, stack);
 	k_object_init(new_thread);
@@ -668,7 +668,7 @@ k_tid_t z_impl_k_thread_create(struct k_thread *new_thread,
 }
 
 #ifdef CONFIG_USERSPACE
-bool z_stack_is_user_capable(k_thread_stack_t *stack)
+bool k_priv_stack_is_user_capable(k_thread_stack_t *stack)
 {
 	return k_object_find(stack) != NULL;
 }
@@ -685,7 +685,7 @@ k_tid_t z_vrfy_k_thread_create(struct k_thread *new_thread,
 	/* The thread and stack objects *must* be in an uninitialized state */
 	K_OOPS(K_SYSCALL_OBJ_NEVER_INIT(new_thread, K_OBJ_THREAD));
 
-	/* No need to check z_stack_is_user_capable(), it won't be in the
+	/* No need to check k_priv_stack_is_user_capable(), it won't be in the
 	 * object table if it isn't
 	 */
 	stack_object = k_object_find(stack);
@@ -780,7 +780,7 @@ FUNC_NORETURN void k_thread_user_mode_enter(k_thread_entry_t entry,
 	_current->entry.parameter3 = p3;
 #endif /* CONFIG_THREAD_MONITOR */
 #ifdef CONFIG_USERSPACE
-	__ASSERT(z_stack_is_user_capable(_current->stack_obj),
+	__ASSERT(k_priv_stack_is_user_capable(_current->stack_obj),
 		 "dropping to user mode with kernel-only stack object");
 #ifdef CONFIG_THREAD_USERSPACE_LOCAL_DATA
 	memset(_current->userspace_local_data, 0,
@@ -803,7 +803,7 @@ FUNC_NORETURN void k_thread_user_mode_enter(k_thread_entry_t entry,
 #error "Unsupported configuration for stack analysis"
 #endif /* CONFIG_STACK_GROWS_UP */
 
-int z_stack_space_get(const uint8_t *stack_start, size_t size, size_t *unused_ptr)
+int k_priv_stack_space_get(const uint8_t *stack_start, size_t size, size_t *unused_ptr)
 {
 	size_t unused = 0;
 	const uint8_t *checked_stack = stack_start;
@@ -863,7 +863,7 @@ int z_impl_k_thread_stack_space_get(const struct k_thread *thread,
 	}
 #endif /* CONFIG_THREAD_STACK_MEM_MAPPED */
 
-	return z_stack_space_get((const uint8_t *)thread->stack_info.start,
+	return k_priv_stack_space_get((const uint8_t *)thread->stack_info.start,
 				 thread->stack_info.size, unused_ptr);
 }
 
@@ -1052,7 +1052,7 @@ void defer_thread_cleanup(struct k_thread *thread)
 
 	/* The stack is now considered un-usable. This should prevent any functions
 	 * from looking directly into the mapped stack if they are made to be aware
-	 * of memory mapped stacks, e.g., z_stack_space_get().
+	 * of memory mapped stacks, e.g., k_priv_stack_space_get().
 	 */
 	thread->stack_info.mapped.addr = NULL;
 	thread->stack_info.mapped.sz = 0;

@@ -72,7 +72,7 @@ void *z_x86_userspace_prepare_thread(struct k_thread *thread)
 {
 	void *initial_entry;
 
-	if (z_stack_is_user_capable(thread->stack_obj)) {
+	if (k_priv_stack_is_user_capable(thread->stack_obj)) {
 		struct z_x86_thread_stack_header *header =
 #ifdef CONFIG_THREAD_STACK_MEM_MAPPED
 			(struct z_x86_thread_stack_header *)thread->stack_info.mapped.addr;
@@ -197,7 +197,7 @@ int arch_thread_priv_stack_space_get(const struct k_thread *thread, size_t *stac
 
 	hdr_stack_obj = (struct z_x86_thread_stack_header *)thread->stack_obj;
 
-	return z_stack_space_get(&hdr_stack_obj->privilege_stack[0],
+	return k_priv_stack_space_get(&hdr_stack_obj->privilege_stack[0],
 				 sizeof(hdr_stack_obj->privilege_stack),
 				 unused_ptr);
 }

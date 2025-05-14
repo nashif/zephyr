@@ -59,10 +59,10 @@ static struct k_spinlock objfree_lock;     /* k_object_free */
  */
 #if defined(CONFIG_ARM_MPU) || defined(CONFIG_ARC_MPU) || defined(CONFIG_RISCV_PMP)
 #define STACK_ELEMENT_DATA_SIZE(size) \
-	(sizeof(struct z_stack_data) + CONFIG_PRIVILEGED_STACK_SIZE + \
+	(sizeof(struct k_priv_stack_data) + CONFIG_PRIVILEGED_STACK_SIZE + \
 	Z_THREAD_STACK_OBJ_ALIGN(size) + K_THREAD_STACK_LEN(size))
 #else
-#define STACK_ELEMENT_DATA_SIZE(size) (sizeof(struct z_stack_data) + \
+#define STACK_ELEMENT_DATA_SIZE(size) (sizeof(struct k_priv_stack_data) + \
 	K_THREAD_STACK_LEN(size))
 #endif /* CONFIG_ARM_MPU || CONFIG_ARC_MPU || CONFIG_RISCV_PMP */
 #else
@@ -345,7 +345,7 @@ static struct k_object *dynamic_object_create(enum k_objects otype, size_t align
 		}
 
 #ifdef CONFIG_GEN_PRIV_STACKS
-		struct z_stack_data *stack_data = (struct z_stack_data *)
+		struct k_priv_stack_data *stack_data = (struct k_priv_stack_data *)
 			((uint8_t *)dyn->data + adjusted_size - sizeof(*stack_data));
 		stack_data->priv = (uint8_t *)dyn->data;
 		stack_data->size = adjusted_size;

@@ -9,7 +9,7 @@
  */
 
 #include <zephyr/kernel.h>
-/* For z_stack_space_get() */
+/* For k_priv_stack_space_get() */
 #include <kernel_internal.h>
 #include <zephyr/debug/thread_analyzer.h>
 #include <zephyr/debug/stack.h>
@@ -182,7 +182,7 @@ static void isr_stack(int core)
 	size_t unused;
 	int err;
 
-	err = z_stack_space_get(buf, size, &unused);
+	err = k_priv_stack_space_get(buf, size, &unused);
 	if (err == 0) {
 		THREAD_ANALYZER_PRINT(
 			THREAD_ANALYZER_FMT(

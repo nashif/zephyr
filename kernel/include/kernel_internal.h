@@ -138,7 +138,7 @@ extern void smp_timer_init(void);
 extern void z_early_rand_get(uint8_t *buf, size_t length);
 
 #if defined(CONFIG_STACK_POINTER_RANDOM) && (CONFIG_STACK_POINTER_RANDOM != 0)
-extern int z_stack_adjust_initialized;
+extern int k_priv_stack_adjust_initialized;
 #endif /* CONFIG_STACK_POINTER_RANDOM */
 
 extern struct k_thread z_main_thread;
@@ -156,10 +156,10 @@ extern uint8_t *z_priv_stack_find(k_thread_stack_t *stack);
 #endif /* CONFIG_GEN_PRIV_STACKS */
 
 /* Calculate stack usage. */
-int z_stack_space_get(const uint8_t *stack_start, size_t size, size_t *unused_ptr);
+int k_priv_stack_space_get(const uint8_t *stack_start, size_t size, size_t *unused_ptr);
 
 #ifdef CONFIG_USERSPACE
-bool z_stack_is_user_capable(k_thread_stack_t *stack);
+bool k_priv_stack_is_user_capable(k_thread_stack_t *stack);
 
 /* Memory domain setup hook, called from z_setup_new_thread() */
 void k_priv_mem_domain_init_thread(struct k_thread *thread);
