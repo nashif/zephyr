@@ -103,7 +103,7 @@ static inline bool z_is_thread_prevented_from_running(struct k_thread *thread)
 
 static inline bool z_is_thread_timeout_active(struct k_thread *thread)
 {
-	return !z_is_inactive_timeout(&thread->base.timeout);
+	return !k_priv_is_inactive_timeout(&thread->base.timeout);
 }
 
 static inline bool z_is_thread_ready(struct k_thread *thread)

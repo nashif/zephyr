@@ -198,7 +198,7 @@ k_ticks_t k_priv_timeout_remaining(const struct _timeout *timeout)
 	k_ticks_t ticks = 0;
 
 	K_SPINLOCK(&timeout_lock) {
-		if (!z_is_inactive_timeout(timeout)) {
+		if (!k_priv_is_inactive_timeout(timeout)) {
 			ticks = timeout_rem(timeout) - elapsed();
 		}
 	}
@@ -212,7 +212,7 @@ k_ticks_t k_priv_timeout_expires(const struct _timeout *timeout)
 
 	K_SPINLOCK(&timeout_lock) {
 		ticks = curr_tick;
-		if (!z_is_inactive_timeout(timeout)) {
+		if (!k_priv_is_inactive_timeout(timeout)) {
 			ticks += timeout_rem(timeout);
 		}
 	}

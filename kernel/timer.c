@@ -260,7 +260,7 @@ uint32_t z_impl_k_timer_status_sync(struct k_timer *timer)
 		do {
 			k_spinlock_key_t key = k_spin_lock(&lock);
 
-			if (!z_is_inactive_timeout(&timer->timeout)) {
+			if (!k_priv_is_inactive_timeout(&timer->timeout)) {
 				result = *(volatile uint32_t *)&timer->status;
 				timer->status = 0U;
 				k_spin_unlock(&lock, key);
@@ -281,7 +281,7 @@ uint32_t z_impl_k_timer_status_sync(struct k_timer *timer)
 	uint32_t result = timer->status;
 
 	if (result == 0U) {
-		if (!z_is_inactive_timeout(&timer->timeout)) {
+		if (!k_priv_is_inactive_timeout(&timer->timeout)) {
 			SYS_PORT_TRACING_OBJ_FUNC_BLOCKING(k_timer, status_sync, timer, K_FOREVER);
 
 			/* wait for timer to expire or stop */
