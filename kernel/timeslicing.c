@@ -41,7 +41,7 @@ bool thread_is_sliceable(struct k_thread *thread)
 	bool ret = thread_is_preemptible(thread)
 		&& slice_time(thread) != 0
 		&& !k_priv_is_prio_higher(thread->base.prio, slice_max_prio)
-		&& !z_is_thread_prevented_from_running(thread)
+		&& !k_priv_is_thread_prevented_from_running(thread)
 		&& !z_is_idle_thread_object(thread);
 
 #ifdef CONFIG_TIMESLICE_PER_THREAD
@@ -122,7 +122,7 @@ void z_time_slice(void)
 			key = k_spin_lock(&_sched_spinlock);
 		}
 #endif
-		if (!z_is_thread_prevented_from_running(curr)) {
+		if (!k_priv_is_thread_prevented_from_running(curr)) {
 			move_thread_to_end_of_prio_q(curr);
 		}
 		k_priv_reset_time_slice(curr);

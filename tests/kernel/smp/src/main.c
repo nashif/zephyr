@@ -512,7 +512,7 @@ static void wakeup_on_start_thread(int tnum)
 	for (i = 0; i < tnum; i++) {
 		while (thread_started[i] == 0) {
 		}
-		while (!z_is_thread_prevented_from_running(tinfo[i].tid)) {
+		while (!k_priv_is_thread_prevented_from_running(tinfo[i].tid)) {
 		}
 	}
 

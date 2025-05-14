@@ -185,7 +185,7 @@ static ALWAYS_INLINE struct k_thread *next_up(void)
 	struct k_thread *mirqp = _current_cpu->metairq_preempted;
 
 	if (mirqp != NULL && (thread == NULL || !thread_is_metairq(thread))) {
-		if (!z_is_thread_prevented_from_running(mirqp)) {
+		if (!k_priv_is_thread_prevented_from_running(mirqp)) {
 			thread = mirqp;
 		} else {
 			_current_cpu->metairq_preempted = NULL;
@@ -217,7 +217,7 @@ static ALWAYS_INLINE struct k_thread *next_up(void)
 	 * queue such that we don't want to re-add it".
 	 */
 	bool queued = z_is_thread_queued(_current);
-	bool active = !z_is_thread_prevented_from_running(_current);
+	bool active = !k_priv_is_thread_prevented_from_running(_current);
 
 	if (thread == NULL) {
 		thread = _current_cpu->idle_thread;

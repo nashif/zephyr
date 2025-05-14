@@ -93,7 +93,7 @@ static inline bool z_is_thread_pending(struct k_thread *thread)
 	return (thread->base.thread_state & _THREAD_PENDING) != 0U;
 }
 
-static inline bool z_is_thread_prevented_from_running(struct k_thread *thread)
+static inline bool k_priv_is_thread_prevented_from_running(struct k_thread *thread)
 {
 	uint8_t state = thread->base.thread_state;
 
@@ -108,7 +108,7 @@ static inline bool z_is_thread_timeout_active(struct k_thread *thread)
 
 static inline bool z_is_thread_ready(struct k_thread *thread)
 {
-	return !z_is_thread_prevented_from_running(thread);
+	return !k_priv_is_thread_prevented_from_running(thread);
 }
 
 static inline bool z_is_thread_state_set(struct k_thread *thread, uint32_t state)
@@ -213,7 +213,7 @@ static ALWAYS_INLINE bool should_preempt(struct k_thread *thread,
 	__ASSERT(_current != NULL, "");
 
 	/* Or if we're pended/suspended/dummy (duh) */
-	if (z_is_thread_prevented_from_running(_current)) {
+	if (k_priv_is_thread_prevented_from_running(_current)) {
 		return true;
 	}
 

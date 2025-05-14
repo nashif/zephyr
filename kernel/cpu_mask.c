@@ -21,12 +21,12 @@ static int cpu_mask_mod(k_tid_t thread, uint32_t enable_mask, uint32_t disable_m
 	int ret = 0;
 
 #ifdef CONFIG_SCHED_CPU_MASK_PIN_ONLY
-	__ASSERT(z_is_thread_prevented_from_running(thread),
+	__ASSERT(k_priv_is_thread_prevented_from_running(thread),
 		 "Running threads cannot change CPU pin");
 #endif /* CONFIG_SCHED_CPU_MASK_PIN_ONLY */
 
 	K_SPINLOCK(&_sched_spinlock) {
-		if (z_is_thread_prevented_from_running(thread)) {
+		if (k_priv_is_thread_prevented_from_running(thread)) {
 			thread->base.cpu_mask |= enable_mask;
 			thread->base.cpu_mask  &= ~disable_mask;
 		} else {
