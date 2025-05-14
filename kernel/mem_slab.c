@@ -136,7 +136,7 @@ static int init_mem_slab_obj_core_list(void)
 	/* Initialize mem_slab object type */
 
 #ifdef CONFIG_OBJ_CORE_MEM_SLAB
-	z_obj_type_init(&obj_type_mem_slab, K_OBJ_TYPE_MEM_SLAB_ID,
+	k_priv_obj_type_init(&obj_type_mem_slab, K_OBJ_TYPE_MEM_SLAB_ID,
 			offsetof(struct k_mem_slab, obj_core));
 #ifdef CONFIG_OBJ_CORE_STATS_MEM_SLAB
 	k_obj_type_stats_init(&obj_type_mem_slab, &mem_slab_stats_desc);

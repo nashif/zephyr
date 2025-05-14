@@ -458,7 +458,7 @@ static int init_fifo_obj_core_list(void)
 {
 	/* Initialize fifo object type */
 
-	z_obj_type_init(&_obj_type_fifo, K_OBJ_TYPE_FIFO_ID,
+	k_priv_obj_type_init(&_obj_type_fifo, K_OBJ_TYPE_FIFO_ID,
 			offsetof(struct k_fifo, obj_core));
 
 	/* Initialize and link statically defined fifos */
@@ -481,7 +481,7 @@ static int init_lifo_obj_core_list(void)
 {
 	/* Initialize lifo object type */
 
-	z_obj_type_init(&_obj_type_lifo, K_OBJ_TYPE_LIFO_ID,
+	k_priv_obj_type_init(&_obj_type_lifo, K_OBJ_TYPE_LIFO_ID,
 			offsetof(struct k_lifo, obj_core));
 
 	/* Initialize and link statically defined lifo */

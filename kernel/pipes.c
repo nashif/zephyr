@@ -825,7 +825,7 @@ static int init_pipe_obj_core_list(void)
 {
 	/* Initialize pipe object type */
 
-	z_obj_type_init(&obj_type_pipe, K_OBJ_TYPE_PIPE_ID,
+	k_priv_obj_type_init(&obj_type_pipe, K_OBJ_TYPE_PIPE_ID,
 			offsetof(struct k_pipe, obj_core));
 
 	/* Initialize and link statically defined pipes */

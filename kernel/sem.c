@@ -220,7 +220,7 @@ static int init_sem_obj_core_list(void)
 {
 	/* Initialize semaphore object type */
 
-	z_obj_type_init(&obj_type_sem, K_OBJ_TYPE_SEM_ID,
+	k_priv_obj_type_init(&obj_type_sem, K_OBJ_TYPE_SEM_ID,
 			offsetof(struct k_sem, obj_core));
 
 	/* Initialize and link statically defined semaphores */

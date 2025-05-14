@@ -849,7 +849,7 @@ static int init_cpu_obj_core_list(void)
 {
 	/* Initialize CPU object type */
 
-	z_obj_type_init(&obj_type_cpu, K_OBJ_TYPE_CPU_ID,
+	k_priv_obj_type_init(&obj_type_cpu, K_OBJ_TYPE_CPU_ID,
 			offsetof(struct _cpu, obj_core));
 
 #ifdef CONFIG_OBJ_CORE_STATS_SYSTEM
@@ -863,7 +863,7 @@ static int init_kernel_obj_core_list(void)
 {
 	/* Initialize kernel object type */
 
-	z_obj_type_init(&obj_type_kernel, K_OBJ_TYPE_KERNEL_ID,
+	k_priv_obj_type_init(&obj_type_kernel, K_OBJ_TYPE_KERNEL_ID,
 			offsetof(struct z_kernel, obj_core));
 
 #ifdef CONFIG_OBJ_CORE_STATS_SYSTEM

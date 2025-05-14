@@ -354,7 +354,7 @@ static int init_timer_obj_core_list(void)
 {
 	/* Initialize timer object type */
 
-	z_obj_type_init(&obj_type_timer, K_OBJ_TYPE_TIMER_ID,
+	k_priv_obj_type_init(&obj_type_timer, K_OBJ_TYPE_TIMER_ID,
 			offsetof(struct k_timer, obj_core));
 
 	/* Initialize and link statically defined timers */

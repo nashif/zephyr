@@ -54,7 +54,7 @@ static int init_thread_obj_core_list(void)
 	/* Initialize mem_slab object type */
 
 #ifdef CONFIG_OBJ_CORE_THREAD
-	z_obj_type_init(&obj_type_thread, K_OBJ_TYPE_THREAD_ID,
+	k_priv_obj_type_init(&obj_type_thread, K_OBJ_TYPE_THREAD_ID,
 			offsetof(struct k_thread, obj_core));
 #endif /* CONFIG_OBJ_CORE_THREAD */
 

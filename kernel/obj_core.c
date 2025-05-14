@@ -11,7 +11,7 @@ static struct k_spinlock  lock;
 
 sys_slist_t z_obj_type_list = SYS_SLIST_STATIC_INIT(&z_obj_type_list);
 
-struct k_obj_type *z_obj_type_init(struct k_obj_type *type,
+struct k_obj_type *k_priv_obj_type_init(struct k_obj_type *type,
 				   uint32_t id, size_t off)
 {
 	sys_slist_init(&type->list);

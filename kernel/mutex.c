@@ -297,7 +297,7 @@ static int init_mutex_obj_core_list(void)
 {
 	/* Initialize mutex object type */
 
-	z_obj_type_init(&obj_type_mutex, K_OBJ_TYPE_MUTEX_ID,
+	k_priv_obj_type_init(&obj_type_mutex, K_OBJ_TYPE_MUTEX_ID,
 			offsetof(struct k_mutex, obj_core));
 
 	/* Initialize and link statically defined mutexes */

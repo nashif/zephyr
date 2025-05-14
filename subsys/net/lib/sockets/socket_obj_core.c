@@ -59,7 +59,7 @@ static void sock_obj_core_init_and_link(struct sock_obj *sock)
 	static bool type_init_done;
 
 	if (!type_init_done) {
-		z_obj_type_init(&sock_obj_type, K_OBJ_TYPE_SOCK,
+		k_priv_obj_type_init(&sock_obj_type, K_OBJ_TYPE_SOCK,
 				offsetof(struct sock_obj, obj_core));
 		k_obj_type_stats_init(&sock_obj_type, &sock_obj_type_stats_desc);
 

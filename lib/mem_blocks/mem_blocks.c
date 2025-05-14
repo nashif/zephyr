@@ -530,7 +530,7 @@ static int init_sys_mem_blocks_obj_core_list(void)
 {
 	/* Initialize the sys_mem_blocks object type */
 
-	z_obj_type_init(&obj_type_sys_mem_blocks, K_OBJ_TYPE_MEM_BLOCK_ID,
+	k_priv_obj_type_init(&obj_type_sys_mem_blocks, K_OBJ_TYPE_MEM_BLOCK_ID,
 			offsetof(struct sys_mem_blocks, obj_core));
 
 #ifdef CONFIG_OBJ_CORE_STATS_SYS_MEM_BLOCKS

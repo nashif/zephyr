@@ -436,7 +436,7 @@ static int init_msgq_obj_core_list(void)
 {
 	/* Initialize msgq object type */
 
-	z_obj_type_init(&obj_type_msgq, K_OBJ_TYPE_MSGQ_ID,
+	k_priv_obj_type_init(&obj_type_msgq, K_OBJ_TYPE_MSGQ_ID,
 			offsetof(struct k_msgq, obj_core));
 
 	/* Initialize and link statically defined message queues */

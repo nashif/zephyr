@@ -108,7 +108,7 @@ initialized for use with object cores and object core statistics.
 
     void my_obj_type_init(void)
     {
-        z_obj_type_init(&my_obj_type, K_OBJ_TYPE_MY_NEW_TYPE,
+        k_priv_obj_type_init(&my_obj_type, K_OBJ_TYPE_MY_NEW_TYPE,
                         offsetof(struct my_new_obj, obj_core);
         k_obj_type_stats_init(&my_obj_type, &my_obj_type_stats_desc);
     }

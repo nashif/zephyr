@@ -352,7 +352,7 @@ static int init_event_obj_core_list(void)
 {
 	/* Initialize condvar object type */
 
-	z_obj_type_init(&obj_type_event, K_OBJ_TYPE_EVENT_ID,
+	k_priv_obj_type_init(&obj_type_event, K_OBJ_TYPE_EVENT_ID,
 			offsetof(struct k_event, obj_core));
 
 	/* Initialize and link statically defined condvars */

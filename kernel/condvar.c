@@ -145,7 +145,7 @@ static int init_condvar_obj_core_list(void)
 {
 	/* Initialize condvar object type */
 
-	z_obj_type_init(&obj_type_condvar, K_OBJ_TYPE_CONDVAR_ID,
+	k_priv_obj_type_init(&obj_type_condvar, K_OBJ_TYPE_CONDVAR_ID,
 			offsetof(struct k_condvar, obj_core));
 
 	/* Initialize and link statically defined condvars */

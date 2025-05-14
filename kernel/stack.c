@@ -205,7 +205,7 @@ static int init_stack_obj_core_list(void)
 {
 	/* Initialize stack object type */
 
-	z_obj_type_init(&obj_type_stack, K_OBJ_TYPE_STACK_ID,
+	k_priv_obj_type_init(&obj_type_stack, K_OBJ_TYPE_STACK_ID,
 			offsetof(struct k_stack, obj_core));
 
 	/* Initialize and link statically defined stacks */
