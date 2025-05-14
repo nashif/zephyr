@@ -62,7 +62,7 @@ static void send_task_list_cb(void)
 	for (thread = _kernel.threads; thread; thread = thread->next_thread) {
 		char name[THREAD_NAME_LEN];
 
-		if (z_is_idle_thread_object(thread)) {
+		if (k_priv_is_idle_thread_object(thread)) {
 			continue;
 		}
 

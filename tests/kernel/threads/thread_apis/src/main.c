@@ -232,7 +232,7 @@ static void umode_entry(void *thread_id, void *p2, void *p3)
 	ARG_UNUSED(p2);
 	ARG_UNUSED(p3);
 
-	if (!z_is_thread_essential(_current) &&
+	if (!k_priv_is_thread_essential(_current) &&
 	    (k_current_get() == (k_tid_t)thread_id)) {
 		ztest_test_pass();
 	} else {
@@ -251,7 +251,7 @@ static void enter_user_mode_entry(void *p1, void *p2, void *p3)
 {
 	k_priv_thread_essential_set(_current);
 
-	zassert_true(z_is_thread_essential(_current), "Thread isn't set"
+	zassert_true(k_priv_is_thread_essential(_current), "Thread isn't set"
 		     " as essential\n");
 
 	k_thread_user_mode_enter(umode_entry,
@@ -545,7 +545,7 @@ static void foreach_callback(const struct k_thread *thread, void *user_data)
 	k_thread_runtime_stats_t stats;
 	int ret;
 
-	if (z_is_idle_thread_object((k_tid_t)thread)) {
+	if (k_priv_is_idle_thread_object((k_tid_t)thread)) {
 		return;
 	}
 

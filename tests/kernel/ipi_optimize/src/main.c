@@ -116,7 +116,7 @@ static void alt_thread_create(int priority, const char *desc)
 	/* Verify alt_thread is pending */
 
 	k_busy_wait(10000);
-	zassert_true(z_is_thread_pending(&alt_thread),
+	zassert_true(k_priv_is_thread_pending(&alt_thread),
 		     "%s priority thread has not pended.\n", desc);
 }
 
@@ -278,7 +278,7 @@ ZTEST(ipi, test_low_thread_wakes_no_ipis)
 	k_busy_wait(DELAY_FOR_IPIS);
 	get_ipi_counts(set, CONFIG_MP_MAX_NUM_CPUS);
 
-	zassert_true(z_is_thread_ready(&alt_thread),
+	zassert_true(k_priv_is_thread_ready(&alt_thread),
 		     "Low priority thread is not ready.\n");
 
 	alt_thread_done = true;
@@ -327,7 +327,7 @@ ZTEST(ipi, test_high_thread_wakes_some_ipis)
 	k_busy_wait(DELAY_FOR_IPIS);
 	get_ipi_counts(set, CONFIG_MP_MAX_NUM_CPUS);
 
-	zassert_true(z_is_thread_ready(&alt_thread),
+	zassert_true(k_priv_is_thread_ready(&alt_thread),
 		     "High priority thread is not ready.\n");
 
 	alt_thread_done = true;
@@ -425,7 +425,7 @@ ZTEST(ipi, test_thread_coop_no_ipis)
 	k_busy_wait(DELAY_FOR_IPIS);
 	get_ipi_counts(set, CONFIG_MP_MAX_NUM_CPUS);
 
-	zassert_true(z_is_thread_ready(&alt_thread),
+	zassert_true(k_priv_is_thread_ready(&alt_thread),
 		     "High priority thread is not ready.\n");
 
 	alt_thread_done = true;

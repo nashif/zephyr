@@ -76,14 +76,14 @@ static ALWAYS_INLINE void *curr_cpu_runq(void)
 
 static ALWAYS_INLINE void runq_add(struct k_thread *thread)
 {
-	__ASSERT_NO_MSG(!z_is_idle_thread_object(thread));
+	__ASSERT_NO_MSG(!k_priv_is_idle_thread_object(thread));
 
 	_priq_run_add(thread_runq(thread), thread);
 }
 
 static ALWAYS_INLINE void runq_remove(struct k_thread *thread)
 {
-	__ASSERT_NO_MSG(!z_is_idle_thread_object(thread));
+	__ASSERT_NO_MSG(!k_priv_is_idle_thread_object(thread));
 
 	_priq_run_remove(thread_runq(thread), thread);
 }
@@ -238,7 +238,7 @@ static ALWAYS_INLINE struct k_thread *next_up(void)
 
 	/* Put _current back into the queue */
 	if ((thread != _current) && active &&
-		!z_is_idle_thread_object(_current) && !queued) {
+		!k_priv_is_idle_thread_object(_current) && !queued) {
 		queue_thread(_current);
 	}
 
@@ -344,7 +344,7 @@ static void ready_thread(struct k_thread *thread)
 	/* If thread is queued already, do not try and added it to the
 	 * run queue again
 	 */
-	if (!k_priv_is_thread_queued(thread) && z_is_thread_ready(thread)) {
+	if (!k_priv_is_thread_queued(thread) && k_priv_is_thread_ready(thread)) {
 		SYS_PORT_TRACING_OBJ_FUNC(k_thread, sched_ready, thread);
 
 		queue_thread(thread);
@@ -433,7 +433,7 @@ static ALWAYS_INLINE void k_priv_thread_halt(struct k_thread *thread, k_spinlock
 	} else {
 		halt_thread(thread, terminate ? _THREAD_DEAD : _THREAD_SUSPENDED);
 		if ((thread == _current) && !arch_is_in_isr()) {
-			if (z_is_thread_essential(thread)) {
+			if (k_priv_is_thread_essential(thread)) {
 				k_spin_unlock(&_sched_spinlock, key);
 				k_panic();
 				key = k_spin_lock(&_sched_spinlock);
@@ -470,7 +470,7 @@ void z_impl_k_thread_suspend(k_tid_t thread)
 
 	k_spinlock_key_t  key = k_spin_lock(&_sched_spinlock);
 
-	if (unlikely(z_is_thread_suspended(thread))) {
+	if (unlikely(k_priv_is_thread_suspended(thread))) {
 
 		/* The target thread is already suspended. Nothing to do. */
 
@@ -499,7 +499,7 @@ void z_impl_k_thread_resume(k_tid_t thread)
 	k_spinlock_key_t key = k_spin_lock(&_sched_spinlock);
 
 	/* Do not try to resume a thread that was not suspended */
-	if (unlikely(!z_is_thread_suspended(thread))) {
+	if (unlikely(!k_priv_is_thread_suspended(thread))) {
 		k_spin_unlock(&_sched_spinlock, key);
 		return;
 	}
@@ -669,7 +669,7 @@ bool k_priv_thread_prio_set(struct k_thread *thread, int prio)
 	int old_prio = thread->base.prio;
 
 	K_SPINLOCK(&_sched_spinlock) {
-		need_sched = z_is_thread_ready(thread);
+		need_sched = k_priv_is_thread_ready(thread);
 
 		if (need_sched) {
 			if (!IS_ENABLED(CONFIG_SMP) || k_priv_is_thread_queued(thread)) {
@@ -699,7 +699,7 @@ bool k_priv_thread_prio_set(struct k_thread *thread, int prio)
 			}
 
 			update_cache(1);
-		} else if (z_is_thread_pending(thread)) {
+		} else if (k_priv_is_thread_pending(thread)) {
 			/* Thread is pending, remove it from the waitq
 			 * and reinsert it with the new priority to avoid
 			 * violating waitq ordering and rb assumptions.
@@ -1052,7 +1052,7 @@ static inline void z_vrfy_k_reschedule(void)
 bool k_can_yield(void)
 {
 	return !(k_is_pre_kernel() || k_is_in_isr() ||
-		 z_is_idle_thread_object(_current));
+		 k_priv_is_idle_thread_object(_current));
 }
 
 void z_impl_k_yield(void)
@@ -1102,7 +1102,7 @@ static int32_t z_tick_sleep(k_timeout_t timeout)
 
 	(void)k_priv_swap(&_sched_spinlock, key);
 
-	if (!z_is_aborted_thread_timeout(_current)) {
+	if (!k_priv_is_aborted_thread_timeout(_current)) {
 		return 0;
 	}
 
@@ -1327,7 +1327,7 @@ static ALWAYS_INLINE void halt_thread(struct k_thread *thread, uint8_t new_state
 
 void k_priv_thread_abort(struct k_thread *thread)
 {
-	bool essential = z_is_thread_essential(thread);
+	bool essential = k_priv_is_thread_essential(thread);
 	k_spinlock_key_t key = k_spin_lock(&_sched_spinlock);
 
 	if ((thread->base.thread_state & _THREAD_DEAD) != 0U) {
@@ -1434,7 +1434,7 @@ static inline void z_vrfy_k_thread_abort(k_tid_t thread)
 		return;
 	}
 
-	K_OOPS(K_SYSCALL_VERIFY_MSG(!z_is_thread_essential(thread),
+	K_OOPS(K_SYSCALL_VERIFY_MSG(!k_priv_is_thread_essential(thread),
 				    "aborting essential thread %p", thread));
 
 	z_impl_k_thread_abort((struct k_thread *)thread);

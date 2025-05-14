@@ -93,7 +93,7 @@ static bool adjust_owner_prio(struct k_mutex *mutex, int32_t new_prio)
 	if (mutex->owner->base.prio != new_prio) {
 
 		LOG_DBG("%p (ready (y/n): %c) prio changed to %d (was %d)",
-			mutex->owner, z_is_thread_ready(mutex->owner) ?
+			mutex->owner, k_priv_is_thread_ready(mutex->owner) ?
 			'y' : 'n',
 			new_prio, mutex->owner->base.prio);
 

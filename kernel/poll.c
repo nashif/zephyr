@@ -267,7 +267,7 @@ static int signal_poller(struct k_poll_event *event, uint32_t state)
 
 	__ASSERT(thread != NULL, "poller should have a thread\n");
 
-	if (!z_is_thread_pending(thread)) {
+	if (!k_priv_is_thread_pending(thread)) {
 		return 0;
 	}
 
@@ -275,7 +275,7 @@ static int signal_poller(struct k_poll_event *event, uint32_t state)
 	arch_thread_return_value_set(thread,
 		state == K_POLL_STATE_CANCELLED ? -EINTR : 0);
 
-	if (!z_is_thread_ready(thread)) {
+	if (!k_priv_is_thread_ready(thread)) {
 		return 0;
 	}
 

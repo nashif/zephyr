@@ -42,7 +42,7 @@ bool thread_is_sliceable(struct k_thread *thread)
 		&& slice_time(thread) != 0
 		&& !k_priv_is_prio_higher(thread->base.prio, slice_max_prio)
 		&& !k_priv_is_thread_prevented_from_running(thread)
-		&& !z_is_idle_thread_object(thread);
+		&& !k_priv_is_idle_thread_object(thread);
 
 #ifdef CONFIG_TIMESLICE_PER_THREAD
 	ret |= thread->base.slice_ticks != 0;

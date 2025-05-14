@@ -490,7 +490,7 @@ void test_syscall_context_user(void *p1, void *p2, void *p3)
 		     "not reported in user syscall");
 }
 
-/* Show that z_is_in_syscall() works properly */
+/* Show that k_priv_is_in_syscall() works properly */
 ZTEST(syscalls, test_syscall_context)
 {
 	/* We're a regular supervisor thread. */

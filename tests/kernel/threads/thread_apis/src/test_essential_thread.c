@@ -29,14 +29,14 @@ static void thread_entry(void *p1, void *p2, void *p3)
 
 	k_priv_thread_essential_set(_current);
 
-	if (z_is_thread_essential(_current)) {
+	if (k_priv_is_thread_essential(_current)) {
 		k_busy_wait(100);
 	} else {
 		zassert_unreachable("The thread is not set as essential");
 	}
 
 	k_priv_thread_essential_clear(_current);
-	zassert_false(z_is_thread_essential(_current),
+	zassert_false(k_priv_is_thread_essential(_current),
 		      "Essential flag of the thread is not cleared");
 
 	k_sem_give(&sync_sem);
@@ -75,7 +75,7 @@ static void abort_thread_entry(void *p1, void *p2, void *p3)
 	ARG_UNUSED(p2);
 	ARG_UNUSED(p3);
 
-	if (z_is_thread_essential(_current)) {
+	if (k_priv_is_thread_essential(_current)) {
 		k_msleep(200);
 	} else {
 		zassert_unreachable("The thread is not set as essential");

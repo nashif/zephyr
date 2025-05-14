@@ -35,7 +35,7 @@ void sys_trace_k_thread_switched_in(void)
 
 	thread = k_current_get();
 
-	if (z_is_idle_thread_object(thread)) {
+	if (k_priv_is_idle_thread_object(thread)) {
 		SEGGER_SYSVIEW_OnIdle();
 	} else {
 		SEGGER_SYSVIEW_OnTaskStartExec((uint32_t)(uintptr_t)thread);

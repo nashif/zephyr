@@ -725,7 +725,7 @@ k_tid_t z_vrfy_k_thread_create(struct k_thread *new_thread,
 	 * than the caller
 	 */
 	K_OOPS(K_SYSCALL_VERIFY(_is_valid_prio(prio, NULL)));
-	K_OOPS(K_SYSCALL_VERIFY(z_is_prio_lower_or_equal(prio,
+	K_OOPS(K_SYSCALL_VERIFY(k_priv_is_prio_lower_or_equal(prio,
 							_current->base.prio)));
 
 	z_setup_new_thread(new_thread, stack, stack_size,

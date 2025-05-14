@@ -43,7 +43,7 @@ static inline bool k_priv_is_inactive_timeout(const struct _timeout *to)
 	return !sys_dnode_is_linked(&to->node);
 }
 
-static inline bool z_is_aborted_timeout(const struct _timeout *to)
+static inline bool k_priv_is_aborted_timeout(const struct _timeout *to)
 {
 	/* When timeout is aborted then dticks is set to special value. */
 	return to->dticks == TIMEOUT_DTICKS_ABORTED;
@@ -66,10 +66,10 @@ static inline void k_priv_abort_thread_timeout(struct k_thread *thread)
 	k_priv_abort_timeout(&thread->base.timeout);
 }
 
-static inline bool z_is_aborted_thread_timeout(struct k_thread *thread)
+static inline bool k_priv_is_aborted_thread_timeout(struct k_thread *thread)
 {
 
-	return z_is_aborted_timeout(&thread->base.timeout);
+	return k_priv_is_aborted_timeout(&thread->base.timeout);
 }
 
 int32_t k_priv_get_next_timeout_expiry(void);
@@ -81,9 +81,9 @@ k_ticks_t k_priv_timeout_remaining(const struct _timeout *timeout);
 /* Stubs when !CONFIG_SYS_CLOCK_EXISTS */
 #define z_init_thread_timeout(thread_base) do {} while (false)
 #define k_priv_abort_thread_timeout(to) do {} while (false)
-#define z_is_aborted_thread_timeout(to) false
+#define k_priv_is_aborted_thread_timeout(to) false
 #define k_priv_is_inactive_timeout(to) 1
-#define z_is_aborted_timeout(to) false
+#define k_priv_is_aborted_timeout(to) false
 #define k_priv_get_next_timeout_expiry() ((int32_t) K_TICKS_FOREVER)
 #define z_set_timeout_expiry(ticks, is_idle) do {} while (false)
 
