@@ -138,7 +138,7 @@ void z_prep_c(void)
 #ifdef __CCAC__
 	dev_state_zero();
 #endif
-	z_data_copy();
+	k_priv_data_copy();
 #if CONFIG_ARCH_CACHE
 	arch_cache_init();
 #endif

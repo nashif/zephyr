@@ -37,9 +37,9 @@ void k_priv_early_memcpy(void *dst, const void *src, size_t n);
 
 void z_bss_zero(void);
 #ifdef CONFIG_XIP
-void z_data_copy(void);
+void k_priv_data_copy(void);
 #else
-static inline void z_data_copy(void)
+static inline void k_priv_data_copy(void)
 {
 	/* Do nothing */
 }

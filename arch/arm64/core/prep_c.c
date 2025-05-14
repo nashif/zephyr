@@ -40,7 +40,7 @@ void z_prep_c(void)
 	write_tpidrro_el0((uintptr_t)&_kernel.cpus[0]);
 
 	z_bss_zero();
-	z_data_copy();
+	k_priv_data_copy();
 #ifdef CONFIG_ARM64_SAFE_EXCEPTION_STACK
 	/* After bss clean, _kernel.cpus is in bss section */
 	z_arm64_safe_exception_stack_init();

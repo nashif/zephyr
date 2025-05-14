@@ -23,7 +23,7 @@ extern volatile uintptr_t __stack_chk_guard;
  *
  * This routine copies the data section from ROM to RAM.
  */
-void z_data_copy(void)
+void k_priv_data_copy(void)
 {
 	k_priv_early_memcpy(&__data_region_start, &__data_region_load_start,
 		       __data_region_end - __data_region_start);

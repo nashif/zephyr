@@ -108,7 +108,7 @@ void z_prep_c(void)
 	z_arm_floating_point_init();
 #endif
 	z_bss_zero();
-	z_data_copy();
+	k_priv_data_copy();
 #if ((defined(CONFIG_ARMV7_R) || defined(CONFIG_ARMV7_A)) && defined(CONFIG_INIT_STACKS))
 	z_arm_init_stacks();
 #endif

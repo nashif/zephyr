@@ -34,7 +34,7 @@ void z_prep_c(void)
 {
 	z_bss_zero();
 
-	z_data_copy();
+	k_priv_data_copy();
 
 	z_cstart();
 	CODE_UNREACHABLE;

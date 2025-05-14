@@ -37,7 +37,7 @@ void z_prep_c(void)
 #endif
 
 	z_bss_zero();
-	z_data_copy();
+	k_priv_data_copy();
 	/* In most XIP scenarios we copy the exception code into RAM, so need
 	 * to flush instruction cache.
 	 */

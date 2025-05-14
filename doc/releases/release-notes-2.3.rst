@@ -1313,7 +1313,7 @@ release:
 * :github:`19614` - Make zephyr_library out of hal_stm32 and hal_st
 * :github:`19550` - drivers/pcie: ``pcie_get_mbar()`` should return a ``void *`` not ``u32_t``
 * :github:`19487` - tests/kernel/fifo/fifo_usage GPF crash on qemu_x86_long
-* :github:`19456` - arch/x86: make use of z_bss_zero() and z_data_copy()
+* :github:`19456` - arch/x86: make use of z_bss_zero() and k_priv_data_copy()
 * :github:`19353` - arch/x86: QEMU doesn't appear to support x2APIC
 * :github:`19307` - _interrupt_stack is defined in the kernel, but declared in arch headers
 * :github:`19285` - devicetree: fixed non-alias reference to specific nodes
