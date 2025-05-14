@@ -176,7 +176,7 @@ int z_impl_k_pipe_write(struct k_pipe *pipe, const uint8_t *data, size_t len, k_
 				 * supporting direct-to-readers copy with them.
 				 * Simply wake up all pending readers instead.
 				 */
-				need_resched = z_sched_wake_all(&pipe->data, 0, NULL);
+				need_resched = k_priv_sched_wake_all(&pipe->data, 0, NULL);
 			} else if (pipe->waiting != 0) {
 				written += copy_to_pending_readers(pipe, &need_resched,
 								   &data[written],
@@ -235,7 +235,7 @@ int z_impl_k_pipe_read(struct k_pipe *pipe, uint8_t *data, size_t len, k_timeout
 	for (;;) {
 		if (pipe_full(pipe)) {
 			/* One or more pending writers may exist. */
-			need_resched = z_sched_wake_all(&pipe->space, 0, NULL);
+			need_resched = k_priv_sched_wake_all(&pipe->space, 0, NULL);
 		}
 
 		buf.used += ring_buf_get(&pipe->buf, &data[buf.used], len - buf.used);
@@ -277,8 +277,8 @@ void z_impl_k_pipe_reset(struct k_pipe *pipe)
 		ring_buf_reset(&pipe->buf);
 		if (likely(pipe->waiting != 0)) {
 			pipe->flags |= PIPE_FLAG_RESET;
-			z_sched_wake_all(&pipe->data, 0, NULL);
-			z_sched_wake_all(&pipe->space, 0, NULL);
+			k_priv_sched_wake_all(&pipe->data, 0, NULL);
+			k_priv_sched_wake_all(&pipe->space, 0, NULL);
 		}
 	}
 	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_pipe, reset, pipe);
@@ -289,8 +289,8 @@ void z_impl_k_pipe_close(struct k_pipe *pipe)
 	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_pipe, close, pipe);
 	K_SPINLOCK(&pipe->lock) {
 		pipe->flags = 0;
-		z_sched_wake_all(&pipe->data, 0, NULL);
-		z_sched_wake_all(&pipe->space, 0, NULL);
+		k_priv_sched_wake_all(&pipe->data, 0, NULL);
+		k_priv_sched_wake_all(&pipe->space, 0, NULL);
 	}
 	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_pipe, close, pipe);
 }

@@ -249,7 +249,7 @@ void z_sched_wake_thread(struct k_thread *thread, bool is_timeout);
  * @retval true If any threads were woken up
  * @retval false If the wait_q was empty
  */
-static inline bool z_sched_wake_all(_wait_q_t *wait_q, int swap_retval,
+static inline bool k_priv_sched_wake_all(_wait_q_t *wait_q, int swap_retval,
 				    void *swap_data)
 {
 	bool woken = false;

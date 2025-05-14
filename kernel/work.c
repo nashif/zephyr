@@ -652,7 +652,7 @@ static void work_queue_main(void *workq_ptr, void *p2, void *p3)
 			 * here doesn't mean that the queue will allow new
 			 * submissions.
 			 */
-			(void)z_sched_wake_all(&queue->drainq, 1, NULL);
+			(void)k_priv_sched_wake_all(&queue->drainq, 1, NULL);
 		} else if (flag_test(&queue->flags, K_WORK_QUEUE_STOP_BIT)) {
 			/* User has requested that the queue stop. Clear the status flags and exit.
 			 */
