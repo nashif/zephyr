@@ -155,7 +155,7 @@ static inline void z_mark_thread_as_not_pending(struct k_thread *thread)
 	thread->base.thread_state &= ~_THREAD_PENDING;
 }
 
-static inline bool z_is_thread_sleeping(struct k_thread *thread)
+static inline bool k_priv_is_thread_sleeping(struct k_thread *thread)
 {
 	return (thread->base.thread_state & _THREAD_SLEEPING) != 0U;
 }

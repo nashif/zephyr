@@ -1175,7 +1175,7 @@ void z_impl_k_wakeup(k_tid_t thread)
 
 	k_spinlock_key_t  key = k_spin_lock(&_sched_spinlock);
 
-	if (z_is_thread_sleeping(thread)) {
+	if (k_priv_is_thread_sleeping(thread)) {
 		k_priv_abort_thread_timeout(thread);
 		z_mark_thread_as_not_sleeping(thread);
 		ready_thread(thread);
