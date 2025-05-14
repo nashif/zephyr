@@ -207,7 +207,7 @@ static FUNC_NORETURN __used void df_handler_top(void)
 
 	/* Restore the main IA task to a runnable state */
 	_main_tss.esp = (uint32_t)(K_KERNEL_STACK_BUFFER(
-		z_interrupt_stacks[0]) + CONFIG_ISR_STACK_SIZE);
+		k_priv_interrupt_stacks[0]) + CONFIG_ISR_STACK_SIZE);
 	_main_tss.cs = CODE_SEG;
 	_main_tss.ds = DATA_SEG;
 	_main_tss.es = DATA_SEG;

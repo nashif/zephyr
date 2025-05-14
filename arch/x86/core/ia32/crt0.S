@@ -33,7 +33,7 @@
 	GTEXT(k_priv_data_copy)
 
 	GDATA(_idt_base_address)
-	GDATA(z_interrupt_stacks)
+	GDATA(k_priv_interrupt_stacks)
 	GDATA(z_x86_idt)
 #ifndef CONFIG_GDT_DYNAMIC
 	GDATA(_gdt)
@@ -194,13 +194,13 @@ __csSet:
 	 * dual-purposing of this area of memory is safe since
 	 * interrupts are disabled until the first context switch.
 	 *
-	 * kernel/init.c enforces that the z_interrupt_stacks pointer and
+	 * kernel/init.c enforces that the k_priv_interrupt_stacks pointer and
 	 * the ISR stack size are some multiple of ARCH_STACK_PTR_ALIGN, which
 	 * is at least 4.
 	 */
 #ifdef CONFIG_INIT_STACKS
 	movl $0xAAAAAAAA, %eax
-	leal K_MEM_PHYS_ADDR(z_interrupt_stacks), %edi
+	leal K_MEM_PHYS_ADDR(k_priv_interrupt_stacks), %edi
 #ifdef CONFIG_X86_STACK_PROTECTION
 	addl $4096, %edi
 #endif
@@ -209,7 +209,7 @@ __csSet:
 	rep  stosl
 #endif
 
-	movl	$K_MEM_PHYS_ADDR(z_interrupt_stacks), %esp
+	movl	$K_MEM_PHYS_ADDR(k_priv_interrupt_stacks), %esp
 #ifdef CONFIG_X86_STACK_PROTECTION
 	/* In this configuration, all stacks, including IRQ stack, are declared
 	 * with a 4K non-present guard page preceding the stack buffer
@@ -249,7 +249,7 @@ __csSet:
 	 * page table is loaded.
 	 */
 
-	movl	$z_interrupt_stacks, %esp
+	movl	$k_priv_interrupt_stacks, %esp
 #ifdef CONFIG_X86_STACK_PROTECTION
 	addl	$(CONFIG_ISR_STACK_SIZE + 4096), %esp
 #else

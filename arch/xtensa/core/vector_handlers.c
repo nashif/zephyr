@@ -66,7 +66,7 @@ bool xtensa_is_outside_stack_bounds(uintptr_t addr, size_t sz, uint32_t ps)
 		cpu_id = 0;
 #endif
 
-		start = (uintptr_t)K_KERNEL_STACK_BUFFER(z_interrupt_stacks[cpu_id]);
+		start = (uintptr_t)K_KERNEL_STACK_BUFFER(k_priv_interrupt_stacks[cpu_id]);
 		end = start + CONFIG_ISR_STACK_SIZE;
 #ifdef CONFIG_USERSPACE
 	} else if (ps == UINT32_MAX) {

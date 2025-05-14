@@ -21,7 +21,7 @@
 #define SGI_MMCFG_IPI	1
 #define SGI_FPU_IPI	2
 
-K_KERNEL_PINNED_STACK_ARRAY_DECLARE(z_interrupt_stacks,
+K_KERNEL_PINNED_STACK_ARRAY_DECLARE(k_priv_interrupt_stacks,
 				   CONFIG_MP_MAX_NUM_CPUS,
 				   CONFIG_ISR_STACK_SIZE);
 
@@ -71,7 +71,7 @@ BUILD_ASSERT(offsetof(struct boot_params, voting) == BOOT_PARAM_VOTING_OFFSET);
 
 volatile struct boot_params arm_cpu_boot_params = {
 	.mpid = -1,
-	.irq_sp = (char *)(z_interrupt_stacks + CONFIG_ISR_STACK_SIZE),
+	.irq_sp = (char *)(k_priv_interrupt_stacks + CONFIG_ISR_STACK_SIZE),
 	.fiq_sp = (char *)(z_arm_fiq_stack + CONFIG_ARMV7_FIQ_STACK_SIZE),
 	.abt_sp = (char *)(z_arm_abort_stack + CONFIG_ARMV7_EXCEPTION_STACK_SIZE),
 	.udf_sp = (char *)(z_arm_undef_stack + CONFIG_ARMV7_EXCEPTION_STACK_SIZE),

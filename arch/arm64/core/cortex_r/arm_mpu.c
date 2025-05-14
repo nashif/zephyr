@@ -412,7 +412,7 @@ static int dynamic_areas_init(uintptr_t start, size_t size)
 #if defined(CONFIG_ARM64_STACK_PROTECTION)
 		ret = insert_region(sys_dyn_regions[cpuid],
 				    MPU_DYNAMIC_REGION_AREAS_NUM,
-				    (uintptr_t)z_interrupt_stacks[cpuid],
+				    (uintptr_t)k_priv_interrupt_stacks[cpuid],
 				    Z_ARM64_STACK_GUARD_SIZE,
 				    NULL /* delete this region */);
 		if (ret < 0) {

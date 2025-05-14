@@ -31,7 +31,7 @@ SECTION_FUNC(TEXT, __sparc_trap_reset)
 	/* NOTE: wrpsr above may have changed the current register window. */
 
 	/* We are in the 3 instruction wrpsr delay so use global registers. */
-	set	z_interrupt_stacks, %g2
+	set	k_priv_interrupt_stacks, %g2
 	set	CONFIG_ISR_STACK_SIZE, %g4
 	add	%g2, %g4, %g1
 	and	%g1, 0xfffffff0, %l3

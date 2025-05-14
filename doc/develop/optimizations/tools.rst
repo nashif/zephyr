@@ -72,7 +72,7 @@ These commands will generate something similar to the output below::
     │   ├── on.2                                                      4   0.09%  0x20000264
     │   ├── poll_out_lock.0                                           4   0.09%  0x200002d4
     │   ├── z_idle_threads                                          128   2.76%  0x20000120
-    │   ├── z_interrupt_stacks                                     2048  44.17%  0x20000360
+    │   ├── k_priv_interrupt_stacks                                     2048  44.17%  0x20000360
     │   └── z_main_thread                                           128   2.76%  0x200001a0
     ├── WORKSPACE                                                   184   3.97%  -
     │   └── modules                                                 184   3.97%  -

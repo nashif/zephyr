@@ -101,7 +101,7 @@ _z_rx_context_switch_isr:
 	mov r2,r5
 
 	/* set r2 (smovb source address) to the beginning of the interrupt stack */
-	mov #(_z_interrupt_stacks + CONFIG_ISR_STACK_SIZE)-1,r2
+	mov #(_k_priv_interrupt_stacks + CONFIG_ISR_STACK_SIZE)-1,r2
 
 	mvfc usp,r1	/* set r1 (smovb dest) to USP */
 

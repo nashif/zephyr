@@ -78,7 +78,7 @@ FUNC_NORETURN void z_prep_c(void *arg)
 	unsigned int num_cpus = arch_num_cpus();
 
 	for (int i = 0; i < num_cpus; i++) {
-		z_x86_set_stack_guard(z_interrupt_stacks[i]);
+		z_x86_set_stack_guard(k_priv_interrupt_stacks[i]);
 	}
 #endif
 #if CONFIG_ARCH_CACHE

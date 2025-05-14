@@ -67,7 +67,7 @@ extern uint8_t x86_cpu_loapics[];	/* CPU logical ID -> local APIC ID */
 	{											\
 		.tr = (0x40 + (16 * n)),							\
 		.gs_base = &tss##n,								\
-		.sp = (uint64_t)z_interrupt_stacks[n] +						\
+		.sp = (uint64_t)k_priv_interrupt_stacks[n] +						\
 		      K_KERNEL_STACK_LEN(CONFIG_ISR_STACK_SIZE),				\
 		.stack_size = K_KERNEL_STACK_LEN(CONFIG_ISR_STACK_SIZE),			\
 		.fn = z_prep_c,									\

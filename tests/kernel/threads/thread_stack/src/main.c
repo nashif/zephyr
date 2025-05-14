@@ -426,8 +426,8 @@ ZTEST(userspace_thread_stack, test_stack_buffer)
 
 	for (int i = 0; i < num_cpus; i++) {
 		printk("irq stack %d: %p size %zu\n",
-		       i, &z_interrupt_stacks[i],
-		       sizeof(z_interrupt_stacks[i]));
+		       i, &k_priv_interrupt_stacks[i],
+		       sizeof(k_priv_interrupt_stacks[i]));
 	}
 
 	printk("Provided stack size: %u\n", STEST_STACKSIZE);

@@ -168,7 +168,7 @@ In the snippets below use and expect your appropriate directories instead of
          #4  0x00104422 in z_prep_c (arg=0x1245bc <x86_cpu_boot_arg>) at <ZEPHYR_BASE>/arch/x86/core/prep_c.c:80
          #5  0x001000c9 in __csSet () at <ZEPHYR_BASE>/arch/x86/core/ia32/crt0.S:290
          #6  0x001245bc in uart_dev ()
-         #7  0x00134988 in z_interrupt_stacks ()
+         #7  0x00134988 in k_priv_interrupt_stacks ()
          #8  0x00000000 in ?? ()
 
    #. Use command ``list`` to show the source code and surroundings where

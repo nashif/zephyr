@@ -26,7 +26,7 @@ void k_sys_fatal_error_handler(unsigned int reason, const struct arch_esf *pEsf)
 #ifdef CONFIG_PMP_STACK_GUARD
 static void check_isr_stack_guard(void)
 {
-	char *isr_stack = (char *)z_interrupt_stacks;
+	char *isr_stack = (char *)k_priv_interrupt_stacks;
 
 	valid_fault = true;
 	*isr_stack = 42;

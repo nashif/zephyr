@@ -47,7 +47,7 @@ static void shell_stack_dump(const struct k_thread *thread, void *user_data)
 		    thread, tname ? tname : "NA", size, unused, size - unused, size, pcnt);
 }
 
-K_KERNEL_STACK_ARRAY_DECLARE(z_interrupt_stacks, CONFIG_MP_MAX_NUM_CPUS,
+K_KERNEL_STACK_ARRAY_DECLARE(k_priv_interrupt_stacks, CONFIG_MP_MAX_NUM_CPUS,
 			     CONFIG_ISR_STACK_SIZE);
 
 static int cmd_kernel_thread_stacks(const struct shell *sh, size_t argc, char **argv)
@@ -72,8 +72,8 @@ static int cmd_kernel_thread_stacks(const struct shell *sh, size_t argc, char **
 
 	for (int i = 0; i < num_cpus; i++) {
 		size_t unused;
-		const uint8_t *buf = K_KERNEL_STACK_BUFFER(z_interrupt_stacks[i]);
-		size_t size = K_KERNEL_STACK_SIZEOF(z_interrupt_stacks[i]);
+		const uint8_t *buf = K_KERNEL_STACK_BUFFER(k_priv_interrupt_stacks[i]);
+		size_t size = K_KERNEL_STACK_SIZEOF(k_priv_interrupt_stacks[i]);
 		int err = k_priv_stack_space_get(buf, size, &unused);
 
 		(void)err;
@@ -81,7 +81,7 @@ static int cmd_kernel_thread_stacks(const struct shell *sh, size_t argc, char **
 
 		shell_print(sh,
 			    "%p IRQ %02d %s(real size %4zu):\tunused %4zu\tusage %4zu / %4zu (%2zu %%)",
-			    &z_interrupt_stacks[i], i, pad, size, unused, size - unused, size,
+			    &k_priv_interrupt_stacks[i], i, pad, size, unused, size - unused, size,
 			    ((size - unused) * 100U) / size);
 	}
 

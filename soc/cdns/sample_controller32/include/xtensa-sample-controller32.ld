@@ -559,7 +559,7 @@ SECTIONS
   PROVIDE(_heap_sentry = ORIGIN(RAM) + LENGTH(RAM));
   PROVIDE(_heap_end = ORIGIN(RAM) + LENGTH(RAM));
 
-  PROVIDE(__stack = z_interrupt_stacks + CONFIG_ISR_STACK_SIZE);
+  PROVIDE(__stack = k_priv_interrupt_stacks + CONFIG_ISR_STACK_SIZE);
 
 #include <zephyr/linker/debug-sections.ld>
 

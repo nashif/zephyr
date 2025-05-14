@@ -60,13 +60,13 @@ boot_first_core:
 #endif
 
 #ifdef CONFIG_INIT_STACKS
-	/* Pre-populate all bytes in z_interrupt_stacks with 0xAA */
-	la t0, z_interrupt_stacks
+	/* Pre-populate all bytes in k_priv_interrupt_stacks with 0xAA */
+	la t0, k_priv_interrupt_stacks
 	/* Total size of all cores' IRQ stack */
 	li t1, __z_interrupt_all_stacks_SIZEOF
 	add t1, t1, t0
 
-	/* Populate z_interrupt_stacks with 0xaaaaaaaa */
+	/* Populate k_priv_interrupt_stacks with 0xaaaaaaaa */
 	li t2, 0xaaaaaaaa
 aa_loop:
 	sw t2, 0x00(t0)
@@ -76,9 +76,9 @@ aa_loop:
 
 	/*
 	 * Initially, setup stack pointer to
-	 * z_interrupt_stacks + __z_interrupt_stack_SIZEOF
+	 * k_priv_interrupt_stacks + __z_interrupt_stack_SIZEOF
 	 */
-	la sp, z_interrupt_stacks
+	la sp, k_priv_interrupt_stacks
 	li t0, __z_interrupt_stack_SIZEOF
 	add sp, sp, t0
 

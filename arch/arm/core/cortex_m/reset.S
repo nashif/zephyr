@@ -20,7 +20,7 @@ _ASM_FILE_PROLOGUE
 
 GTEXT(z_arm_reset)
 GTEXT(k_priv_early_memset)
-GDATA(z_interrupt_stacks)
+GDATA(k_priv_interrupt_stacks)
 GDATA(z_main_stack)
 #if defined(CONFIG_DEBUG_THREAD_INFO)
 GDATA(sys_priv_post_kernel)
@@ -94,7 +94,7 @@ SECTION_SUBSEC_FUNC(TEXT,_reset_section,__start)
      * And, apart from arch_pm_s2ram_resume being able to use the stack for
      * a short while, there is no change in behavior in either of the paths.
      */
-    ldr r0, =z_interrupt_stacks + CONFIG_ISR_STACK_SIZE + MPU_GUARD_ALIGN_AND_SIZE
+    ldr r0, =k_priv_interrupt_stacks + CONFIG_ISR_STACK_SIZE + MPU_GUARD_ALIGN_AND_SIZE
     msr msp, r0
 
     bl arch_pm_s2ram_resume
@@ -102,7 +102,7 @@ SECTION_SUBSEC_FUNC(TEXT,_reset_section,__start)
 
     /*
      * MSP needs to be set to main stack for following scenarios:
-     * - If CONFIG_PM_S2RAM is enabled, MSP is set to z_interrupt_stacks
+     * - If CONFIG_PM_S2RAM is enabled, MSP is set to k_priv_interrupt_stacks
      *   for resume functions to make use of a stack. However,
      *   if the device was not suspended and if resume functions return,
      *   MSP needs to be set back to z_main_stack to ensure proper
@@ -112,7 +112,7 @@ SECTION_SUBSEC_FUNC(TEXT,_reset_section,__start)
      *   device was loaded through chain loading or a debugger, as the initial
      *   value of MSP would be anything that the previous image loaded.
      * - If CONFIG_INIT_STACKS is enabled, we need to ensure MSP is not set
-     *   to z_interrupt_stacks, so we set it to z_main_stack.
+     *   to k_priv_interrupt_stacks, so we set it to z_main_stack.
      *
      * Since these scenarios cover most of the cases, we set MSP to
      * z_main_stack here.
@@ -174,7 +174,7 @@ SECTION_SUBSEC_FUNC(TEXT,_reset_section,__start)
  */
 
 #ifdef CONFIG_INIT_STACKS
-    ldr r0, =z_interrupt_stacks
+    ldr r0, =k_priv_interrupt_stacks
     ldr r1, =0xaa
     ldr r2, =CONFIG_ISR_STACK_SIZE + MPU_GUARD_ALIGN_AND_SIZE
     bl k_priv_early_memset
@@ -182,9 +182,9 @@ SECTION_SUBSEC_FUNC(TEXT,_reset_section,__start)
 
     /*
      * Set PSP and use it to boot without using MSP, so that it
-     * gets set to z_interrupt_stacks during initialization.
+     * gets set to k_priv_interrupt_stacks during initialization.
      */
-    ldr r0, =z_interrupt_stacks
+    ldr r0, =k_priv_interrupt_stacks
     ldr r1, =CONFIG_ISR_STACK_SIZE + MPU_GUARD_ALIGN_AND_SIZE
     adds r0, r0, r1
     msr PSP, r0

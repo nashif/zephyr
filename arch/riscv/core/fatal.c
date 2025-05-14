@@ -179,7 +179,7 @@ static bool bad_stack_pointer(struct arch_esf *esf)
 		return true;
 	}
 #else
-	uintptr_t isr_stack = (uintptr_t)z_interrupt_stacks;
+	uintptr_t isr_stack = (uintptr_t)k_priv_interrupt_stacks;
 	uintptr_t main_stack = (uintptr_t)z_main_stack;
 
 	if ((sp >= isr_stack && sp < isr_stack + Z_RISCV_STACK_GUARD_SIZE) ||

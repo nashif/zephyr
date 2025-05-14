@@ -30,7 +30,7 @@ static inline bool in_irq_stack_bound(uintptr_t addr, uint8_t cpu_id)
 {
 	uintptr_t start, end;
 
-	start = (uintptr_t)K_KERNEL_STACK_BUFFER(z_interrupt_stacks[cpu_id]);
+	start = (uintptr_t)K_KERNEL_STACK_BUFFER(k_priv_interrupt_stacks[cpu_id]);
 	end = start + CONFIG_ISR_STACK_SIZE;
 
 	return (addr >= start) && (addr < end);

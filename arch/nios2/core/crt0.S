@@ -13,7 +13,7 @@ GTEXT(__reset)
 
 /* imports */
 GTEXT(z_prep_c)
-GTEXT(z_interrupt_stacks)
+GTEXT(k_priv_interrupt_stacks)
 
 	/* Allow use of r1/at (the assembler temporary register) in this
 	 * code, normally reserved for internal assembler use
@@ -100,19 +100,19 @@ SECTION_FUNC(TEXT, __start)
 #endif /* ALT_CPU_DCACHE_SIZE && defined(CONFIG_INCLUDE_RESET_VECTOR) */
 
 #ifdef CONFIG_INIT_STACKS
-	/* Pre-populate all bytes in z_interrupt_stacks with 0xAA
-	 * init.c enforces that the z_interrupt_stacks pointer
+	/* Pre-populate all bytes in k_priv_interrupt_stacks with 0xAA
+	 * init.c enforces that the k_priv_interrupt_stacks pointer
 	 * and CONFIG_ISR_STACK_SIZE are a multiple of ARCH_STACK_PTR_ALIGN (4)
 	 */
-	movhi r1, %hi(z_interrupt_stacks)
-	ori r1, r1, %lo(z_interrupt_stacks)
+	movhi r1, %hi(k_priv_interrupt_stacks)
+	ori r1, r1, %lo(k_priv_interrupt_stacks)
 	movhi r2, %hi(CONFIG_ISR_STACK_SIZE)
 	ori r2, r2, %lo(CONFIG_ISR_STACK_SIZE)
 	/* Put constant 0xaaaaaaaa in r3 */
 	movhi r3, 0xaaaa
 	ori r3, r3, 0xaaaa
 1:
-	/* Loop through the z_interrupt_stacks treating it as an array of
+	/* Loop through the k_priv_interrupt_stacks treating it as an array of
 	 * uint32_t, setting each element to r3 */
 	stw r3, (r1)
 	subi r2, r2, 4
@@ -124,8 +124,8 @@ SECTION_FUNC(TEXT, __start)
 	 * to use this as the CPU boots up with interrupts disabled and we
 	 * don't turn them on until much later, when the kernel is on
 	 * the main stack */
-	movhi sp, %hi(z_interrupt_stacks)
-	ori sp, sp, %lo(z_interrupt_stacks)
+	movhi sp, %hi(k_priv_interrupt_stacks)
+	ori sp, sp, %lo(k_priv_interrupt_stacks)
 	addi sp, sp, CONFIG_ISR_STACK_SIZE
 
 #if defined(CONFIG_GP_LOCAL) || defined(CONFIG_GP_GLOBAL) || \

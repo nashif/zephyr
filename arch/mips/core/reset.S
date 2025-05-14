@@ -30,12 +30,12 @@ SECTION_FUNC(TEXT, __initialize)
 	ehb
 
 #ifdef CONFIG_INIT_STACKS
-	/* Pre-populate all bytes in z_interrupt_stacks with 0xAA */
-	la t0, z_interrupt_stacks
+	/* Pre-populate all bytes in k_priv_interrupt_stacks with 0xAA */
+	la t0, k_priv_interrupt_stacks
 	li t1, CONFIG_ISR_STACK_SIZE
 	add t1, t1, t0
 
-	/* Populate z_interrupt_stacks with 0xaaaaaaaa */
+	/* Populate k_priv_interrupt_stacks with 0xaaaaaaaa */
 	li t2, 0xaaaaaaaa
 aa_loop:
 	sw t2, 0(t0)

@@ -220,7 +220,7 @@ int arch_thread_priv_stack_space_get(const struct k_thread *thread, size_t *stac
 
 #ifndef CONFIG_MULTITHREADING
 
-K_KERNEL_STACK_ARRAY_DECLARE(z_interrupt_stacks, CONFIG_MP_MAX_NUM_CPUS, CONFIG_ISR_STACK_SIZE);
+K_KERNEL_STACK_ARRAY_DECLARE(k_priv_interrupt_stacks, CONFIG_MP_MAX_NUM_CPUS, CONFIG_ISR_STACK_SIZE);
 K_THREAD_STACK_DECLARE(z_main_stack, CONFIG_MAIN_STACK_SIZE);
 
 FUNC_NORETURN void z_riscv_switch_to_main_no_multithreading(k_thread_entry_t main_entry,
@@ -233,8 +233,8 @@ FUNC_NORETURN void z_riscv_switch_to_main_no_multithreading(k_thread_entry_t mai
 	ARG_UNUSED(p3);
 
 	_kernel.cpus[0].id = 0;
-	_kernel.cpus[0].irq_stack = (K_KERNEL_STACK_BUFFER(z_interrupt_stacks[0]) +
-				     K_KERNEL_STACK_SIZEOF(z_interrupt_stacks[0]));
+	_kernel.cpus[0].irq_stack = (K_KERNEL_STACK_BUFFER(k_priv_interrupt_stacks[0]) +
+				     K_KERNEL_STACK_SIZEOF(k_priv_interrupt_stacks[0]));
 
 	main_stack = (K_THREAD_STACK_BUFFER(z_main_stack) +
 		      K_THREAD_STACK_SIZEOF(z_main_stack));

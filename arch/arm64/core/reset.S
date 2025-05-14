@@ -190,7 +190,7 @@ secondary_core:
 primary_core:
 #endif
 	/* load primary stack and entry point */
-	ldr	x24, =(z_interrupt_stacks + __z_interrupt_stack_SIZEOF)
+	ldr	x24, =(k_priv_interrupt_stacks + __z_interrupt_stack_SIZEOF)
 	ldr	x25, =z_prep_c
 boot:
 	/* Prepare for calling C code */

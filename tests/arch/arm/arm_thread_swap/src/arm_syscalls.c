@@ -50,7 +50,7 @@ void z_impl_test_arm_user_syscall(void)
 #if defined(CONFIG_BUILTIN_STACK_GUARD)
 	zassert_true(__get_PSPLIM() == _current->arch.priv_stack_start,
 		     "PSPLIM not guarding the thread's privileged stack\n");
-	zassert_true(__get_MSPLIM() == (uint32_t)z_interrupt_stacks,
+	zassert_true(__get_MSPLIM() == (uint32_t)k_priv_interrupt_stacks,
 		     "MSPLIM not guarding the interrupt stack\n");
 #endif
 }
@@ -100,7 +100,7 @@ void arm_isr_handler(const void *args)
 		 * We expect PSPLIM to be clear at this point.
 		 */
 		zassert_true(__get_PSPLIM() == 0, "PSPLIM not clear\n");
-		zassert_true(__get_MSPLIM() == (uint32_t)z_interrupt_stacks,
+		zassert_true(__get_MSPLIM() == (uint32_t)k_priv_interrupt_stacks,
 			     "MSPLIM not guarding the interrupt stack\n");
 #endif
 		NVIC_DisableIRQ((uint32_t)args);
@@ -172,7 +172,7 @@ ZTEST(arm_thread_swap, test_arm_syscalls)
 #if defined(CONFIG_BUILTIN_STACK_GUARD)
 	zassert_true(__get_PSPLIM() == _current->stack_info.start,
 		     "PSPLIM not guarding the default stack\n");
-	zassert_true(__get_MSPLIM() == (uint32_t)z_interrupt_stacks,
+	zassert_true(__get_MSPLIM() == (uint32_t)k_priv_interrupt_stacks,
 		     "MSPLIM not guarding the interrupt stack\n");
 #endif
 

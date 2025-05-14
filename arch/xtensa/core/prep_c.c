@@ -64,8 +64,8 @@ void z_prep_c(void)
 	XTENSA_WSR(ZSR_CPU_STR, cpu0);
 
 #ifdef CONFIG_INIT_STACKS
-	char *stack_start = K_KERNEL_STACK_BUFFER(z_interrupt_stacks[0]);
-	size_t stack_sz = K_KERNEL_STACK_SIZEOF(z_interrupt_stacks[0]);
+	char *stack_start = K_KERNEL_STACK_BUFFER(k_priv_interrupt_stacks[0]);
+	size_t stack_sz = K_KERNEL_STACK_SIZEOF(k_priv_interrupt_stacks[0]);
 	char *stack_end = stack_start + stack_sz;
 
 	uint32_t sp;

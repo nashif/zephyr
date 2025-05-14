@@ -17,7 +17,7 @@ __start :
     mvtc    #(_z_initialization_process_stacks + CONFIG_INITIALIZATION_STACK_SIZE),USP
 
 /* initialise interrupt stack pointer */
-    mvtc    #(_z_interrupt_stacks + CONFIG_ISR_STACK_SIZE),ISP
+    mvtc    #(_k_priv_interrupt_stacks + CONFIG_ISR_STACK_SIZE),ISP
 
 /* set exception vector address (_ExceptVectors is defined in vects.c) */
 #if CONFIG_HAS_EXCEPT_VECTOR_TABLE
@@ -56,7 +56,7 @@ __start :
 #ifdef CONFIG_INIT_STACKS
 	/* initialize the irq stack (it is located in the bss section) */
 	mov    #0xaa,r2      			/* initialization value 0xaa */
-	mov    #_z_interrupt_stacks, r1     	/* start address */
+	mov    #_k_priv_interrupt_stacks, r1     	/* start address */
 	mov    #CONFIG_ISR_STACK_SIZE, r3	/* stack size */
 	sstr.b
 #endif
