@@ -23,6 +23,8 @@ manifest:
       url-base: https://github.com/zephyrproject-rtos
     - name: babblesim
       url-base: https://github.com/BabbleSim
+    - name: keithp
+      url-base: https://github.com/keith-packard
 
   group-filter: [-babblesim, -optional]
 
@@ -117,7 +119,7 @@ manifest:
       groups:
         - babblesim
     - name: cmsis
-      revision: d1b8b20b6278615b00e136374540eb1c00dcabe7
+      revision: 512cc7e895e8491696b61f7ba8066b4a182569b8
       path: modules/hal/cmsis
       groups:
         - hal
@@ -360,7 +362,8 @@ manifest:
       groups:
         - tee
     - name: trusted-firmware-m
-      revision: c150f48855f04d77451a39bfaa80d14eb61d918b
+      remote: keithp
+      revision: 9cd82350d2115487f4d461d8235c8e227ba3ec4b
       path: modules/tee/tf-m/trusted-firmware-m
       groups:
         - tee
