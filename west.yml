@@ -232,8 +232,9 @@ manifest:
       groups:
         - hal
     - name: hal_rpi_pico
+      remote: keithp
       path: modules/hal/rpi_pico
-      revision: 7b57b24588797e6e7bf18b6bda168e6b96374264
+      revision: e17c15c85eb6db381b8cbd3852450e781a598fb3
       groups:
         - hal
     - name: hal_silabs
