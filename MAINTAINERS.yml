@@ -4207,6 +4207,8 @@ STM32 Platforms:
     - drivers/*/*stm32*
     - dts/arm/st/
     - dts/bindings/*/*stm32*
+    - include/zephyr/dt-bindings/*/stm32*.h
+    - include/zephyr/drivers/*/stm32*.h
     - soc/st/stm32/
     - samples/boards/st/
   files-exclude:
@@ -4271,6 +4273,7 @@ Espressif Platforms:
     - samples/boards/espressif/
     - tests/boards/espressif/
     - drivers/*/*esp32*/
+    - drivers/sensor/espressif/
   labels:
     - "platform: ESP32"
 
