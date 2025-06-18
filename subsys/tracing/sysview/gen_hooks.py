@@ -6,10 +6,9 @@ import argparse
 
 # Regular expression to match SYS_PORT_TRACING_* macros
 TRACING_MACRO_REGEX = r"SYS_PORT_TRACING_(OBJ_FUNC|FUNC|OBJ_INIT|FUNC_ENTER|FUNC_EXIT|OBJ_FUNC_ENTER|OBJ_FUNC_EXIT|OBJ_FUNC_BLOCKING)\(([^)]+)\)"
-
 def parse_file(file_path):
     """
-    Parse a file and extract SYS_PORT_TRACING_* macro calls.
+    Parse a file and extract SYS_PORT_TRACING_* macro calls, including multi-line macros.
 
     Args:
         file_path (str): Path to the file to parse.
@@ -20,12 +19,13 @@ def parse_file(file_path):
     macros = []
     try:
         with open(file_path, "r") as f:
-            for line in f:
-                match = re.search(TRACING_MACRO_REGEX, line)
-                if match:
-                    macro_type = match.group(1)
-                    macro_args = match.group(2).strip()
-                    macros.append((macro_type, macro_args))
+            content = f.read()
+            # Remove line continuations for macros split across lines
+            content = re.sub(r"\\\n", "", content)
+            # Find all macro matches in the file content
+            matches = re.findall(TRACING_MACRO_REGEX, content)
+            for macro_type, macro_args in matches:
+                macros.append((macro_type, macro_args.strip()))
     except Exception as e:
         print(f"Error reading file {file_path}: {e}")
     return macros
@@ -56,7 +56,7 @@ def generate_systemview_hooks(macros):
                 hook = f"#define sys_port_trace_{obj_type}_{func_name}_enter({param_list}) \\\n" \
                        f"    SEGGER_SYSVIEW_RecordU32x2({tid_name}, (uint32_t)(uintptr_t){params[0]}, (uint32_t)(uintptr_t){params[1]})"
             elif len(params) == 3:
-                hook = f"#define sys_port_trace_{obj_type}_{func_name}_enter{param_list}) \\\n" \
+                hook = f"#define sys_port_trace_{obj_type}_{func_name}_enter({param_list}) \\\n" \
                        f"    SEGGER_SYSVIEW_RecordEndCallU32x3({tid_name}, (uint32_t)(uintptr_t){params[0]}, (uint32_t)(uintptr_t){params[1]}, (uint32_t)(uintptr_t){params[2]})"
             elif len(params) == 4:
                 hook = f"#define sys_port_trace_{obj_type}_{func_name}_enter({param_list}) \\\n" \
