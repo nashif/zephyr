@@ -18,13 +18,13 @@
 extern "C" {
 #endif
 
-#define sys_port_trace_k_poll_api_event_init(event)
-#define sys_port_trace_k_poll_api_poll_enter(events)
-#define sys_port_trace_k_poll_api_poll_exit(events, ret)
-#define sys_port_trace_k_poll_api_signal_init(signal)
-#define sys_port_trace_k_poll_api_signal_reset(signal)
-#define sys_port_trace_k_poll_api_signal_check(signal)
-#define sys_port_trace_k_poll_api_signal_raise(signal, ret)
+#define sys_port_trace_k_poll_init(event)
+#define sys_port_trace_k_poll_poll_enter(events)
+#define sys_port_trace_k_poll_poll_exit(events, ret)
+#define sys_port_trace_k_poll_signal_init(signal)
+#define sys_port_trace_k_poll_signal_reset(signal)
+#define sys_port_trace_k_poll_signal_check(signal)
+#define sys_port_trace_k_poll_signal_raise(signal, ret)
 
 
 #define sys_port_trace_k_mutex_init(mutex, ret)                                                    \
