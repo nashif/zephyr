@@ -42,10 +42,7 @@ extern "C" {
 #define TID_QUEUE_PEAK_HEAD     (21u + TID_OFFSET)
 #define TID_QUEUE_PEAK_TAIL     (22u + TID_OFFSET)
 
-#define TID_STACK_INIT          (23u + TID_OFFSET)
-#define TID_STACK_PUSH          (24u + TID_OFFSET)
-#define TID_STACK_POP           (25u + TID_OFFSET)
-#define TID_QUEUE_STACK_CLEANUP (26u + TID_OFFSET)
+
 
 #define TID_MSGQ_INIT    (27u + TID_OFFSET)
 #define TID_MSGQ_PUT     (28u + TID_OFFSET)
@@ -158,7 +155,16 @@ extern "C" {
 
 #define TID_NAMED_EVENT (131u + TID_OFFSET)
 
-/* latest ID is 130 */
+#define TID_STACK_INIT          (23u + TID_OFFSET)
+#define TID_STACK_PUSH          (24u + TID_OFFSET)
+#define TID_STACK_POP           (25u + TID_OFFSET)
+
+#define TID_STACK_ALLOC_INIT (104u + TID_OFFSET)
+#define TID_STACK_CLEANUP (105u + TID_OFFSET)
+#define TID_STACK_POP_BLOCKING (106u + TID_OFFSET)
+
+
+/* latest ID is 131 */
 
 #ifdef __cplusplus
 }

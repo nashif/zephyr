@@ -213,6 +213,7 @@ extern "C" {
 #define sys_port_trace_k_lifo_get_exit(lifo, timeout, ret)                                         \
 	SEGGER_SYSVIEW_RecordEndCall(TID_LIFO_GET)
 
+#if 0
 #define sys_port_trace_k_stack_init(stack)
 #define sys_port_trace_k_stack_alloc_init_enter(stack)
 #define sys_port_trace_k_stack_alloc_init_exit(stack, ret)
@@ -223,6 +224,8 @@ extern "C" {
 #define sys_port_trace_k_stack_pop_enter(stack, timeout)
 #define sys_port_trace_k_stack_pop_blocking(stack, timeout)
 #define sys_port_trace_k_stack_pop_exit(stack, timeout, ret)
+#endif
+#include "stack_sysview.h"
 
 #define sys_port_trace_k_msgq_init(msgq)
 #define sys_port_trace_k_msgq_alloc_init_enter(msgq)
