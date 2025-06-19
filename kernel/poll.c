@@ -56,7 +56,7 @@ void k_poll_event_init(struct k_poll_event *event, uint32_t type,
 	event->unused = 0U;
 	event->obj = obj;
 
-	SYS_PORT_TRACING_OBJ_INIT(k_poll, event);
+	SYS_PORT_TRACING_FUNC(k_poll, event_init, event);
 }
 
 /* must be called with interrupts locked */

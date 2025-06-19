@@ -18,7 +18,7 @@
 extern "C" {
 #endif
 
-#define sys_port_trace_k_poll_init(event)
+#define sys_port_trace_k_poll_event_init(event)
 #define sys_port_trace_k_poll_poll_enter(events)
 #define sys_port_trace_k_poll_poll_exit(events, ret)
 #define sys_port_trace_k_poll_signal_init(signal)
