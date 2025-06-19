@@ -30,7 +30,7 @@ def parse_file(file_path):
         print(f"Error reading file {file_path}: {e}")
     return macros
 
-def generate_systemview_hooks(macros):
+def generate_systemview_hooks(macros, object):
     """
     Generate SEGGER SystemView hooks for the given macros.
 
@@ -47,7 +47,7 @@ def generate_systemview_hooks(macros):
         if macro_type == "OBJ_FUNC_ENTER":
             # Generate hook for OBJ_FUNC_ENTER
             obj_type, func_name, *params = args
-            tid_name = f"TID_{obj_type.upper()}_{func_name.upper()}"
+            tid_name = f"TID_{object.upper()}_{func_name.upper()}"
             param_list = ", ".join(params)
             if len(params) == 1:
                 hook = f"#define sys_port_trace_{obj_type}_{func_name}_enter({param_list}) \\\n" \
@@ -65,10 +65,28 @@ def generate_systemview_hooks(macros):
                 hook = f"#define sys_port_trace_{obj_type}_{func_name}_enter({param_list}) \\\n" \
                        f"    SEGGER_SYSVIEW_RecordU32({tid_name}, (uint32_t)(uintptr_t){params[0]})"
             hooks.add(hook)
+        elif macro_type == "OBJ_FUNC":
+            # Generate hook for OBJ_FUNC
+            obj_type, func_name, *params = args
+            tid_name = f"TID_{object.upper()}_{func_name.upper()}"
+            param_list = ", ".join(params)
+            if len(params) == 1:
+                hook = f"#define sys_port_trace_{obj_type}_{func_name}({param_list}) \\\n" \
+                       f"    SEGGER_SYSVIEW_RecordU32({tid_name}, (uint32_t)({params[0]}))"
+            elif len(params) == 2:
+                hook = f"#define sys_port_trace_{obj_type}_{func_name}({param_list}) \\\n" \
+                       f"    SEGGER_SYSVIEW_RecordU32x2({tid_name}, (uint32_t)(uintptr_t){params[0]}, (uint32_t)(uintptr_t){params[1]})"
+            elif len(params) == 3:
+                hook = f"#define sys_port_trace_{obj_type}_{func_name}({param_list}) \\\n" \
+                       f"    SEGGER_SYSVIEW_RecordU32x3({tid_name}, (uint32_t)(uintptr_t){params[0]}, (uint32_t)(uintptr_t){params[1]}, (uint32_t)(uintptr_t){params[2]})"
+            else:
+                hook = f"#define sys_port_trace_{obj_type}_{func_name}({param_list}) \\\n" \
+                       f"    SEGGER_SYSVIEW_RecordU32({tid_name}, (uint32_t)({params[-1]}))"
+            hooks.add(hook)
         elif macro_type == "OBJ_FUNC_EXIT":
             # Generate hook for OBJ_FUNC_EXIT
             obj_type, func_name, *params = args
-            tid_name = f"TID_{obj_type.upper()}_{func_name.upper()}"
+            tid_name = f"TID_{object.upper()}_{func_name.upper()}"
             param_list = ", ".join(params)
             if len(params) == 1:
                 hook = f"#define sys_port_trace_{obj_type}_{func_name}_exit({param_list}) \\\n" \
@@ -86,7 +104,7 @@ def generate_systemview_hooks(macros):
         elif macro_type == "OBJ_FUNC_BLOCKING":
             # Generate hook for OBJ_FUNC_BLOCKING
             obj_type, func_name, *params = args
-            tid_name = f"TID_{obj_type.upper()}_{func_name.upper()}"
+            tid_name = f"TID_{object.upper()}_{func_name.upper()}"
             param_list = ", ".join(params)
             if len(params) == 3:
                 hook = f"#define sys_port_trace_{obj_type}_{func_name}_blocking({param_list}) \\\n" \
@@ -98,7 +116,7 @@ def generate_systemview_hooks(macros):
         elif macro_type == "FUNC_ENTER":
             # Generate hook for FUNC_ENTER
             obj_type, func_name, *params = args
-            tid_name = f"TID_{obj_type.upper()}_{func_name.upper()}"
+            tid_name = f"TID_{object.upper()}_{func_name.upper()}"
             param_list = ", ".join(params)
             if len(params) == 1:
                 hook = f"#define sys_port_trace_{obj_type}_{func_name}_enter({param_list}) \\\n" \
@@ -113,14 +131,14 @@ def generate_systemview_hooks(macros):
         elif macro_type == "FUNC_EXIT":
             # Generate hook for FUNC_EXIT
             obj_type, func_name, *params = args
-            tid_name = f"TID_{obj_type.upper()}_{func_name.upper()}"
+            tid_name = f"TID_{object.upper()}_{func_name.upper()}"
             hook = f"#define sys_port_trace_{obj_type}_{func_name}_exit(ret) \\\n" \
                    f"    SEGGER_SYSVIEW_RecordEndCallU32({tid_name}, (uint32_t)(ret))"
             hooks.add(hook)
         elif macro_type == "OBJ_INIT":
             # Generate hook for OBJ_INIT
             obj_type = args[0]
-            tid_name = f"TID_{obj_type.upper()}_INIT"
+            tid_name = f"TID_{object.upper()}_INIT"
             hook = f"#define sys_port_trace_{obj_type}_init({obj_type}) \\\n" \
                    f"    SEGGER_SYSVIEW_RecordU32({tid_name}, (uint32_t)(uintptr_t){obj_type})"
             hooks.add(hook)
@@ -154,7 +172,7 @@ def main():
             all_macros.extend(macros)
 
     if all_macros:
-        hooks = generate_systemview_hooks(all_macros)
+        hooks = generate_systemview_hooks(all_macros, args.object)
         try:
             with open(args.output, "w") as output_file:
                 output_file.write(f"""\
