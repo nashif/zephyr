@@ -56,7 +56,7 @@ void k_poll_event_init(struct k_poll_event *event, uint32_t type,
 	event->unused = 0U;
 	event->obj = obj;
 
-	SYS_PORT_TRACING_FUNC(k_poll_api, event_init, event);
+	SYS_PORT_TRACING_OBJ_INIT(k_poll, event);
 }
 
 /* must be called with interrupts locked */
@@ -290,6 +290,7 @@ int z_impl_k_poll(struct k_poll_event *events, int num_events,
 	int events_registered;
 	k_spinlock_key_t key;
 	struct z_poller *poller = &_current->poller;
+	int rc = 0;
 
 	poller->is_polling = true;
 	poller->mode = MODE_POLL;
@@ -298,7 +299,7 @@ int z_impl_k_poll(struct k_poll_event *events, int num_events,
 	__ASSERT(events != NULL, "NULL events\n");
 	__ASSERT(num_events >= 0, "<0 events\n");
 
-	SYS_PORT_TRACING_FUNC_ENTER(k_poll_api, poll, events);
+	SYS_PORT_TRACING_FUNC_ENTER(k_poll, poll, events);
 
 	events_registered = register_events(events, num_events, poller,
 					    K_TIMEOUT_EQ(timeout, K_NO_WAIT));
@@ -314,9 +315,7 @@ int z_impl_k_poll(struct k_poll_event *events, int num_events,
 		clear_event_registrations(events, events_registered, key);
 		k_spin_unlock(&lock, key);
 
-		SYS_PORT_TRACING_FUNC_EXIT(k_poll_api, poll, events, 0);
-
-		return 0;
+		goto exit;
 	}
 
 	poller->is_polling = false;
@@ -324,14 +323,13 @@ int z_impl_k_poll(struct k_poll_event *events, int num_events,
 	if (K_TIMEOUT_EQ(timeout, K_NO_WAIT)) {
 		k_spin_unlock(&lock, key);
 
-		SYS_PORT_TRACING_FUNC_EXIT(k_poll_api, poll, events, -EAGAIN);
-
-		return -EAGAIN;
+		rc = -EAGAIN;
+		goto exit;
 	}
 
 	static _wait_q_t wait_q = Z_WAIT_Q_INIT(&wait_q);
 
-	int swap_rc = z_pend_curr(&lock, key, &wait_q, timeout);
+	rc = z_pend_curr(&lock, key, &wait_q, timeout);
 
 	/*
 	 * Clear all event registrations. If events happen while we're in this
@@ -346,9 +344,10 @@ int z_impl_k_poll(struct k_poll_event *events, int num_events,
 	clear_event_registrations(events, events_registered, key);
 	k_spin_unlock(&lock, key);
 
-	SYS_PORT_TRACING_FUNC_EXIT(k_poll_api, poll, events, swap_rc);
+exit:
+	SYS_PORT_TRACING_FUNC_EXIT(k_poll, poll, events, rc);
 
-	return swap_rc;
+	return rc;
 }
 
 #ifdef CONFIG_USERSPACE
@@ -483,7 +482,7 @@ void z_impl_k_poll_signal_init(struct k_poll_signal *sig)
 	/* signal->result is left uninitialized */
 	k_object_init(sig);
 
-	SYS_PORT_TRACING_FUNC(k_poll_api, signal_init, sig);
+	SYS_PORT_TRACING_FUNC(k_poll, signal_init, sig);
 }
 
 #ifdef CONFIG_USERSPACE
@@ -499,7 +498,7 @@ void z_impl_k_poll_signal_reset(struct k_poll_signal *sig)
 {
 	sig->signaled = 0U;
 
-	SYS_PORT_TRACING_FUNC(k_poll_api, signal_reset, sig);
+	SYS_PORT_TRACING_FUNC(k_poll, signal_reset, sig);
 }
 
 void z_impl_k_poll_signal_check(struct k_poll_signal *sig,
@@ -508,7 +507,7 @@ void z_impl_k_poll_signal_check(struct k_poll_signal *sig,
 	*signaled = sig->signaled;
 	*result = sig->result;
 
-	SYS_PORT_TRACING_FUNC(k_poll_api, signal_check, sig);
+	SYS_PORT_TRACING_FUNC(k_poll, signal_check, sig);
 }
 
 #ifdef CONFIG_USERSPACE
@@ -530,21 +529,19 @@ int z_impl_k_poll_signal_raise(struct k_poll_signal *sig, int result)
 
 	sig->result = result;
 	sig->signaled = 1U;
+	int rc = 0;
 
 	poll_event = (struct k_poll_event *)sys_dlist_get(&sig->poll_events);
 	if (poll_event == NULL) {
 		k_spin_unlock(&lock, key);
-
-		SYS_PORT_TRACING_FUNC(k_poll_api, signal_raise, sig, 0);
-
-		return 0;
+		goto exit;
 	}
 
-	int rc = signal_poll_event(poll_event, K_POLL_STATE_SIGNALED);
-
-	SYS_PORT_TRACING_FUNC(k_poll_api, signal_raise, sig, rc);
+	rc = signal_poll_event(poll_event, K_POLL_STATE_SIGNALED);
 
 	z_reschedule(&lock, key);
+exit:
+	SYS_PORT_TRACING_FUNC(k_poll, signal_raise, sig, rc);
 	return rc;
 }
 
