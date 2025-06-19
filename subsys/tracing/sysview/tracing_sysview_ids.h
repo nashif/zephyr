@@ -164,6 +164,9 @@ extern "C" {
 #define TID_STACK_POP_BLOCKING (106u + TID_OFFSET)
 
 
+#define TID_MSGQ_ALLOC_INIT (107u + TID_OFFSET)
+#define TID_MSGQ_PEEK    (108u + TID_OFFSET)
+
 /* latest ID is 131 */
 
 #ifdef __cplusplus

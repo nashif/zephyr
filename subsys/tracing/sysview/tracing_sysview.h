@@ -14,6 +14,8 @@
 #include "thread_sysview.h"
 #include "workqueue_sysview.h"
 #include "sema_sysview.h"
+#include "stack_sysview.h"
+#include "msgq_sysview.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -212,34 +214,6 @@ extern "C" {
 	SEGGER_SYSVIEW_RecordU32x2(TID_LIFO_GET, (uint32_t)(uintptr_t)lifo, (uint32_t)timeout.ticks)
 #define sys_port_trace_k_lifo_get_exit(lifo, timeout, ret)                                         \
 	SEGGER_SYSVIEW_RecordEndCall(TID_LIFO_GET)
-
-#if 0
-#define sys_port_trace_k_stack_init(stack)
-#define sys_port_trace_k_stack_alloc_init_enter(stack)
-#define sys_port_trace_k_stack_alloc_init_exit(stack, ret)
-#define sys_port_trace_k_stack_cleanup_enter(stack)
-#define sys_port_trace_k_stack_cleanup_exit(stack, ret)
-#define sys_port_trace_k_stack_push_enter(stack)
-#define sys_port_trace_k_stack_push_exit(stack, ret)
-#define sys_port_trace_k_stack_pop_enter(stack, timeout)
-#define sys_port_trace_k_stack_pop_blocking(stack, timeout)
-#define sys_port_trace_k_stack_pop_exit(stack, timeout, ret)
-#endif
-#include "stack_sysview.h"
-
-#define sys_port_trace_k_msgq_init(msgq)
-#define sys_port_trace_k_msgq_alloc_init_enter(msgq)
-#define sys_port_trace_k_msgq_alloc_init_exit(msgq, ret)
-#define sys_port_trace_k_msgq_cleanup_enter(msgq)
-#define sys_port_trace_k_msgq_cleanup_exit(msgq, ret)
-#define sys_port_trace_k_msgq_put_enter(msgq, timeout)
-#define sys_port_trace_k_msgq_put_blocking(msgq, timeout)
-#define sys_port_trace_k_msgq_put_exit(msgq, timeout, ret)
-#define sys_port_trace_k_msgq_get_enter(msgq, timeout)
-#define sys_port_trace_k_msgq_get_blocking(msgq, timeout)
-#define sys_port_trace_k_msgq_get_exit(msgq, timeout, ret)
-#define sys_port_trace_k_msgq_peek(msgq, ret)
-#define sys_port_trace_k_msgq_purge(msgq)
 
 #define sys_port_trace_k_mbox_init(mbox)
 #define sys_port_trace_k_mbox_message_put_enter(mbox, timeout)
