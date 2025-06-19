@@ -124,6 +124,20 @@ void sys_trace_thread_info(struct k_thread *thread);
 #define sys_port_trace_k_thread_sched_suspend(thread)                                              \
 	SEGGER_SYSVIEW_OnTaskStopReady((uint32_t)(uintptr_t)thread, 3 << 3)
 
+void sys_trace_idle(void);
+void sys_trace_idle_exit(void);
+
+void sys_trace_k_thread_create(struct k_thread *new_thread, size_t stack_size, int prio);
+void sys_trace_k_thread_user_mode_enter(k_thread_entry_t entry, void *p1, void *p2, void *p3);
+
+void sys_trace_k_thread_join_blocking(struct k_thread *thread, k_timeout_t timeout);
+void sys_trace_k_thread_join_exit(struct k_thread *thread, k_timeout_t timeout, int ret);
+
+void sys_trace_k_thread_switched_out(void);
+void sys_trace_k_thread_switched_in(void);
+void sys_trace_k_thread_ready(struct k_thread *thread);
+void sys_trace_k_thread_pend(struct k_thread *thread);
+void sys_trace_k_thread_info(struct k_thread *thread);
 
 #ifdef __cplusplus
 }
