@@ -129,12 +129,19 @@ def generate_systemview_hooks(macros):
 def main():
     parser = argparse.ArgumentParser(description="Parse source/header files and generate SystemView hooks for SYS_PORT_TRACING_* macros.")
     parser.add_argument("path", help="Path to the source/header file or directory to parse.")
+    parser.add_argument("output", help="Path to the output header file.")
+    parser.add_argument("--object", help="Object type to filter macros (optional).", default=None)
     args = parser.parse_args()
 
     if os.path.isfile(args.path):
         files = [args.path]
     elif os.path.isdir(args.path):
-        files = [os.path.join(root, file) for root, _, files in os.walk(args.path) for file in files if file.endswith((".c", ".h"))]
+        files = [
+            os.path.join(root, file)
+            for root, _, files in os.walk(args.path)
+            for file in files
+            if file.endswith((".c", ".h"))
+        ]
     else:
         print(f"Invalid path: {args.path}")
         return
@@ -148,8 +155,28 @@ def main():
 
     if all_macros:
         hooks = generate_systemview_hooks(all_macros)
-        print("\nGenerated SystemView hooks:\n")
-        print(hooks)
+        try:
+            with open(args.output, "w") as output_file:
+                output_file.write(f"""\
+/*
+ * Copyright The Zephyr Project Contributors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#ifndef ZEPHYR_TRACE_{args.object.upper()}_SYSVIEW_H
+#define ZEPHYR_TRACE_{args.object.upper()}_SYSVIEW_H
+#include <zephyr/kernel.h>
+#include <tracing_sysview_ids.h>
+#ifdef __cplusplus
+extern "C" {{
+#endif
+
+""")
+                output_file.write(hooks)
+                output_file.write(f"\n#ifdef __cplusplus\n}}\n#endif\n#endif /* ZEPHYR_TRACE_{args.object.upper()}_SYSVIEW_H */\n")
+            print(f"Generated hooks written to {args.output}")
+        except Exception as e:
+            print(f"Error writing to file {args.output}: {e}")
     else:
         print("No SYS_PORT_TRACING_* macros found.")
 
