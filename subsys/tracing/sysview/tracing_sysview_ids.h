@@ -58,6 +58,7 @@ extern "C" {
 #define TID_MBOX_DATA_GET       (37u + TID_OFFSET)
 #define TID_MBOX_DATA_BLOCK_GET (38u + TID_OFFSET)
 
+
 #define TID_PIPE_INIT      (39u + TID_OFFSET)
 #define TID_PIPE_CLEANUP   (40u + TID_OFFSET)
 #define TID_PIPE_PUT       (41u + TID_OFFSET)
@@ -166,6 +167,8 @@ extern "C" {
 
 #define TID_MSGQ_ALLOC_INIT (107u + TID_OFFSET)
 #define TID_MSGQ_PEEK    (108u + TID_OFFSET)
+
+#define TID_MBOX_MESSAGE_PUT (109u + TID_OFFSET)
 
 /* latest ID is 131 */
 

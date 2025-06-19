@@ -16,6 +16,7 @@
 #include "sema_sysview.h"
 #include "stack_sysview.h"
 #include "msgq_sysview.h"
+#include "mbox_sysview.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -214,19 +215,6 @@ extern "C" {
 	SEGGER_SYSVIEW_RecordU32x2(TID_LIFO_GET, (uint32_t)(uintptr_t)lifo, (uint32_t)timeout.ticks)
 #define sys_port_trace_k_lifo_get_exit(lifo, timeout, ret)                                         \
 	SEGGER_SYSVIEW_RecordEndCall(TID_LIFO_GET)
-
-#define sys_port_trace_k_mbox_init(mbox)
-#define sys_port_trace_k_mbox_message_put_enter(mbox, timeout)
-#define sys_port_trace_k_mbox_message_put_blocking(mbox, timeout)
-#define sys_port_trace_k_mbox_message_put_exit(mbox, timeout, ret)
-#define sys_port_trace_k_mbox_put_enter(mbox, timeout)
-#define sys_port_trace_k_mbox_put_exit(mbox, timeout, ret)
-#define sys_port_trace_k_mbox_async_put_enter(mbox, sem)
-#define sys_port_trace_k_mbox_async_put_exit(mbox, sem)
-#define sys_port_trace_k_mbox_get_enter(mbox, timeout)
-#define sys_port_trace_k_mbox_get_blocking(mbox, timeout)
-#define sys_port_trace_k_mbox_get_exit(mbox, timeout, ret)
-#define sys_port_trace_k_mbox_data_get(rx_msg)
 
 #define sys_port_trace_k_pipe_init(pipe, buffer, size)
 #define sys_port_trace_k_pipe_reset_enter(pipe)
