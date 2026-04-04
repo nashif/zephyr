@@ -11,26 +11,27 @@
  * This module provides general purpose thread support.
  */
 
+#include <stdbool.h>
+#include <string.h>
+
+#include <zephyr/init.h>
 #include <zephyr/kernel.h>
+#include <zephyr/llext/symbol.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/random/random.h>
 #include <zephyr/spinlock.h>
+#include <zephyr/sys/check.h>
+#include <zephyr/sys/iterable_sections.h>
 #include <zephyr/sys/math_extras.h>
-#include <zephyr/sys_clock.h>
+#include <zephyr/tracing/tracing.h>
+
+#include <zephyr/internal/syscall_handler.h>
+
+#include <kernel_internal.h>
 #include <ksched.h>
+#include <kswap.h>
 #include <kthread.h>
 #include <wait_q.h>
-#include <zephyr/internal/syscall_handler.h>
-#include <kernel_internal.h>
-#include <kswap.h>
-#include <zephyr/init.h>
-#include <zephyr/tracing/tracing.h>
-#include <string.h>
-#include <stdbool.h>
-#include <zephyr/sys/check.h>
-#include <zephyr/random/random.h>
-#include <zephyr/sys/atomic.h>
-#include <zephyr/logging/log.h>
-#include <zephyr/llext/symbol.h>
-#include <zephyr/sys/iterable_sections.h>
 
 LOG_MODULE_DECLARE(os, CONFIG_KERNEL_LOG_LEVEL);
 
