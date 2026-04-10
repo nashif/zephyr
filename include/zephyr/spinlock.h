@@ -369,13 +369,20 @@ static ALWAYS_INLINE void k_spin_release(struct k_spinlock *l)
 #endif /* CONFIG_SMP */
 }
 
-#if defined(CONFIG_SPIN_VALIDATE) && defined(__GNUC__)
-static ALWAYS_INLINE void z_spin_onexit(__maybe_unused k_spinlock_key_t *k)
+#if defined(__GNUC__)
+/* Internal guard struct used by K_SPINLOCK to release the lock on scope exit */
+struct z_spinlock_key_guard {
+	struct k_spinlock *lock;
+	k_spinlock_key_t key;
+};
+
+static ALWAYS_INLINE void z_spinlock_key_guard_unlock(struct z_spinlock_key_guard *g)
 {
-	__ASSERT(k->key, "K_SPINLOCK exited with goto, break or return, "
-			 "use K_SPINLOCK_BREAK instead.");
+	if (g->lock != NULL) {
+		k_spin_unlock(g->lock, g->key);
+	}
 }
-#define K_SPINLOCK_ONEXIT __attribute__((__cleanup__(z_spin_onexit)))
+#define K_SPINLOCK_ONEXIT __attribute__((__cleanup__(z_spinlock_key_guard_unlock)))
 #else
 #define K_SPINLOCK_ONEXIT
 #endif
@@ -419,14 +426,17 @@ static ALWAYS_INLINE void z_spin_onexit(__maybe_unused k_spinlock_key_t *k)
  * exactly once:
  *
  * @code{.c}
- * for (k_spinlock_key_t key = k_spin_lock(&mylock); ...; k_spin_unlock(&mylock, key)) {
+ * for (struct z_spinlock_key_guard __guard = {.lock = &mylock, .key = k_spin_lock(&mylock)};
+ *      __guard.lock != NULL;
+ *      k_spin_unlock(&mylock, __guard.key), __guard.lock = NULL) {
  *     ...
  * }
  * @endcode
  *
- * @warning The code block must execute to its end or be left by calling
- * @ref K_SPINLOCK_BREAK. Otherwise, e.g. if exiting the block with a break,
- * goto or return statement, the spinlock will not be released on exit.
+ * @warning On GCC-compatible compilers the spinlock is automatically released
+ * when the enclosed block is exited via break, goto, or return.  On other
+ * compilers the code block must execute to its end or be left by calling
+ * @ref K_SPINLOCK_BREAK; any other early exit leaves the spinlock held.
  *
  * @note In user mode the spinlock must be placed in memory accessible to the
  * application, see @ref K_APP_DMEM and @ref K_APP_BMEM macros for details.
@@ -434,8 +444,10 @@ static ALWAYS_INLINE void z_spin_onexit(__maybe_unused k_spinlock_key_t *k)
  * @param lck Spinlock used to guard the enclosed code block.
  */
 #define K_SPINLOCK(lck)                                                                            \
-	for (k_spinlock_key_t __i K_SPINLOCK_ONEXIT = {}, __key = k_spin_lock(lck); !__i.key;      \
-	     k_spin_unlock((lck), __key), __i.key = 1)
+	for (struct z_spinlock_key_guard __guard K_SPINLOCK_ONEXIT =                               \
+		     {.lock = (lck), .key = k_spin_lock(lck)};                                    \
+	     __guard.lock != NULL;                                                                 \
+	     k_spin_unlock((lck), __guard.key), __guard.lock = NULL)
 
 /** @} */
 
