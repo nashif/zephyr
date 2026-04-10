@@ -42,6 +42,7 @@ synchronization.
    synchronization/condvar.rst
    synchronization/events.rst
    synchronization/completions.rst
+   synchronization/thread_notify.rst
    smp/smp.rst
 
 .. _kernel_data_passing_api:
