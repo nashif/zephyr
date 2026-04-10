@@ -383,17 +383,38 @@ bool k_queue_unique_append(struct k_queue *queue, void *data)
 {
 	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_queue, unique_append, queue);
 
+	k_spinlock_key_t key = k_spin_lock(&queue->lock);
 	sys_sfnode_t *test;
 
 	SYS_SFLIST_FOR_EACH_NODE(&queue->data_q, test) {
-		if (test == (sys_sfnode_t *) data) {
+		if (test == (sys_sfnode_t *)data) {
+			k_spin_unlock(&queue->lock, key);
 			SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_queue, unique_append, queue, false);
 
 			return false;
 		}
 	}
 
-	k_queue_append(queue, data);
+	/* Item is unique; insert while still holding the lock so that the
+	 * check and the append are atomic with respect to other CPUs.
+	 */
+	struct k_thread *first_pending_thread = z_unpend_first_thread(&queue->wait_q);
+	bool resched;
+
+	if (unlikely(first_pending_thread != NULL)) {
+		prepare_thread_to_run(first_pending_thread, data);
+		resched = true;
+	} else {
+		sys_sfnode_init(data, 0x0);
+		sys_sflist_append(&queue->data_q, data);
+		resched = handle_poll_events(queue, K_POLL_STATE_DATA_AVAILABLE);
+	}
+
+	if (resched) {
+		z_reschedule(&queue->lock, key);
+	} else {
+		k_spin_unlock(&queue->lock, key);
+	}
 
 	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_queue, unique_append, queue, true);
 
