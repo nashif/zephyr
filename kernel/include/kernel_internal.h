@@ -280,6 +280,17 @@ void k_thread_abort_cleanup(struct k_thread *thread);
 void k_thread_abort_cleanup_check_reuse(struct k_thread *thread);
 #endif /* CONFIG_THREAD_ABORT_NEED_CLEANUP */
 
+#if defined(CONFIG_THREAD_NOTIFY)
+/**
+ * @brief Initialise direct-to-thread notification state for a new thread.
+ *
+ * Must be called during thread creation before the thread is made runnable.
+ *
+ * @param thread Thread to initialise.
+ */
+void z_thread_notify_init(struct k_thread *thread);
+#endif /* CONFIG_THREAD_NOTIFY */
+
 #ifdef __cplusplus
 }
 #endif

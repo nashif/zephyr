@@ -613,6 +613,10 @@ char *z_setup_new_thread(struct k_thread *new_thread,
 #endif /* CONFIG_USERSPACE */
 	z_waitq_init(&new_thread->join_queue);
 
+#if defined(CONFIG_THREAD_NOTIFY)
+	z_thread_notify_init(new_thread);
+#endif /* CONFIG_THREAD_NOTIFY */
+
 	/* Initialize various struct k_thread members */
 	z_init_thread_base(&new_thread->base, prio, _THREAD_SLEEPING, options);
 	stack_ptr = setup_thread_stack(new_thread, stack, stack_size);
