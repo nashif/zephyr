@@ -202,10 +202,8 @@ static ALWAYS_INLINE k_spinlock_key_t k_spin_lock(struct k_spinlock *l)
 		arch_spin_relax();
 	}
 #else
-	while (!atomic_cas(&l->locked, 0, 1)) {
-		do {
-			arch_spin_relax();
-		} while (atomic_get(&l->locked) != 0);
+	while (atomic_get(&l->locked) != 0 || !atomic_cas(&l->locked, 0, 1)) {
+		arch_spin_relax();
 	}
 #endif /* CONFIG_TICKET_SPINLOCKS */
 #endif /* CONFIG_SMP */
