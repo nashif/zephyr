@@ -1,0 +1,7 @@
+# Copyright (c) 2026 The Zephyr Project Contributors
+# SPDX-License-Identifier: Apache-2.0
+
+config TEST_PROCESS
+	bool "Process subsystem test suite"
+	default y
+	depends on PROCESS && ZTEST

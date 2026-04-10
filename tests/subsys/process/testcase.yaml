@@ -1,0 +1,31 @@
+common:
+  tags:
+    - process
+    - llext
+    - userspace
+  platform_exclude:
+    - numaker_pfm_m487
+    - qemu_cortex_m0
+    - mps2/an383
+    - qemu_xtensa/dc233c/mmu
+  integration_platforms:
+    - qemu_cortex_a9
+    - qemu_cortex_r5
+    - mps2/an385
+    - mps2/an521/cpu0
+  min_ram: 128
+  min_flash: 256
+  extra_configs:
+    - arch:arm64:CONFIG_LLEXT_HEAP_SIZE=128
+
+tests:
+  subsys.process.lifecycle:
+    harness: ztest
+
+  subsys.process.no_userspace:
+    harness: ztest
+    extra_configs:
+      - CONFIG_USERSPACE=n
+    tags:
+      - process
+      - llext
