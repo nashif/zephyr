@@ -353,6 +353,21 @@ static ALWAYS_INLINE bool z_spin_is_locked(struct k_spinlock *l)
 }
 #endif /* defined(CONFIG_SMP) && (defined(CONFIG_TEST) || defined(CONFIG_ASSERT)) */
 
+/**
+ * @brief Release a spinlock without re-enabling interrupts
+ *
+ * This is an internal variant of k_spin_unlock() intended for use by the
+ * kernel scheduler and other contexts that need to drop the SMP spinlock
+ * but keep local interrupts disabled, for example when transitioning
+ * directly into a context-switch path.
+ *
+ * @warning This function leaves local interrupts in the disabled state.
+ * Callers are responsible for re-enabling interrupts at the appropriate
+ * point.  Failing to do so will permanently mask interrupts on the calling
+ * CPU.  In most cases k_spin_unlock() should be used instead.
+ *
+ * @param l A pointer to the spinlock to release
+ */
 /* Internal function: releases the lock, but leaves local interrupts disabled */
 static ALWAYS_INLINE void k_spin_release(struct k_spinlock *l)
 {
