@@ -277,7 +277,7 @@ static int signal_poller(struct k_poll_event *event, uint32_t state)
 
 	z_ready_thread(thread);
 
-	return 0;
+	return 1;
 }
 
 int z_impl_k_poll(struct k_poll_event *events, int num_events,
@@ -540,8 +540,12 @@ int z_impl_k_poll_signal_raise(struct k_poll_signal *sig, int result)
 
 	SYS_PORT_TRACING_FUNC(k_poll_api, signal_raise, sig, rc);
 
-	z_reschedule(&lock, key);
-	return rc;
+	if (rc > 0) {
+		z_reschedule(&lock, key);
+	} else {
+		k_spin_unlock(&lock, key);
+	}
+	return rc > 0 ? 0 : rc;
 }
 
 #ifdef CONFIG_USERSPACE
