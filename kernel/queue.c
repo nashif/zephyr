@@ -369,7 +369,10 @@ bool k_queue_remove(struct k_queue *queue, void *data)
 {
 	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_queue, remove, queue);
 
+	k_spinlock_key_t key = k_spin_lock(&queue->lock);
 	bool ret = sys_sflist_find_and_remove(&queue->data_q, (sys_sfnode_t *)data);
+
+	k_spin_unlock(&queue->lock, key);
 
 	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_queue, remove, queue, ret);
 
