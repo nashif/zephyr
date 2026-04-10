@@ -82,7 +82,7 @@ static inline int z_vrfy_k_mutex_init(struct k_mutex *mutex)
 #if (CONFIG_PRIORITY_CEILING < K_LOWEST_THREAD_PRIO)
 static int32_t new_prio_for_inheritance(int32_t target, int32_t limit)
 {
-	int new_prio = z_is_prio_higher(target, limit) ? target : limit;
+	int32_t new_prio = z_is_prio_higher(target, limit) ? target : limit;
 
 	new_prio = z_get_new_prio_with_ceiling(new_prio);
 
