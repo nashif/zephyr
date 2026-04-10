@@ -22,6 +22,7 @@ OS Services
    jwt/index.rst
    llext/index.rst
    logging/index.rst
+   process/index.rst
    tracing/index.rst
    resource_management/index.rst
    mem_mgmt/index.rst
