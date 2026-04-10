@@ -184,6 +184,8 @@ void *k_heap_realloc(struct k_heap *heap, void *ptr, size_t bytes, k_timeout_t t
 
 	__ASSERT(!arch_is_in_isr() || K_TIMEOUT_EQ(timeout, K_NO_WAIT), "");
 
+	bool blocked_realloc = false;
+
 	while (ret == NULL) {
 		ret = sys_heap_realloc(&heap->heap, ptr, bytes);
 
@@ -192,14 +194,20 @@ void *k_heap_realloc(struct k_heap *heap, void *ptr, size_t bytes, k_timeout_t t
 			break;
 		}
 
+		if (!blocked_realloc) {
+			blocked_realloc = true;
+			SYS_PORT_TRACING_OBJ_FUNC_BLOCKING(k_heap, realloc, heap, timeout);
+		}
+
 		timeout = sys_timepoint_timeout(end);
 		(void) z_pend_curr(&heap->lock, key, &heap->wait_q, timeout);
 		key = k_spin_lock(&heap->lock);
 	}
 
+	k_spin_unlock(&heap->lock, key);
+
 	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_heap, realloc, heap, ptr, bytes, timeout, ret);
 
-	k_spin_unlock(&heap->lock, key);
 	return ret;
 }
 
