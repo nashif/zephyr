@@ -96,7 +96,7 @@ void z_impl_k_sem_give(struct k_sem *sem)
 {
 	k_spinlock_key_t key = k_spin_lock(&lock);
 	struct k_thread *thread;
-	bool resched;
+	bool resched = false;
 
 	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_sem, give, sem);
 
@@ -107,7 +107,7 @@ void z_impl_k_sem_give(struct k_sem *sem)
 		z_ready_thread(thread);
 		resched = true;
 	} else {
-		sem->count += (sem->count != sem->limit) ? 1U : 0U;
+		sem->count += (sem->count < sem->limit) ? 1U : 0U;
 		resched = handle_poll_events(sem);
 	}
 
