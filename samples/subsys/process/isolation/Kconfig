@@ -1,13 +1,13 @@
 # Copyright (c) 2026 The Zephyr Project Contributors
 # SPDX-License-Identifier: Apache-2.0
 
-mainmenu "Process Model hello world sample"
+mainmenu "Process Model isolation sample"
 
 source "Kconfig.zephyr"
 
-config SAMPLE_PROCESS_HELLO
-	bool "Hello World process sample"
+config SAMPLE_PROCESS_ISOLATION
+	bool "Isolation process sample"
 	default y
 	depends on PROCESS
 	help
-	  Build the Hello World process sample.
+	  Build the multi-process isolation sample.
