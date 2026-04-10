@@ -7183,6 +7183,10 @@ void k_sys_runtime_stats_disable(void);
 #include <zephyr/tracing/tracing.h>
 #include <zephyr/syscalls/kernel.h>
 
+#if defined(CONFIG_THREAD_NOTIFY)
+#include <zephyr/kernel/thread_notify.h>
+#endif /* CONFIG_THREAD_NOTIFY */
+
 #endif /* !_ASMLANGUAGE */
 
 #endif /* ZEPHYR_INCLUDE_KERNEL_H_ */
