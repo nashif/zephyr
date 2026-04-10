@@ -1,0 +1,5 @@
+tests:
+  kernel.thread_notify:
+    tags:
+      - kernel
+      - thread_notify
