@@ -259,16 +259,17 @@ int z_impl_k_mutex_unlock(struct k_mutex *mutex)
 
 	LOG_DBG("mutex %p lock_count: %d", mutex, mutex->lock_count);
 
+	k_spinlock_key_t key = k_spin_lock(&lock);
+
 	/*
 	 * If we are the owner and count is greater than 1, then decrement
 	 * the count and return and keep current thread as the owner.
 	 */
 	if (mutex->lock_count > 1U) {
 		mutex->lock_count--;
+		k_spin_unlock(&lock, key);
 		goto k_mutex_unlock_return;
 	}
-
-	k_spinlock_key_t key = k_spin_lock(&lock);
 
 #if (CONFIG_PRIORITY_CEILING < K_LOWEST_THREAD_PRIO)
 	adjust_owner_prio(mutex, mutex->owner_orig_prio);
