@@ -777,6 +777,24 @@ config COMPLETION
 
 	  Modelled after the Linux kernel completion API.
 
+config THREAD_NOTIFY
+	bool "Direct-to-thread notifications"
+	depends on MULTITHREADING
+	help
+	  Enable direct-to-thread notifications, a lightweight signalling
+	  mechanism that allows any thread or ISR to post a 32-bit value
+	  directly to a target thread without requiring a separate kernel
+	  object (semaphore, event, etc.).
+
+	  Each thread carries a notification value and a pending counter.
+	  The sending side can OR bits into the value, overwrite it, or
+	  simply increment the pending count (acting like a lightweight
+	  semaphore give).  The receiving side can wait for any notification,
+	  optionally clearing bits on entry or exit.
+
+	  Note that enabling this option slightly increases the size of the
+	  thread structure.
+
 config KERNEL_MEM_POOL
 	bool "Use Kernel Memory Pool"
 	default y

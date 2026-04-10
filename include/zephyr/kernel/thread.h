@@ -291,6 +291,15 @@ struct k_thread {
 	uint32_t   event_options;
 #endif /* CONFIG_EVENTS */
 
+#if defined(CONFIG_THREAD_NOTIFY)
+	/** notification value set by k_thread_notify() */
+	uint32_t notify_value;
+	/** number of pending notifications (lightweight semaphore count) */
+	uint32_t notify_pending;
+	/** wait queue for threads blocked in k_thread_notify_wait() */
+	_wait_q_t notify_wait_q;
+#endif /* CONFIG_THREAD_NOTIFY */
+
 #if defined(CONFIG_THREAD_MONITOR)
 	/** thread entry and parameters description */
 	struct __thread_entry entry;
