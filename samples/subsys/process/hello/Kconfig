@@ -1,0 +1,9 @@
+# Copyright (c) 2026 The Zephyr Project Contributors
+# SPDX-License-Identifier: Apache-2.0
+
+config SAMPLE_PROCESS_HELLO
+	bool "Hello World process sample"
+	default y
+	depends on PROCESS
+	help
+	  Build the Hello World process sample.

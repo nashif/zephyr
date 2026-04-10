@@ -1,0 +1,30 @@
+sample:
+  name: Process Model - Hello World
+  description: >
+    Demonstrates loading and running a dynamically-loaded ELF process using
+    the Zephyr Process Model subsystem.  The loadable extension runs in an
+    isolated memory domain (and in user mode when CONFIG_USERSPACE is enabled)
+    without any knowledge of LLEXT, memory domains, or userspace internals.
+
+common:
+  tags:
+    - process
+    - llext
+    - userspace
+  depends_on: []
+  min_ram: 64
+  min_flash: 128
+  integration_platforms:
+    - qemu_cortex_a9
+    - qemu_cortex_r5
+    - mps2/an385
+    - mps2/an521/cpu0
+    - native_sim
+
+tests:
+  sample.process.hello:
+    harness: console
+    harness_config:
+      type: one_line
+      regex:
+        - "Hello from process 'hello' \\(arg=42\\)"
