@@ -1,0 +1,51 @@
+# Copyright (c) 2026 The Zephyr Project Contributors
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig PROCESS
+	bool "Zephyr Process Model"
+	depends on LLEXT
+	select THREAD_NAME
+	help
+	  Enable the Zephyr process model subsystem.
+
+	  The process model combines three Zephyr subsystems to create a
+	  cohesive abstraction for isolated, dynamically-loaded application
+	  processes:
+
+	    - LLEXT for loading ELF binaries at runtime
+	    - Memory Domains for per-process hardware memory isolation
+	      (requires CONFIG_USERSPACE)
+	    - Userspace to run process threads in unprivileged mode
+
+	  A simple API (z_process_load / z_process_start / z_process_join /
+	  z_process_unload) hides the internal complexity of each subsystem.
+
+if PROCESS
+
+config PROCESS_NAME_MAX_LEN
+	int "Maximum length of a process name"
+	default 15
+	range 8 31
+	help
+	  Maximum number of characters in a process name, not counting the
+	  null terminator.  Truncation is silent.
+
+config PROCESS_STACK_SIZE_DEFAULT
+	int "Default process thread stack size (bytes)"
+	default 2048
+	help
+	  Stack size used when z_process_opts.stack_size is 0.
+
+config PROCESS_PRIORITY_DEFAULT
+	int "Default process thread scheduling priority"
+	default 5
+	range -16 14
+	help
+	  Scheduling priority applied to a new process thread when
+	  z_process_opts.priority is not overridden.
+
+module = PROCESS
+module-str = process
+source "subsys/logging/Kconfig.template.log_config"
+
+endif # PROCESS
