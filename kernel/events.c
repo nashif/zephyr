@@ -98,7 +98,7 @@ static uint32_t are_wait_conditions_met(uint32_t desired, uint32_t current,
 {
 	uint32_t match = current & desired;
 
-	if ((wait_condition == K_EVENT_WAIT_ALL) && (match != desired)) {
+	if (((wait_condition & K_EVENT_WAIT_MASK) == K_EVENT_WAIT_ALL) && (match != desired)) {
 		/* special case for K_EVENT_WAIT_ALL */
 		return 0;
 	}
