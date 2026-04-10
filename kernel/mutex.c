@@ -126,6 +126,12 @@ int z_impl_k_mutex_lock(struct k_mutex *mutex, k_timeout_t timeout)
 					mutex->owner_orig_prio;
 #endif
 
+		CHECKIF(mutex->lock_count == UINT32_MAX) {
+			k_spin_unlock(&lock, key);
+			SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_mutex, lock, mutex, timeout, -EAGAIN);
+			return -EAGAIN;
+		}
+
 		mutex->lock_count++;
 		mutex->owner = _current;
 
