@@ -346,9 +346,7 @@ static ALWAYS_INLINE void k_spin_unlock(struct k_spinlock *l,
 static ALWAYS_INLINE bool z_spin_is_locked(struct k_spinlock *l)
 {
 #ifdef CONFIG_TICKET_SPINLOCKS
-	atomic_val_t ticket_val = atomic_get(&l->owner);
-
-	return !atomic_cas(&l->tail, ticket_val, ticket_val);
+	return atomic_get(&l->tail) != atomic_get(&l->owner);
 #else
 	return l->locked;
 #endif /* CONFIG_TICKET_SPINLOCKS */
