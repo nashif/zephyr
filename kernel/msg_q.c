@@ -283,7 +283,11 @@ void z_impl_k_msgq_get_attrs(struct k_msgq *msgq, struct k_msgq_attrs *attrs)
 {
 	attrs->msg_size = msgq->msg_size;
 	attrs->max_msgs = msgq->max_msgs;
+
+	k_spinlock_key_t key = k_spin_lock(&msgq->lock);
+
 	attrs->used_msgs = msgq->used_msgs;
+	k_spin_unlock(&msgq->lock, key);
 }
 
 #ifdef CONFIG_USERSPACE
@@ -322,8 +326,6 @@ int z_impl_k_msgq_get(struct k_msgq *msgq, void *data, k_timeout_t timeout)
 		/* handle first thread waiting to write (if any) */
 		pending_thread = z_unpend_first_thread(&msgq->wait_q);
 		if (unlikely(pending_thread != NULL)) {
-			SYS_PORT_TRACING_OBJ_FUNC_BLOCKING(k_msgq, get, msgq, timeout);
-
 			/* add thread's message to queue */
 			__ASSERT_NO_MSG((msgq->write_ptr >= msgq->buffer_start) &&
 					(msgq->write_ptr <= (msgq->buffer_end - 1)) &&
