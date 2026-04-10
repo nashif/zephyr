@@ -1,0 +1,17 @@
+tests:
+  sample.kernel.thread_notify:
+    integration_platforms:
+      - native_sim
+    tags:
+      - kernel
+      - thread_notify
+    harness: console
+    harness_config:
+      type: multi_line
+      regex:
+        - ".*\\[main\\] waiting for sensor notification"
+        - ".*\\[sensor\\] posting temperature: 23"
+        - ".*\\[main\\] received notification: value=0x00000017"
+        - ".*\\[producer\\] sending 5 work items"
+        - ".*\\[consumer\\] processed 5 work items"
+        - ".*Sample complete"
