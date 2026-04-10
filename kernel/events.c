@@ -47,6 +47,7 @@ struct event_walk_data {
 #endif /* CONFIG_WAITQ_SCALABLE */
 	uint32_t events;
 	uint32_t clear_events;
+	bool resched;
 };
 
 #ifdef CONFIG_OBJ_CORE_EVENT
@@ -157,6 +158,7 @@ static int event_walk_op(struct k_thread *thread, void *data)
 			event_data->clear_events |= match;
 		}
 		z_abort_thread_timeout(thread);
+		event_data->resched = true;
 
 #ifndef CONFIG_WAITQ_SCALABLE
 		/*
@@ -208,12 +210,17 @@ static uint32_t k_event_post_internal(struct k_event *event, uint32_t events,
 #endif /* CONFIG_WAITQ_SCALABLE */
 	data.events = events;
 	data.clear_events = 0;
+	data.resched = false;
 	z_sched_waitq_walk(&event->wait_q, event_walk_op, EVENT_POST_WALK_OP_FN, &data);
 
 	/* stash any events not consumed */
 	event->events = data.events & ~data.clear_events;
 
-	z_reschedule(&event->lock, key);
+	if (data.resched) {
+		z_reschedule(&event->lock, key);
+	} else {
+		k_spin_unlock(&event->lock, key);
+	}
 
 	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_event, post, event, events,
 				       events_mask);
