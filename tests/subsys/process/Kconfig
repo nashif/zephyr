@@ -1,6 +1,10 @@
 # Copyright (c) 2026 The Zephyr Project Contributors
 # SPDX-License-Identifier: Apache-2.0
 
+mainmenu "Process Model hello world sample"
+
+source "Kconfig.zephyr"
+
 config TEST_PROCESS
 	bool "Process subsystem test suite"
 	default y
