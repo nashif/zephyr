@@ -1,0 +1,22 @@
+sample:
+  description: >
+    Mirrors samples/kernel/completion and samples/kernel/semaphore_sync
+    using direct-to-thread notifications, showing the differences between
+    all three synchronisation primitives.
+  name: Thread Notify Sync Sample
+tests:
+  sample.kernel.thread_notify_sync:
+    tags:
+      - kernel
+      - synchronization
+    harness: console
+    harness_config:
+      type: multi_line
+      regex:
+        - "worker: starting long computation"
+        - "worker: computation done, notifying main"
+        - "main: computation result ready"
+        - "worker: task 1 done"
+        - "worker: task 2 done"
+        - "worker: task 3 done"
+        - "main: all tasks done"
