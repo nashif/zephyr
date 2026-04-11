@@ -35,6 +35,7 @@
  * - @ref _track_list_k_pipe
  * - @ref _track_list_k_queue
  * - @ref _track_list_k_event
+ * - @ref _track_list_k_completion
  *
  * @note To enable object tracking, enable @kconfig{CONFIG_TRACING_OBJECT_TRACKING}.
  *       When disabled, all macros compile to no-ops, preserving call sites with zero runtime
@@ -65,6 +66,8 @@ extern struct k_pipe *_track_list_k_pipe;
 extern struct k_queue *_track_list_k_queue;
 /** @brief Head of the tracking list for k_event objects. */
 extern struct k_event *_track_list_k_event;
+/** @brief Head of the tracking list for k_completion objects. */
+extern struct k_completion *_track_list_k_completion;
 
 /**
  * @brief Gets node's next element in a object tracking list.
@@ -116,6 +119,9 @@ extern struct k_event *_track_list_k_event;
 #define sys_port_track_k_event_init(event) \
 	sys_track_k_event_init(event);
 
+#define sys_port_track_k_completion_init(c) \
+	sys_track_k_completion_init(c);
+
 #define sys_port_track_socket_init(sock, family, type, proto)	\
 	sys_track_socket_init(sock, family, type, proto);
 
@@ -129,6 +135,7 @@ void sys_track_k_mbox_init(struct k_mbox *mbox);
 void sys_track_k_pipe_init(struct k_pipe *pipe, void *buffer, size_t size);
 void sys_track_k_queue_init(struct k_queue *queue);
 void sys_track_k_event_init(struct k_event *event);
+void sys_track_k_completion_init(struct k_completion *c);
 void sys_track_socket_init(int sock, int family, int type, int proto);
 
 /** @endcond */
@@ -167,6 +174,7 @@ void sys_track_socket_init(int sock, int family, int type, int proto);
 #define sys_port_track_k_heap_free(h)
 #define sys_port_track_k_heap_init(h)
 #define sys_port_track_k_event_init(event)
+#define sys_port_track_k_completion_init(c)
 #define sys_port_track_socket_init(sock, family, type, proto)
 
 #endif

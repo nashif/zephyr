@@ -33,6 +33,7 @@
 #include <ksched.h>
 #include <zephyr/init.h>
 #include <zephyr/internal/syscall_handler.h>
+#include <zephyr/tracing/tracing.h>
 #include <zephyr/sys/check.h>
 #include <limits.h>
 
@@ -49,7 +50,12 @@ void z_impl_k_completion_init(struct k_completion *c)
 
 	c->done = 0U;
 	z_waitq_init(&c->wait_q);
+
+	SYS_PORT_TRACING_OBJ_INIT(k_completion, c, 0);
+
 	k_object_init(c);
+
+	sys_port_track_k_completion_init(c);
 
 #ifdef CONFIG_OBJ_CORE_COMPLETION
 	k_obj_core_init_and_link(K_OBJ_CORE(c), &obj_type_completion);
@@ -70,16 +76,20 @@ void z_impl_k_completion_complete(struct k_completion *c)
 	k_spinlock_key_t key = k_spin_lock(&lock);
 	struct k_thread *thread;
 
+	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_completion, complete, c);
+
 	thread = z_unpend_first_thread(&c->wait_q);
 
 	if (thread != NULL) {
 		arch_thread_return_value_set(thread, 0);
 		z_ready_thread(thread);
+		SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_completion, complete, c);
 		z_reschedule(&lock, key);
 	} else {
 		if (c->done != UINT_MAX) {
 			c->done++;
 		}
+		SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_completion, complete, c);
 		k_spin_unlock(&lock, key);
 	}
 }
@@ -99,6 +109,8 @@ void z_impl_k_completion_complete_all(struct k_completion *c)
 	k_spinlock_key_t key = k_spin_lock(&lock);
 	bool need_resched = false;
 
+	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_completion, complete_all, c);
+
 	c->done = UINT_MAX;
 
 	while ((thread = z_unpend_first_thread(&c->wait_q)) != NULL) {
@@ -106,6 +118,8 @@ void z_impl_k_completion_complete_all(struct k_completion *c)
 		z_ready_thread(thread);
 		need_resched = true;
 	}
+
+	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_completion, complete_all, c);
 
 	if (need_resched) {
 		z_reschedule(&lock, key);
@@ -126,24 +140,35 @@ void z_vrfy_k_completion_complete_all(struct k_completion *c)
 int z_impl_k_completion_wait(struct k_completion *c, k_timeout_t timeout)
 {
 	k_spinlock_key_t key = k_spin_lock(&lock);
+	int ret;
 
 	__ASSERT(((arch_is_in_isr() == false) ||
 		  K_TIMEOUT_EQ(timeout, K_NO_WAIT)), "");
+
+	SYS_PORT_TRACING_OBJ_FUNC_ENTER(k_completion, wait, c, timeout);
 
 	if (c->done > 0U) {
 		if (c->done != UINT_MAX) {
 			c->done--;
 		}
+		SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_completion, wait, c, timeout, 0);
 		k_spin_unlock(&lock, key);
 		return 0;
 	}
 
 	if (K_TIMEOUT_EQ(timeout, K_NO_WAIT)) {
+		SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_completion, wait, c, timeout, -EBUSY);
 		k_spin_unlock(&lock, key);
 		return -EBUSY;
 	}
 
-	return z_pend_curr(&lock, key, &c->wait_q, timeout);
+	SYS_PORT_TRACING_OBJ_FUNC_BLOCKING(k_completion, wait, c, timeout);
+
+	ret = z_pend_curr(&lock, key, &c->wait_q, timeout);
+
+	SYS_PORT_TRACING_OBJ_FUNC_EXIT(k_completion, wait, c, timeout, ret);
+
+	return ret;
 }
 
 #ifdef CONFIG_USERSPACE
@@ -159,6 +184,8 @@ void z_impl_k_completion_reset(struct k_completion *c)
 {
 	struct k_thread *thread;
 	k_spinlock_key_t key = k_spin_lock(&lock);
+
+	SYS_PORT_TRACING_OBJ_FUNC(k_completion, reset, c);
 
 	c->done = 0U;
 

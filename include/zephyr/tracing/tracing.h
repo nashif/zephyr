@@ -901,6 +901,73 @@
 /** @} */ /* end of subsys_tracing_apis_condvar */
 
 /**
+ * @brief Tracing hooks for completion events
+ * @defgroup subsys_tracing_apis_completion Completion
+ * @{
+ */
+
+/**
+ * @brief Trace initialisation of a completion object
+ * @param c Completion object
+ * @param ret Return value
+ */
+#define sys_port_trace_k_completion_init(c, ret)
+
+/**
+ * @brief Trace signalling one thread on a completion (entry)
+ * @param c Completion object
+ */
+#define sys_port_trace_k_completion_complete_enter(c)
+
+/**
+ * @brief Trace signalling one thread on a completion (exit)
+ * @param c Completion object
+ */
+#define sys_port_trace_k_completion_complete_exit(c)
+
+/**
+ * @brief Trace signalling all threads on a completion (entry)
+ * @param c Completion object
+ */
+#define sys_port_trace_k_completion_complete_all_enter(c)
+
+/**
+ * @brief Trace signalling all threads on a completion (exit)
+ * @param c Completion object
+ */
+#define sys_port_trace_k_completion_complete_all_exit(c)
+
+/**
+ * @brief Trace waiting on a completion (entry)
+ * @param c Completion object
+ * @param timeout Timeout period
+ */
+#define sys_port_trace_k_completion_wait_enter(c, timeout)
+
+/**
+ * @brief Trace waiting on a completion (blocking)
+ * @param c Completion object
+ * @param timeout Timeout period
+ */
+#define sys_port_trace_k_completion_wait_blocking(c, timeout)
+
+/**
+ * @brief Trace waiting on a completion (exit)
+ * @param c Completion object
+ * @param timeout Timeout period
+ * @param ret Return value
+ */
+#define sys_port_trace_k_completion_wait_exit(c, timeout, ret)
+
+/**
+ * @brief Trace resetting a completion object
+ * @param c Completion object
+ */
+#define sys_port_trace_k_completion_reset(c)
+
+/** @} */ /* end of subsys_tracing_apis_completion */
+
+/**
  * @brief Tracing hooks for queue events
  * @defgroup subsys_tracing_apis_queue Queue
  * @{

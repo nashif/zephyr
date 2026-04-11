@@ -117,6 +117,12 @@
 	#define sys_port_trace_type_mask_k_condvar(trace_call)
 #endif
 
+#if defined(CONFIG_TRACING_COMPLETION)
+	#define sys_port_trace_type_mask_k_completion(trace_call) trace_call
+#else
+	#define sys_port_trace_type_mask_k_completion(trace_call)
+#endif
+
 #if defined(CONFIG_TRACING_QUEUE)
 	#define sys_port_trace_type_mask_k_queue(trace_call) trace_call
 #else

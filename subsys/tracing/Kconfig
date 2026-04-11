@@ -266,6 +266,12 @@ config TRACING_CONDVAR
 	help
 	  Enable tracing Condition Variables
 
+config TRACING_COMPLETION
+	bool "Tracing Completion Objects"
+	default y
+	help
+	  Enable tracing Completion objects.
+
 config TRACING_QUEUE
 	bool "Tracing Queues"
 	default y
