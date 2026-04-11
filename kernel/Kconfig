@@ -766,6 +766,17 @@ config EVENTS
 	  Note that setting this option slightly increases the size of the
 	  thread structure.
 
+config COMPLETION
+	bool "Completion objects"
+	depends on MULTITHREADING
+	help
+	  This option enables completion objects. A completion provides a
+	  thread-to-thread (or ISR-to-thread) synchronisation mechanism
+	  that allows one or more threads to wait until a specific operation
+	  has been completed.
+
+	  Modelled after the Linux kernel completion API.
+
 config KERNEL_MEM_POOL
 	bool "Use Kernel Memory Pool"
 	default y

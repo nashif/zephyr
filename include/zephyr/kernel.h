@@ -3804,6 +3804,132 @@ static inline unsigned int z_impl_k_sem_count_get(struct k_sem *sem)
 
 /** @} */
 
+/**
+ * @defgroup completion_apis Completion APIs
+ * @ingroup kernel_apis
+ * @{
+ */
+
+/**
+ * @brief Completion object structure.
+ *
+ * A completion object is a lightweight synchronisation primitive modelled
+ * after the Linux kernel completion API.  One or more threads may wait on
+ * a completion until another thread (or ISR) signals it.
+ *
+ * All the members are internal and should not be accessed directly.
+ */
+struct k_completion {
+/**
+ * @cond INTERNAL_HIDDEN
+ */
+	_wait_q_t wait_q;
+	unsigned int done;
+
+	SYS_PORT_TRACING_TRACKING_FIELD(k_completion)
+
+#ifdef CONFIG_OBJ_CORE_COMPLETION
+	struct k_obj_core  obj_core;
+#endif
+/**
+ * INTERNAL_HIDDEN @endcond
+ */
+};
+
+/**
+ * @cond INTERNAL_HIDDEN
+ */
+#define Z_COMPLETION_INITIALIZER(obj) \
+	{ \
+	.wait_q = Z_WAIT_Q_INIT(&(obj).wait_q), \
+	.done = 0U, \
+	}
+/**
+ * INTERNAL_HIDDEN @endcond
+ */
+
+/**
+ * @brief Initialize a completion object.
+ *
+ * This routine initializes a completion object, prior to its first use.
+ *
+ * @param c Address of the completion object.
+ */
+__syscall void k_completion_init(struct k_completion *c);
+
+/**
+ * @brief Signal one thread waiting on a completion object.
+ *
+ * If any threads are pending on @a c, exactly one is woken.  Otherwise
+ * the internal counter is incremented so the next k_completion_wait()
+ * call returns immediately (counter is capped at UINT_MAX - 1).
+ *
+ * @isr_ok
+ *
+ * @param c Address of the completion object.
+ */
+__syscall void k_completion_complete(struct k_completion *c);
+
+/**
+ * @brief Signal all threads waiting on a completion object.
+ *
+ * All threads currently pending on @a c are woken.  The completion is
+ * permanently marked as done (done = UINT_MAX), so any subsequent
+ * k_completion_wait() calls return immediately.  Call
+ * k_completion_reset() to re-arm the object for another round.
+ *
+ * @isr_ok
+ *
+ * @param c Address of the completion object.
+ */
+__syscall void k_completion_complete_all(struct k_completion *c);
+
+/**
+ * @brief Wait for a completion object to be signalled.
+ *
+ * If the completion has already been signalled (done > 0), this routine
+ * returns immediately.  Otherwise it blocks until
+ * k_completion_complete() or k_completion_complete_all() is called, or
+ * until the timeout expires.
+ *
+ * @note @a timeout must be set to K_NO_WAIT if called from ISR.
+ *
+ * @param c       Address of the completion object.
+ * @param timeout Waiting period, or one of the special values K_NO_WAIT
+ *                and K_FOREVER.
+ *
+ * @retval 0      Completion received.
+ * @retval -EBUSY Returned without waiting (@a timeout = K_NO_WAIT).
+ * @retval -EAGAIN Waiting period timed out.
+ */
+__syscall int k_completion_wait(struct k_completion *c, k_timeout_t timeout);
+
+/**
+ * @brief Reset a completion object.
+ *
+ * Clears the done state and aborts any threads currently waiting on
+ * @a c with -EAGAIN, allowing the object to be reused.
+ *
+ * @param c Address of the completion object.
+ */
+__syscall void k_completion_reset(struct k_completion *c);
+
+/**
+ * @brief Statically define and initialize a completion object.
+ *
+ * The completion can be accessed outside the module where it is defined
+ * using:
+ *
+ * @code extern struct k_completion <name>; @endcode
+ *
+ * @param name Name of the completion object.
+ */
+#define K_COMPLETION_DEFINE(name) \
+	STRUCT_SECTION_ITERABLE(k_completion, name) = \
+		Z_COMPLETION_INITIALIZER(name)
+
+/** @} */
+
 #if defined(CONFIG_SCHED_IPI_SUPPORTED) || defined(__DOXYGEN__)
 struct k_ipi_work;
 

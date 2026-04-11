@@ -109,6 +109,7 @@ kobjects = OrderedDict(
         ("k_futex", (None, True, False)),
         ("k_condvar", (None, False, True)),
         ("k_event", ("CONFIG_EVENTS", False, True)),
+        ("k_completion", ("CONFIG_COMPLETION", False, True)),
         ("ztest_suite_node", ("CONFIG_ZTEST", True, False)),
         ("ztest_suite_stats", ("CONFIG_ZTEST", True, False)),
         ("ztest_unit_test", ("CONFIG_ZTEST", True, False)),
