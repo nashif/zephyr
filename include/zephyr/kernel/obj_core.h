@@ -29,6 +29,8 @@
 
 /** Condition variable object type */
 #define K_OBJ_TYPE_CONDVAR_ID    K_OBJ_TYPE_ID_GEN("COND")
+/** Completion object type */
+#define K_OBJ_TYPE_COMPLETION_ID K_OBJ_TYPE_ID_GEN("COMP")
 /** CPU object type */
 #define K_OBJ_TYPE_CPU_ID        K_OBJ_TYPE_ID_GEN("CPU_")
 /** Event object type */

@@ -19,6 +19,13 @@ config OBJ_CORE_CONDVAR
 	  When enabled, this option integrates condition variables into the
 	  object core framework.
 
+config OBJ_CORE_COMPLETION
+	bool "Integrate completion objects into object core framework"
+	default y if COMPLETION
+	help
+	  When enabled, this option integrates completion objects into the
+	  object core framework.
+
 config OBJ_CORE_EVENT
 	bool "Integrate events into object core framework"
 	default y if EVENTS
