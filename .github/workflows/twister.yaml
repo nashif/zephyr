@@ -349,6 +349,7 @@ jobs:
         run: |
           junitparser merge --glob 'artifacts/*/twister.xml' 'artifacts/*/*/twister.xml' junit.xml
           junit2html junit.xml junit.html
+          python3 ./scripts/ci/merge_twister_json.py 'artifacts/*/*/twister.json' -o twister-all.json
 
       - name: Upload Unit Test Results
         if: always()
@@ -359,6 +360,7 @@ jobs:
           path: |
             junit.html
             junit.xml
+            twister-all.json
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() && (github.event_name == 'push') }}
