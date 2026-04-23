@@ -1,5 +1,7 @@
 tests:
   drivers.dma.loop_transfer:
+    required_snippets:
+      - testing
     depends_on: dma
     tags:
       - drivers
