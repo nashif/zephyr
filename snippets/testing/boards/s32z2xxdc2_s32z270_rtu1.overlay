@@ -27,3 +27,7 @@ tst_dma0: &edma5 {};
 	compatible = "mmio-sram";
 	reg = <0x35780000 DT_SIZE_K(960)>;
 };
+
+tst_dma0: &edma5 {
+	status = "okay";
+};

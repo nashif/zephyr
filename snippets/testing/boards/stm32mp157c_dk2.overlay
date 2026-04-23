@@ -13,3 +13,7 @@
 tst_dma0: &dmamux {
 	status = "okay";
 };
+
+&dmamux {
+	status = "okay";
+};

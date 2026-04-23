@@ -12,3 +12,7 @@
 };
 
 tst_dma0: &edma0 {};
+
+&itcm {
+	zephyr,memory-attr = <DT_MEM_ARM(ATTR_MPU_RAM_NOCACHE)>;
+};
