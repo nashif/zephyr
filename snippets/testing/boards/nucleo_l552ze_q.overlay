@@ -15,3 +15,23 @@
 tst_dma0: &dmamux1 {
 	status = "okay";
 };
+
+&spi1 {
+	dmas = <&dmamux1 0 12 STM32_DMA_PERIPH_TX>,
+	       <&dmamux1 7 11 STM32_DMA_PERIPH_RX>;
+	dma-names = "tx", "rx";
+	slow@0 {
+		compatible = "test-spi-loopback-slow";
+		reg = <0>;
+		spi-max-frequency = <500000>;
+	};
+	fast@0 {
+		compatible = "test-spi-loopback-fast";
+		reg = <0>;
+		spi-max-frequency = <16000000>;
+	};
+};
+
+&dmamux1 {
+	status = "okay";
+};

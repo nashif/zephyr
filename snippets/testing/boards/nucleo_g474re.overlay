@@ -15,3 +15,27 @@
 tst_dma0: &dmamux1 {
 	status = "okay";
 };
+
+&rcc {
+	apb2-prescaler = <2>;
+};
+
+&spi1 {
+	dmas = <&dmamux1 0 11 (STM32_DMA_PERIPH_TX | STM32_DMA_PRIORITY_HIGH)>,
+	       <&dmamux1 8 10 (STM32_DMA_PERIPH_RX | STM32_DMA_PRIORITY_HIGH)>;
+	dma-names = "tx", "rx";
+	slow@0 {
+		compatible = "test-spi-loopback-slow";
+		reg = <0>;
+		spi-max-frequency = <500000>;
+	};
+	fast@0 {
+		compatible = "test-spi-loopback-fast";
+		reg = <0>;
+		spi-max-frequency = <16000000>;
+	};
+};
+
+&dmamux1 {
+	status = "okay";
+};

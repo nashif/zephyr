@@ -5,3 +5,17 @@
  */
 
 tst_dma0: &dma0 {};
+
+&hs_lspi {
+	/delete-property/ cs-gpios;
+	slow@1 {
+		compatible = "test-spi-loopback-slow";
+		reg = <1>;
+		spi-max-frequency = <5000>;
+	};
+	fast@1 {
+		compatible = "test-spi-loopback-fast";
+		reg = <1>;
+		spi-max-frequency = <160000>;
+	};
+};

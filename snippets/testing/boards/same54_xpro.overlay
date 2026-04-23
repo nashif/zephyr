@@ -7,3 +7,25 @@
 tst_dma0: &dmac {
 	status = "okay";
 };
+
+&dmac {
+	status = "okay";
+};
+
+&sercom4 {
+	dipo = <3>;
+	dopo = <2>;
+	cs-gpios = <&portb 28 GPIO_ACTIVE_LOW>;
+	dmas = <&dmac 0 12>, <&dmac 1 13>;
+	dma-names = "rx", "tx";
+	slow@0 {
+		compatible = "test-spi-loopback-slow";
+		reg = <0>;
+		spi-max-frequency = <500000>;
+	};
+	fast@0 {
+		compatible = "test-spi-loopback-fast";
+		reg = <0>;
+		spi-max-frequency = <16000000>;
+	};
+};

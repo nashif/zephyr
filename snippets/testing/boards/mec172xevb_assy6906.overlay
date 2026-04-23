@@ -7,3 +7,25 @@
 tst_dma: &dmac {
 	status = "okay";
 };
+
+/ {
+	aliases {
+		spi0 = &qspi0;
+	};
+};
+
+&qspi0 {
+	status = "okay";
+	compatible = "microchip,xec-qmspi-ldma";
+	clock-frequency = <12000000>;
+	slow@0 {
+		compatible = "test-spi-loopback-slow";
+		reg = <0>;
+		spi-max-frequency = <500000>;
+	};
+	fast@0 {
+		compatible = "test-spi-loopback-fast";
+		reg = <0>;
+		spi-max-frequency = <16000000>;
+	};
+};

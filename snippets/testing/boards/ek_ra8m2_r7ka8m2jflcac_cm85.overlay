@@ -9,3 +9,21 @@ tst_dma0: &dma0 {
 	interrupts = <95 1>, <94 1>, <93 1>;
 	interrupt-names = "ch0", "ch1", "ch2";
 };
+
+#include <zephyr/dt-bindings/clock/ra_clock.h>
+
+&spi1 {
+	rx-dtc;
+	tx-dtc;
+	status = "okay";
+	slow@0 {
+		compatible = "test-spi-loopback-slow";
+		reg = <0>;
+		spi-max-frequency = <2000000>;
+	};
+	fast@0 {
+		compatible = "test-spi-loopback-fast";
+		reg = <0>;
+		spi-max-frequency = <3000000>;
+	};
+};

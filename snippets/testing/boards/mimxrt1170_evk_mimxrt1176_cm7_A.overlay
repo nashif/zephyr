@@ -16,3 +16,21 @@ tst_dma0: &edma0 {};
 &itcm {
 	zephyr,memory-attr = <DT_MEM_ARM(ATTR_MPU_RAM_NOCACHE)>;
 };
+
+&lpspi1 {
+	dmas = <&edma0 0 36>, <&edma0 1 37>;
+	dma-names = "rx", "tx";
+	slow@0 {
+		compatible = "test-spi-loopback-slow";
+		reg = <0>;
+		spi-max-frequency = <500000>;
+	};
+	fast@0 {
+		compatible = "test-spi-loopback-fast";
+		reg = <0>;
+		spi-max-frequency = <16000000>;
+	};
+	transfer-delay = <100>;
+	pcs-sck-delay = <100>;
+	sck-pcs-delay = <100>;
+};

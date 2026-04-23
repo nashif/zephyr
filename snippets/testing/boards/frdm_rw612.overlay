@@ -8,3 +8,16 @@
 tst_dma0: &dma0 {};
 
 tst_dma1: &gdma {};
+
+&flexcomm1 {
+	slow@0 {
+		compatible = "test-spi-loopback-slow";
+		reg = <0>;
+		spi-max-frequency = <500000>;
+	};
+	fast@0 {
+		compatible = "test-spi-loopback-fast";
+		reg = <0>;
+		spi-max-frequency = <16000000>;
+	};
+};
