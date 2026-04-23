@@ -18,3 +18,35 @@ tst_dma0: &edma0 {};
 		spi-max-frequency = <16000000>;
 	};
 };
+
+/ {
+	zephyr,user {
+		io-channels = <&adc0 14>;
+	};
+};
+
+&adc0 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	clk-source = <0>;
+	hw-trigger-src = <4>;
+	continuous-convert;
+	high-speed;
+	periodic-trigger;
+	status = "okay";
+	channel@e {
+		reg = <14>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_EXTERNAL0";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <12>;
+	};
+};
+
+test_counter: &pit0_channel0 {
+	status = "okay";
+};
+
+&edma0 {
+	dma-buf-addr-alignment = <4>;
+};

@@ -48,3 +48,5 @@
 &gpio0 {
 	status = "okay";
 };
+
+#include "nordic,nrf-saadc-common.dtsi"

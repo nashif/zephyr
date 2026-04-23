@@ -51,3 +51,5 @@
 &gpio1 {
 	status = "okay";
 };
+
+#include "nrf54lm20dk_nrf54lm20_common.dtsi"

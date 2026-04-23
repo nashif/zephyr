@@ -35,3 +35,29 @@ tst_dma0: &dmamux1 {
 &dmamux1 {
 	status = "okay";
 };
+
+/ {
+	zephyr,user {
+		io-channels = <&adc1 13>, <&adc1 14>;
+	};
+};
+
+&adc1 {
+	pinctrl-0 = <&adc1_in13_pc4 &adc1_in14_pc5>;
+	#address-cells = <1>;
+	#size-cells = <0>;
+	channel@d {
+		reg = <13>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_MAX>;
+		zephyr,resolution = <12>;
+	};
+	channel@e {
+		reg = <14>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_MAX>;
+		zephyr,resolution = <12>;
+	};
+};

@@ -61,3 +61,5 @@ tst_dma0: &edma5 {
 		spi-max-frequency = <16000000>;
 	};
 };
+
+#include "s32z2xxdc2_s32z270_rtu0.overlay"

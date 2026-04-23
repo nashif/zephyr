@@ -22,3 +22,5 @@
 		spi-max-frequency = <16000000>;
 	};
 };
+
+#include "nordic,nrf-saadc-common.dtsi"

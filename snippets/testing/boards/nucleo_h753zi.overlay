@@ -62,3 +62,31 @@ tst_dma1: &dmamux2 {
 &dmamux1 {
 	status = "okay";
 };
+
+/ {
+	zephyr,user {
+		io-channels = <&adc1 12>, <&adc1 15>;
+	};
+};
+
+&adc1 {
+	dmas = <&dmamux1 0 9 (STM32_DMA_PERIPH_RX | STM32_DMA_MEM_16BITS |
+			      STM32_DMA_PERIPH_16BITS)>;
+	dma-names = "dmamux";
+	#address-cells = <1>;
+	#size-cells = <0>;
+	channel@c {
+		reg = <12>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <16>;
+	};
+	channel@f {
+		reg = <15>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <16>;
+	};
+};
