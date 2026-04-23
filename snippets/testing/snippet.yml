@@ -3,6 +3,73 @@ append:
   EXTRA_CONF_FILE: testing.conf
 
 boards:
+  bg29_rb4420a/efr32bg29b220f1024cj45:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/bg29_rb4420a.overlay
   cyw920829m2evk_02/cyw20829b1340:
     append:
       EXTRA_DTC_OVERLAY_FILE: boards/cyw920829m2evk_02_cyw20829b1340.overlay
+  frdm_k64f/mk64f12:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/frdm_k64f.overlay
+  frdm_mcxa153/mcxa153:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/frdm_mcxa153.overlay
+  frdm_mcxe247/mcxe247:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/frdm_mcxe247.overlay
+  frdm_mcxe31b/mcxe31b:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/frdm_mcxe31b.overlay
+  mimxrt1010_evk/mimxrt1011:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/mimxrt1010_evk.overlay
+  mimxrt1024_evk/mimxrt1024:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/mimxrt1024_evk.overlay
+  mimxrt1050_evk/mimxrt1052/hyperflash:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/mimxrt1050_evk_mimxrt1052_hyperflash.overlay
+  mimxrt1060_evk/mimxrt1062/qspi:
+    revisions:
+      "C":
+        append:
+          EXTRA_DTC_OVERLAY_FILE: boards/mimxrt1060_evk_mimxrt1062_qspi_C.overlay
+  mimxrt1064_evk/mimxrt1064:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/mimxrt1064_evk.overlay
+  mimxrt1160_evk/mimxrt1166/cm7:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/mimxrt1160_evk_mimxrt1166_cm7.overlay
+  mimxrt1170_evk/mimxrt1176/cm7:
+    revisions:
+      "B":
+        append:
+          EXTRA_DTC_OVERLAY_FILE: boards/mimxrt1170_evk_mimxrt1176_cm7.overlay
+  mimxrt595_evk/mimxrt595s/cm33:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/mimxrt595_evk_mimxrt595s_cm33.overlay
+  mr_canhubk3/s32k344:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/mr_canhubk3.overlay
+  native_sim/native:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/native_sim.overlay
+  native_sim/native/64:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/native_sim_native_64.overlay
+  rpi_pico2/rp2350a/hazard3:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/rpi_pico2_rp2350a_hazard3.overlay
+  s32k5xxcvb/s32k566/m7:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/s32k5xxcvb_s32k566_m7.overlay
+  s32k5xxcvb/s32k566/r52:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/s32k5xxcvb_s32k566_r52.overlay
+  s32z2xxdc2/s32z270/rtu0:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/s32z2xxdc2_s32z270_rtu0.overlay
+  s32z2xxdc2/s32z270/rtu1:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/s32z2xxdc2_s32z270_rtu1.overlay
