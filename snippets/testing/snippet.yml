@@ -1,0 +1,8 @@
+name: testing
+append:
+  EXTRA_CONF_FILE: testing.conf
+
+boards:
+  cyw920829m2evk_02/cyw20829b1340:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/cyw920829m2evk_02_cyw20829b1340.overlay
