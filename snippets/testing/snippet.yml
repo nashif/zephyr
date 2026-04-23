@@ -3,12 +3,120 @@ append:
   EXTRA_CONF_FILE: testing.conf
 
 boards:
+  adafruit_itsybitsy_m4_express/samd51g19a:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/adafruit_itsybitsy_m4_express.overlay
+  adafruit_trinket_m0/samd21e18a:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/adafruit_trinket_m0.overlay
+  adp_xc7k/ae350:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/adp_xc7k_ae350.overlay
+  adp_xc7k/ae350/clic:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/adp_xc7k_ae350_clic.overlay
+  arduino_mkrzero/samd21g18a:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/arduino_mkrzero.overlay
+  arduino_nano_33_iot/samd21g18a:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/arduino_nano_33_iot.overlay
+  arduino_zero/samd21g18a:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/arduino_zero.overlay
+  b_u585i_iot02a/stm32u585xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/b_u585i_iot02a.overlay
   bg29_rb4420a/efr32bg29b220f1024cj45:
     append:
       EXTRA_DTC_OVERLAY_FILE: boards/bg29_rb4420a.overlay
+  cy8ckit_041s_max/cy8c4149azi_s598:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/cy8ckit_041s_max.overlay
+  cy8cproto_041tp/cy8c4147azq_t495:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/cy8cproto_041tp.overlay
+  cy8cproto_062_4343w/cy8c624abzi_s2d44:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/cy8cproto_062_4343w.overlay
   cyw920829m2evk_02/cyw20829b1340:
     append:
       EXTRA_DTC_OVERLAY_FILE: boards/cyw920829m2evk_02_cyw20829b1340.overlay
+  da1469x_dk_pro/da14699:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/da1469x_dk_pro.overlay
+  disco_l475_iot1/stm32l475xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/disco_l475_iot1.overlay
+  ek_ra4e2/r7fa4e2b93cfm:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/ek_ra4e2.overlay
+  ek_ra4l1/r7fa4l1bd4cfp:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/ek_ra4l1.overlay
+  ek_ra4m1/r7fa4m1ab3cfp:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/ek_ra4m1.overlay
+  ek_ra4m2/r7fa4m2ad3cfp:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/ek_ra4m2.overlay
+  ek_ra4m3/r7fa4m3af3cfb:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/ek_ra4m3.overlay
+  ek_ra4w1/r7fa4w1ad2cng:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/ek_ra4w1.overlay
+  ek_ra6e2/r7fa6e2bb3cfm:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/ek_ra6e2.overlay
+  ek_ra6m1/r7fa6m1ad3cfp:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/ek_ra6m1.overlay
+  ek_ra6m2/r7fa6m2af3cfb:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/ek_ra6m2.overlay
+  ek_ra6m3/r7fa6m3ah3cfc:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/ek_ra6m3.overlay
+  ek_ra6m4/r7fa6m4af3cfb:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/ek_ra6m4.overlay
+  ek_ra6m5/r7fa6m5bh3cfc:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/ek_ra6m5.overlay
+  ek_ra8d1/r7fa8d1bhecbd:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/ek_ra8d1.overlay
+  ek_ra8d2/r7ka8d2kflcac/cm85:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/ek_ra8d2_r7ka8d2kflcac_cm85.overlay
+  ek_ra8m1/r7fa8m1ahecbd:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/ek_ra8m1.overlay
+  ek_ra8m2/r7ka8m2jflcac/cm85:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/ek_ra8m2_r7ka8m2jflcac_cm85.overlay
+  esp32s3_devkitc/esp32s3/procpu:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/esp32s3_devkitc_procpu.overlay
+  esp32s3_luatos_core/esp32s3/procpu:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/esp32s3_luatos_core_procpu.overlay
+  esp32s3_luatos_core/esp32s3/procpu/usb:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/esp32s3_luatos_core_procpu_usb.overlay
+  fpb_ra4e1/r7fa4e10d2cfm:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/fpb_ra4e1.overlay
+  fpb_ra6e1/r7fa6e10f2cfp:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/fpb_ra6e1.overlay
+  fpb_ra6e2/r7fa6e2bb3cfm:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/fpb_ra6e2.overlay
+  fpb_ra8e1/r7fa8e1afdcfb:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/fpb_ra8e1.overlay
   frdm_k64f/mk64f12:
     append:
       EXTRA_DTC_OVERLAY_FILE: boards/frdm_k64f.overlay
@@ -21,6 +129,93 @@ boards:
   frdm_mcxe31b/mcxe31b:
     append:
       EXTRA_DTC_OVERLAY_FILE: boards/frdm_mcxe31b.overlay
+  frdm_rw612/rw612:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/frdm_rw612.overlay
+  kit_psc3m5_evk/psc3m5fds2afq1:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/kit_psc3m5_evk.overlay
+  kit_pse84_ai/pse846gps2dbzc4a/m33:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/kit_pse84_ai_pse846gps2dbzc4a_m33.overlay
+  kit_pse84_ai/pse846gps2dbzc4a/m55:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/kit_pse84_ai_pse846gps2dbzc4a_m55.overlay
+  kit_pse84_eval/pse846gps2dbzc4a/m33:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/kit_pse84_eval_pse846gps2dbzc4a_m33.overlay
+  kit_pse84_eval/pse846gps2dbzc4a/m55:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/kit_pse84_eval_pse846gps2dbzc4a_m55.overlay
+  lpcxpresso55s36/lpc55s36:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/lpcxpresso55s36.overlay
+  lpcxpresso55s69/lpc55s69/cpu0/ns:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/lpcxpresso55s69_lpc55s69_cpu0_ns.overlay
+  max32650evkit/max32650:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/max32650evkit.overlay
+  max32650fthr/max32650:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/max32650fthr.overlay
+  max32655evkit/max32655/m4:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/max32655evkit_max32655_m4.overlay
+  max32655fthr/max32655/m4:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/max32655fthr_max32655_m4.overlay
+  max32657evkit/max32657:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/max32657evkit_max32657.overlay
+  max32657evkit/max32657/ns:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/max32657evkit_max32657_ns.overlay
+  max32662evkit/max32662:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/max32662evkit.overlay
+  max32666evkit/max32666/cpu0:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/max32666evkit_max32666_cpu0.overlay
+  max32666fthr/max32666/cpu0:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/max32666fthr_max32666_cpu0.overlay
+  max32670evkit/max32670:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/max32670evkit.overlay
+  max32672evkit/max32672:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/max32672evkit.overlay
+  max32672fthr/max32672:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/max32672fthr.overlay
+  max32675evkit/max32675:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/max32675evkit.overlay
+  max32680evkit/max32680/m4:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/max32680evkit_max32680_m4.overlay
+  max32690evkit/max32690/m4:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/max32690evkit_max32690_m4.overlay
+  max78000evkit/max78000/m4:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/max78000evkit_max78000_m4.overlay
+  max78000fthr/max78000/m4:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/max78000fthr_max78000_m4.overlay
+  max78002evkit/max78002/m4:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/max78002evkit_max78002_m4.overlay
+  mck_ra4t1/r7fa4t1bb3cfm:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/mck_ra4t1.overlay
+  mck_ra8t1/r7fa8t1ahecbd:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/mck_ra8t1.overlay
+  mec172xevb_assy6906/mec172x_nsz:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/mec172xevb_assy6906.overlay
   mimxrt1010_evk/mimxrt1011:
     append:
       EXTRA_DTC_OVERLAY_FILE: boards/mimxrt1010_evk.overlay
@@ -32,23 +227,43 @@ boards:
       EXTRA_DTC_OVERLAY_FILE: boards/mimxrt1050_evk_mimxrt1052_hyperflash.overlay
   mimxrt1060_evk/mimxrt1062/qspi:
     revisions:
+      "B":
+        append:
+          EXTRA_DTC_OVERLAY_FILE: boards/mimxrt1060_evk_mimxrt1062_qspi_B.overlay
       "C":
         append:
           EXTRA_DTC_OVERLAY_FILE: boards/mimxrt1060_evk_mimxrt1062_qspi_C.overlay
   mimxrt1064_evk/mimxrt1064:
     append:
       EXTRA_DTC_OVERLAY_FILE: boards/mimxrt1064_evk.overlay
+  mimxrt1160_evk/mimxrt1166/cm4:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/mimxrt1160_evk_mimxrt1166_cm4.overlay
   mimxrt1160_evk/mimxrt1166/cm7:
     append:
       EXTRA_DTC_OVERLAY_FILE: boards/mimxrt1160_evk_mimxrt1166_cm7.overlay
+  mimxrt1170_evk/mimxrt1176/cm4:
+    revisions:
+      "B":
+        append:
+          EXTRA_DTC_OVERLAY_FILE: boards/mimxrt1170_evk_mimxrt1176_cm4_B.overlay
   mimxrt1170_evk/mimxrt1176/cm7:
     revisions:
+      "A":
+        append:
+          EXTRA_DTC_OVERLAY_FILE: boards/mimxrt1170_evk_mimxrt1176_cm7_A.overlay
       "B":
         append:
           EXTRA_DTC_OVERLAY_FILE: boards/mimxrt1170_evk_mimxrt1176_cm7.overlay
   mimxrt595_evk/mimxrt595s/cm33:
     append:
       EXTRA_DTC_OVERLAY_FILE: boards/mimxrt595_evk_mimxrt595s_cm33.overlay
+  mimxrt685_evk/mimxrt685s/cm33:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/mimxrt685_evk_mimxrt685s_cm33.overlay
+  mm_feather/mimxrt1062:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/mm_feather.overlay
   mr_canhubk3/s32k344:
     append:
       EXTRA_DTC_OVERLAY_FILE: boards/mr_canhubk3.overlay
@@ -58,9 +273,108 @@ boards:
   native_sim/native/64:
     append:
       EXTRA_DTC_OVERLAY_FILE: boards/native_sim_native_64.overlay
+  nucleo_c031c6/stm32c031xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_c031c6.overlay
+  nucleo_c071rb/stm32c071xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_c071rb.overlay
+  nucleo_c5a3zg/stm32c5a3xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_c5a3zg.overlay
+  nucleo_f070rb/stm32f070xb:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_f070rb.overlay
+  nucleo_f091rc/stm32f091xc:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_f091rc.overlay
+  nucleo_f103rb/stm32f103xb:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_f103rb.overlay
+  nucleo_f207zg/stm32f207xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_f207zg.overlay
+  nucleo_f429zi/stm32f429xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_f429zi.overlay
+  nucleo_f746zg/stm32f746xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_f746zg.overlay
+  nucleo_f767zi/stm32f767xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_f767zi.overlay
+  nucleo_g071rb/stm32g071xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_g071rb.overlay
+  nucleo_g0b1re/stm32g0b1xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_g0b1re.overlay
+  nucleo_g474re/stm32g474xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_g474re.overlay
+  nucleo_h743zi/stm32h743xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_h743zi.overlay
+  nucleo_h753zi/stm32h753xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_h753zi.overlay
+  nucleo_l053r8/stm32l053xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_l053r8.overlay
+  nucleo_l152re/stm32l152xe:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_l152re.overlay
+  nucleo_l476rg/stm32l476xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_l476rg.overlay
+  nucleo_l496zg/stm32l496xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_l496zg.overlay
+  nucleo_l552ze_q/stm32l552xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_l552ze_q.overlay
+  nucleo_u575zi_q/stm32u575xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_u575zi_q.overlay
+  nucleo_wb07cc/stm32wb07:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_wb07cc.overlay
+  nucleo_wb09ke/stm32wb09:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_wb09ke.overlay
+  nucleo_wb55rg/stm32wb55xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_wb55rg.overlay
+  nucleo_wl55jc/stm32wl55xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/nucleo_wl55jc.overlay
+  pic32cm_jh01_cpro/pic32cm5164jh01100:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/pic32cm_jh01_cpro.overlay
+  pic32cm_pl10_cnano/pic32cm6408pl10048:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/pic32cm_pl10_cnano.overlay
+  pic32cx_sg41_cult/pic32cx1025sg41128:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/pic32cx_sg41_cult.overlay
+  pic32cx_sg61_cult/pic32cx1025sg61128:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/pic32cx_sg61_cult.overlay
   rpi_pico2/rp2350a/hazard3:
     append:
       EXTRA_DTC_OVERLAY_FILE: boards/rpi_pico2_rp2350a_hazard3.overlay
+  rzg3s_smarc/r9a08g045s33gbg/cm33:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/rzg3s_smarc_r9a08g045s33gbg_cm33.overlay
+  rzn2l_rsk/r9a07g084m04gbg:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/rzn2l_rsk.overlay
+  rzt2m_rsk/r9a07g075m24gbg/cr520:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/rzt2m_rsk_r9a07g075m24gbg_cr520.overlay
+  rzv2l_smarc/r9a07g054l23gbg/cm33:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/rzv2l_smarc_r9a07g054l23gbg_cm33.overlay
   s32k5xxcvb/s32k566/m7:
     append:
       EXTRA_DTC_OVERLAY_FILE: boards/s32k5xxcvb_s32k566_m7.overlay
@@ -73,3 +387,88 @@ boards:
   s32z2xxdc2/s32z270/rtu1:
     append:
       EXTRA_DTC_OVERLAY_FILE: boards/s32z2xxdc2_s32z270_rtu1.overlay
+  sam_e54_xpro/atsame54p20a:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/sam_e54_xpro.overlay
+  samc21n_xpro/samc21n18a:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/samc21n_xpro.overlay
+  samd21_xpro/samd21j18a:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/samd21_xpro.overlay
+  saml21_xpro/saml21j18b:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/saml21_xpro.overlay
+  samr34_xpro/samr34j18b:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/samr34_xpro.overlay
+  seeeduino_xiao/samd21g18a:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/seeeduino_xiao.overlay
+  sgrm/sim3u167:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/sgrm.overlay
+  sim3u1xx_dk/sim3u167:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/sim3u1xx_dk.overlay
+  siwx917_rb4338a/siwg917m111mgtba:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/siwx917_rb4338a.overlay
+  siwx917_rb4342a/siwg917m111mgtba:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/siwx917_rb4342a.overlay
+  sltb010a:
+    revisions:
+      "2":
+        append:
+          EXTRA_DTC_OVERLAY_FILE: boards/sltb010a.overlay
+  slwrb4180a/efr32mg21a020f1024im32:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/slwrb4180a.overlay
+  stm32f3_disco:
+    revisions:
+      "B":
+        append:
+          EXTRA_DTC_OVERLAY_FILE: boards/stm32f3_disco.overlay
+  stm32f746g_disco/stm32f746xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/stm32f746g_disco.overlay
+  stm32g0316_disco/stm32g031xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/stm32g0316_disco.overlay
+  stm32h573i_dk/stm32h573xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/stm32h573i_dk.overlay
+  stm32l562e_dk/stm32l562xx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/stm32l562e_dk.overlay
+  stm32mp157c_dk2/stm32mp157cxx:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/stm32mp157c_dk2.overlay
+  twr_ke18f/mke18f16:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/twr_ke18f.overlay
+  voice_ra4e1/r7fa4e10d2cne:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/voice_ra4e1.overlay
+  xg23_rb4210a/efr32zg23b020f512im48:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/xg23_rb4210a.overlay
+  xg24_dk2601b/efr32mg24b310f1536im48:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/xg24_dk2601b.overlay
+  xg24_rb4187c/efr32mg24b220f1536im48:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/xg24_rb4187c.overlay
+  xg27_dk2602a/efr32bg27c140f768im40:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/xg27_dk2602a.overlay
+  xg29_rb4412a/efr32mg29b140f1024im40:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/xg29_rb4412a.overlay
+  xmc45_relax_kit/xmc4500:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/xmc45_relax_kit.overlay
+  xmc47_relax_kit/xmc4700:
+    append:
+      EXTRA_DTC_OVERLAY_FILE: boards/xmc47_relax_kit.overlay

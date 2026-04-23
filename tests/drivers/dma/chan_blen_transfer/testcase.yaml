@@ -1,3 +1,6 @@
+common:
+  required_snippets:
+    - testing
 tests:
   drivers.dma.chan_blen_transfer:
     min_ram: 16

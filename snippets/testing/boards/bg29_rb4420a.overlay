@@ -7,3 +7,9 @@
 tst_dma0: &dma0 {
 	status = "okay";
 };
+
+&dma0 {
+	status = "okay";
+};
+
+tst_dma0: &dma0 {};
