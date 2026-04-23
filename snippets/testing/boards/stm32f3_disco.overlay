@@ -50,3 +50,11 @@ tst_dma0: &dma1 {};
 &dma1 {
 	status = "okay";
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpioc 6 0>;
+		in-gpios = <&gpioc 7 0>;
+	};
+};

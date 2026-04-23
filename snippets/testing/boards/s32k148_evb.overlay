@@ -40,3 +40,11 @@
 &adc1 {
 	status = "disabled";
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpioa 0 0>;
+		in-gpios = <&gpioa 1 0>;
+	};
+};

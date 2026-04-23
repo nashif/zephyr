@@ -30,3 +30,11 @@
 		zephyr,resolution = <12>;
 	};
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		in-gpios = <MCHP_GPIO_DECODE_156 0>;
+		out-gpios = <MCHP_GPIO_DECODE_157 0>;
+	};
+};

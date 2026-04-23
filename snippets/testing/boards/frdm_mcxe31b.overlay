@@ -37,3 +37,27 @@ tst_dma0: &edma {};
 		zephyr,input-positive = <55>;
 	};
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		status = "okay";
+		out-gpios = <&arduino_header 0 (GPIO_ACTIVE_HIGH | GPIO_PUSH_PULL | GPIO_PULL_UP)>;
+		in-gpios = <&arduino_header 1 (GPIO_ACTIVE_HIGH | GPIO_PUSH_PULL | GPIO_PULL_UP)>;
+	};
+};
+
+&gpioe_l {
+	status = "okay";
+};
+
+&gpioe_h {
+	status = "okay";
+};
+
+&eirq0_default {
+	group2 {
+		pinmux = <PTE15_EIRQ14>;
+		input-enable;
+	};
+};

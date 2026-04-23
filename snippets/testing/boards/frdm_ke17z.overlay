@@ -46,3 +46,11 @@
 		zephyr,resolution = <12>;
 	};
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpiod 8 0>;
+		in-gpios = <&gpiod 9 0>;
+	};
+};

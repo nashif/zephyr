@@ -19,3 +19,11 @@
 		spi-max-frequency = <16000000>;
 	};
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpio_b 14 0>;
+		in-gpios = <&gpio_b 15 0>;
+	};
+};

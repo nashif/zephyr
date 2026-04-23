@@ -36,3 +36,11 @@ tst_dma0: &dma {};
 	};
 	dmas = <&dma 2>;
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpio0 4 0>;
+		in-gpios = <&gpio0 5 0>;
+	};
+};

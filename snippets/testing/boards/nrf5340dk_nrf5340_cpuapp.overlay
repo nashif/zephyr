@@ -50,3 +50,11 @@
 };
 
 #include "nordic,nrf-saadc-common.dtsi"
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpio0 6 0>;
+		in-gpios = <&gpio0 7 0>;
+	};
+};

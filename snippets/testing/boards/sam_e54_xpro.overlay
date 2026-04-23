@@ -27,3 +27,15 @@ tst_dma0: &dmac {
 		zephyr,input-positive = <MCHP_ADC_SCALEDIOVCC>;
 	};
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&porta 6 0>;
+		in-gpios = <&porta 7 0>;
+	};
+};
+
+&porta {
+	status = "okay";
+};

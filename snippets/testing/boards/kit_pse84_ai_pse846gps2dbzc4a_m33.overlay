@@ -10,3 +10,15 @@ tst_dma0: &dma0 {
 };
 
 #include "kit_pse84_ai_common.overlay"
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpio_prt16 2 0>;
+		in-gpios = <&gpio_prt16 1 0>;
+	};
+};
+
+&gpio_prt16 {
+	status = "okay";
+};

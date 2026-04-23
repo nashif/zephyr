@@ -47,3 +47,12 @@ tst_dma0: &dma0 {};
 		zephyr,input-positive = <MCUX_LPADC_CH1A>;
 	};
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		status = "okay";
+		out-gpios = <&arduino_header 16 (GPIO_ACTIVE_HIGH | GPIO_PUSH_PULL | GPIO_PULL_UP)>;
+		in-gpios = <&arduino_header 17 (GPIO_ACTIVE_HIGH | GPIO_PUSH_PULL | GPIO_PULL_UP)>;
+	};
+};

@@ -68,3 +68,11 @@ tst_dma0: &dma0 {};
 		zephyr,input-positive = <IADC_INPUT_VBAT>;
 	};
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpioc 5 0>;
+		in-gpios = <&gpioc 3 0>;
+	};
+};

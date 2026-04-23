@@ -22,3 +22,15 @@
 		zephyr,resolution = <12>;
 	};
 };
+
+&gpioc {
+	status = "okay";
+};
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpioc 8 0>;
+		in-gpios = <&gpioc 9 0>;
+	};
+};

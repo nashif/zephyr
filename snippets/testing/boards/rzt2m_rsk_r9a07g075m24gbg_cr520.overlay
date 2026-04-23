@@ -50,3 +50,32 @@ tst_dma0: &dma0 {};
 		zephyr,vref-mv = <1800>;
 	};
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpio2 2 GPIO_ACTIVE_HIGH>;
+		in-gpios = <&gpio2 0 GPIO_ACTIVE_HIGH>;
+	};
+};
+
+&pinctrl {
+	input_test: input_test {
+		group1 {
+			pinmux = <RZT_PINMUX(PORT_02, 0, 0)>;
+			input-enable;
+		};
+	};
+};
+
+&irq4 {
+	trigger-type = "falling";
+	pinctrl-0 = <&input_test>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
+&gpio2 {
+	irqs = <&irq4 0>;
+	status = "okay";
+};

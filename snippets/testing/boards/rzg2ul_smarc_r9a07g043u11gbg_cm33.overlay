@@ -33,3 +33,20 @@
 		zephyr,vref-mv = <1800>;
 	};
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpio1 3 GPIO_ACTIVE_HIGH>;
+		in-gpios = <&gpio1 4 GPIO_ACTIVE_HIGH>;
+	};
+};
+
+&tint20 {
+	status = "okay";
+};
+
+&gpio1 {
+	irqs = <&tint20 4>;
+	status = "okay";
+};

@@ -53,3 +53,19 @@
 &gpio2 {
 	status = "okay";
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpio1 12 0>;
+		in-gpios = <&gpio1 11 0>;
+	};
+};
+
+&gpiote20 {
+	status = "okay";
+};
+
+&gpio1 {
+	status = "okay";
+};

@@ -32,3 +32,11 @@ tst_dma0: &dma {
 		zephyr,resolution = <12>;
 	};
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&pico_header 12 GPIO_ACTIVE_HIGH>;
+		in-gpios = <&pico_header 13 GPIO_ACTIVE_HIGH>;
+	};
+};

@@ -80,3 +80,11 @@ tst_dma0: &dma0 {
 		zephyr,input-positive = <IADC_INPUT_GND>;
 	};
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&exp_header 4 0>;
+		in-gpios = <&exp_header 7 0>;
+	};
+};

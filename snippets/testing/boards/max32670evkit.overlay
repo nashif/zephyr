@@ -20,3 +20,11 @@ tst_dma0: &dma0 {};
 		spi-max-frequency = <500000>;
 	};
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpio0 2 0>;
+		in-gpios = <&gpio0 4 0>;
+	};
+};

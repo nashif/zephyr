@@ -30,3 +30,11 @@
 		zephyr,resolution = <12>;
 	};
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&ambiq_header 12 0>;
+		in-gpios = <&ambiq_header 13 0>;
+	};
+};

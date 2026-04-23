@@ -58,3 +58,20 @@ tst_dma0: &dma0 {};
 		zephyr,vref-mv = <1800>;
 	};
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpio43 1 GPIO_ACTIVE_HIGH>;
+		in-gpios = <&gpio43 2 GPIO_ACTIVE_HIGH>;
+	};
+};
+
+&tint20 {
+	status = "okay";
+};
+
+&gpio43 {
+	irqs = <&tint20 2>;
+	status = "okay";
+};

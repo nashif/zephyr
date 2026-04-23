@@ -24,3 +24,14 @@
 		zephyr,vref-mv = <3300>;
 	};
 };
+
+#include <zephyr/dt-bindings/gpio/renesas-rza2m-gpio.h>
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpiog 2 0>;
+		in-gpios = <&gpiog 0 0>;
+		status = "okay";
+	};
+};

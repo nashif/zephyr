@@ -45,3 +45,11 @@
 		zephyr,resolution = <10>;
 	};
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpioc 5 0>;
+		in-gpios = <&gpioc 6 0>;
+	};
+};

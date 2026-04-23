@@ -43,3 +43,11 @@ tst_dma0: &dmac {
 		zephyr,input-positive = <ADC_INPUTCTRL_MUXPOS_SCALEDIOVCC_Val>;
 	};
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&portb 6 0>;
+		in-gpios = <&portb 7 0>;
+	};
+};

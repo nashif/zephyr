@@ -43,3 +43,15 @@ tst_dma0: &edma {};
 		zephyr,resolution = <12>;
 	};
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpioc 6 0>;
+		in-gpios = <&gpioc 7 0>;
+	};
+};
+
+&gpioc {
+	status = "okay";
+};

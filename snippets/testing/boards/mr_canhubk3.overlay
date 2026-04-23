@@ -50,3 +50,18 @@ tst_dma0: &edma0 {};
 		zephyr,resolution = <14>;
 	};
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpioa_h 13 0>;
+		in-gpios = <&gpioa_h 14 0>;
+	};
+};
+
+&eirq0_default {
+	group2 {
+		pinmux = <PTA30_EIRQ7>;
+		input-enable;
+	};
+};

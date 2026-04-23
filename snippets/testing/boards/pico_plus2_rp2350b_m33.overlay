@@ -33,3 +33,5 @@ tst_dma0: &dma {
 		zephyr,resolution = <12>;
 	};
 };
+
+#include "rpi_pico.overlay"

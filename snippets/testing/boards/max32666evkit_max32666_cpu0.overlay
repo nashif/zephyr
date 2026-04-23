@@ -33,3 +33,11 @@ tst_dma0: &dma0 {};
 		zephyr,resolution = <10>;
 	};
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpio0 6 0>;
+		in-gpios = <&gpio0 7 0>;
+	};
+};

@@ -76,3 +76,11 @@ tst_dma0: &gpdma {};
 	};
 	status = "okay";
 };
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpiod 0 0>;
+		in-gpios = <&gpiod 2 0>;
+	};
+};
