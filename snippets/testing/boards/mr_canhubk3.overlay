@@ -65,3 +65,15 @@ tst_dma0: &edma0 {};
 		input-enable;
 	};
 };
+
+/ {
+	chosen {
+		zephyr,sram = &dtcm;
+	};
+};
+
+dut: &lpuart10 {
+	current-speed = <115200>;
+	nxp,loopback;
+	status = "okay";
+};

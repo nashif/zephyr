@@ -50,3 +50,20 @@ tst_dma0: &dmac {
 		zephyr,input-positive = <ADC_INPUTCTRL_MUXPOS_SCALEDIOVCC_Val>;
 	};
 };
+
+dut: &sercom1 {
+	status = "okay";
+	compatible = "atmel,sam0-uart";
+	current-speed = <115200>;
+	#address-cells = <1>;
+	#size-cells = <0>;
+	rxpo = <0>;
+	txpo = <0>;
+	dmas = <&dmac 0 6>, <&dmac 1 7>;
+	dma-names = "rx", "tx";
+};
+
+&sercom2 {
+	dmas = <&dmac 30 8>, <&dmac 31 9>;
+	dma-names = "rx", "tx";
+};

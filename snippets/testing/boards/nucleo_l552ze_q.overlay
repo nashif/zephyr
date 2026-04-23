@@ -61,3 +61,9 @@ tst_dma0: &dmamux1 {
 		zephyr,resolution = <12>;
 	};
 };
+
+dut: &usart3 {
+	dmas = <&dmamux1 5 30 STM32_DMA_PERIPH_TX>,
+	       <&dmamux1 4 29 STM32_DMA_PERIPH_RX>;
+	dma-names = "tx", "rx";
+};

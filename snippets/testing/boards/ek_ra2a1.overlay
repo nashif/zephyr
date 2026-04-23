@@ -59,3 +59,22 @@
 		zephyr,vref-mv = <3300>;
 	};
 };
+
+&pinctrl {
+	sci1_default: sci1_default {
+		group1 {
+			psels = <RA_PSEL(RA_PSEL_SCI_1, 4, 10)>,
+				<RA_PSEL(RA_PSEL_SCI_1, 4, 11)>;
+		};
+	};
+};
+
+&sci1 {
+	pinctrl-0 = <&sci1_default>;
+	pinctrl-names = "default";
+	status = "okay";
+	dut: uart {
+		current-speed = <115200>;
+		status = "okay";
+	};
+};

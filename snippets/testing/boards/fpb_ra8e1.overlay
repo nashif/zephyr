@@ -82,3 +82,11 @@ tst_dma0: &dma0 {};
 		zephyr,vref-mv = <3300>;
 	};
 };
+
+&sci2 {
+	status = "okay";
+	dut: uart {
+		current-speed = <115200>;
+		status = "okay";
+	};
+};

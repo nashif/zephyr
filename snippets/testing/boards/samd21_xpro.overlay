@@ -51,3 +51,23 @@ tst_dma0: &dmac {
 		in-gpios = <&portb 7 0>;
 	};
 };
+
+&dmac {
+	status = "okay";
+};
+
+&sercom0 {
+	status = "disabled";
+};
+
+dut: &sercom1 {
+	rxpo = <0>;
+	txpo = <0>;
+	dmas = <&dmac 0 3>, <&dmac 1 4>;
+	dma-names = "rx", "tx";
+};
+
+&sercom3 {
+	dmas = <&dmac 10 7>, <&dmac 11 8>;
+	dma-names = "rx", "tx";
+};

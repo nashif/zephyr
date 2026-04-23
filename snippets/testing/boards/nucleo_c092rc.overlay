@@ -24,3 +24,24 @@
 		zephyr,resolution = <12>;
 	};
 };
+
+&usart4 {
+	pinctrl-0 = <&usart4_tx_pc1 &usart4_rx_pc0>;
+	pinctrl-names = "default";
+	current-speed = <115200>;
+	status = "okay";
+};
+
+dut: &usart4 {
+	dmas = <&dmamux1 5 57 STM32_DMA_PERIPH_TX>,
+	       <&dmamux1 6 56 STM32_DMA_PERIPH_RX>;
+	dma-names = "tx", "rx";
+};
+
+&dma1 {
+	status = "okay";
+};
+
+&dmamux1 {
+	status = "okay";
+};

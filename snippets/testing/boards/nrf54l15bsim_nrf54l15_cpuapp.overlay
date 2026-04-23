@@ -5,3 +5,5 @@
  */
 
 #include "nrf52_bsim.overlay"
+
+#include "nrf54l15dk_nrf54l15_cpuapp.overlay"

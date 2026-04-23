@@ -51,3 +51,5 @@
 		zephyr,input-positive = <MCUX_LPADC_CH2A>;
 	};
 };
+
+dut: &flexcomm2_lpuart2 {};

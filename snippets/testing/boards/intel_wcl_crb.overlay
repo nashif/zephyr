@@ -37,3 +37,11 @@
 		in-gpios = <&gpio_b 23 0>;
 	};
 };
+
+dut: &uart1 {
+	status = "okay";
+};
+
+&uart1_dma {
+	status = "okay";
+};

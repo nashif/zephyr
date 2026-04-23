@@ -28,3 +28,23 @@ tst_dma0: &dmac {
 		zephyr,input-positive = <ADC_INPUTCTRL_MUXPOS_SCALEDIOVCC_Val>;
 	};
 };
+
+&dmac {
+	status = "okay";
+};
+
+dut: &sercom0 {
+	rxpo = <0>;
+	txpo = <0>;
+	dmas = <&dmac 0 0x02>, <&dmac 1 0x03>;
+	dma-names = "rx", "tx";
+};
+
+&sercom2 {
+	status = "disabled";
+};
+
+&sercom4 {
+	dmas = <&dmac 10 0x0a>, <&dmac 11 0x0b>;
+	dma-names = "rx", "tx";
+};

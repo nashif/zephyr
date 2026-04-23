@@ -20,3 +20,8 @@
 		spi-max-frequency = <3000000>;
 	};
 };
+
+dut: &uart7 {
+	current-speed = <115200>;
+	status = "okay";
+};

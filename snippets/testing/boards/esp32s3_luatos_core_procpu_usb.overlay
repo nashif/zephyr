@@ -49,3 +49,28 @@ tst_dma0: &dma {};
 		in-gpios = <&gpio0 5 0>;
 	};
 };
+
+&pinctrl {
+	uart1_test: uart1_test {
+		group1 {
+			pinmux = <UART1_TX_GPIO5>;
+		};
+		group2 {
+			pinmux = <UART1_RX_GPIO6>;
+			bias-pull-up;
+		};
+	};
+};
+
+dut: &uart1 {
+	status = "okay";
+	current-speed = <115200>;
+	pinctrl-0 = <&uart1_test>;
+	pinctrl-names = "default";
+	dmas = <&dma 0>, <&dma 1>;
+	dma-names = "rx", "tx";
+};
+
+&uart0 {
+	status = "okay";
+};

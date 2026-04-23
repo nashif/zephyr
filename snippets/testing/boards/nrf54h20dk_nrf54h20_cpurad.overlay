@@ -8,3 +8,7 @@
 &spi130 {
 	memory-regions = <&cpurad_dma_region>;
 };
+
+&dut {
+	memory-regions = <&cpurad_dma_region>;
+};

@@ -44,3 +44,32 @@ tst_dma0: &dmac {
 		zephyr,input-positive = <ADC_INPUTCTRL_MUXPOS_SCALEDIOVCC_Val>;
 	};
 };
+
+&pinctrl {
+	sercom3_loopback: sercom3_loopback {
+		group1 {
+			pinmux = <PA16D_SERCOM3_PAD0>;
+		};
+	};
+};
+
+&dmac {
+	status = "okay";
+};
+
+&sercom0 {
+	dmas = <&dmac 0 1>, <&dmac 1 2>;
+	dma-names = "rx", "tx";
+};
+
+dut: &sercom3 {
+	status = "okay";
+	compatible = "atmel,sam0-uart";
+	current-speed = <115200>;
+	rxpo = <0>;
+	txpo = <0>;
+	pinctrl-0 = <&sercom3_loopback>;
+	pinctrl-names = "default";
+	dmas = <&dmac 10 7>, <&dmac 11 8>;
+	dma-names = "rx", "tx";
+};

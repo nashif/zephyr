@@ -56,3 +56,14 @@ tst_dma0: &dma0 {};
 		in-gpios = <&gpio2 1 0>;
 	};
 };
+
+dut: &uart3 {
+	status = "okay";
+	pinctrl-0 = <&lpuartb_tx_p2_7 &lpuartb_rx_p2_6>;
+	pinctrl-names = "default";
+	dmas = <&dma0 1 MAX32_DMA_SLOT_UART3_TX>, <&dma0 2 MAX32_DMA_SLOT_UART3_RX>;
+	dma-names = "tx", "rx";
+	current-speed = <115200>;
+	data-bits = <8>;
+	parity = "none";
+};

@@ -67,3 +67,23 @@ tst_dma0: &dma0 {
 		zephyr,vref-mv = <3300>;
 	};
 };
+
+&pinctrl {
+	sci0_default: sci0_default {
+		group1 {
+			psels = <RA_PSEL(RA_PSEL_SCI_0, 4, 11)>,
+				<RA_PSEL(RA_PSEL_SCI_0, 4, 10)>;
+			drive-strength = "high";
+		};
+	};
+};
+
+&sci0 {
+	pinctrl-0 = <&sci0_default>;
+	pinctrl-names = "default";
+	status = "okay";
+	dut: uart {
+		current-speed = <115200>;
+		status = "okay";
+	};
+};

@@ -31,3 +31,11 @@
 		in-gpios = <&gpio_0_i 17 0>;
 	};
 };
+
+dut: &uart0 {
+	status = "okay";
+};
+
+&uart0_dma {
+	status = "okay";
+};

@@ -54,3 +54,22 @@ tst_dma0: &dma0 {};
 		zephyr,vref-mv = <3300>;
 	};
 };
+
+&pinctrl {
+	sci1_default: sci1_default {
+		group1 {
+			psels = <RA_PSEL(RA_PSEL_SCI_1, 2, 13)>,
+				<RA_PSEL(RA_PSEL_SCI_1, 2, 12)>;
+		};
+	};
+};
+
+&sci1 {
+	pinctrl-0 = <&sci1_default>;
+	pinctrl-names = "default";
+	status = "okay";
+	dut: uart {
+		current-speed = <115200>;
+		status = "okay";
+	};
+};

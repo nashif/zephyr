@@ -51,3 +51,9 @@ tst_dma0: &gpdma1 {
 &gpdma1 {
 	status = "okay";
 };
+
+dut: &usart2 {
+	dmas = <&gpdma1 0 27 STM32_DMA_PERIPH_TX>,
+	       <&gpdma1 1 26 STM32_DMA_PERIPH_RX>;
+	dma-names = "tx", "rx";
+};

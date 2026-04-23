@@ -43,3 +43,9 @@ tst_dma0: &edma {};
 		zephyr,resolution = <12>;
 	};
 };
+
+dut: &lpuart2 {
+	status = "okay";
+	current-speed = <115200>;
+	nxp,loopback;
+};

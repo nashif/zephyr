@@ -23,3 +23,13 @@ tst_dma0: &dma1 {};
 		zephyr,resolution = <12>;
 	};
 };
+
+dut: &usart1 {
+	dmas = <&dma1 4 (STM32_DMA_PERIPH_TX | STM32_DMA_PRIORITY_HIGH)>,
+	       <&dma1 5 (STM32_DMA_PERIPH_RX | STM32_DMA_PRIORITY_HIGH)>;
+	dma-names = "tx", "rx";
+};
+
+&dma1 {
+	status = "okay";
+};

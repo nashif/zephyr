@@ -39,3 +39,8 @@ tst_dma0: &dmac {
 &porta {
 	status = "okay";
 };
+
+dut: &sercom1 {
+	rxpo = <0>;
+	txpo = <0>;
+};

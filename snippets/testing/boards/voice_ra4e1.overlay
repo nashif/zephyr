@@ -11,3 +11,22 @@ tst_dma0: &dma0 {};
 	interrupts = <95 1>, <94 1>, <93 1>;
 	interrupt-names = "ch0", "ch1", "ch2";
 };
+
+&pinctrl {
+	sci0_default: sci0_default {
+		group1 {
+			psels = <RA_PSEL(RA_PSEL_SCI_0, 1, 1)>,
+				<RA_PSEL(RA_PSEL_SCI_0, 1, 0)>;
+		};
+	};
+};
+
+&sci0 {
+	pinctrl-0 = <&sci0_default>;
+	pinctrl-names = "default";
+	status = "okay";
+	dut: uart {
+		current-speed = <115200>;
+		status = "okay";
+	};
+};

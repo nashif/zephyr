@@ -53,3 +53,9 @@ tst_dma0: &lpdma1 {};
 &lpdma1 {
 	status = "okay";
 };
+
+dut: &usart2 {
+	dmas = <&lpdma1 0 15 STM32_DMA_PERIPH_TX>,
+	       <&lpdma1 1 14 STM32_DMA_PERIPH_RX>;
+	dma-names = "tx", "rx";
+};

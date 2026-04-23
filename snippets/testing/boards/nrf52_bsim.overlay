@@ -11,3 +11,5 @@
 		in-gpios = <&gpio1 2 0>;
 	};
 };
+
+#include "nrf52840dk_nrf52840.overlay"

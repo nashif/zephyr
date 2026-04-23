@@ -63,3 +63,22 @@
 &ioportd {
 	status = "okay";
 };
+
+&pinctrl {
+	sci12_default: sci12_default {
+		group1 {
+			psels = <RX_PSEL(0xC, 0xE, 1)>,
+				<RX_PSEL(0xC, 0xE, 2)>;
+		};
+	};
+};
+
+&sci12 {
+	pinctrl-0 = <&sci12_default>;
+	pinctrl-names = "default";
+	status = "okay";
+	dut: uart {
+		current-speed = <115200>;
+		status = "okay";
+	};
+};

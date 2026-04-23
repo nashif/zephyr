@@ -42,3 +42,5 @@
 		zephyr,resolution = <10>;
 	};
 };
+
+#include "bl54l15_dvk_nrf54l15_cpuapp.overlay"
