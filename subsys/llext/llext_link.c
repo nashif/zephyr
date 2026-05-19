@@ -333,6 +333,12 @@ static int llext_link_plt(struct llext_loader *ldr, struct llext *ext, elf_shdr_
 
 		if (tgt) {
 			/* Relocatable / partially linked ELF. */
+			if (rela.r_offset >= tgt->sh_size) {
+				LOG_ERR("PLT: r_offset %#zx out of target section "
+					"(size %#zx), skipping",
+					(size_t)rela.r_offset, (size_t)tgt->sh_size);
+				continue;
+			}
 			rel_addr += rela.r_offset + tgt->sh_offset;
 		} else {
 			/* Shared / dynamically linked ELF */
