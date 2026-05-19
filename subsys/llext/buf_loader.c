@@ -34,5 +34,15 @@ void *llext_buf_peek(struct llext_loader *l, size_t pos)
 {
 	struct llext_buf_loader *buf_l = CONTAINER_OF(l, struct llext_buf_loader, loader);
 
+	/*
+	 * Validate that pos is within the buffer before returning a pointer.
+	 * ELF-derived offsets (e_shoff, sh_offset) flow directly into pos; an
+	 * out-of-range value must be rejected here rather than handing the
+	 * caller a wild pointer into memory beyond the supplied buffer.
+	 */
+	if (pos >= buf_l->len) {
+		return NULL;
+	}
+
 	return (void *)(buf_l->buf + pos);
 }

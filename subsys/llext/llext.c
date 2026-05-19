@@ -72,6 +72,10 @@ ssize_t llext_find_section(struct llext_loader *ldr, const char *search_name)
 					      ldr->sects[LLEXT_MEM_SHSTRTAB].sh_offset +
 					      shdr->sh_name);
 
+		if (!name) {
+			return -ENOTSUP;
+		}
+
 		if (!strcmp(name, search_name)) {
 			return shdr->sh_offset;
 		}
