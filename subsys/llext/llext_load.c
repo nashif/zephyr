@@ -727,6 +727,20 @@ static int llext_copy_symbols(struct llext_loader *ldr, struct llext *ext,
 
 		if ((stt == STT_FUNC || stt == STT_OBJECT) &&
 		    stb == STB_GLOBAL && shndx != SHN_UNDEF) {
+			/*
+			 * Validate shndx before using it as an array index.
+			 * Reserved indices (>= SHN_LORESERVE, e.g. SHN_ABS,
+			 * SHN_COMMON) are not real section indices and must not
+			 * be used to index sect_hdrs[] or sect_map[].  Any value
+			 * >= sect_cnt is likewise out of bounds.  Both conditions
+			 * are caught by the single >= sect_cnt test because
+			 * sect_cnt is always much smaller than SHN_LORESERVE.
+			 */
+			if (shndx >= ext->sect_cnt) {
+				LOG_ERR("Symbol %d has invalid section index %u", i, shndx);
+				return -ENOEXEC;
+			}
+
 			const char *name = llext_symbol_name(ldr, ext, &sym);
 
 			__ASSERT(j <= sym_tab->sym_cnt, "Miscalculated symbol number %u\n", j);
