@@ -92,6 +92,7 @@ except ImportError:
 # PR backlog categories
 # ---------------------------------------------------------------------------
 CAT_NO_REVIEWER = "no_reviewer"
+CAT_NO_REVIEW = "no_review"
 CAT_NO_ASSIGNEE = "no_assignee"
 CAT_CI_FAILING = "ci_failing"
 CAT_CI_PENDING = "ci_pending"
@@ -112,6 +113,15 @@ CATEGORY_META = {
         "description": (
             "No reviewer has been requested.  Nobody is formally "
             "responsible for looking at the PR."
+        ),
+    },
+    CAT_NO_REVIEW: {
+        "label": "No reviews at all",
+        "color": "#c0392b",
+        "description": (
+            "The PR has received zero reviews of any kind — no approvals, "
+            "no change requests, and no reviewer comments.  It has been "
+            "completely ignored since it was opened."
         ),
     },
     CAT_NO_ASSIGNEE: {
@@ -155,11 +165,14 @@ CATEGORY_META = {
         ),
     },
     CAT_MANY_AREAS: {
-        "label": "Spans many areas (≥ 4)",
+        "label": "Spans many code areas (≥ 4)",
         "color": "#16a085",
         "description": (
-            "The change touches four or more MAINTAINERS areas, involving "
-            "many people with potentially unclear ownership."
+            "The change touches four or more MAINTAINERS code areas "
+            "(Tests, Samples, Boards/SoCs, Release, Documentation, and "
+            "MAINTAINERS entries are excluded from the count).  Many "
+            "independent owners are involved with potentially unclear "
+            "ownership."
         ),
     },
     CAT_MAINTAINER_SUBMITTED: {
@@ -214,6 +227,24 @@ CATEGORY_META = {
 # Size thresholds
 SIZE_LARGE_LINES = 500
 SIZE_MANY_AREAS = 4
+
+# Area names that are considered meta (infrastructure / overhead) and are
+# excluded when counting how many *code* areas a PR touches.  The names
+# are matched as substrings (case-insensitive) against the area name
+# returned by MAINTAINERS.yml.
+_META_AREA_SUBSTRINGS = (
+    "release notes",
+    "documentation",
+    "samples",
+    "tests",
+    "release",
+    "maintainers",
+    "boards",
+    "socs",
+    "soc ",
+    "board ",
+    "platform",
+)
 
 
 # ---------------------------------------------------------------------------
@@ -327,6 +358,13 @@ def _ci_details(pr):
     if any(s == "pending" for s in states):
         return "pending", unique_failing
     return "pass", unique_failing
+
+
+def _is_meta_area(name):
+    """Return True when *name* matches a meta area that should not count
+    toward the 'many areas' code-complexity threshold."""
+    low = name.lower()
+    return any(sub in low for sub in _META_AREA_SUBSTRINGS)
 
 
 def _maintainers_for_pr(maint_obj, pr_files):
@@ -464,6 +502,8 @@ def _analyze_pr(pr, maint_obj, verbose=False):
     areas, all_area_maintainers = _maintainers_for_pr(maint_obj, pr_file_paths)
     area_names = [a.name for a in areas]
     num_areas = len(areas)
+    non_meta_areas = [a for a in area_names if not _is_meta_area(a)]
+    num_non_meta_areas = len(non_meta_areas)
 
     submitter_is_maintainer = pr.user.login in all_area_maintainers \
         if pr.user else False
@@ -482,6 +522,8 @@ def _analyze_pr(pr, maint_obj, verbose=False):
     else:
         if not requested_reviewers and not all_reviews:
             categories.append(CAT_NO_REVIEWER)
+        if not all_reviews:
+            categories.append(CAT_NO_REVIEW)
         if not assignees:
             categories.append(CAT_NO_ASSIGNEE)
         elif not assignee_approved:
@@ -497,7 +539,7 @@ def _analyze_pr(pr, maint_obj, verbose=False):
         elif num_approvals == 1:
             categories.append(CAT_AWAITING_SECOND_REVIEW)
 
-        if num_areas >= SIZE_MANY_AREAS:
+        if num_non_meta_areas >= SIZE_MANY_AREAS:
             categories.append(CAT_MANY_AREAS)
 
         if submitter_is_maintainer:
@@ -551,6 +593,8 @@ def _analyze_pr(pr, maint_obj, verbose=False):
         "comment_idle_days": comment_idle_days,
         "areas": area_names,
         "num_areas": num_areas,
+        "non_meta_areas": non_meta_areas,
+        "num_non_meta_areas": num_non_meta_areas,
         "area_details": area_details,
         "all_area_maintainers": sorted(all_area_maintainers),
         "submitter_is_maintainer": submitter_is_maintainer,
@@ -831,11 +875,11 @@ _HTML_TEMPLATE = """\
     <option>pending</option><option>unknown</option>
   </select>
   <select id="filter-areas" onchange="applyFilters()">
-    <option value="">Any # areas</option>
-    <option value="1">1 area</option>
-    <option value="2">2 areas</option>
-    <option value="3">3 areas</option>
-    <option value="4+">4+ areas</option>
+    <option value="">Any # code areas</option>
+    <option value="1">1 code area</option>
+    <option value="2">2 code areas</option>
+    <option value="3">3 code areas</option>
+    <option value="4+">4+ code areas</option>
   </select>
   <select id="filter-draft" onchange="applyFilters()">
     <option value="">All PRs (incl. drafts)</option>
@@ -882,7 +926,11 @@ _HTML_TEMPLATE = """\
 {ci_workflow_table}
 
 <!-- ======================== AREAS MOST INVOLVED ======================== -->
-<div class="section-title">Top Areas by PR Involvement</div>
+<div class="section-title">Top Code Areas by PR Involvement</div>
+<p style="font-size:.8rem;color:var(--muted);margin-bottom:8px;">
+  Meta areas (Tests, Samples, Boards/SoCs, Release, Documentation,
+  MAINTAINERS entries) are excluded from this chart and from the
+  &ldquo;Spans many code areas&rdquo; category count.</p>
 <div class="bar-chart">
   {area_chart}
 </div>
@@ -931,8 +979,8 @@ function applyFilters() {{
     )) return false;
     if (cat && !p.categories.includes(cat)) return false;
     if (ci  && p.ci !== ci) return false;
-    if (areas === "4+" && p.num_areas < 4) return false;
-    if (areas && areas !== "4+" && p.num_areas !== +areas) return false;
+    if (areas === "4+" && p.num_non_meta_areas < 4) return false;
+    if (areas && areas !== "4+" && p.num_non_meta_areas !== +areas) return false;
     if (draft === "no" && p.draft) return false;
     if (draft === "only" && !p.draft) return false;
     return true;
@@ -1272,7 +1320,7 @@ def render_html(org, repo, age_days, pr_data_list, generated):
     changes_req = sum(1 for p in pr_data_list if p["changes_requested_by"])
     nearly_done = sum(1 for p in pr_data_list if p["two_approvals_met"])
     large_prs = sum(1 for p in pr_data_list if p["total_lines"] > SIZE_LARGE_LINES)
-    many_areas = sum(1 for p in pr_data_list if p["num_areas"] >= SIZE_MANY_AREAS)
+    many_areas = sum(1 for p in pr_data_list if p["num_non_meta_areas"] >= SIZE_MANY_AREAS)
     avg_age = sum(p["age_days"] for p in pr_data_list) / total if total else 0
     avg_idle = sum(p["meaningful_idle_days"] for p in pr_data_list) / total if total else 0
     maint_submitted = sum(1 for p in pr_data_list if p["submitter_is_maintainer"])
@@ -1287,7 +1335,7 @@ def render_html(org, repo, age_days, pr_data_list, generated):
         _summary_card(changes_req, "Changes requested", "#8e44ad"),
         _summary_card(nearly_done, "Nearly approved", "#1abc9c"),
         _summary_card(large_prs, "Large PRs", "#d35400"),
-        _summary_card(many_areas, "Many areas", "#16a085"),
+        _summary_card(many_areas, "Many code areas (≥ 4)", "#16a085"),
         _summary_card(maint_submitted, "Maintainer author", "#27ae60"),
         _summary_card(num_drafts, "Draft PRs", "#7f8c8d"),
     ]
@@ -1335,10 +1383,10 @@ def render_html(org, repo, age_days, pr_data_list, generated):
     sorted_prs = sorted(pr_data_list, key=lambda p: p["age_days"], reverse=True)
     pr_rows_html = "\n".join(_pr_row_html(p) for p in sorted_prs)
 
-    # ---- Area chart ----
+    # ---- Area chart (code areas only, meta areas excluded) ----
     area_counter = collections.Counter()
     for p in pr_data_list:
-        for a in p["areas"]:
+        for a in p["non_meta_areas"]:
             area_counter[a] += 1
     top_areas = area_counter.most_common(20)
     max_area = top_areas[0][1] if top_areas else 1
@@ -1404,7 +1452,9 @@ def render_html(org, repo, age_days, pr_data_list, generated):
             "total_lines": p["total_lines"],
             "num_files": p["num_files"],
             "num_areas": p["num_areas"],
+            "num_non_meta_areas": p["num_non_meta_areas"],
             "areas": p["areas"],
+            "non_meta_areas": p["non_meta_areas"],
             "ci": p["ci"],
             "ci_failing_checks": p["ci_failing_checks"],
             "num_approvals": p["num_approvals"],
