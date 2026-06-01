@@ -183,7 +183,8 @@ CATEGORY_META = {
         "color": "#27ae60",
         "description": (
             "The author is a maintainer of one of the touched areas and is "
-            "waiting for external reviews."
+            "also the PR's assignee — waiting for external reviews to land "
+            "their own change."
         ),
     },
     CAT_LARGE_PR: {
@@ -598,7 +599,7 @@ def _analyze_pr(pr, maint_obj, verbose=False):
         if num_non_meta_areas >= SIZE_MANY_AREAS:
             categories.append(CAT_MANY_AREAS)
 
-        if submitter_is_maintainer:
+        if submitter_is_maintainer and pr.user and pr.user.login in assignees:
             categories.append(CAT_MAINTAINER_SUBMITTED)
 
         if total_lines > SIZE_LARGE_LINES:
