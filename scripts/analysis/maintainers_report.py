@@ -10,6 +10,7 @@ import time
 import argparse
 import urllib.request
 import urllib.error
+import pathlib
 from pathlib import Path
 from collections import defaultdict, Counter
 import datetime
@@ -665,7 +666,7 @@ def check_icon(val):
     return '<span class="check">✓</span>' if val else '<span class="cross">✗</span>'
 
 
-def generate_html(areas, stats):
+def generate_html(areas, stats, trend_html=""):
     """Generate the full HTML report."""
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     total_files = sum(a.get("file_count", 0) for a in areas)
@@ -1662,6 +1663,8 @@ def generate_html(areas, stats):
   </div>
 </section>
 
+{trend_html}
+
 </main>
 
 <button id="scrolltop" onclick="window.scrollTo({{top:0,behavior:'smooth'}})">&#8679;</button>
@@ -1724,6 +1727,119 @@ filterTable();
     return html
 
 
+# ---------------------------------------------------------------------------
+# Run-history helpers
+# ---------------------------------------------------------------------------
+
+def _load_history(path):
+    """Load run history from *path*.  Returns an empty list on any error."""
+    p = pathlib.Path(path)
+    if not p.exists():
+        return []
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception as exc:
+        print(f"WARNING: Could not load history file {path}: {exc}", flush=True)
+        return []
+
+
+def _save_snapshot(path, snapshot, history):
+    """Append *snapshot* to *history* and persist to *path*."""
+    updated = list(history) + [snapshot]
+    try:
+        pathlib.Path(path).write_text(
+            json.dumps(updated, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+    except Exception as exc:
+        print(f"WARNING: Could not write history file {path}: {exc}", flush=True)
+
+
+def _maintainers_delta_html(current, prev, lower_is_better=True):
+    """Return a tiny coloured arrow span comparing *current* to *prev*."""
+    if prev is None:
+        return ""
+    try:
+        diff = current - prev
+    except TypeError:
+        return ""
+    if diff == 0:
+        return ' <span style="color:#6b7280;font-size:.7rem">—</span>'
+    improving = (diff < 0) == lower_is_better
+    color = "#16a34a" if improving else "#dc2626"
+    arrow = "▼" if diff < 0 else "▲"
+    if isinstance(current, float):
+        label = f"{diff:+.1f}"
+    else:
+        label = f"{diff:+d}"
+    return (f' <span style="color:{color};font-size:.7rem;font-weight:600">' +
+            f'{arrow} {label}</span>')
+
+
+def _maintainers_trend_table(history):
+    """Render an HTML table summarising all historical snapshots (newest first)."""
+    if len(history) < 2:
+        return (
+            '<p style="color:#64748b;font-size:.85rem;margin-top:8px;">' +
+            'Trend data will appear here after two or more runs.</p>'
+        )
+
+    cols = [
+        ("Date",              "generated",          None),
+        ("Total Areas",       "total",               True),
+        ("Maintained",        "maintained",          False),
+        ("No Maintainer",     "no_maintainer",       True),
+        ("Unique Maint.",     "unique_maintainers",  False),
+        ("Unique Collab.",    "unique_collaborators",False),
+        ("No Collab.",        "no_collab",            True),
+        ("2+ Collab.",        "two_plus_collab",      False),
+        ("Has Test IDs",      "has_test_ids",         False),
+        ("Avg Health",        "avg_health",           False),
+        ("Critical/Poor",     "critical_poor",        True),
+        ("Repo Coverage %",   "coverage_pct",         False),
+    ]
+
+    th = "".join(
+        f'<th style="background:#1e3a5f;color:#fff;padding:6px 10px;' +
+        f'text-align:right;white-space:nowrap">{c[0]}</th>'
+        for c in cols
+    )
+    th = th.replace('right', 'left', 1)  # first column left-aligned
+
+    rows = []
+    for i in range(len(history) - 1, -1, -1):
+        snap = history[i]
+        prev = history[i - 1] if i > 0 else None
+        cells = []
+        for _, key, lib in cols:
+            val = snap.get(key, "")
+            if lib is None:
+                cells.append(f'<td style="padding:5px 10px;text-align:left;'
+                             f'border-bottom:1px solid #e2e8f0;white-space:nowrap">' +
+                             f'{val}</td>')
+            else:
+                dh = _maintainers_delta_html(val, prev.get(key) if prev else None,
+                                             lower_is_better=lib)
+                if isinstance(val, float):
+                    cell_val = f"{val:.1f}"
+                else:
+                    cell_val = str(val)
+                cells.append(f'<td style="padding:5px 10px;text-align:right;'
+                             f'border-bottom:1px solid #e2e8f0;white-space:nowrap">' +
+                             f'{cell_val}{dh}</td>')
+        bg = "#f9fafb" if (len(history) - 1 - i) % 2 == 1 else "#ffffff"
+        cells_html = "".join(cells)
+        rows.append(f'<tr style="background:{bg}">{cells_html}</tr>')
+
+    return (
+        '<div style="overflow-x:auto">' +
+        f'<table style="width:100%;border-collapse:collapse;font-size:.82rem">' +
+        f'<thead><tr>{th}</tr></thead>' +
+        f'<tbody>{"".join(rows)}</tbody>' +
+        '</table></div>'
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Analyze MAINTAINERS.yml and generate a browsable HTML report."
@@ -1755,6 +1871,18 @@ def main():
                         help="Minimum seconds between GitHub Search API calls to avoid "
                              "secondary rate limits (default: %(default)s). "
                              "Lower to 0 to disable.")
+    parser.add_argument(
+        "--history",
+        default=None,
+        metavar="FILE",
+        help=(
+            "Path to a JSON file used to persist run history.  If the file "
+            "exists, previous snapshots are loaded and the report shows a "
+            "trend table at the bottom comparing key metrics over time.  "
+            "After rendering, the current run's statistics are appended to "
+            "the file (created if it does not exist)."
+        ),
+    )
     args = parser.parse_args()
 
     output_file = Path(args.output)
@@ -1823,11 +1951,59 @@ def main():
     print(f"Areas with test IDs: {stats['has_test_ids']}")
 
     print(f"\nGenerating HTML report: {output_file}")
-    html = generate_html(areas, stats)
+
+    # ---- Build snapshot for history ----
+    generated_ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    avg_health = (sum(a["health_score"] for a in areas) / len(areas)
+                  if areas else 0.0)
+    critical_poor = sum(
+        1 for a in areas
+        if health_level(a["health_score"], a["area_type"])[0] in ("Critical", "Poor")
+    )
+    snapshot = {
+        "timestamp": datetime.datetime.utcnow().isoformat(),
+        "generated": generated_ts,
+        "total": stats["total"],
+        "maintained": stats["maintained"],
+        "no_maintainer": stats["no_maintainer"],
+        "unique_maintainers": stats["unique_maintainers"],
+        "unique_collaborators": stats["unique_collaborators"],
+        "no_collab": stats["no_collab"],
+        "two_plus_collab": stats["two_plus_collab"],
+        "has_test_ids": stats["has_test_ids"],
+        "avg_health": round(avg_health, 2),
+        "critical_poor": critical_poor,
+        "coverage_pct": round(stats.get("coverage_pct", 0.0), 1),
+    }
+
+    # ---- Load history and build trend HTML ----
+    history = []
+    if args.history:
+        history = _load_history(args.history)
+    all_runs = list(history) + [snapshot]
+    if len(all_runs) >= 2:
+        trend_html = (
+            '<section id="trend">\n'
+            '<h2>&#128200; Backlog Trend History</h2>\n'
+            '<p style="color:#64748b;font-size:.85rem;margin-bottom:12px;">'
+            'Each row is one saved run. Arrows show change vs. the previous '
+            'run; green\u202f=\u202fimproving, red\u202f=\u202fworsening.</p>\n'
+            + _maintainers_trend_table(all_runs)
+            + '\n</section>'
+        )
+    else:
+        trend_html = ""
+
+    html = generate_html(areas, stats, trend_html=trend_html)
     with open(output_file, "w") as f:
         f.write(html)
     print(f"Report written to: {output_file}")
     print(f"Open with: xdg-open {output_file}")
+
+    # ---- Persist snapshot ----
+    if args.history:
+        _save_snapshot(args.history, snapshot, history)
+        print(f"Snapshot appended to history file: {args.history}")
 
 
 if __name__ == "__main__":
