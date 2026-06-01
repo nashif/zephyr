@@ -982,6 +982,14 @@ _HTML_TEMPLATE = """\
   assignee set.</p>
 {assignee_table}
 
+<!-- ======================== TOP CHANGE REQUESTERS ======================== -->
+<div class="section-title">Top Reviewers Requesting Changes</div>
+<p style="font-size:.8rem;color:var(--muted);margin-bottom:8px;">
+  Reviewers who have the most unresolved change requests across backlog PRs,
+  sorted by number of PRs blocked.
+  &ldquo;Sole blocker&rdquo; means no other reviewer has approved that PR yet.</p>
+{change_requesters_table}
+
 <!-- ======================== CI WORKFLOW FAILURES ======================== -->
 <div class="section-title">Most-Failing CI Workflows</div>
 <p style="font-size:.8rem;color:var(--muted);margin-bottom:8px;">
@@ -1334,6 +1342,51 @@ def _pr_row_html(pr):
     )
 
 
+def _change_requesters_table(sorted_reviewers):
+    """Render the top change-requesters summary table."""
+    if not sorted_reviewers:
+        return '<p style="color:var(--muted);font-size:.82rem">No data.</p>'
+    rows = []
+    for login, d in sorted_reviewers[:30]:
+        pr_links = " ".join(
+            f'<a href="{url}" target="_blank" title="{html.escape(title[:80])}">'
+            f'#{num}</a>'
+            for num, url, title in d["prs"]
+        )
+        avg_age = f'{d["total_age"] / d["total"]:.0f}d' if d["total"] else "\u2014"
+        rows.append(
+            f'<tr>'
+            f'<td><strong>{html.escape(login)}</strong></td>'
+            f'<td class="num">{d["total"]}</td>'
+            f'<td class="num">{d["ci_pass"] or "\u2014"}</td>'
+            f'<td class="num">{d["also_approved"] or "\u2014"}</td>'
+            f'<td class="num">{d["no_other_approvals"] or "\u2014"}</td>'
+            f'<td class="num">{avg_age}</td>'
+            f'<td class="pr-link-list">{pr_links}</td>'
+            f'</tr>'
+        )
+    return (
+        '<table class="simple-table">'
+        '<thead><tr>'
+        '<th>Reviewer</th>'
+        '<th title="PRs where this reviewer has an unresolved change request">'
+        '# PRs blocked</th>'
+        '<th title="Of those, PRs where CI is currently passing">'
+        '# CI passing</th>'
+        '<th title="PRs where at least one other reviewer has already approved">'
+        '# Others approved</th>'
+        '<th title="PRs where no other reviewer has approved yet — '
+        'only this reviewer\'s feedback is pending">'
+        '# Sole blocker</th>'
+        '<th title="Average age (days) of PRs blocked by this reviewer\'s change request">'
+        'Avg PR age</th>'
+        '<th>PRs</th>'
+        '</tr></thead>'
+        '<tbody>' + "\n".join(rows) + '</tbody>'
+        '</table>'
+    )
+
+
 def _assignee_table(sorted_assignees):
     """Render the by-assignee summary table."""
     if not sorted_assignees:
@@ -1532,6 +1585,35 @@ def render_html(org, repo, age_days, pr_data_list, generated):
     )
     assignee_table_html = _assignee_table(sorted_assignees)
 
+    # ---- Change-requesters table ----
+    reviewer_data = collections.defaultdict(lambda: {
+        "total": 0,
+        "ci_pass": 0,
+        "also_approved": 0,
+        "no_other_approvals": 0,
+        "total_age": 0,
+        "prs": [],
+    })
+    for p in pr_data_list:
+        for reviewer in p["changes_requested_by"]:
+            d = reviewer_data[reviewer]
+            d["total"] += 1
+            d["total_age"] += p["age_days"]
+            if p["ci"] == "pass":
+                d["ci_pass"] += 1
+            other_approvals = [u for u in p["approved_by"] if u != reviewer]
+            if other_approvals:
+                d["also_approved"] += 1
+            else:
+                d["no_other_approvals"] += 1
+            d["prs"].append((p["number"], p["url"], p["title"]))
+    sorted_reviewers = sorted(
+        reviewer_data.items(),
+        key=lambda x: x[1]["total"],
+        reverse=True,
+    )
+    change_requesters_table_html = _change_requesters_table(sorted_reviewers)
+
     # ---- CI workflow failures table ----
     workflow_counter = collections.Counter()
     workflow_prs = collections.defaultdict(list)
@@ -1596,6 +1678,7 @@ def render_html(org, repo, age_days, pr_data_list, generated):
         area_chart=area_chart_html,
         author_chart=author_chart_html,
         assignee_table=assignee_table_html,
+        change_requesters_table=change_requesters_table_html,
         ci_workflow_table=ci_workflow_table_html,
         pr_json=pr_json,
         cat_colors_json=cat_colors_json,
