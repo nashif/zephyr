@@ -105,6 +105,9 @@ CAT_DISCUSSION_ACTIVE = "discussion_active"
 CAT_DISCUSSION_STALE = "discussion_stale"
 CAT_MISSING_ASSIGNEE_APPROVAL = "missing_assignee_approval"
 CAT_NEARLY_APPROVED = "nearly_approved"
+CAT_NEEDS_REBASE = "needs_rebase"
+CAT_DNM = "dnm"
+CAT_ARCH_REVIEW = "arch_review"
 
 CATEGORY_META = {
     CAT_NO_REVIEWER: {
@@ -220,6 +223,31 @@ CATEGORY_META = {
         "description": (
             "The PR already has 2+ approvals including the assignee – it may "
             "only be waiting for a final merge trigger."
+        ),
+    },
+    CAT_NEEDS_REBASE: {
+        "label": "Needs rebase (merge conflict)",
+        "color": "#c0392b",
+        "description": (
+            "The PR branch has a merge conflict with the target branch.  "
+            "The author must rebase or resolve conflicts before this can land."
+        ),
+    },
+    CAT_DNM: {
+        "label": "Do Not Merge (DNM)",
+        "color": "#2c3e50",
+        "description": (
+            "The PR carries a DNM (Do Not Merge) label.  It is intentionally "
+            "blocked from landing until the label is removed."
+        ),
+    },
+    CAT_ARCH_REVIEW: {
+        "label": "Architecture Review",
+        "color": "#6c3483",
+        "description": (
+            "The PR carries an 'Architecture Review' or 'TSC' label, "
+            "indicating it requires sign-off from the Architecture Working "
+            "Group or the Technical Steering Committee before merging."
         ),
     },
 }
@@ -415,6 +443,17 @@ def _analyze_pr(pr, maint_obj, verbose=False):
 
     # ---- Labels ----
     label_names = [lbl.name for lbl in pr.labels]
+    has_dnm = any(lbl.upper() == "DNM" for lbl in label_names)
+    has_arch_review = any(
+        lbl in ("Architecture Review", "TSC") for lbl in label_names
+    )
+
+    # ---- Mergeability ----
+    try:
+        mergeable_state = pr.mergeable_state or "unknown"
+    except Exception:
+        mergeable_state = "unknown"
+    needs_rebase = mergeable_state == "dirty"
 
     # ---- Assignees / reviewers ----
     assignees = [a.login for a in pr.assignees]
@@ -443,6 +482,7 @@ def _analyze_pr(pr, maint_obj, verbose=False):
     approved_by = [u for u, s in latest.items() if s == "APPROVED"]
     changes_by = [u for u, s in latest.items() if s == "CHANGES_REQUESTED"]
     num_approvals = len(approved_by)
+    num_changes_requested = len(changes_by)
 
     # ---- CI ----
     ci, ci_failing_checks = _ci_details(pr)
@@ -517,6 +557,14 @@ def _analyze_pr(pr, maint_obj, verbose=False):
     # ---- Categorize ----
     categories = []
 
+    # These categories apply regardless of approval state
+    if has_dnm:
+        categories.append(CAT_DNM)
+    if needs_rebase:
+        categories.append(CAT_NEEDS_REBASE)
+    if has_arch_review:
+        categories.append(CAT_ARCH_REVIEW)
+
     if two_approvals_met:
         categories.append(CAT_NEARLY_APPROVED)
     else:
@@ -583,6 +631,7 @@ def _analyze_pr(pr, maint_obj, verbose=False):
         "approved_by": approved_by,
         "changes_requested_by": changes_by,
         "num_approvals": num_approvals,
+        "num_changes_requested": num_changes_requested,
         "assignee_approved": assignee_approved,
         "two_approvals_met": two_approvals_met,
         "draft": is_draft,
@@ -598,6 +647,10 @@ def _analyze_pr(pr, maint_obj, verbose=False):
         "area_details": area_details,
         "all_area_maintainers": sorted(all_area_maintainers),
         "submitter_is_maintainer": submitter_is_maintainer,
+        "mergeable_state": mergeable_state,
+        "needs_rebase": needs_rebase,
+        "has_dnm": has_dnm,
+        "has_arch_review": has_arch_review,
         "categories": categories,
     }
 
@@ -712,6 +765,16 @@ _HTML_TEMPLATE = """\
   details summary {{ cursor: pointer; color: var(--link); font-size: 0.78rem; }}
   details[open] summary {{ margin-bottom: 4px; }}
   .area-list {{ font-size: 0.72rem; color: var(--muted); margin-top: 3px; }}
+  .area-chip {{
+    display: inline-block;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 0.70rem;
+    font-weight: 500;
+    margin: 1px 2px 1px 0;
+    white-space: nowrap;
+    color: #fff;
+  }}
 
   /* ---- co-occurrence heatmap ---- */
   .heatmap-wrapper {{ overflow-x: auto; margin-bottom: 28px; }}
@@ -900,9 +963,10 @@ _HTML_TEMPLATE = """\
       <th data-col="4">Areas</th>
       <th data-col="5">CI</th>
       <th data-col="6">Approvals</th>
-      <th data-col="7">Assignee</th>
-      <th data-col="8">Comments</th>
-      <th data-col="9">Categories</th>
+      <th data-col="7" title="Number of reviewers with unresolved change requests">Chg Req</th>
+      <th data-col="8">Assignee</th>
+      <th data-col="9">Comments</th>
+      <th data-col="10">Categories</th>
     </tr>
   </thead>
   <tbody id="pr-tbody">
@@ -988,7 +1052,7 @@ function applyFilters() {{
 
   /* sort */
   const keys = ["age_days","meaningful_idle_days","total_lines","num_files",
-    "num_areas","ci","num_approvals","assignees","total_comments","categories"];
+    "num_areas","ci","num_approvals","num_changes_requested","assignees","total_comments","categories"];
   rows.sort((a,b) => {{
     let av = a[keys[sortCol]], bv = b[keys[sortCol]];
     if (Array.isArray(av)) av = av.length;
@@ -1013,6 +1077,20 @@ function ageClass(d) {{
 const CAT_COLORS = {cat_colors_json};
 const CAT_LABELS = {cat_labels_json};
 
+/* Derive a stable hue from an arbitrary string (djb2-style hash). */
+function strHue(s) {{
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+  return ((h >>> 0) % 360);
+}}
+function areaColor(name) {{
+  const hue = strHue(name);
+  return `hsl(${{hue}},42%,38%)`;
+}}
+function areaChip(name) {{
+  return `<span class="area-chip" style="background:${{areaColor(name)}}" title="${{escHtml(name)}}">${{escHtml(name)}}</span>`;
+}}
+
 function rowHtml(p) {{
   const cats = p.categories.map(c =>
     `<span class="badge" style="background:${{CAT_COLORS[c]||'#95a5a6'}}">${{
@@ -1022,7 +1100,7 @@ function rowHtml(p) {{
     : '<span style="color:#c0392b">none</span>';
   const areas = p.areas.length
     ? `<details><summary>${{p.num_areas}} area(s)</summary>
-       <div class="area-list">${{p.areas.map(escHtml).join("<br>")}}</div></details>`
+       <div class="area-list">${{p.areas.map(areaChip).join("")}}</div></details>`
     : '<span style="color:var(--muted)">—</span>';
   const ageC = ageClass(p.age_days);
   const idleC = ageClass(p.meaningful_idle_days);
@@ -1036,7 +1114,7 @@ function rowHtml(p) {{
   const da = `data-cats="${{p.categories.join(" ")}}" data-ci="${{p.ci}}" data-areas="${{p.num_areas}}" data-draft="${{p.draft}}"`;
   return (
     `<tr class="pr-title-row" ${{da}}>` +
-    `<td class="pr-title-cell" colspan="10">` +
+    `<td class="pr-title-cell" colspan="11">` +
     `<a class="pr-num-link" href="${{p.url}}" target="_blank">#${{p.number}}</a>` +
     (p.draft ? `<span class="badge draft-badge">DRAFT</span>` : "") +
     (p.fork_deleted ? `<span class="badge fork-del-badge" title="Source fork deleted; review/commit data unavailable">⚠ fork deleted</span>` : "") +
@@ -1051,6 +1129,7 @@ function rowHtml(p) {{
     `<td>${{areas}}</td>` +
     `<td>${{ciCell}}</td>` +
     `<td class="num">${{p.num_approvals}}</td>` +
+    `<td class="num">${{p.num_changes_requested || 0}}</td>` +
     `<td>${{assignee}}</td>` +
     `<td class="num">${{p.total_comments}}</td>` +
     `<td style="min-width:200px">${{cats}}</td>` +
@@ -1157,6 +1236,24 @@ def _heatmap_html(pr_data_list):
     return "\n".join(lines)
 
 
+def _area_color(name):
+    """Derive a stable HSL background color from an area name (djb2 hash)."""
+    h = 0
+    for ch in name:
+        h = (31 * h + ord(ch)) & 0xFFFFFFFF
+    hue = h % 360
+    return f"hsl({hue},42%,38%)"
+
+
+def _area_chip_html(name):
+    escaped = html.escape(name)
+    color = _area_color(name)
+    return (
+        f'<span class="area-chip" style="background:{color}" title="{escaped}">'
+        f'{escaped}</span>'
+    )
+
+
 def _ci_cell_html(ci, ci_failing_checks, ci_cls):
     """Build the HTML for the CI status cell."""
     badge = f'<span class="badge {ci_cls}">{ci}</span>'
@@ -1188,7 +1285,7 @@ def _pr_row_html(pr):
         area_html = (
             f'<details><summary>{pr["num_areas"]} area(s)</summary>'
             f'<div class="area-list">'
-            + "<br>".join(html.escape(a) for a in pr["areas"])
+            + "".join(_area_chip_html(a) for a in pr["areas"])
             + "</div></details>"
         )
     else:
@@ -1208,9 +1305,9 @@ def _pr_row_html(pr):
         f'data-ci="{pr["ci"]}" data-areas="{pr["num_areas"]}"'
     )
     return (
-        # ---- Title row: spans all 10 metric columns ----
+        # ---- Title row: spans all 11 metric columns ----
         f'<tr class="pr-title-row" {data_attrs}>'
-        f'<td class="pr-title-cell" colspan="10">'
+        f'<td class="pr-title-cell" colspan="11">'
         f'<a class="pr-num-link" href="{pr["url"]}" target="_blank">'
         f'#{pr["number"]}</a>'
         + (f'<span class="badge draft-badge">DRAFT</span>' if pr["draft"] else '')
@@ -1229,6 +1326,7 @@ def _pr_row_html(pr):
         f'<td>{area_html}</td>'
         f'<td>{ci_html}</td>'
         f'<td class="num">{pr["num_approvals"]}</td>'
+        f'<td class="num">{pr["num_changes_requested"]}</td>'
         f'<td>{assignee_html}</td>'
         f'<td class="num">{pr["total_comments"]}</td>'
         f'<td style="min-width:200px">{cats_html}</td>'
@@ -1325,6 +1423,9 @@ def render_html(org, repo, age_days, pr_data_list, generated):
     avg_idle = sum(p["meaningful_idle_days"] for p in pr_data_list) / total if total else 0
     maint_submitted = sum(1 for p in pr_data_list if p["submitter_is_maintainer"])
     num_drafts = sum(1 for p in pr_data_list if p["draft"])
+    num_needs_rebase = sum(1 for p in pr_data_list if p["needs_rebase"])
+    num_dnm = sum(1 for p in pr_data_list if p["has_dnm"])
+    num_arch_review = sum(1 for p in pr_data_list if p["has_arch_review"])
 
     cards = [
         _summary_card(total, "PRs", "#2c3e50"),
@@ -1338,6 +1439,9 @@ def render_html(org, repo, age_days, pr_data_list, generated):
         _summary_card(many_areas, "Many code areas (≥ 4)", "#16a085"),
         _summary_card(maint_submitted, "Maintainer author", "#27ae60"),
         _summary_card(num_drafts, "Draft PRs", "#7f8c8d"),
+        _summary_card(num_needs_rebase, "Needs rebase", "#c0392b"),
+        _summary_card(num_dnm, "Do Not Merge", "#2c3e50"),
+        _summary_card(num_arch_review, "Architecture Review", "#6c3483"),
     ]
 
     # ---- Category cards + bar chart ----
@@ -1458,6 +1562,7 @@ def render_html(org, repo, age_days, pr_data_list, generated):
             "ci": p["ci"],
             "ci_failing_checks": p["ci_failing_checks"],
             "num_approvals": p["num_approvals"],
+            "num_changes_requested": p["num_changes_requested"],
             "assignees": p["assignees"],
             "total_comments": p["total_comments"],
             "categories": p["categories"],
