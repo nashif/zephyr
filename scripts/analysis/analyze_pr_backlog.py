@@ -355,9 +355,17 @@ def _ci_details(pr):
     except Exception:
         pass
 
-    # Check runs (GitHub Actions / newer API)
+    # Check runs (GitHub Actions / newer API).
+    # Keep only the latest run per check name (highest ID) so that cancelled
+    # runs that were superseded by a newer run on the same commit do not
+    # incorrectly appear as failures (workflows with cancel-in-progress:true
+    # produce a cancelled run followed by a fresh successful run).
     try:
+        latest_runs = {}
         for run in commit.get_check_runs():
+            if run.name not in latest_runs or run.id > latest_runs[run.name].id:
+                latest_runs[run.name] = run
+        for run in latest_runs.values():
             if run.status == "completed":
                 if run.conclusion in (
                     "failure", "action_required", "timed_out", "cancelled"
