@@ -703,6 +703,22 @@ _HTML_TEMPLATE = """\
   .card .num {{ font-size: 2rem; font-weight: 700; line-height: 1; }}
   .card .lbl {{ margin-top: 6px; color: var(--muted); font-size: 0.78rem;
     text-transform: uppercase; letter-spacing: .04em; }}
+  .card .delta {{ display:block; margin-top:4px; font-size:0.72rem;
+    font-weight:600; }}
+  .delta-good  {{ color: #27ae60; }}
+  .delta-bad   {{ color: #e74c3c; }}
+  .delta-neutral {{ color: var(--muted); }}
+
+  /* ---- trend history table ---- */
+  .trend-tbl {{ width:100%; border-collapse:collapse; font-size:0.82rem; }}
+  .trend-tbl th {{ background:var(--header-bg); color:var(--header-fg);
+    padding:6px 10px; text-align:right; white-space:nowrap; }}
+  .trend-tbl th:first-child {{ text-align:left; }}
+  .trend-tbl td {{ padding:5px 10px; border-bottom:1px solid var(--border);
+    text-align:right; white-space:nowrap; }}
+  .trend-tbl td:first-child {{ text-align:left; }}
+  .trend-tbl tr:nth-child(even) td {{ background:#f9fafb; }}
+  .trend-tbl .delta {{ display:inline; font-size:0.70rem; margin-left:3px; }}
 
   /* ---- category breakdown ---- */
   .section-title {{ font-size: 1.1rem; font-weight: 600; margin: 28px 0 12px;
@@ -908,6 +924,9 @@ _HTML_TEMPLATE = """\
 <div class="summary-grid">
   {summary_cards}
 </div>
+
+<!-- ======================== TREND HISTORY ======================== -->
+{trend_section}
 
 <!-- ======================== CATEGORY BREAKDOWN ======================== -->
 <div class="section-title">PR Backlog Categories</div>
@@ -1171,12 +1190,93 @@ document.querySelectorAll("thead th[data-col]").forEach((th, i) => {{
 """
 
 
-def _summary_card(num, label, color="var(--text)"):
+def _summary_card(num, label, color="var(--text)", delta_html=""):
     return (
         f'<div class="card">'
         f'<div class="num" style="color:{color}">{num}</div>'
         f'<div class="lbl">{html.escape(label)}</div>'
+        f'{delta_html}'
         f'</div>'
+    )
+
+
+def _delta_html(current, prev, lower_is_better=True):
+    """Return an HTML <span> showing the change from *prev* to *current*.
+
+    Returns an empty string when *prev* is None (no previous run).
+    """
+    if prev is None:
+        return ""
+    try:
+        diff = current - prev
+    except TypeError:
+        return ""
+    if diff == 0:
+        return '<span class="delta delta-neutral">—</span>'
+    improving = (diff < 0) == lower_is_better
+    cls = "delta-good" if improving else "delta-bad"
+    arrow = "▼" if diff < 0 else "▲"
+    if isinstance(current, float):
+        label = f"{diff:+.1f}"
+    else:
+        label = f"{diff:+d}"
+    return f'<span class="delta {cls}">{arrow} {label}</span>'
+
+
+def _trend_table_html(history):
+    """Render an HTML table summarising all historical run snapshots.
+
+    *history* is a list of snapshot dicts, oldest first.  The table is
+    displayed newest-first with per-cell deltas vs. the previous run.
+    Returns an empty-state paragraph when there is only one entry (nothing
+    to compare yet) or no data.
+    """
+    if len(history) < 2:
+        return (
+            '<p style="color:var(--muted);font-size:.85rem;margin-top:8px;">'
+            'Trend data will appear here after two or more runs.</p>'
+        )
+
+    cols = [
+        ("Date",          "generated",        None),
+        ("Total PRs",     "total",             True),
+        ("Avg Age (d)",   "avg_age",           True),
+        ("Avg Idle (d)",  "avg_idle",          True),
+        ("CI Failing",    "ci_fail",           True),
+        ("Changes Req",   "changes_req",       True),
+        ("Needs Rebase",  "num_needs_rebase",  True),
+        ("DNM",           "num_dnm",           True),
+        ("Arch Review",   "num_arch_review",   True),
+        ("Nearly Done",   "nearly_done",       False),
+        ("No Assignee",   "no_assignee",       True),
+    ]
+
+    header = "".join(f"<th>{c[0]}</th>" for c in cols)
+
+    rows = []
+    for i in range(len(history) - 1, -1, -1):
+        snap = history[i]
+        prev = history[i - 1] if i > 0 else None
+        cells = []
+        for (_, key, lower_is_better) in cols:
+            val = snap.get(key, "")
+            if lower_is_better is None:
+                cells.append(f"<td>{html.escape(str(val))}</td>")
+            else:
+                dh = _delta_html(val, prev.get(key) if prev else None,
+                                 lower_is_better=lower_is_better)
+                if isinstance(val, float):
+                    cells.append(f"<td>{val:.1f}{dh}</td>")
+                else:
+                    cells.append(f"<td>{val}{dh}</td>")
+        rows.append(f"<tr>{''.join(cells)}</tr>")
+
+    return (
+        '<div style="overflow-x:auto">'
+        f'<table class="trend-tbl">'
+        f'<thead><tr>{header}</tr></thead>'
+        f'<tbody>{"".join(rows)}</tbody>'
+        '</table></div>'
     )
 
 
@@ -1469,40 +1569,95 @@ def _ci_workflow_table(workflow_counter, workflow_prs):
     )
 
 
-def render_html(org, repo, age_days, pr_data_list, generated):
-    """Render the full HTML report and return it as a string."""
-    total = len(pr_data_list)
+def render_html(org, repo, age_days, pr_data_list, generated, history=None):
+    """Render the full HTML report.
 
-    # ---- Summary cards ----
+    Returns a ``(html_string, snapshot)`` tuple where *snapshot* is a dict
+    capturing the key statistics of this run so it can be persisted to a
+    history file by the caller.
+
+    *history* is an optional list of previously saved snapshot dicts (oldest
+    first).  When provided, summary cards show deltas vs. the most recent
+    prior run and a trend table is rendered.
+    """
+    total = len(pr_data_list)
+    if history is None:
+        history = []
+
+    # ---- Summary stats ----
     no_assignee = sum(1 for p in pr_data_list if not p["assignees"])
     ci_fail = sum(1 for p in pr_data_list if p["ci"] == "fail")
     changes_req = sum(1 for p in pr_data_list if p["changes_requested_by"])
     nearly_done = sum(1 for p in pr_data_list if p["two_approvals_met"])
     large_prs = sum(1 for p in pr_data_list if p["total_lines"] > SIZE_LARGE_LINES)
     many_areas = sum(1 for p in pr_data_list if p["num_non_meta_areas"] >= SIZE_MANY_AREAS)
-    avg_age = sum(p["age_days"] for p in pr_data_list) / total if total else 0
-    avg_idle = sum(p["meaningful_idle_days"] for p in pr_data_list) / total if total else 0
+    avg_age = sum(p["age_days"] for p in pr_data_list) / total if total else 0.0
+    avg_idle = sum(p["meaningful_idle_days"] for p in pr_data_list) / total if total else 0.0
     maint_submitted = sum(1 for p in pr_data_list if p["submitter_is_maintainer"])
     num_drafts = sum(1 for p in pr_data_list if p["draft"])
     num_needs_rebase = sum(1 for p in pr_data_list if p["needs_rebase"])
     num_dnm = sum(1 for p in pr_data_list if p["has_dnm"])
     num_arch_review = sum(1 for p in pr_data_list if p["has_arch_review"])
 
+    # ---- Build current-run snapshot (saved by caller to history file) ----
+    snapshot = {
+        "timestamp": datetime.datetime.now(
+            datetime.timezone.utc).isoformat(),
+        "generated": generated,
+        "total": total,
+        "avg_age": round(avg_age, 1),
+        "avg_idle": round(avg_idle, 1),
+        "no_assignee": no_assignee,
+        "ci_fail": ci_fail,
+        "changes_req": changes_req,
+        "nearly_done": nearly_done,
+        "large_prs": large_prs,
+        "many_areas": many_areas,
+        "maint_submitted": maint_submitted,
+        "num_drafts": num_drafts,
+        "num_needs_rebase": num_needs_rebase,
+        "num_dnm": num_dnm,
+        "num_arch_review": num_arch_review,
+    }
+
+    # ---- Deltas vs. the most recent prior run ----
+    prev = history[-1] if history else None
+
+    def _d(cur, key, lib=True):
+        """Shorthand: delta_html comparing *cur* to prev[key]."""
+        return _delta_html(cur, prev.get(key) if prev else None,
+                           lower_is_better=lib)
+
+    # ---- Summary cards ----
     cards = [
-        _summary_card(total, "PRs", "#2c3e50"),
-        _summary_card(f"{avg_age:.0f}d", "Avg age", "#e67e22"),
-        _summary_card(f"{avg_idle:.0f}d", "Avg meaningful idle", "#e67e22"),
-        _summary_card(no_assignee, "No assignee", "#e74c3c"),
-        _summary_card(ci_fail, "CI failing", "#c0392b"),
-        _summary_card(changes_req, "Changes requested", "#8e44ad"),
-        _summary_card(nearly_done, "Nearly approved", "#1abc9c"),
-        _summary_card(large_prs, "Large PRs", "#d35400"),
-        _summary_card(many_areas, "Many code areas (≥ 4)", "#16a085"),
-        _summary_card(maint_submitted, "Maintainer author", "#27ae60"),
-        _summary_card(num_drafts, "Draft PRs", "#7f8c8d"),
-        _summary_card(num_needs_rebase, "Needs rebase", "#c0392b"),
-        _summary_card(num_dnm, "Do Not Merge", "#2c3e50"),
-        _summary_card(num_arch_review, "Architecture Review", "#6c3483"),
+        _summary_card(total, "PRs", "#2c3e50",
+                      _d(total, "total")),
+        _summary_card(f"{avg_age:.0f}d", "Avg age", "#e67e22",
+                      _d(avg_age, "avg_age")),
+        _summary_card(f"{avg_idle:.0f}d", "Avg meaningful idle", "#e67e22",
+                      _d(avg_idle, "avg_idle")),
+        _summary_card(no_assignee, "No assignee", "#e74c3c",
+                      _d(no_assignee, "no_assignee")),
+        _summary_card(ci_fail, "CI failing", "#c0392b",
+                      _d(ci_fail, "ci_fail")),
+        _summary_card(changes_req, "Changes requested", "#8e44ad",
+                      _d(changes_req, "changes_req")),
+        _summary_card(nearly_done, "Nearly approved", "#1abc9c",
+                      _d(nearly_done, "nearly_done", lib=False)),
+        _summary_card(large_prs, "Large PRs", "#d35400",
+                      _d(large_prs, "large_prs")),
+        _summary_card(many_areas, "Many code areas (≥ 4)", "#16a085",
+                      _d(many_areas, "many_areas")),
+        _summary_card(maint_submitted, "Maintainer author", "#27ae60",
+                      _d(maint_submitted, "maint_submitted", lib=False)),
+        _summary_card(num_drafts, "Draft PRs", "#7f8c8d",
+                      _d(num_drafts, "num_drafts")),
+        _summary_card(num_needs_rebase, "Needs rebase", "#c0392b",
+                      _d(num_needs_rebase, "num_needs_rebase")),
+        _summary_card(num_dnm, "Do Not Merge", "#2c3e50",
+                      _d(num_dnm, "num_dnm")),
+        _summary_card(num_arch_review, "Architecture Review", "#6c3483",
+                      _d(num_arch_review, "num_arch_review")),
     ]
 
     # ---- Category cards + bar chart ----
@@ -1671,13 +1826,29 @@ def render_html(org, repo, age_days, pr_data_list, generated):
         {k: v["label"] for k, v in CATEGORY_META.items()}
     )
 
-    return _HTML_TEMPLATE.format(
+    # ---- Trend history section ----
+    # Include the current run in the table so this run's values are visible
+    # even before the caller writes the file.
+    all_runs = list(history) + [snapshot]
+    if len(all_runs) >= 2:
+        trend_section = (
+            '<div class="section-title">Backlog Trend History</div>\n'
+            '<p style="font-size:.8rem;color:var(--muted);margin-bottom:8px;">'
+            'Each row is one saved run.  Arrows show change vs. the '
+            'previous run; green = improving, red = worsening.</p>\n'
+            + _trend_table_html(all_runs)
+        )
+    else:
+        trend_section = ""
+
+    report = _HTML_TEMPLATE.format(
         org=html.escape(org),
         repo=html.escape(repo),
         age_days=age_days,
         generated=html.escape(generated),
         total_prs=total,
         summary_cards="\n".join(cards),
+        trend_section=trend_section,
         cat_cards="\n".join(cat_cards_html),
         bar_chart=bar_html,
         cat_options=cat_option_html,
@@ -1692,6 +1863,7 @@ def render_html(org, repo, age_days, pr_data_list, generated):
         cat_colors_json=cat_colors_json,
         cat_labels_json=cat_labels_json,
     )
+    return report, snapshot
 
 
 # ---------------------------------------------------------------------------
@@ -1730,6 +1902,40 @@ def _debug_single_pr(gh_repo, pr_number, args):
 
     data = _analyze_pr(pr, maint_obj, verbose=True)
     print(json.dumps(data, indent=2, default=str))
+
+
+# ---------------------------------------------------------------------------
+# Run-history helpers
+# ---------------------------------------------------------------------------
+
+def _load_history(path):
+    """Load run history from *path*.  Returns an empty list on any error."""
+    p = pathlib.Path(path)
+    if not p.exists():
+        return []
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception as exc:
+        print(
+            f"WARNING: Could not load history file {path}: {exc}",
+            file=sys.stderr,
+        )
+        return []
+
+
+def _save_snapshot(path, snapshot, history):
+    """Append *snapshot* to *history* and persist to *path*."""
+    updated = list(history) + [snapshot]
+    try:
+        pathlib.Path(path).write_text(
+            json.dumps(updated, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+    except Exception as exc:
+        print(
+            f"WARNING: Could not write history file {path}: {exc}",
+            file=sys.stderr,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -1805,6 +2011,19 @@ def parse_args():
             "Analyse a single PR by number and print all collected data to "
             "stdout as JSON (for debugging / data inspection).  "
             "No HTML report is written."
+        ),
+    )
+    parser.add_argument(
+        "--history",
+        default=None,
+        metavar="FILE",
+        help=(
+            "Path to a JSON file used to persist run history.  "
+            "If the file exists, previous snapshots are loaded and the "
+            "report shows trend indicators comparing this run to the last "
+            "saved run.  After rendering, the current run's statistics are "
+            "appended to the file (created if it does not exist).  "
+            "Has no effect when --pr is used."
         ),
     )
     return parser.parse_args()
@@ -1934,15 +2153,37 @@ def main():
         )
         sys.exit(1)
 
+    # ---- Load run history (if requested) ----
+    history = []
+    if args.history:
+        history = _load_history(args.history)
+        if args.verbose and history:
+            print(
+                f"Loaded {len(history)} historical run(s) from {args.history}",
+                flush=True,
+            )
+
     # ---- Render HTML ----
     generated = datetime.datetime.now(datetime.timezone.utc).strftime(
         "%Y-%m-%d %H:%M UTC"
     )
-    report = render_html(args.org, args.repo, args.age, pr_data_list, generated)
+    report, snapshot = render_html(
+        args.org, args.repo, args.age, pr_data_list, generated,
+        history=history,
+    )
 
     out = pathlib.Path(args.output)
     out.write_text(report, encoding="utf-8")
     print(f"Report written to {out.resolve()}")
+
+    # ---- Persist snapshot to history file ----
+    if args.history:
+        _save_snapshot(args.history, snapshot, history)
+        if args.verbose:
+            print(
+                f"Snapshot appended to history file: {args.history}",
+                flush=True,
+            )
 
 
 if __name__ == "__main__":
