@@ -926,9 +926,6 @@ _HTML_TEMPLATE = """\
   {summary_cards}
 </div>
 
-<!-- ======================== TREND HISTORY ======================== -->
-{trend_section}
-
 <!-- ======================== CATEGORY BREAKDOWN ======================== -->
 <div class="section-title">PR Backlog Categories</div>
 <div class="cat-grid">
@@ -1040,6 +1037,9 @@ _HTML_TEMPLATE = """\
 <div class="bar-chart">
   {author_chart}
 </div>
+
+<!-- ======================== TREND HISTORY ======================== -->
+{trend_section}
 
 </main>
 <script>
