@@ -316,12 +316,19 @@ def _latest_reviews(reviews):
     """
     Collapse per-reviewer review history into the *latest* review state.
     Returns a dict: login -> state (APPROVED | CHANGES_REQUESTED | COMMENTED | DISMISSED)
+
+    A COMMENTED review does NOT supersede a prior CHANGES_REQUESTED or
+    APPROVED state.  Only APPROVED or DISMISSED can clear CHANGES_REQUESTED,
+    matching GitHub's own PR-readiness logic.
     """
     by_user = {}
     for review in reviews:
         if review.state == "PENDING":
             continue
         login = review.user.login if review.user else "__unknown__"
+        prev = by_user.get(login)
+        if review.state == "COMMENTED" and prev in ("CHANGES_REQUESTED", "APPROVED"):
+            continue
         by_user[login] = review.state
     return by_user
 
@@ -368,8 +375,12 @@ def _ci_details(pr):
                 latest_runs[run.name] = run
         for run in latest_runs.values():
             if run.status == "completed":
+                # "cancelled" is intentional (cancel-in-progress, manual) and
+                # is not treated as a merge blocker by GitHub; omit it here so
+                # that a cancelled run that was not replaced by a successful
+                # one does not produce a spurious CI failure in the report.
                 if run.conclusion in (
-                    "failure", "action_required", "timed_out", "cancelled"
+                    "failure", "action_required", "timed_out"
                 ):
                     failing.append(run.name)
                     states.append("failure")
@@ -495,6 +506,13 @@ def _analyze_pr(pr, maint_obj, verbose=False):
 
     # ---- CI ----
     ci, ci_failing_checks = _ci_details(pr)
+    # GitHub's mergeable_state is authoritative about whether *required* checks
+    # pass.  If the state is 'clean' our check-run analysis may have picked up
+    # non-required or superseded failures; trust GitHub and override to 'pass'.
+    # 'unstable' means non-required checks are failing but the PR is otherwise
+    # mergeable — also not a CI blocker from GitHub's perspective.
+    if ci == "fail" and mergeable_state in ("clean", "unstable"):
+        ci = "pass"
 
     # ---- Comments / discussion ----
     try:
