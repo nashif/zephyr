@@ -108,6 +108,7 @@ CAT_NEARLY_APPROVED = "nearly_approved"
 CAT_NEEDS_REBASE = "needs_rebase"
 CAT_DNM = "dnm"
 CAT_ARCH_REVIEW = "arch_review"
+CAT_NO_ASSIGNEE_ENGAGEMENT = "no_assignee_engagement"
 
 CATEGORY_META = {
     CAT_NO_REVIEWER: {
@@ -249,6 +250,15 @@ CATEGORY_META = {
             "The PR carries an 'Architecture Review' or 'TSC' label, "
             "indicating it requires sign-off from the Architecture Working "
             "Group or the Technical Steering Committee before merging."
+        ),
+    },
+    CAT_NO_ASSIGNEE_ENGAGEMENT: {
+        "label": "No engagement by assignee",
+        "color": "#e74c3c",
+        "description": (
+            "The PR has an assignee but that person has left no reviews, "
+            "comments, labels, or reviewer requests — they have not "
+            "interacted with the PR at all."
         ),
     },
 }
@@ -581,6 +591,47 @@ def _analyze_pr(pr, maint_obj, verbose=False):
     # ---- 2-approval rule ----
     two_approvals_met = num_approvals >= 2 and (not assignees or assignee_approved)
 
+    # ---- Assignee engagement ----
+    # An assignee is considered engaged if they have left any review
+    # (including a plain comment-review), any issue/review comment, or
+    # performed a visible timeline action such as adding a label or
+    # requesting a reviewer.  The PR author counts as engaged if they are
+    # also the assignee (they submitted the PR).
+    assignee_logins = set(assignees)
+    assignee_engaged = False
+    if assignee_logins:
+        author_login = pr.user.login if pr.user else None
+        if author_login and author_login in assignee_logins:
+            assignee_engaged = True
+        if not assignee_engaged:
+            for rev in all_reviews:
+                if rev.user and rev.user.login in assignee_logins:
+                    assignee_engaged = True
+                    break
+        if not assignee_engaged:
+            for c in issue_comments_list:
+                if c.user and c.user.login in assignee_logins:
+                    assignee_engaged = True
+                    break
+        if not assignee_engaged:
+            for c in review_comments_list:
+                if c.user and c.user.login in assignee_logins:
+                    assignee_engaged = True
+                    break
+        if not assignee_engaged:
+            try:
+                for evt in pr.as_issue().get_events():
+                    if evt.actor and evt.actor.login in assignee_logins:
+                        if evt.event in (
+                            "labeled", "unlabeled",
+                            "review_requested", "review_request_removed",
+                            "milestoned", "demilestoned",
+                        ):
+                            assignee_engaged = True
+                            break
+            except Exception:
+                pass
+
     # ---- Categorize ----
     categories = []
 
@@ -601,14 +652,17 @@ def _analyze_pr(pr, maint_obj, verbose=False):
             categories.append(CAT_NO_REVIEW)
         if not assignees:
             categories.append(CAT_NO_ASSIGNEE)
-        elif not assignee_approved:
-            # A maintainer-submitted PR where the author is the assignee
-            # cannot self-approve; don't flag missing assignee approval.
-            author_is_assignee = (
-                pr.user is not None and pr.user.login in assignees
-            )
-            if not (submitter_is_maintainer and author_is_assignee):
-                categories.append(CAT_MISSING_ASSIGNEE_APPROVAL)
+        else:
+            if not assignee_approved:
+                # A maintainer-submitted PR where the author is the assignee
+                # cannot self-approve; don't flag missing assignee approval.
+                author_is_assignee = (
+                    pr.user is not None and pr.user.login in assignees
+                )
+                if not (submitter_is_maintainer and author_is_assignee):
+                    categories.append(CAT_MISSING_ASSIGNEE_APPROVAL)
+            if not assignee_engaged:
+                categories.append(CAT_NO_ASSIGNEE_ENGAGEMENT)
 
         if ci == "fail":
             categories.append(CAT_CI_FAILING)
@@ -680,6 +734,7 @@ def _analyze_pr(pr, maint_obj, verbose=False):
         "area_details": area_details,
         "all_area_maintainers": sorted(all_area_maintainers),
         "submitter_is_maintainer": submitter_is_maintainer,
+        "assignee_engaged": assignee_engaged,
         "mergeable_state": mergeable_state,
         "needs_rebase": needs_rebase,
         "has_dnm": has_dnm,
