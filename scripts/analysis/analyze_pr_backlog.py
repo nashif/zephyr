@@ -1053,6 +1053,11 @@ _HTML_TEMPLATE = """\
     <option value="no">Hide drafts</option>
     <option value="only">Drafts only</option>
   </select>
+  <select id="filter-assignee" onchange="applyFilters()">
+    <option value="">All assignees</option>
+    <option value="(unassigned)">(unassigned)</option>
+    {assignee_options}
+  </select>
   <span id="row-count" style="font-size:.8rem;color:var(--muted);
     margin-left:8px;"></span>
 </div>
@@ -1120,10 +1125,14 @@ _HTML_TEMPLATE = """\
 <!-- ======================== TREND HISTORY ======================== -->
 {trend_section}
 
+<!-- ======================== HISTORY CHART ======================== -->
+{history_chart_section}
+
 </main>
 <script>
 /* ---- raw data for client-side filtering ---- */
 const PR_DATA = {pr_json};
+const HISTORY_DATA = {history_data_json};
 
 /* ---- sorting ---- */
 let sortCol = 3;   // age
@@ -1144,11 +1153,12 @@ document.querySelectorAll("thead th[data-col]").forEach(th => {{
 
 /* ---- filtering + rendering ---- */
 function applyFilters() {{
-  const txt = document.getElementById("filter-text").value.toLowerCase();
-  const cat = document.getElementById("filter-cat").value;
-  const ci  = document.getElementById("filter-ci").value;
-  const areas = document.getElementById("filter-areas").value;
-  const draft = document.getElementById("filter-draft").value;
+  const txt      = document.getElementById("filter-text").value.toLowerCase();
+  const cat      = document.getElementById("filter-cat").value;
+  const ci       = document.getElementById("filter-ci").value;
+  const areas    = document.getElementById("filter-areas").value;
+  const draft    = document.getElementById("filter-draft").value;
+  const assignee = document.getElementById("filter-assignee").value;
 
   let rows = PR_DATA.filter(p => {{
     if (txt && !(
@@ -1162,6 +1172,13 @@ function applyFilters() {{
     if (areas && areas !== "4+" && p.num_non_meta_areas !== +areas) return false;
     if (draft === "no" && p.draft) return false;
     if (draft === "only" && !p.draft) return false;
+    if (assignee) {{
+      if (assignee === "(unassigned)") {{
+        if (p.assignees.length > 0) return false;
+      }} else {{
+        if (!p.assignees.includes(assignee)) return false;
+      }}
+    }}
     return true;
   }});
 
@@ -1277,6 +1294,98 @@ def _summary_card(num, label, color="var(--text)", delta_html=""):
         f'<div class="lbl">{html.escape(label)}</div>'
         f'{delta_html}'
         f'</div>'
+    )
+
+
+def _history_chart_section_html():
+    """Return the HTML+JS for the multi-line history chart section.
+
+    The chart reads HISTORY_DATA (injected as a JS constant elsewhere in the
+    page) and renders a Chart.js line chart with one series per tracked metric.
+    Checkboxes allow toggling individual series on/off.
+    """
+    metrics = [
+        ("total",          "Total PRs",         "#2c3e50"),
+        ("ci_fail",        "CI Failing",         "#c0392b"),
+        ("changes_req",    "Changes Requested",  "#8e44ad"),
+        ("no_assignee",    "No Assignee",        "#e67e22"),
+        ("num_needs_rebase", "Needs Rebase",     "#e74c3c"),
+        ("num_dnm",        "Do Not Merge",       "#7f8c8d"),
+        ("num_arch_review","Arch Review",        "#6c3483"),
+        ("nearly_done",    "Nearly Approved",    "#1abc9c"),
+        ("large_prs",      "Large PRs",          "#d35400"),
+        ("many_areas",     "Many Areas",         "#16a085"),
+        ("maint_submitted","Maintainer Author",  "#27ae60"),
+        ("num_drafts",     "Draft PRs",          "#95a5a6"),
+    ]
+    checkboxes = "\n".join(
+        f'<label style="margin-right:12px;font-size:.8rem;cursor:pointer;">'
+        f'<input type="checkbox" checked data-metric="{key}" '
+        f'onchange="toggleHistorySeries(this)" '
+        f'style="accent-color:{color};margin-right:3px;">'
+        f'<span style="color:{color}">{label}</span></label>'
+        for key, label, color in metrics
+    )
+    datasets_js = json.dumps([
+        {"key": key, "label": label, "color": color}
+        for key, label, color in metrics
+    ])
+    return (
+        '<div class="section-title">Backlog Metrics Over Time</div>\n'
+        '<p style="font-size:.8rem;color:var(--muted);margin-bottom:8px;">'
+        'Requires --history data.  Toggle series with the checkboxes below.</p>\n'
+        '<div style="margin-bottom:8px;line-height:2;">' + checkboxes + '</div>\n'
+        '<div style="position:relative;height:380px;">'
+        '<canvas id="history-chart"></canvas></div>\n'
+        '<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js">'
+        '</script>\n'
+        '<script>\n'
+        '(function() {{\n'
+        '  const METRICS = ' + datasets_js + ';\n'
+        '  const runs = HISTORY_DATA;\n'
+        '  const labels = runs.map(r => (r.generated || r.timestamp || "").slice(0,10));\n'
+        '  const datasets = METRICS.map(m => ({{\n'
+        '    label: m.label,\n'
+        '    data: runs.map(r => r[m.key] ?? null),\n'
+        '    borderColor: m.color,\n'
+        '    backgroundColor: m.color + "33",\n'
+        '    tension: 0.3,\n'
+        '    pointRadius: 3,\n'
+        '    borderWidth: 2,\n'
+        '  }}));\n'
+        '  const ctx = document.getElementById("history-chart").getContext("2d");\n'
+        '  const histChart = new Chart(ctx, {{\n'
+        '    type: "line",\n'
+        '    data: {{ labels, datasets }},\n'
+        '    options: {{\n'
+        '      responsive: true,\n'
+        '      maintainAspectRatio: false,\n'
+        '      interaction: {{ mode: "index", intersect: false }},\n'
+        '      plugins: {{\n'
+        '        legend: {{ position: "bottom", labels: {{ boxWidth: 12, font: {{ size: 11 }} }} }},\n'
+        '        tooltip: {{ callbacks: {{ title: t => labels[t[0].dataIndex] }} }},\n'
+        '      }},\n'
+        '      scales: {{\n'
+        '        x: {{ ticks: {{ maxRotation: 45, font: {{ size: 10 }} }} }},\n'
+        '        y: {{ beginAtZero: true }},\n'
+        '      }},\n'
+        '    }},\n'
+        '  }});\n'
+        '  window._histChart = histChart;\n'
+        '}})();\n'
+        'function toggleHistorySeries(cb) {{\n'
+        '  const key = cb.dataset.metric;\n'
+        '  const chart = window._histChart;\n'
+        '  const idx = chart.data.datasets.findIndex(d => {{\n'
+        '    const m = HISTORY_DATA.length > 0;\n'
+        '    return d.label === cb.closest("label").querySelector("span").textContent;\n'
+        '  }});\n'
+        '  if (idx === -1) return;\n'
+        '  const meta = chart.getDatasetMeta(idx);\n'
+        '  meta.hidden = !cb.checked;\n'
+        '  chart.update();\n'
+        '}}\n'
+        '</script>\n'
     )
 
 
@@ -1834,6 +1943,14 @@ def render_html(org, repo, age_days, pr_data_list, generated, history=None):
     )
     assignee_table_html = _assignee_table(sorted_assignees)
 
+    # Options for the assignee filter dropdown (excludes "(unassigned)"
+    # which is added as a static option in the template).
+    assignee_options_html = "\n".join(
+        f'<option value="{html.escape(a)}">{html.escape(a)}</option>'
+        for a, _ in sorted_assignees
+        if a != "(unassigned)"
+    )
+
     # ---- Change-requesters table ----
     reviewer_data = collections.defaultdict(lambda: {
         "total": 0,
@@ -1927,6 +2044,13 @@ def render_html(org, repo, age_days, pr_data_list, generated, history=None):
     else:
         trend_section = ""
 
+    # ---- History chart section ----
+    history_data_json = json.dumps(all_runs, ensure_ascii=False, default=str)
+    if len(all_runs) >= 2:
+        history_chart_section = _history_chart_section_html()
+    else:
+        history_chart_section = ""
+
     report = _HTML_TEMPLATE.format(
         org=html.escape(org),
         repo=html.escape(repo),
@@ -1935,6 +2059,8 @@ def render_html(org, repo, age_days, pr_data_list, generated, history=None):
         total_prs=total,
         summary_cards="\n".join(cards),
         trend_section=trend_section,
+        history_chart_section=history_chart_section,
+        history_data_json=history_data_json,
         cat_cards="\n".join(cat_cards_html),
         bar_chart=bar_html,
         cat_options=cat_option_html,
@@ -1943,6 +2069,7 @@ def render_html(org, repo, age_days, pr_data_list, generated, history=None):
         area_chart=area_chart_html,
         author_chart=author_chart_html,
         assignee_table=assignee_table_html,
+        assignee_options=assignee_options_html,
         change_requesters_table=change_requesters_table_html,
         ci_workflow_table=ci_workflow_table_html,
         pr_json=pr_json,
