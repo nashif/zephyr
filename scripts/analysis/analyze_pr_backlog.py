@@ -602,7 +602,13 @@ def _analyze_pr(pr, maint_obj, verbose=False):
         if not assignees:
             categories.append(CAT_NO_ASSIGNEE)
         elif not assignee_approved:
-            categories.append(CAT_MISSING_ASSIGNEE_APPROVAL)
+            # A maintainer-submitted PR where the author is the assignee
+            # cannot self-approve; don't flag missing assignee approval.
+            author_is_assignee = (
+                pr.user is not None and pr.user.login in assignees
+            )
+            if not (submitter_is_maintainer and author_is_assignee):
+                categories.append(CAT_MISSING_ASSIGNEE_APPROVAL)
 
         if ci == "fail":
             categories.append(CAT_CI_FAILING)
