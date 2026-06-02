@@ -1964,6 +1964,54 @@ def _save_snapshot(path, snapshot, history):
 
 
 # ---------------------------------------------------------------------------
+# PR analysis cache
+# ---------------------------------------------------------------------------
+
+def _load_cache(path):
+    """
+    Load the per-PR analysis cache from *path*.
+
+    Returns a dict mapping str(pr_number) ->
+        {"updated_at": <iso-string>, "data": <_analyze_pr result dict>}.
+    Returns an empty dict if the file does not exist or cannot be parsed.
+    """
+    p = pathlib.Path(path)
+    if not p.exists():
+        return {}
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception as exc:
+        print(
+            f"WARNING: Could not read cache file {path}: {exc}; "
+            "starting with an empty cache.",
+            file=sys.stderr,
+        )
+        return {}
+
+
+def _save_cache(path, cache):
+    """
+    Persist *cache* to *path* as JSON.
+
+    Uses an atomic rename-from-temp so a concurrent reader never sees a
+    half-written file.
+    """
+    p = pathlib.Path(path)
+    tmp = p.with_suffix(".tmp")
+    try:
+        tmp.write_text(
+            json.dumps(cache, indent=2, ensure_ascii=False, default=str),
+            encoding="utf-8",
+        )
+        tmp.replace(p)
+    except Exception as exc:
+        print(
+            f"WARNING: Could not write cache file {path}: {exc}",
+            file=sys.stderr,
+        )
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
@@ -2051,6 +2099,20 @@ def parse_args():
             "Has no effect when --pr is used."
         ),
     )
+    parser.add_argument(
+        "--cache",
+        default=None,
+        metavar="FILE",
+        help=(
+            "Path to a JSON file used to cache per-PR analysis results.  "
+            "PRs whose updated_at timestamp is unchanged since the last run "
+            "are loaded from the cache instead of making fresh GitHub API "
+            "calls, which dramatically reduces run time for large backlogs.  "
+            "The cache is updated after every run (new or changed PRs are "
+            "written back automatically).  Has no effect when --pr is used.  "
+            "Example: --cache pr_backlog.cache.json"
+        ),
+    )
     return parser.parse_args()
 
 
@@ -2090,6 +2152,16 @@ def main():
             print(
                 f"WARNING: Maintainer file not found: {mf}",
                 file=sys.stderr,
+            )
+
+    # ---- Load PR cache ----
+    pr_cache = {}
+    if args.cache:
+        pr_cache = _load_cache(args.cache)
+        if args.verbose and pr_cache:
+            print(
+                f"Loaded {len(pr_cache)} cached PR entries from {args.cache}",
+                flush=True,
             )
 
     # ---- Fetch PRs ----
@@ -2144,18 +2216,36 @@ def main():
                 print(f"Reached --max-prs={args.max_prs} limit.", flush=True)
             break
 
-        try:
-            data = _analyze_pr(pr, maint_obj, verbose=args.verbose)
-            pr_data_list.append(data)
-        except GithubException as exc:
-            print(f"  Skipping PR #{pr.number}: {exc}", file=sys.stderr)
-        except Exception as exc:
-            print(f"  Error on PR #{pr.number}: {exc}", file=sys.stderr)
+        # ---- Cache check ----
+        cache_key = str(pr.number)
+        pr_updated = pr.updated_at
+        if pr_updated is not None and pr_updated.tzinfo is None:
+            pr_updated = pr_updated.replace(tzinfo=datetime.timezone.utc)
+        pr_updated_iso = pr_updated.isoformat() if pr_updated is not None else ""
+        cached_entry = pr_cache.get(cache_key) if args.cache else None
+        if cached_entry is not None and cached_entry.get("updated_at") == pr_updated_iso:
+            if args.verbose:
+                print(f"  PR #{pr.number}: cache hit", flush=True)
+            pr_data_list.append(cached_entry["data"])
+        else:
+            try:
+                data = _analyze_pr(pr, maint_obj, verbose=args.verbose)
+                pr_data_list.append(data)
+                if args.cache:
+                    pr_cache[cache_key] = {
+                        "updated_at": pr_updated_iso,
+                        "data": data,
+                    }
+            except GithubException as exc:
+                print(f"  Skipping PR #{pr.number}: {exc}", file=sys.stderr)
+            except Exception as exc:
+                print(f"  Error on PR #{pr.number}: {exc}", file=sys.stderr)
 
         fetched += 1
 
-        # Respect secondary rate limit: brief pause every 10 PRs
-        if fetched % 10 == 0:
+        # Respect secondary rate limit: brief pause every 10 PRs (cache hits
+        # do not touch GitHub, so skip the pause for those)
+        if fetched % 10 == 0 and cached_entry is None:
             time.sleep(2)
 
     if args.verbose:
@@ -2177,6 +2267,20 @@ def main():
             file=sys.stderr,
         )
         sys.exit(1)
+
+    # ---- Persist PR cache ----
+    if args.cache:
+        _save_cache(args.cache, pr_cache)
+        if args.verbose:
+            hits = sum(
+                1 for p in pr_data_list
+                if pr_cache.get(str(p["number"]), {}).get("updated_at")
+                and pr_cache[str(p["number"])]["data"] is p
+            )
+            print(
+                f"Cache saved to {args.cache} ({len(pr_cache)} entries).",
+                flush=True,
+            )
 
     # ---- Load run history (if requested) ----
     history = []
