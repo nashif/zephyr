@@ -1603,20 +1603,31 @@ def render_html(org, repo, age_days, pr_data_list, generated, history=None):
     if history is None:
         history = []
 
+    # ---- Category counts (used both for the categories section and to
+    #      derive the overview stats so that both sections are consistent) ----
+    cat_counts = collections.Counter()
+    for p in pr_data_list:
+        for c in p["categories"]:
+            cat_counts[c] += 1
+
     # ---- Summary stats ----
-    no_assignee = sum(1 for p in pr_data_list if not p["assignees"])
-    ci_fail = sum(1 for p in pr_data_list if p["ci"] == "fail")
-    changes_req = sum(1 for p in pr_data_list if p["changes_requested_by"])
-    nearly_done = sum(1 for p in pr_data_list if p["two_approvals_met"])
-    large_prs = sum(1 for p in pr_data_list if p["total_lines"] > SIZE_LARGE_LINES)
-    many_areas = sum(1 for p in pr_data_list if p["num_non_meta_areas"] >= SIZE_MANY_AREAS)
+    # Derive counts from cat_counts so that Overview numbers always match
+    # the PR Backlog Categories section (categories are only assigned under
+    # the same conditions, e.g. CAT_CI_FAILING is not applied to
+    # nearly-approved PRs, so raw-field sums would differ).
     avg_age = sum(p["age_days"] for p in pr_data_list) / total if total else 0.0
     avg_idle = sum(p["meaningful_idle_days"] for p in pr_data_list) / total if total else 0.0
-    maint_submitted = sum(1 for p in pr_data_list if p["submitter_is_maintainer"])
     num_drafts = sum(1 for p in pr_data_list if p["draft"])
-    num_needs_rebase = sum(1 for p in pr_data_list if p["needs_rebase"])
-    num_dnm = sum(1 for p in pr_data_list if p["has_dnm"])
-    num_arch_review = sum(1 for p in pr_data_list if p["has_arch_review"])
+    no_assignee = cat_counts[CAT_NO_ASSIGNEE]
+    ci_fail = cat_counts[CAT_CI_FAILING]
+    changes_req = cat_counts[CAT_CHANGES_REQUESTED]
+    nearly_done = cat_counts[CAT_NEARLY_APPROVED]
+    large_prs = cat_counts[CAT_LARGE_PR]
+    many_areas = cat_counts[CAT_MANY_AREAS]
+    maint_submitted = cat_counts[CAT_MAINTAINER_SUBMITTED]
+    num_needs_rebase = cat_counts[CAT_NEEDS_REBASE]
+    num_dnm = cat_counts[CAT_DNM]
+    num_arch_review = cat_counts[CAT_ARCH_REVIEW]
 
     # ---- Build current-run snapshot (saved by caller to history file) ----
     snapshot = {
@@ -1680,11 +1691,6 @@ def render_html(org, repo, age_days, pr_data_list, generated, history=None):
     ]
 
     # ---- Category cards + bar chart ----
-    cat_counts = collections.Counter()
-    for p in pr_data_list:
-        for c in p["categories"]:
-            cat_counts[c] += 1
-
     cat_cards_html = []
     for key, meta in CATEGORY_META.items():
         cnt = cat_counts.get(key, 0)
