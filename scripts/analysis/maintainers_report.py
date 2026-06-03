@@ -1256,6 +1256,7 @@ def generate_html(areas, stats, trend_html="", prev_snapshot=None):
   <a href="#worst">&#9888; Needs Attention</a>
   <a href="#top-maintainers">&#127947; Top Maintainers</a>
   <a href="#top-collaborators">&#129309; Top Collaborators</a>
+  <a href="#trend">&#128200; Trend</a>
 </nav>
 
 <main>
@@ -1864,6 +1865,97 @@ def _maintainers_trend_table(history):
     )
 
 
+# Chart series definitions: (label, snapshot_key, y_axis_id, border_color, bg_color)
+_CHART_SERIES = [
+    # --- Maintainership ---
+    ("Total Areas",        "total",               "yLeft",  "#2563eb", "rgba(37,99,235,.15)"),
+    ("Maintained",         "maintained",          "yLeft",  "#16a34a", "rgba(22,163,74,.15)"),
+    ("No Maintainer",      "no_maintainer",       "yLeft",  "#dc2626", "rgba(220,38,38,.15)"),
+    ("Unique Maintainers", "unique_maintainers",  "yLeft",  "#7c3aed", "rgba(124,58,237,.15)"),
+    # --- Collaborators ---
+    ("2+ Collaborators",   "two_plus_collab",     "yLeft",  "#0891b2", "rgba(8,145,178,.15)"),
+    ("No Collaborators",   "no_collab",           "yLeft",  "#f59e0b", "rgba(245,158,11,.15)"),
+    # --- Health ---
+    ("Avg Health Score",   "avg_health",          "yRight", "#059669", "rgba(5,150,105,.15)"),
+    ("Critical/Poor",      "critical_poor",       "yLeft",  "#be185d", "rgba(190,24,93,.15)"),
+    # --- Coverage ---
+    ("Repo Coverage %",    "coverage_pct",        "yRight", "#6366f1", "rgba(99,102,241,.15)"),
+    # --- Test IDs ---
+    ("Has Test IDs",       "has_test_ids",        "yLeft",  "#d97706", "rgba(217,119,6,.15)"),
+]
+
+
+def _maintainers_trend_charts(history):
+    """Return an HTML block with Chart.js line charts built from *history*.
+
+    Renders two charts side-by-side:
+      * Left  -- absolute-count metrics (areas, maintainers, ...)
+      * Right -- ratio/score metrics (avg health, coverage %)
+    """
+    if len(history) < 2:
+        return ""
+
+    labels = json.dumps([s.get("generated", s.get("timestamp", "")[:16])
+                         for s in history])
+
+    def _series_js(title, key, color, bg):
+        vals = json.dumps([s.get(key) for s in history])
+        return (
+            '{' +
+            f'label:{json.dumps(title)},data:{vals},' +
+            f'borderColor:{json.dumps(color)},backgroundColor:{json.dumps(bg)},' +
+            'borderWidth:2,pointRadius:3,pointHoverRadius:5,tension:0.35,fill:true'
+            '}'
+        )
+
+    left_series  = [s for s in _CHART_SERIES if s[2] == "yLeft"]
+    right_series = [s for s in _CHART_SERIES if s[2] == "yRight"]
+
+    left_ds  = ",".join(_series_js(t, k, c, b) for t, k, _, c, b in left_series)
+    right_ds = ",".join(_series_js(t, k, c, b) for t, k, _, c, b in right_series)
+
+    chart_opts = (
+        'responsive:true,'
+        'interaction:{mode:"index",intersect:false},'
+        'plugins:{legend:{position:"bottom",labels:{font:{size:11},boxWidth:12}}},'
+        'scales:{x:{ticks:{maxRotation:45,font:{size:10}}},'
+        'y:{beginAtZero:false,ticks:{font:{size:10}}}}'
+    )
+
+    return (
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1rem">\n'
+        '  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;'
+        'padding:1rem;box-shadow:0 1px 3px rgba(0,0,0,.06)">\n'
+        '    <h3 style="font-size:.9rem;color:#1e3a5f;margin-bottom:.5rem">'
+        'Area &amp; People Counts</h3>\n'
+        '    <canvas id="chartLeft"></canvas>\n'
+        '  </div>\n'
+        '  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;'
+        'padding:1rem;box-shadow:0 1px 3px rgba(0,0,0,.06)">\n'
+        '    <h3 style="font-size:.9rem;color:#1e3a5f;margin-bottom:.5rem">'
+        'Health &amp; Coverage</h3>\n'
+        '    <canvas id="chartRight"></canvas>\n'
+        '  </div>\n'
+        '</div>\n'
+        '<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>\n'
+        '<script>\n'
+        '(function(){\n'
+        f'  var labels = {labels};\n'
+        f'  new Chart(document.getElementById(\'chartLeft\'), {{\n'
+        f'    type: \'line\',\n'
+        f'    data: {{labels: labels, datasets: [{left_ds}]}},\n'
+        f'    options: {{{chart_opts}}}\n'
+        f'  }});\n'
+        f'  new Chart(document.getElementById(\'chartRight\'), {{\n'
+        f'    type: \'line\',\n'
+        f'    data: {{labels: labels, datasets: [{right_ds}]}},\n'
+        f'    options: {{{chart_opts}}}\n'
+        f'  }});\n'
+        '})();\n'
+        '</script>\n'
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Analyze MAINTAINERS.yml and generate a browsable HTML report."
@@ -2037,6 +2129,9 @@ def main():
             '<p style="color:#64748b;font-size:.85rem;margin-bottom:12px;">'
             'Each row is one saved run. Arrows show change vs. the previous '
             'run; green\u202f=\u202fimproving, red\u202f=\u202fworsening.</p>\n'
+            + _maintainers_trend_charts(all_runs)
+            + '\n<h3 style="font-size:1rem;color:#1e3a5f;margin:1.5rem 0 .5rem">'
+            'Full History Table</h3>\n'
             + _maintainers_trend_table(all_runs)
             + '\n</section>'
         )
