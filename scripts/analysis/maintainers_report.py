@@ -33,9 +33,13 @@ _REPO_EXCLUDE_DIRS = {
 }
 
 
-def load_maintainers():
-    """Load and parse MAINTAINERS.yml, stripping the keep-sorted markers."""
-    with open(MAINTAINERS_FILE, "r") as f:
+def load_maintainers(path=None):
+    """Load and parse a MAINTAINERS.yml file, stripping the keep-sorted markers.
+
+    *path* overrides the default MAINTAINERS_FILE when supplied.
+    """
+    target = Path(path) if path else MAINTAINERS_FILE
+    with open(target, "r") as f:
         content = f.read()
     # Remove zephyr-keep-sorted markers
     content = re.sub(r'#\s*zephyr-keep-sorted-(start|stop).*\n', '', content)
@@ -1866,6 +1870,15 @@ def main():
     )
     parser.add_argument("-o", "--output", default=str(OUTPUT_FILE),
                         help="Output HTML file path (default: %(default)s)")
+    parser.add_argument(
+        "--maintainers-file",
+        default=None,
+        metavar="FILE",
+        help=(
+            "Path to an alternative MAINTAINERS.yml file to analyse.  "
+            "Defaults to MAINTAINERS.yml at the repository root."
+        ),
+    )
     activity_grp = parser.add_mutually_exclusive_group()
     activity_grp.add_argument(
         "--activity-maintainers", action="store_true",
@@ -1906,11 +1919,15 @@ def main():
     args = parser.parse_args()
 
     output_file = Path(args.output)
+    maintainers_file = Path(args.maintainers_file) if args.maintainers_file else MAINTAINERS_FILE
+    if not maintainers_file.exists():
+        print(f"ERROR: Maintainers file not found: {maintainers_file}")
+        sys.exit(1)
 
-    print(f"Loading {MAINTAINERS_FILE}...")
-    data = load_maintainers()
+    print(f"Loading {maintainers_file}...")
+    data = load_maintainers(maintainers_file)
     if data is None:
-        print("ERROR: Failed to parse MAINTAINERS.yml")
+        print(f"ERROR: Failed to parse {maintainers_file}")
         sys.exit(1)
 
     print(f"Parsed {len(data)} top-level entries")
