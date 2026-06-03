@@ -1364,16 +1364,17 @@ def _history_chart_js():
         {"key": key, "label": label, "color": color}
         for key, label, color in metrics
     ])
-    # This is injected as a value into _HTML_TEMPLATE via .format(), so all
-    # JS braces must be doubled so that .format() collapses {{ -> { correctly.
+    # This string is injected as a VALUE into _HTML_TEMPLATE via .format().
+    # Python only unescapes {{ -> { in the *template* string, not in values.
+    # So use single braces here — they pass through .format() unchanged.
     return (
         '/* ---- history chart ---- */\n'
-        'if (HISTORY_DATA.length >= 2 && document.getElementById("history-chart")) {{\n'
-        '  (function() {{\n'
+        'if (HISTORY_DATA.length >= 2 && document.getElementById("history-chart")) {\n'
+        '  (function() {\n'
         '    const METRICS = ' + datasets_js + ';\n'
         '    const runs = HISTORY_DATA;\n'
         '    const labels = runs.map(r => (r.generated || r.timestamp || "").slice(0,10));\n'
-        '    const datasets = METRICS.map(m => ({{\n'
+        '    const datasets = METRICS.map(m => ({\n'
         '      label: m.label,\n'
         '      data: runs.map(r => r[m.key] != null ? r[m.key] : null),\n'
         '      borderColor: m.color,\n'
@@ -1381,27 +1382,27 @@ def _history_chart_js():
         '      tension: 0.3,\n'
         '      pointRadius: 3,\n'
         '      borderWidth: 2,\n'
-        '    }}));\n'
+        '    }));\n'
         '    const ctx = document.getElementById("history-chart").getContext("2d");\n'
-        '    window._histChart = new Chart(ctx, {{\n'
+        '    window._histChart = new Chart(ctx, {\n'
         '      type: "line",\n'
-        '      data: {{ labels: labels, datasets: datasets }},\n'
-        '      options: {{\n'
+        '      data: { labels: labels, datasets: datasets },\n'
+        '      options: {\n'
         '        responsive: true,\n'
         '        maintainAspectRatio: false,\n'
-        '        interaction: {{ mode: "index", intersect: false }},\n'
-        '        plugins: {{\n'
-        '          legend: {{ position: "bottom", labels: {{ boxWidth: 12, font: {{ size: 11 }} }} }},\n'
-        '        }},\n'
-        '        scales: {{\n'
-        '          x: {{ ticks: {{ maxRotation: 45, font: {{ size: 10 }} }} }},\n'
-        '          y: {{ beginAtZero: true }},\n'
-        '        }},\n'
-        '      }},\n'
-        '    }});\n'
-        '  }})();\n'
-        '}}\n'
-        'function toggleHistorySeries(cb) {{\n'
+        '        interaction: { mode: "index", intersect: false },\n'
+        '        plugins: {\n'
+        '          legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } },\n'
+        '        },\n'
+        '        scales: {\n'
+        '          x: { ticks: { maxRotation: 45, font: { size: 10 } } },\n'
+        '          y: { beginAtZero: true },\n'
+        '        },\n'
+        '      },\n'
+        '    });\n'
+        '  })();\n'
+        '}\n'
+        'function toggleHistorySeries(cb) {\n'
         '  const chart = window._histChart;\n'
         '  if (!chart) return;\n'
         '  const label = cb.closest("label").querySelector("span").textContent;\n'
@@ -1409,7 +1410,7 @@ def _history_chart_js():
         '  if (idx === -1) return;\n'
         '  chart.setDatasetVisibility(idx, cb.checked);\n'
         '  chart.update();\n'
-        '}}\n'
+        '}\n'
     )
 
 
