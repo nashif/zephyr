@@ -666,7 +666,7 @@ def check_icon(val):
     return '<span class="check">✓</span>' if val else '<span class="cross">✗</span>'
 
 
-def generate_html(areas, stats, trend_html=""):
+def generate_html(areas, stats, trend_html="", prev_snapshot=None):
     """Generate the full HTML report."""
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     total_files = sum(a.get("file_count", 0) for a in areas)
@@ -815,6 +815,26 @@ def generate_html(areas, stats, trend_html=""):
         "obsolete": stats["obsolete"],
         "unknown": stats["unknown"],
     }
+
+    def _delta(current_val, snap_key, lower_is_better=False):
+        """Return a coloured arrow span comparing current_val to the previous run."""
+        if prev_snapshot is None:
+            return ""
+        prev_val = prev_snapshot.get(snap_key)
+        return _maintainers_delta_html(current_val, prev_val,
+                                       lower_is_better=lower_is_better)
+
+    if activity:
+        _inactive_delta = _delta(inactive_count, "inactive_count",
+                                 lower_is_better=True)
+        inactive_card = (
+            f'<div class="stat-card red">'
+            f'<div class="number">{inactive_count}{_inactive_delta}</div>'
+            f'<div class="label">Inactive Contributors (>{since_days}d)</div>'
+            f'</div>'
+        )
+    else:
+        inactive_card = ""
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -1242,68 +1262,68 @@ def generate_html(areas, stats, trend_html=""):
 
   <div class="stats-grid">
     <div class="stat-card blue">
-      <div class="number">{stats['total']}</div>
+      <div class="number">{stats['total']}{_delta(stats['total'], 'total')}</div>
       <div class="label">Total Areas</div>
     </div>
     <div class="stat-card green">
-      <div class="number">{stats['maintained']}</div>
+      <div class="number">{stats['maintained']}{_delta(stats['maintained'], 'maintained')}</div>
       <div class="label">Maintained</div>
     </div>
     <div class="stat-card orange">
-      <div class="number">{stats['odd_fixes']}</div>
+      <div class="number">{stats['odd_fixes']}{_delta(stats['odd_fixes'], 'odd_fixes')}</div>
       <div class="label">Odd Fixes</div>
     </div>
     <div class="stat-card blue" style="border-top:3px solid #1d4ed8;">
-      <div class="number">{stats['type_counts'].get('General', 0)}</div>
+      <div class="number">{stats['type_counts'].get('General', 0)}{_delta(stats['type_counts'].get('General', 0), 'general_areas')}</div>
       <div class="label">General Areas</div>
     </div>
     <div class="stat-card green" style="border-top:3px solid #15803d;">
-      <div class="number">{stats['type_counts'].get('Driver', 0)}</div>
+      <div class="number">{stats['type_counts'].get('Driver', 0)}{_delta(stats['type_counts'].get('Driver', 0), 'driver_areas')}</div>
       <div class="label">Driver Areas</div>
     </div>
     <div class="stat-card gray" style="border-top:3px solid #7e22ce;">
-      <div class="number">{stats['type_counts'].get('Platform', 0)}</div>
+      <div class="number">{stats['type_counts'].get('Platform', 0)}{_delta(stats['type_counts'].get('Platform', 0), 'platform_areas')}</div>
       <div class="label">Platform Areas</div>
     </div>
     <div class="stat-card orange" style="border-top:3px solid #c2410c;">
-      <div class="number">{stats['type_counts'].get('West Project', 0)}</div>
+      <div class="number">{stats['type_counts'].get('West Project', 0)}{_delta(stats['type_counts'].get('West Project', 0), 'west_areas')}</div>
       <div class="label">West Project Areas</div>
     </div>
     <div class="stat-card gray">
-      <div class="number">{stats['unique_maintainers']}</div>
+      <div class="number">{stats['unique_maintainers']}{_delta(stats['unique_maintainers'], 'unique_maintainers')}</div>
       <div class="label">Unique Maintainers</div>
     </div>
     <div class="stat-card blue">
-      <div class="number">{stats['unique_collaborators']}</div>
+      <div class="number">{stats['unique_collaborators']}{_delta(stats['unique_collaborators'], 'unique_collaborators')}</div>
       <div class="label">Unique Collaborators</div>
     </div>
     <div class="stat-card red">
-      <div class="number">{stats['no_maintainer']}</div>
+      <div class="number">{stats['no_maintainer']}{_delta(stats['no_maintainer'], 'no_maintainer', lower_is_better=True)}</div>
       <div class="label">Areas Without Maintainer</div>
     </div>
     <div class="stat-card orange">
-      <div class="number">{stats['no_collab']}</div>
+      <div class="number">{stats['no_collab']}{_delta(stats['no_collab'], 'no_collab', lower_is_better=True)}</div>
       <div class="label">Areas Without Collaborators</div>
     </div>
     <div class="stat-card green">
-      <div class="number">{stats['has_test_ids']}</div>
+      <div class="number">{stats['has_test_ids']}{_delta(stats['has_test_ids'], 'has_test_ids')}</div>
       <div class="label">Areas With Test IDs</div>
     </div>
     <div class="stat-card blue">
-      <div class="number">{covered_files:,}</div>
+      <div class="number">{covered_files:,}{_delta(covered_files, 'covered_files')}</div>
       <div class="label">Files Covered by Globs</div>
     </div>
     <div class="stat-card gray">
-      <div class="number">{total_repo_files:,}</div>
+      <div class="number">{total_repo_files:,}{_delta(total_repo_files, 'total_repo_files')}</div>
       <div class="label">Total Repo Files</div>
     </div>
     <div class="stat-card {'green' if coverage_pct >= 70 else ('orange' if coverage_pct >= 40 else 'red')}">
-      <div class="number">{coverage_pct:.1f}%</div>
+      <div class="number">{coverage_pct:.1f}%{_delta(coverage_pct, 'coverage_pct')}</div>
       <div class="label">Repo Coverage</div>
     </div>
-    {'<div class="stat-card red"><div class="number">' + str(inactive_count) + '</div><div class="label">Inactive Contributors (>' + str(since_days) + 'd)</div></div>' if activity else ''}
+    {inactive_card}
     <div class="stat-card green">
-      <div class="number">{avg_health:.1f}/6</div>
+      <div class="number">{avg_health:.1f}/6{_delta(avg_health, 'avg_health')}</div>
       <div class="label">Avg Health Score</div>
     </div>
   </div>
@@ -1960,11 +1980,16 @@ def main():
         1 for a in areas
         if health_level(a["health_score"], a["area_type"])[0] in ("Critical", "Poor")
     )
+    inactive_count_snap = (
+        sum(1 for info in activity.values() if info.get("is_inactive"))
+        if activity else None
+    )
     snapshot = {
         "timestamp": datetime.datetime.utcnow().isoformat(),
         "generated": generated_ts,
         "total": stats["total"],
         "maintained": stats["maintained"],
+        "odd_fixes": stats["odd_fixes"],
         "no_maintainer": stats["no_maintainer"],
         "unique_maintainers": stats["unique_maintainers"],
         "unique_collaborators": stats["unique_collaborators"],
@@ -1974,6 +1999,13 @@ def main():
         "avg_health": round(avg_health, 2),
         "critical_poor": critical_poor,
         "coverage_pct": round(stats.get("coverage_pct", 0.0), 1),
+        "general_areas": stats["type_counts"].get("General", 0),
+        "driver_areas": stats["type_counts"].get("Driver", 0),
+        "platform_areas": stats["type_counts"].get("Platform", 0),
+        "west_areas": stats["type_counts"].get("West Project", 0),
+        "covered_files": stats.get("covered_files", 0),
+        "total_repo_files": stats.get("total_repo_files", 0),
+        "inactive_count": inactive_count_snap,
     }
 
     # ---- Load history and build trend HTML ----
@@ -1994,7 +2026,9 @@ def main():
     else:
         trend_html = ""
 
-    html = generate_html(areas, stats, trend_html=trend_html)
+    prev_snapshot = history[-1] if history else None
+    html = generate_html(areas, stats, trend_html=trend_html,
+                         prev_snapshot=prev_snapshot)
     with open(output_file, "w") as f:
         f.write(html)
     print(f"Report written to: {output_file}")
