@@ -2125,7 +2125,7 @@ def main():
     if len(all_runs) >= 2:
         trend_html = (
             '<section id="trend">\n'
-            '<h2>&#128200; Backlog Trend History</h2>\n'
+            '<h2>&#128200; MAINTAINERS.yml Trend History</h2>\n'
             '<p style="color:#64748b;font-size:.85rem;margin-bottom:12px;">'
             'Each row is one saved run. Arrows show change vs. the previous '
             'run; green\u202f=\u202fimproving, red\u202f=\u202fworsening.</p>\n'
