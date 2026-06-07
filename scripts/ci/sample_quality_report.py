@@ -2238,25 +2238,27 @@ def main():
         for a in all_analyses:
             if args.llm_non_compliant_only and a['verdict'] == 'compliant':
                 continue
-            # If from cache and LLM result for this model is already there, skip
-            if a.get('_from_cache'):
-                rel_path = a['sample']['path']
-                cached = cache_entries.get(rel_path, {})
-                if cached.get('git_sha') == a.get('_git_sha', '') and \
-                        args.model in cached.get('llm', {}):
-                    # Inject cached LLM into the analysis in-place
-                    llm_r = cached['llm'][args.model]
-                    a['llm'] = llm_r
-                    a['_llm_model'] = args.model
-                    # Re-merge verdict
-                    if llm_r.get('verdict') in VERDICTS:
-                        llm_idx = VERDICTS.index(llm_r['verdict'])
-                        h_idx = VERDICTS.index(a['heuristic']['verdict'])
-                        if llm_idx > h_idx:
-                            a['verdict'] = llm_r['verdict']
-                    log.debug('LLM cache hit: %s (model %s)',
-                              rel_path, args.model)
-                    continue
+            # Skip samples that already have a cached LLM result for this
+            # model and whose git tree SHA has not changed.
+            # Check the cache directly (covers both cache-hit and freshly
+            # analyzed samples whose entry was written this run).
+            rel_path = a['sample']['path']
+            cached = cache_entries.get(rel_path, {})
+            git_sha = a.get('_git_sha', '')
+            if (cached.get('git_sha') == git_sha
+                    and args.model in cached.get('llm', {})):
+                # Inject cached LLM result into the in-memory analysis
+                llm_r = cached['llm'][args.model]
+                a['llm'] = llm_r
+                a['_llm_model'] = args.model
+                # Re-merge verdict
+                if llm_r.get('verdict') in VERDICTS:
+                    llm_idx = VERDICTS.index(llm_r['verdict'])
+                    h_idx = VERDICTS.index(a['heuristic']['verdict'])
+                    if llm_idx > h_idx:
+                        a['verdict'] = llm_r['verdict']
+                log.debug('LLM cache hit: %s (model %s)', rel_path, args.model)
+                continue
             candidates.append(a)
             if len(candidates) >= args.max_llm:
                 break
