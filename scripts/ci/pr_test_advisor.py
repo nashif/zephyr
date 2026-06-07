@@ -615,6 +615,45 @@ def _build_user_content(pr_data, heuristic_result):
     )
 
 
+def _extract_json(raw):
+    """
+    Extract a JSON object from raw LLM output.
+
+    Tries in order:
+    1. Direct json.loads (model returned pure JSON).
+    2. Strip markdown code fences (```json ... ``` or ``` ... ```).
+    3. Find the first {...} block in the text (model added prose around JSON).
+
+    Raises json.JSONDecodeError if no valid JSON is found.
+    """
+    if not raw or not raw.strip():
+        raise json.JSONDecodeError('Empty response from LLM', '', 0)
+
+    # 1. Direct parse
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        pass
+
+    # 2. Strip markdown code fences
+    stripped = re.sub(r'^```(?:json)?\s*', '', raw.strip(), flags=re.IGNORECASE)
+    stripped = re.sub(r'```\s*$', '', stripped.strip())
+    try:
+        return json.loads(stripped)
+    except json.JSONDecodeError:
+        pass
+
+    # 3. Extract the first {...} block
+    match = re.search(r'\{.*\}', raw, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group(0))
+        except json.JSONDecodeError:
+            pass
+
+    raise json.JSONDecodeError('No JSON object found in LLM response', raw, 0)
+
+
 def _call_openai(model, system, user):
     """Call an OpenAI or OpenAI-compatible endpoint. Returns raw text."""
     api_key = os.environ.get('OPENAI_API_KEY')
@@ -667,7 +706,6 @@ def _call_litellm(model, system, user):
     )
     return response.choices[0].message.content
 
-
 def _call_openrouter(model, system, user):
     """
     Call OpenRouter.ai using the OpenAI-compatible endpoint.
@@ -676,6 +714,11 @@ def _call_openrouter(model, system, user):
       anthropic/claude-opus-4
       google/gemini-pro
       meta-llama/llama-3-70b-instruct
+
+    Note: response_format={'type': 'json_object'} is intentionally omitted
+    here because many OpenRouter-proxied backends (Claude, Gemini, Llama, ...)
+    do not support that OpenAI-specific parameter. JSON is extracted from the
+    raw response text by _extract_json() instead.
     """
     api_key = os.environ.get('OPENROUTER_API_KEY')
     if not api_key:
@@ -697,14 +740,10 @@ def _call_openrouter(model, system, user):
             {'role': 'system', 'content': system},
             {'role': 'user', 'content': user},
         ],
-        response_format={'type': 'json_object'},
         temperature=0.2,
         max_tokens=1024,
     )
     return response.choices[0].message.content
-
-
-def llm_analyze(pr_data, heuristic_result, provider=None):
     """
     Call an LLM to analyze the PR using the selected provider.
 
@@ -737,7 +776,8 @@ def llm_analyze(pr_data, heuristic_result, provider=None):
     pr_data['llm_provider'] = resolved
     try:
         raw = backend_fn(model, LLM_SYSTEM_PROMPT, user_content)
-        return json.loads(raw)
+        log.debug('Raw LLM response: %s', raw)
+        return _extract_json(raw)
     except Exception as exc:
         log.warning('LLM analysis failed (%s): %s', resolved, exc)
         return None
