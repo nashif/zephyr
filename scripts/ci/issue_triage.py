@@ -220,6 +220,75 @@ CRITICALITY_COLORS = {
 _STALE_AGE_DAYS = 180
 _STALE_INACTIVE_DAYS = 90
 
+# Platform scope classification for issues that mention specific hardware.
+# scope -> human label for the report
+PLATFORM_SCOPE_LABELS = {
+    'hardware-only':    'Hardware Only',
+    'driver':           'Driver Specific',
+    'platform-config':  'Platform Config',
+    'likely-general':   'Likely General',
+    'unknown':          'Unknown',
+}
+
+PLATFORM_SCOPE_COLORS = {
+    'hardware-only':    '#455a64',
+    'driver':           '#00838f',
+    'platform-config':  '#0277bd',
+    'likely-general':   '#6a1b9a',
+    'unknown':          '#9e9e9e',
+}
+
+# Glob-style path prefixes that indicate a file is strongly platform-specific
+_DRIVER_SPECIFIC_PATHS = (
+    'drivers/bluetooth/hci/',
+    'drivers/can/',
+    'drivers/dma/',
+    'drivers/ethernet/',
+    'drivers/flash/',
+    'drivers/gpio/',
+    'drivers/i2c/',
+    'drivers/ieee802154/',
+    'drivers/modem/',
+    'drivers/pinctrl/',
+    'drivers/pwm/',
+    'drivers/sensor/',
+    'drivers/serial/',
+    'drivers/spi/',
+    'drivers/usb/',
+    'drivers/wifi/',
+    'soc/',
+    'boards/',
+    'dts/arm/',
+    'dts/riscv/',
+    'dts/xtensa/',
+)
+
+_GENERAL_SUBSYS_PATHS = (
+    'kernel/',
+    'subsys/bluetooth/',
+    'subsys/net/',
+    'subsys/fs/',
+    'subsys/usb/',
+    'lib/',
+    'include/zephyr/',
+    'cmake/',
+    'scripts/',
+)
+
+# Patterns suggesting the issue is hardware/silicon-level rather than software
+_HARDWARE_ERRATA_RE = re.compile(
+    r'(?i)(silicon\s+errata|hardware\s+bug|errata\b|hw\s+limitation'
+    r'|silicon\s+issue|chip\s+bug|hardware\s+limitation|silicon\s+bug'
+    r'|hardware\s+errata)',
+)
+
+# Patterns suggesting the issue was discovered on one board but is likely general
+_GENERAL_SIGNAL_RE = re.compile(
+    r'(?i)(all\s+platforms?|other\s+platforms?|multiple\s+boards?'
+    r'|reproducible\s+on|also\s+on|seen\s+on.*and|same\s+issue\s+on'
+    r'|generic\s+zephyr|upstream\s+issue)',
+)
+
 # ---------------------------------------------------------------------------
 # Heuristic pattern compilation
 # ---------------------------------------------------------------------------
@@ -394,6 +463,327 @@ def check_already_fixed_git(issue_number):
 
 
 # ---------------------------------------------------------------------------
+# Cache management
+# ---------------------------------------------------------------------------
+
+CACHE_VERSION = 1
+
+
+def load_cache(cache_path):
+    """
+    Load the triage cache from a JSON file.
+
+    Cache format:
+      {
+        "version": 1,
+        "entries": {
+          "<org>/<repo>#<number>": {
+            "updated_at":  "<ISO date from GitHub at time of analysis>",
+            "checked_at":  "<ISO datetime when we analyzed it>",
+            "analysis":    { ... full analysis dict ... }
+          }, ...
+        }
+      }
+
+    Returns a dict {key: entry} or empty dict on any error.
+    """
+    if not cache_path or not Path(cache_path).exists():
+        return {}
+    try:
+        with open(cache_path, encoding='utf-8') as fh:
+            data = json.load(fh)
+        if not isinstance(data, dict):
+            return {}
+        if data.get('version') != CACHE_VERSION:
+            log.debug('Cache version mismatch; discarding.')
+            return {}
+        return data.get('entries', {})
+    except Exception as exc:
+        log.warning('Could not load cache %s: %s', cache_path, exc)
+        return {}
+
+
+def save_cache(cache_path, entries):
+    """
+    Persist the triage cache to a JSON file atomically.
+
+    entries is the dict {key: entry} maintained by the triage loop.
+    """
+    if not cache_path:
+        return
+    try:
+        data = {'version': CACHE_VERSION, 'entries': entries}
+        tmp = cache_path + '.tmp'
+        with open(tmp, 'w', encoding='utf-8') as fh:
+            json.dump(data, fh, indent=2, default=str)
+        os.replace(tmp, cache_path)
+        log.debug('Cache saved to %s (%d entries)', cache_path, len(entries))
+    except Exception as exc:
+        log.warning('Could not save cache %s: %s', cache_path, exc)
+
+
+def _cache_key(org, repo, number):
+    """Return the cache dict key for an issue."""
+    return f'{org}/{repo}#{number}'
+
+
+# ---------------------------------------------------------------------------
+# Linked PR fetcher
+# ---------------------------------------------------------------------------
+
+_PR_FIX_REF_RE = re.compile(
+    r'(?:(?:Fixes|Closes|Resolves|fix|close|resolve)s?'
+    r'\s+(?:(?:[\w-]+/[\w-]+)?#(\d+))'
+    r'|https://github\.com/[\w-]+/[\w-]+/pull/(\d+))',
+    re.IGNORECASE,
+)
+
+
+def _extract_pr_refs_from_text(text):
+    """Return a set of PR/issue numbers cited as fix-references in text."""
+    nums = set()
+    for m in _PR_FIX_REF_RE.finditer(text or ''):
+        for g in m.groups():
+            if g:
+                nums.add(int(g))
+    return nums
+
+
+def fetch_linked_prs(issue, token, org=GITHUB_ORG, repo=GITHUB_REPO):
+    """
+    Find PRs that are linked to this issue.
+
+    Strategy:
+      1. Scan the issue body for "Fixes #N" / "Closes #N" / PR URL patterns.
+      2. Fetch the GitHub issue timeline and look for cross-referenced events
+         where the source is a pull request.
+      3. For each candidate PR number, fetch its data and determine:
+         - whether the PR explicitly references this issue number.
+         - whether the PR is already merged (strong 'already-fixed' signal).
+
+    Returns a list of dicts:
+      {
+        'number':       <int>,
+        'title':        <str>,
+        'url':          <str>,
+        'state':        'open' | 'closed',
+        'merged':       <bool>,
+        'fixes_issue':  <bool>,
+        'body_snippet': <str>,  first 200 chars of PR body
+      }
+    """
+    issue_number = issue['number']
+    candidate_prs = set()
+
+    # Body scan for explicit "Fixes #N" references
+    candidate_prs.update(_extract_pr_refs_from_text(issue.get('body', '')))
+
+    # Timeline API: cross-referenced events from PRs
+    try:
+        timeline = _gh_api_request(
+            f'/repos/{org}/{repo}/issues/{issue_number}/timeline',
+            token,
+            params={'per_page': 100},
+        )
+        for event in (timeline or []):
+            if event.get('event') == 'cross-referenced':
+                src = event.get('source') or {}
+                issue_src = src.get('issue') or {}
+                pr_url = issue_src.get('html_url', '')
+                if '/pull/' in pr_url:
+                    try:
+                        pr_num = int(pr_url.rstrip('/').rsplit('/', 1)[-1])
+                        candidate_prs.add(pr_num)
+                    except (ValueError, IndexError):
+                        pass
+    except Exception as exc:
+        log.debug('Timeline fetch failed for #%d: %s', issue_number, exc)
+
+    if not candidate_prs:
+        return []
+
+    results = []
+    for pr_num in sorted(candidate_prs):
+        try:
+            pr = _gh_api_request(f'/repos/{org}/{repo}/pulls/{pr_num}', token)
+        except Exception as exc:
+            log.debug('Could not fetch PR #%d: %s', pr_num, exc)
+            continue
+        if not isinstance(pr, dict):
+            continue
+
+        pr_body  = pr.get('body') or ''
+        pr_title = pr.get('title') or ''
+        pr_state = pr.get('state', 'open')
+        merged   = bool(pr.get('merged_at'))
+
+        # Does this PR explicitly reference our issue?
+        combined  = pr_title + ' ' + pr_body
+        pr_refs   = _extract_pr_refs_from_text(combined)
+        plain_refs = set(int(m) for m in re.findall(r'#(\d+)', combined))
+        fixes_issue = issue_number in pr_refs or issue_number in plain_refs
+
+        results.append({
+            'number':       pr_num,
+            'title':        pr_title,
+            'url':          pr.get('html_url', ''),
+            'state':        pr_state,
+            'merged':       merged,
+            'fixes_issue':  fixes_issue,
+            'body_snippet': pr_body[:200],
+        })
+
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Platform scope assessment
+# ---------------------------------------------------------------------------
+
+_PLATFORM_DRIVER_FILE_RE = re.compile(
+    r'(?i)(?:drivers|soc|boards|dts)/[\w/._-]+'
+    r'(?:stm32|nrf5|nrf9|esp32|rp2040|sam[dle]|imxrt|mimxrt|lpc|nxp'
+    r'|adi_|ti_|silabs|nordic|renesas|atmel|microchip|cypress|infineon'
+    r'|ambiq|nuvoton|gd32|hc32)[\\w/._-]*\\.c',
+)
+
+_HARDWARE_ERRATA_RE = re.compile(
+    r'(?i)(silicon\s+errata|hardware\s+bug|errata\b|hw\s+limitation'
+    r'|silicon\s+issue|chip\s+bug|hardware\s+limitation|silicon\s+bug'
+    r'|hardware\s+errata)',
+)
+
+_GENERAL_SIGNAL_RE = re.compile(
+    r'(?i)(all\s+platforms?|other\s+platforms?|multiple\s+boards?'
+    r'|reproducible\s+on|also\s+on|seen\s+on.*and|same\s+issue\s+on'
+    r'|generic\s+zephyr|upstream\s+issue)',
+)
+
+
+def assess_platform_scope(issue, linked_prs):
+    """
+    Determine whether an issue is truly hardware/platform-specific or
+    likely a general Zephyr bug that happened to be discovered on
+    specific hardware.
+
+    Returns a dict:
+      {
+        'scope':             'hardware-only' | 'driver' | 'platform-config'
+                             | 'likely-general' | 'unknown',
+        'rationale':         '<one-sentence explanation>',
+        'general_signals':   [<str>, ...],
+        'specific_signals':  [<str>, ...],
+      }
+    """
+    title = issue.get('title') or ''
+    body  = issue.get('body') or ''
+    text  = (title + ' ' + body[:3000]).lower()
+    area_labels = issue.get('area_labels', [])
+
+    general_signals  = []
+    specific_signals = []
+
+    # General signals
+    if _GENERAL_SIGNAL_RE.search(title + ' ' + body[:1000]):
+        general_signals.append(
+            'Issue text mentions multiple platforms or general scope'
+        )
+
+    # Silicon-level errata
+    if _HARDWARE_ERRATA_RE.search(text):
+        specific_signals.append(
+            'Issue mentions silicon errata or hardware-level limitation'
+        )
+
+    # Named boards (filter out pure emulation targets)
+    board_matches = list(set(_BOARD_NAME_RE.findall(title + ' ' + body[:500])))
+    board_matches = [
+        b for b in board_matches
+        if b.lower() not in ('qemu_x86', 'native_sim')
+    ]
+    if board_matches:
+        specific_signals.append(
+            f'References hardware boards: {", ".join(board_matches[:4])}'
+        )
+
+    # Area labels: board/SoC/arch labels suggest hardware scope
+    hw_area = [
+        l for l in area_labels
+        if any(kw in l.lower() for kw in ('board', 'soc', 'bsp', 'platform', 'arch'))
+    ]
+    if hw_area:
+        specific_signals.append(
+            f'Board/SoC area labels: {", ".join(hw_area[:3])}'
+        )
+
+    # Platform-specific driver file paths mentioned in the body
+    if _PLATFORM_DRIVER_FILE_RE.search(body[:2000]):
+        specific_signals.append('Body references platform-specific driver file(s)')
+
+    # Area labels for general subsystems
+    gen_area = [
+        l for l in area_labels
+        if any(
+            kw in l.lower()
+            for kw in ('kernel', 'network', 'bluetooth', 'filesystem', 'posix', 'usb')
+        )
+    ]
+    if gen_area:
+        general_signals.append(
+            f'General-subsystem area labels: {", ".join(gen_area[:3])}'
+        )
+
+    # Merged linked PRs that touch general subsystem paths
+    for pr in (linked_prs or []):
+        if pr.get('merged'):
+            snippet = pr.get('body_snippet', '').lower()
+            if any(p in snippet for p in (
+                'kernel/', 'subsys/', 'include/zephyr/', 'lib/', 'scripts/',
+            )):
+                general_signals.append(
+                    f'Merged PR #{pr["number"]} references general subsystem paths'
+                )
+
+    # Classification
+    n_spec = len(specific_signals)
+    n_gen  = len(general_signals)
+
+    if _HARDWARE_ERRATA_RE.search(text):
+        scope     = 'hardware-only'
+        rationale = 'Issue explicitly mentions silicon errata or hardware-level limitation.'
+    elif _PLATFORM_DRIVER_FILE_RE.search(body[:2000]) and not gen_area:
+        scope     = 'driver'
+        rationale = 'Issue references platform-specific driver source files.'
+    elif hw_area and not general_signals:
+        scope     = 'platform-config'
+        rationale = (
+            'Issue has board/SoC area labels with no signals pointing to a general bug.'
+        )
+    elif n_gen > n_spec:
+        scope     = 'likely-general'
+        rationale = (
+            'Despite being discovered on specific hardware, multiple signals '
+            'suggest this is a general Zephyr issue that deserves wider attention.'
+        )
+    elif n_spec > 0 and not board_matches:
+        scope     = 'platform-config'
+        rationale = 'Issue appears tied to a platform configuration rather than generic code.'
+    elif n_spec > 0:
+        scope     = 'driver'
+        rationale = 'Issue is tied to specific hardware but may have a driver-level fix.'
+    else:
+        scope     = 'unknown'
+        rationale = 'Insufficient signals to determine platform scope.'
+
+    return {
+        'scope':           scope,
+        'rationale':       rationale,
+        'general_signals': general_signals,
+        'specific_signals': specific_signals,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Heuristic analysis
 # ---------------------------------------------------------------------------
 
@@ -448,17 +838,20 @@ def _report_quality(issue):
     return 'minimal'
 
 
-def heuristic_analyze_issue(issue, all_issues, maintainers_by_label):
+def heuristic_analyze_issue(issue, all_issues, maintainers_by_label, linked_prs=None):
     """
     Perform heuristic triage analysis on a single issue.
 
-    Returns a dict with: criticality, verdict, signals, flags, similar_issues,
-    git_commits, report_quality, maintainers.
+    linked_prs is the list returned by fetch_linked_prs(); pass None to
+    skip that context (e.g. when running without a GitHub token).
+
+    Returns a dict with all heuristic fields plus platform_scope.
     """
     title = issue.get('title') or ''
     body = issue.get('body') or ''
     age_days = issue.get('age_days', 0)
     inactive_days = issue.get('inactive_days', 0)
+    linked_prs = linked_prs or []
 
     signals = []
 
@@ -483,7 +876,14 @@ def heuristic_analyze_issue(issue, all_issues, maintainers_by_label):
 
     # Git-based already-fixed check
     git_commits = check_already_fixed_git(issue['number'])
-    is_fixed = bool(git_commits)
+
+    # PR-based already-fixed check: any linked PR that is merged and references
+    # this issue is strong evidence the bug has been fixed
+    merged_fix_prs = [
+        pr for pr in linked_prs
+        if pr.get('merged') and pr.get('fixes_issue')
+    ]
+    is_fixed = bool(git_commits) or bool(merged_fix_prs)
 
     # Title similarity (duplicate candidates)
     similar_issues = find_similar_issues(issue, all_issues)
@@ -494,13 +894,15 @@ def heuristic_analyze_issue(issue, all_issues, maintainers_by_label):
     # Criticality
     criticality = _heuristic_criticality(issue)
 
+    # Platform scope (is this truly platform-specific or likely a general bug?)
+    platform_scope = assess_platform_scope(issue, linked_prs)
+
     # Priority assessment
     current_priority = issue.get('current_priority')
     priority_wrong = False
     if current_priority:
         cp_idx = PRIORITY_ORDER.index(current_priority) if current_priority in PRIORITY_ORDER else 2
         cr_idx = PRIORITY_ORDER.index(criticality) if criticality in PRIORITY_ORDER else 2
-        # More than 2 tiers off -> flag as wrong
         if abs(cp_idx - cr_idx) >= 2:
             priority_wrong = True
             signals.append(
@@ -511,7 +913,11 @@ def heuristic_analyze_issue(issue, all_issues, maintainers_by_label):
     # Verdict determination (ordered by specificity)
     if is_fixed:
         verdict = 'already-fixed'
-        signals.append(f'{len(git_commits)} git commit(s) reference fixing this issue')
+        if git_commits:
+            signals.append(f'{len(git_commits)} git commit(s) reference fixing this issue')
+        if merged_fix_prs:
+            pnums = ', '.join(f'#{p["number"]}' for p in merged_fix_prs[:3])
+            signals.append(f'Merged PR(s) reference this issue as fixed: {pnums}')
     elif is_question:
         verdict = 'not-a-bug'
         signals.append('Title suggests a question or feature request rather than a bug')
@@ -533,9 +939,17 @@ def heuristic_analyze_issue(issue, all_issues, maintainers_by_label):
         verdict = 'wrong-priority'
     elif is_platform_specific:
         verdict = 'platform-specific'
-        if board_matches:
+        # Upgrade verdict if platform scope analysis says it is likely general
+        if platform_scope['scope'] == 'likely-general':
+            verdict = 'valid-bug'
             signals.append(
-                f'References platform-specific hardware: {", ".join(set(board_matches[:3]))}'
+                'Platform-specific appearance but scope analysis suggests '
+                'a general Zephyr issue: ' + platform_scope['rationale']
+            )
+        elif board_matches:
+            signals.append(
+                f'References hardware: {", ".join(set(board_matches[:3]))}'
+                f' — scope: {platform_scope["scope"]}'
             )
     elif quality == 'poor':
         verdict = 'needs-triage'
@@ -546,6 +960,12 @@ def heuristic_analyze_issue(issue, all_issues, maintainers_by_label):
 
     if not signals:
         signals.append('No strong heuristic signals detected')
+
+    # Add open linked PRs as a signal even when they don't trigger a verdict
+    open_prs = [pr for pr in linked_prs if not pr.get('merged')]
+    if open_prs:
+        pnums = ', '.join(f'#{p["number"]}' for p in open_prs[:3])
+        signals.append(f'Open linked PR(s): {pnums}')
 
     # Maintainer lookup from area labels
     maintainers = []
@@ -559,18 +979,20 @@ def heuristic_analyze_issue(issue, all_issues, maintainers_by_label):
                     maintainers.append(m)
 
     return {
-        'criticality': criticality,
-        'verdict': verdict,
-        'signals': signals,
-        'is_test_failure': is_test_failure,
+        'criticality':        criticality,
+        'verdict':            verdict,
+        'signals':            signals,
+        'is_test_failure':    is_test_failure,
         'is_platform_specific': is_platform_specific,
-        'is_question': is_question,
-        'is_stale': is_stale,
-        'report_quality': quality,
-        'similar_issues': similar_issues,
-        'git_commits': git_commits,
-        'priority_wrong': priority_wrong,
-        'maintainers': maintainers,
+        'is_question':        is_question,
+        'is_stale':           is_stale,
+        'report_quality':     quality,
+        'similar_issues':     similar_issues,
+        'git_commits':        git_commits,
+        'linked_prs':         linked_prs,
+        'platform_scope':     platform_scope,
+        'priority_wrong':     priority_wrong,
+        'maintainers':        maintainers,
     }
 
 
@@ -775,8 +1197,11 @@ The JSON object must have exactly these fields:
   "verdict": "<valid-bug|duplicate|already-fixed|not-a-bug|platform-specific|test-failure-only|wrong-priority|stale|needs-triage>",
   "verdict_rationale": "<one sentence explaining the verdict>",
   "is_platform_specific": <true|false>,
+  "platform_scope": "<hardware-only|driver|platform-config|likely-general|unknown>",
+  "platform_scope_rationale": "<one sentence: is this truly hardware-specific or a general Zephyr bug that should get wider attention?>",
   "affected_subsystem": "<subsystem name, e.g. Bluetooth, Networking, Kernel, Drivers/SPI>",
   "duplicate_candidate": <null or integer issue number>,
+  "linked_pr_assessment": "<none|open-wip|fixes-issue|does-not-fix>",
   "action_items": ["<specific action 1>", "<specific action 2>"],
   "notes": "<additional triage notes or empty string>"
 }
@@ -784,9 +1209,9 @@ The JSON object must have exactly these fields:
 Verdict definitions:
 - valid-bug: well-described bug that needs fixing, not yet fixed
 - duplicate: very similar to one of the listed candidate issues
-- already-fixed: evidence the bug is already fixed (git commits listed or recently merged PR)
+- already-fixed: evidence the bug is already fixed (git commits listed or merged PR)
 - not-a-bug: user error, question, feature request, or working as designed
-- platform-specific: only affects specific hardware/platform, not a general Zephyr issue
+- platform-specific: genuinely hardware/platform-specific; not a general Zephyr issue
 - test-failure-only: CI/test failure report with no root cause; likely flaky test or setup issue
 - wrong-priority: valid bug but priority label does not match actual severity
 - stale: no activity for a long time; may no longer be relevant
@@ -799,16 +1224,31 @@ Criticality definitions:
 - low: minor issue, cosmetic, rare edge case
 - negligible: trivial, documentation-only, cosmetic
 
+Platform scope:
+- hardware-only: bug is in silicon errata or missing hardware feature; no SW fix possible
+- driver: bug is in a platform-specific driver file; fix is scoped to that driver
+- platform-config: bug is in board DTS/Kconfig; not a general subsystem issue
+- likely-general: although discovered on specific hardware, the bug is in shared
+  Zephyr code (kernel, subsys, lib, include) and should be fixed for all platforms
+- unknown: cannot determine from available information
+
 Priority assessment:
 - correct: assigned priority matches estimated criticality
 - too-high: issue is less severe than assigned priority suggests
 - too-low: issue is more severe than assigned priority (needs escalation)
 - not-set: no priority label is assigned
+
+Linked PR assessment:
+- none: no linked PRs found
+- open-wip: there are open PRs working on this issue but no fix merged yet
+- fixes-issue: a merged PR explicitly fixes this issue (strong already-fixed signal)
+- does-not-fix: linked PR(s) exist but do not address this specific issue
 """
 
 
-def _build_issue_prompt(issue, similar_issues, git_commits):
+def _build_issue_prompt(issue, similar_issues, git_commits, linked_prs=None):
     """Build the user-side content for LLM analysis of a single issue."""
+    linked_prs = linked_prs or []
     lines = [
         f"Issue: #{issue['number']}",
         f"Title: {issue['title']}",
@@ -830,6 +1270,17 @@ def _build_issue_prompt(issue, similar_issues, git_commits):
         for c in git_commits[:5]:
             lines.append(f'  {c}')
 
+    if linked_prs:
+        lines += ['', 'Linked pull requests:']
+        for pr in linked_prs[:6]:
+            state = 'MERGED' if pr.get('merged') else pr.get('state', 'open').upper()
+            fixes = ' [explicitly fixes this issue]' if pr.get('fixes_issue') else ''
+            lines.append(
+                f"  PR #{pr['number']} ({state}){fixes}: {pr['title'][:80]}"
+            )
+            if pr.get('body_snippet'):
+                lines.append(f"    Body snippet: {pr['body_snippet'][:120]}")
+
     if similar_issues:
         lines += ['', 'Issues with similar titles (possible duplicates):']
         for num, score, title in similar_issues[:5]:
@@ -838,7 +1289,8 @@ def _build_issue_prompt(issue, similar_issues, git_commits):
     return '\n'.join(lines)
 
 
-def llm_analyze_issue(issue, similar_issues, git_commits, model, provider):
+def llm_analyze_issue(issue, similar_issues, git_commits, model, provider,
+                       linked_prs=None):
     """
     Call the LLM to triage a single issue.
 
@@ -849,7 +1301,7 @@ def llm_analyze_issue(issue, similar_issues, git_commits, model, provider):
         return None
 
     system = ISSUE_TRIAGE_SYSTEM_PROMPT
-    user = _build_issue_prompt(issue, similar_issues, git_commits)
+    user = _build_issue_prompt(issue, similar_issues, git_commits, linked_prs)
 
     _BACKENDS = {
         'openai':      _call_openai,
@@ -1114,17 +1566,55 @@ def triage_issues(
     llm_model='gpt-4o-mini',
     llm_provider=None,
     no_llm=False,
+    github_token=None,
+    org=GITHUB_ORG,
+    repo=GITHUB_REPO,
+    cache_entries=None,
+    priority_filter=None,
 ):
     """
     Run full triage (heuristic + optional LLM) on a list of issue dicts.
 
-    Returns a list of fully-analyzed issue dicts.
+    cache_entries  - dict {cache_key: entry} loaded from the cache file.
+                     Issues whose updated_at matches the cached entry are
+                     returned from cache without re-analysis.  Pass None
+                     to disable caching.
+
+    priority_filter - list of priority strings (e.g. ['critical', 'high']).
+                      Issues not matching any of these priorities are skipped.
+                      Pass None to analyze all issues.
+
+    Returns (results, updated_cache_entries) where updated_cache_entries
+    is the full cache dict that should be written back to disk.
     """
     maintainers_by_label = load_maintainers_by_label()
     provider = None if no_llm else llm_provider
 
+    if cache_entries is None:
+        cache_entries = {}
+
+    # Apply priority filter before analysis
+    if priority_filter:
+        pf_set = set(priority_filter)
+        filtered = []
+        skipped = 0
+        for issue in issues:
+            prio = issue.get('current_priority')
+            if prio in pf_set:
+                filtered.append(issue)
+            else:
+                skipped += 1
+        if skipped:
+            print(
+                f'  Priority filter: keeping {len(filtered)}, '
+                f'skipping {skipped} issues (not in {priority_filter})',
+                file=sys.stderr,
+            )
+        issues = filtered
+
     results = []
     total = len(issues)
+    cache_hits = 0
 
     for idx, issue in enumerate(issues, 1):
         num = issue['number']
@@ -1135,7 +1625,27 @@ def triage_issues(
             file=sys.stderr,
         )
 
-        heuristic = heuristic_analyze_issue(issue, issues, maintainers_by_label)
+        # Cache check: use cached result if issue has not been updated
+        key = _cache_key(org, repo, num)
+        cached = cache_entries.get(key)
+        if cached and cached.get('updated_at') == issue.get('updated_at'):
+            analysis = cached['analysis']
+            # Merge fresh issue fields (age_days, inactive_days change every run)
+            analysis = dict(analysis)
+            analysis['age_days']      = issue['age_days']
+            analysis['inactive_days'] = issue['inactive_days']
+            results.append(analysis)
+            cache_hits += 1
+            continue
+
+        # Fetch linked PRs (requires a GitHub token; skip gracefully if absent)
+        linked_prs = []
+        if github_token:
+            linked_prs = fetch_linked_prs(issue, github_token, org=org, repo=repo)
+
+        heuristic = heuristic_analyze_issue(
+            issue, issues, maintainers_by_label, linked_prs=linked_prs
+        )
 
         llm_result = None
         if provider is not None:
@@ -1145,19 +1655,34 @@ def triage_issues(
                 heuristic['git_commits'],
                 model=llm_model,
                 provider=provider,
+                linked_prs=linked_prs,
             )
 
         final = _merge_verdict(heuristic, llm_result)
 
-        results.append({
+        analysis = {
             **issue,
             'heuristic': heuristic,
             'llm':       llm_result,
             'final':     final,
-        })
+        }
+        results.append(analysis)
+
+        # Update cache entry
+        cache_entries[key] = {
+            'updated_at': issue.get('updated_at', ''),
+            'checked_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            'analysis':   analysis,
+        }
 
     print('', file=sys.stderr)
-    return results
+    if cache_hits:
+        print(
+            f'  Cache: {cache_hits}/{total} issue(s) served from cache.',
+            file=sys.stderr,
+        )
+
+    return results, cache_entries
 
 
 # ---------------------------------------------------------------------------
@@ -1237,6 +1762,20 @@ tbody tr.detail-row td{padding:0;background:#f5f7fa;border-bottom:2px solid #c5c
 .tag-heuristic{font-size:.7rem;background:#fff3e0;color:#e65100;
   border:1px solid #ffcc80;border-radius:10px;padding:1px 7px;
   font-weight:600;vertical-align:middle}
+.tag-cached{font-size:.7rem;background:#e3f2fd;color:#0d47a1;
+  border:1px solid #90caf9;border-radius:10px;padding:1px 7px;
+  font-weight:600;vertical-align:middle}
+.scope-badge{display:inline-block;padding:2px 9px;border-radius:4px;
+  font-size:.72rem;font-weight:600;color:#fff}
+.pr-merged{color:#2e7d32;font-weight:600}
+.pr-open{color:#1565c0}
+.pr-closed{color:#757575}
+.pr-fixes{background:#e8f5e9;border-left:3px solid #43a047;
+  padding:3px 7px;margin:2px 0;border-radius:0 4px 4px 0;font-size:.8rem}
+.pr-item{background:#f3f3f3;padding:3px 7px;margin:2px 0;
+  border-radius:4px;font-size:.8rem}
+.scope-section{margin-top:8px;padding:6px 10px;border-radius:4px;
+  background:#f5f5f5;border-left:3px solid #9e9e9e;font-size:.82rem}
 @media(max-width:900px){.detail-inner{grid-template-columns:1fr}}
 """
 
@@ -1253,6 +1792,7 @@ function init(){
   document.getElementById('fv').addEventListener('change',applyFilters);
   document.getElementById('fc').addEventListener('change',applyFilters);
   document.getElementById('fp').addEventListener('change',applyFilters);
+  document.getElementById('fsc').addEventListener('change',applyFilters);
   document.getElementById('fs').addEventListener('input',applyFilters);
   document.getElementById('btn-clear').addEventListener('click',clearFilters);
   rows.forEach(function(row){
@@ -1271,15 +1811,17 @@ function applyFilters(){
   var v=document.getElementById('fv').value;
   var c=document.getElementById('fc').value;
   var p=document.getElementById('fp').value;
+  var sc=document.getElementById('fsc').value;
   var s=document.getElementById('fs').value.toLowerCase();
   filtered=[];
   rows.forEach(function(row){
     var mv=!v||row.dataset.verdict===v;
     var mc=!c||row.dataset.crit===c;
     var mp=!p||row.dataset.prio===p;
+    var msc=!sc||row.dataset.scope===sc;
     var ms=!s||(row.dataset.title||'').indexOf(s)>=0
                ||(row.dataset.num||'').indexOf(s)>=0;
-    var show=mv&&mc&&mp&&ms;
+    var show=mv&&mc&&mp&&msc&&ms;
     row.style.display=show?'':'none';
     var dr=document.getElementById(row.dataset.detail);
     if(dr)dr.style.display='none';
@@ -1292,6 +1834,7 @@ function clearFilters(){
   document.getElementById('fv').value='';
   document.getElementById('fc').value='';
   document.getElementById('fp').value='';
+  document.getElementById('fsc').value='';
   document.getElementById('fs').value='';
   applyFilters();
 }
@@ -1357,26 +1900,38 @@ def _priority_badge(priority):
 
 def _detail_row(analysis, idx):
     """Render the expandable detail row for a single issue."""
-    h = analysis['heuristic']
+    h = analysis.get('heuristic') or {}
     llm = analysis.get('llm')
-    final = analysis['final']
+    final = analysis.get('final') or {}
+    from_cache = analysis.get('_from_cache', False)
     esc = html_module.escape
 
     parts = ['<div class="detail-inner">']
 
-    # Left: Heuristic signals + action items
+    # ------------------------------------------------------------------ #
+    # Left col: Heuristic signals, git commits, similar issues            #
+    # ------------------------------------------------------------------ #
     parts.append('<div class="detail-box">')
-    parts.append('<h4>Heuristic signals</h4><ul>')
+    source_tag = (
+        '<span class="tag-llm">AI</span>' if llm
+        else ('<span class="tag-cached">Cached</span>' if from_cache
+              else '<span class="tag-heuristic">Heuristic</span>')
+    )
+    parts.append(f'<h4>Heuristic signals {source_tag}</h4><ul>')
     for sig in h.get('signals', []):
         parts.append(f'<li>{esc(sig)}</li>')
     parts.append('</ul>')
 
     quality = h.get('report_quality', '')
-    qclass = {'good': 'quality-good', 'minimal': 'quality-minimal', 'poor': 'quality-poor'}.get(
-        quality, ''
+    qclass = {
+        'good':    'quality-good',
+        'minimal': 'quality-minimal',
+        'poor':    'quality-poor',
+    }.get(quality, '')
+    parts.append(
+        f'<p style="margin-top:8px">Report quality: '
+        f'<span class="{qclass}">{esc(quality)}</span></p>'
     )
-    parts.append(f'<p style="margin-top:8px">Report quality: '
-                 f'<span class="{qclass}">{esc(quality)}</span></p>')
 
     if h.get('git_commits'):
         parts.append('<p style="margin-top:8px"><strong>Possible fix commits:</strong></p>')
@@ -1393,16 +1948,39 @@ def _detail_row(analysis, idx):
                 f' ({score:.0%}) {esc(title[:70])}</div>'
             )
 
+    # Platform scope block
+    ps = h.get('platform_scope') or {}
+    if ps and ps.get('scope', 'unknown') != 'unknown':
+        scope_color = PLATFORM_SCOPE_COLORS.get(ps['scope'], '#9e9e9e')
+        scope_label = PLATFORM_SCOPE_LABELS.get(ps['scope'], ps['scope'])
+        parts.append(
+            f'<div class="scope-section" style="border-color:{scope_color}">'
+            f'<strong>Platform scope:</strong> '
+            f'<span class="scope-badge" style="background:{scope_color}">'
+            f'{esc(scope_label)}</span>'
+            f' — {esc(ps.get("rationale", ""))}'
+        )
+        gen = ps.get('general_signals', [])
+        spec = ps.get('specific_signals', [])
+        if gen:
+            parts.append(
+                '<br><small style="color:#2e7d32">&#x2191; General: '
+                + esc('; '.join(gen[:2])) + '</small>'
+            )
+        if spec:
+            parts.append(
+                '<br><small style="color:#b71c1c">&#x2193; Specific: '
+                + esc('; '.join(spec[:2])) + '</small>'
+            )
+        parts.append('</div>')
+
     parts.append('</div>')
 
-    # Right: LLM analysis or action items
+    # ------------------------------------------------------------------ #
+    # Right col: AI/heuristic triage result + linked PRs                 #
+    # ------------------------------------------------------------------ #
     parts.append('<div class="detail-box">')
-    source_tag = (
-        '<span class="tag-llm">AI</span>'
-        if llm else
-        '<span class="tag-heuristic">Heuristic</span>'
-    )
-    parts.append(f'<h4>Triage result {source_tag}</h4>')
+    parts.append('<h4>Triage result</h4>')
 
     if llm:
         summary = llm.get('summary', '')
@@ -1413,15 +1991,30 @@ def _detail_row(analysis, idx):
             parts.append(f'<p style="margin-bottom:8px">{esc(rationale)}</p>')
         subsystem = llm.get('affected_subsystem', '')
         if subsystem:
+            parts.append(f'<p><strong>Subsystem:</strong> {esc(subsystem)}</p>')
+
+        # LLM platform scope
+        llm_scope = llm.get('platform_scope', '')
+        if llm_scope and llm_scope != 'unknown':
+            scope_color = PLATFORM_SCOPE_COLORS.get(llm_scope, '#9e9e9e')
+            scope_label = PLATFORM_SCOPE_LABELS.get(llm_scope, llm_scope)
+            llm_scope_rationale = llm.get('platform_scope_rationale', '')
             parts.append(
-                f'<p><strong>Subsystem:</strong> {esc(subsystem)}</p>'
+                f'<p><strong>Platform scope (AI):</strong> '
+                f'<span class="scope-badge" style="background:{scope_color}">'
+                f'{esc(scope_label)}</span>'
             )
+            if llm_scope_rationale:
+                parts.append(f' — <em>{esc(llm_scope_rationale)}</em>')
+            parts.append('</p>')
+
         pa = llm.get('priority_assessment', '')
-        ps = llm.get('priority_suggested', '')
+        ps_sug = llm.get('priority_suggested', '')
         if pa and pa != 'correct':
             parts.append(
                 f'<p><strong>Priority:</strong> {esc(pa)}'
-                + (f' (suggested: <strong>{esc(ps)}</strong>)' if ps and ps != 'none' else '')
+                + (f' (suggested: <strong>{esc(ps_sug)}</strong>)'
+                   if ps_sug and ps_sug != 'none' else '')
                 + '</p>'
             )
         dup = llm.get('duplicate_candidate')
@@ -1430,6 +2023,18 @@ def _detail_row(analysis, idx):
                 f'<p><strong>Possible duplicate of:</strong> '
                 f'<a href="https://github.com/{GITHUB_ORG}/{GITHUB_REPO}/issues/{dup}"'
                 f' target="_blank">#{dup}</a></p>'
+            )
+        pr_assess = llm.get('linked_pr_assessment', '')
+        if pr_assess and pr_assess != 'none':
+            pr_colors = {
+                'fixes-issue': '#2e7d32',
+                'open-wip':    '#1565c0',
+                'does-not-fix': '#757575',
+            }
+            col = pr_colors.get(pr_assess, '#555')
+            parts.append(
+                f'<p><strong>Linked PR:</strong> '
+                f'<span style="color:{col}">{esc(pr_assess)}</span></p>'
             )
         notes = llm.get('notes', '')
         if notes:
@@ -1445,6 +2050,34 @@ def _detail_row(analysis, idx):
         for item in action_items:
             parts.append(f'<div class="action-item">{esc(item)}</div>')
 
+    # Linked PRs panel
+    linked_prs = h.get('linked_prs', [])
+    if linked_prs:
+        parts.append('<p style="margin-top:10px"><strong>Linked PRs:</strong></p>')
+        for pr in linked_prs[:6]:
+            if pr.get('merged'):
+                state_cls = 'pr-merged'
+                state_str = '&#x2714; MERGED'
+            elif pr.get('state') == 'closed':
+                state_cls = 'pr-closed'
+                state_str = '&#x2715; CLOSED'
+            else:
+                state_cls = 'pr-open'
+                state_str = '&#x25CF; OPEN'
+            fixes_html = (
+                '<span style="color:#2e7d32;margin-left:4px">'
+                '&#x2714; fixes this issue</span>'
+                if pr.get('fixes_issue') else ''
+            )
+            item_cls = 'pr-fixes' if pr.get('fixes_issue') else 'pr-item'
+            parts.append(
+                f'<div class="{item_cls}">'
+                f'<span class="{state_cls}">{state_str}</span> '
+                f'<a href="{esc(pr["url"])}" target="_blank">PR #{pr["number"]}</a>'
+                f'{fixes_html}: {esc(pr["title"][:70])}'
+                f'</div>'
+            )
+
     maintainers = h.get('maintainers', [])
     if maintainers:
         parts.append(
@@ -1455,7 +2088,9 @@ def _detail_row(analysis, idx):
 
     parts.append('</div>')
 
-    # Full row: labels + description snippet
+    # ------------------------------------------------------------------ #
+    # Full-width row: labels + description snippet                        #
+    # ------------------------------------------------------------------ #
     parts.append('<div class="detail-box detail-full">')
     labels_html = ' '.join(
         f'<span class="label-chip">{esc(l)}</span>'
@@ -1526,7 +2161,6 @@ def generate_html_report(analyses, args):
     # Stats: by verdict
     parts.append('<div class="section-title">Summary by Verdict</div>')
     parts.append('<div class="stats-grid">')
-    # Total card
     parts.append(
         f'<div class="stat-card" style="border-color:#1a237e">'
         f'<div class="val">{total}</div>'
@@ -1555,6 +2189,26 @@ def generate_html_report(analyses, args):
         )
     parts.append('</div>')
 
+    # Stats: by platform scope
+    scope_counts = {}
+    for a in analyses:
+        h = a.get('heuristic') or {}
+        ps = h.get('platform_scope') or {}
+        scope = ps.get('scope', 'unknown')
+        scope_counts[scope] = scope_counts.get(scope, 0) + 1
+    if any(scope_counts.values()):
+        parts.append('<div class="section-title">Summary by Platform Scope</div>')
+        parts.append('<div class="stats-grid">')
+        for s in list(PLATFORM_SCOPE_LABELS):
+            cnt = scope_counts.get(s, 0)
+            color = PLATFORM_SCOPE_COLORS.get(s, '#9e9e9e')
+            parts.append(
+                f'<div class="stat-card" style="border-color:{color}">'
+                f'<div class="val" style="color:{color}">{cnt}</div>'
+                f'<div class="lbl">{esc(PLATFORM_SCOPE_LABELS[s])}</div></div>'
+            )
+        parts.append('</div>')
+
     # Filters
     def _options(values, current=None):
         opts = ['<option value="">All</option>']
@@ -1574,7 +2228,10 @@ def generate_html_report(analyses, args):
         '<label>Priority: <select id="fp">'
         + _options(PRIORITY_ORDER + ['not-set'])
         + '</select></label>'
-        '<label>Search: <input type="text" id="fs" placeholder="title or issue #" style="width:220px"></label>'
+        '<label>Scope: <select id="fsc">'
+        + _options(list(PLATFORM_SCOPE_LABELS.keys()))
+        + '</select></label>'
+        '<label>Search: <input type="text" id="fs" placeholder="title or #" style="width:180px"></label>'
         '<button id="btn-clear">Clear</button>'
         '<span class="filter-count" id="filter-count"></span>'
         '</div>'
@@ -1586,11 +2243,12 @@ def generate_html_report(analyses, args):
         '<thead><tr>'
         '<th data-col="num" style="width:70px">#</th>'
         '<th>Title</th>'
-        '<th data-col="age" style="width:70px">Age</th>'
-        '<th data-col="prio" style="width:110px">Priority</th>'
-        '<th data-col="crit" style="width:110px">Criticality</th>'
-        '<th data-col="verdict" style="width:150px">Verdict</th>'
-        '<th style="width:160px">Subsystem</th>'
+        '<th data-col="age" style="width:60px">Age</th>'
+        '<th data-col="prio" style="width:100px">Priority</th>'
+        '<th data-col="crit" style="width:100px">Criticality</th>'
+        '<th data-col="verdict" style="width:140px">Verdict</th>'
+        '<th data-col="scope" style="width:130px">Scope</th>'
+        '<th style="width:140px">Subsystem</th>'
         '</tr></thead>'
     )
     parts.append('<tbody>')
@@ -1600,64 +2258,85 @@ def generate_html_report(analyses, args):
         title = analysis['title']
         url = analysis['url']
         age_days = analysis['age_days']
-        prio = analysis['current_priority'] or 'not-set'
-        final = analysis['final']
-        verdict = final['verdict']
-        criticality = final['criticality']
+        prio = analysis.get('current_priority') or 'not-set'
+        final = analysis.get('final') or {}
+        heur  = analysis.get('heuristic') or {}
+        verdict = final.get('verdict', 'needs-triage')
+        criticality = final.get('criticality', 'medium')
         subsystem = final.get('affected_subsystem', '')
         if not subsystem and analysis.get('area_labels'):
             subsystem = analysis['area_labels'][0].replace('area: ', '').replace('area:', '')
 
+        # Platform scope from heuristic (or LLM if available)
+        ps_data  = heur.get('platform_scope') or {}
+        llm_data = analysis.get('llm') or {}
+        scope    = llm_data.get('platform_scope') or ps_data.get('scope', 'unknown')
+
+        # Linked PR indicators
+        linked_prs = heur.get('linked_prs', [])
+        has_merged_fix = any(p.get('merged') and p.get('fixes_issue') for p in linked_prs)
+        has_open_pr    = any(not p.get('merged') for p in linked_prs)
+
         detail_id = f'detail-{idx}'
 
-        # Row data attributes used by JS filtering and sorting
         row_attrs = (
             f'data-num="{num}"'
             f' data-verdict="{esc(verdict)}"'
             f' data-crit="{esc(criticality)}"'
             f' data-prio="{esc(prio)}"'
+            f' data-scope="{esc(scope)}"'
             f' data-title="{esc(title.lower())}"'
             f' data-age="{age_days}"'
             f' data-detail="{detail_id}"'
         )
 
-        # Subtle left-border color by criticality
         row_color = CRITICALITY_COLORS.get(criticality, '#9e9e9e')
         parts.append(
             f'<tr class="issue-row" {row_attrs}'
             f' style="border-left:4px solid {row_color}">'
         )
-        # Issue number cell
+        # Number
+        pr_icon = ''
+        if has_merged_fix:
+            pr_icon = ' <span title="Merged fix PR" style="color:#2e7d32">&#x2714;</span>'
+        elif has_open_pr:
+            pr_icon = ' <span title="Open PR" style="color:#1565c0">&#x25CF;</span>'
         parts.append(
-            f'<td><a href="{esc(url)}" target="_blank">#{num}</a></td>'
+            f'<td><a href="{esc(url)}" target="_blank">#{num}</a>{pr_icon}</td>'
         )
-        # Title (truncated)
-        title_truncated = title[:90] + ('...' if len(title) > 90 else '')
+        # Title
+        title_truncated = title[:85] + ('...' if len(title) > 85 else '')
         parts.append(f'<td>{esc(title_truncated)}</td>')
         # Age
-        age_str = f'{age_days}d'
-        parts.append(f'<td style="white-space:nowrap">{age_str}</td>')
+        parts.append(f'<td style="white-space:nowrap">{age_days}d</td>')
         # Priority
-        parts.append(f'<td>{_priority_badge(analysis["current_priority"])}</td>')
+        parts.append(f'<td>{_priority_badge(analysis.get("current_priority"))}</td>')
         # Criticality
         parts.append(f'<td>{_crit_badge(criticality)}</td>')
         # Verdict
         parts.append(f'<td>{_verdict_badge(verdict)}</td>')
+        # Platform scope badge
+        scope_color = PLATFORM_SCOPE_COLORS.get(scope, '#9e9e9e')
+        scope_label = PLATFORM_SCOPE_LABELS.get(scope, scope)
+        parts.append(
+            f'<td><span class="scope-badge" style="background:{scope_color}">'
+            f'{esc(scope_label)}</span></td>'
+        )
         # Subsystem
-        parts.append(f'<td style="font-size:.8rem;color:#555">{esc(subsystem[:40])}</td>')
+        parts.append(f'<td style="font-size:.8rem;color:#555">{esc(subsystem[:35])}</td>')
         parts.append('</tr>')
 
         # Detail row (hidden by default)
         detail_html = _detail_row(analysis, idx)
         parts.append(
             f'<tr class="detail-row" id="{detail_id}" style="display:none">'
-            f'<td colspan="7">{detail_html}</td>'
+            f'<td colspan="8">{detail_html}</td>'
             f'</tr>'
         )
 
     if not analyses:
         parts.append(
-            '<tr><td colspan="7" class="no-results">No issues found</td></tr>'
+            '<tr><td colspan="8" class="no-results">No issues found</td></tr>'
         )
 
     parts.append('</tbody></table></div>')  # end tbl-wrap
@@ -1694,6 +2373,10 @@ def parse_args():
             '      ./scripts/ci/issue_triage.py --model anthropic/claude-opus-4\n'
             '  ./scripts/ci/issue_triage.py --issue 12345 --no-llm\n'
             '  ./scripts/ci/issue_triage.py --type Enhancement\n'
+            '  # Cache results; re-use on subsequent runs unless issue updated:\n'
+            '  ./scripts/ci/issue_triage.py --cache triage_cache.json\n'
+            '  # Only analyze high and critical priority bugs:\n'
+            '  ./scripts/ci/issue_triage.py --priority high,critical\n'
         ),
     )
     parser.add_argument(
@@ -1719,7 +2402,7 @@ def parse_args():
         default=DEFAULT_ISSUE_TYPE,
         metavar='TYPE',
         help=f'GitHub issue type to filter on (default: {DEFAULT_ISSUE_TYPE!r}). '
-             'This uses the GitHub issue types feature, not labels.',
+             'Uses the GitHub issue types feature, not labels.',
     )
     parser.add_argument(
         '--max-issues',
@@ -1741,6 +2424,27 @@ def parse_args():
         default=None,
         metavar='NUMBER',
         help='Analyze a single issue number (for debugging)',
+    )
+    parser.add_argument(
+        '--priority',
+        default=None,
+        metavar='LEVEL[,LEVEL]',
+        help=(
+            'Only analyze issues with the given priority level(s). '
+            'Comma-separated list from: '
+            + ', '.join(PRIORITY_ORDER)
+            + '. Example: --priority high,critical'
+        ),
+    )
+    parser.add_argument(
+        '--cache',
+        default=None,
+        metavar='FILE',
+        help=(
+            'Path to a JSON cache file. Previously analyzed issues are '
+            'served from cache unless the issue was updated since the '
+            'last analysis. The cache is updated after each run.'
+        ),
     )
     parser.add_argument(
         '--model',
@@ -1807,7 +2511,36 @@ def main():
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    # Print a summary of what we're about to do
+    # Resolve GitHub token (used for both issue fetch and linked-PR fetch)
+    github_token = args.token or os.environ.get('GITHUB_TOKEN')
+
+    # Parse priority filter
+    priority_filter = None
+    if args.priority:
+        raw_prios = [p.strip().lower() for p in args.priority.split(',') if p.strip()]
+        unknown = [p for p in raw_prios if p not in PRIORITY_ORDER]
+        if unknown:
+            print(
+                f'ERROR: Unknown priority level(s): {", ".join(unknown)}. '
+                f'Valid values: {", ".join(PRIORITY_ORDER)}',
+                file=sys.stderr,
+            )
+            return 1
+        priority_filter = raw_prios
+        print(
+            f'Priority filter: {", ".join(priority_filter)}',
+            file=sys.stderr,
+        )
+
+    # Load cache
+    cache_entries = load_cache(args.cache)
+    if cache_entries:
+        print(
+            f'Cache loaded from {args.cache} ({len(cache_entries)} entries)',
+            file=sys.stderr,
+        )
+
+    # Fetch issues
     target = f'issue #{args.issue}' if args.issue else f'up to {args.max_issues} issues'
     print(
         f'Fetching {target} of type "{args.type}" from '
@@ -1816,7 +2549,7 @@ def main():
     )
 
     issues = fetch_issues(
-        github_token=args.token,
+        github_token=github_token,
         org=args.org,
         repo=args.repo,
         issue_type=args.type,
@@ -1832,12 +2565,22 @@ def main():
     print(f'Found {len(issues)} issue(s). Running triage ...', file=sys.stderr)
 
     provider = None if args.no_llm else args.provider
-    analyses = triage_issues(
+    analyses, cache_entries = triage_issues(
         issues,
         llm_model=args.model,
         llm_provider=provider,
         no_llm=args.no_llm,
+        github_token=github_token,
+        org=args.org,
+        repo=args.repo,
+        cache_entries=cache_entries,
+        priority_filter=priority_filter,
     )
+
+    # Save updated cache
+    save_cache(args.cache, cache_entries)
+    if args.cache:
+        print(f'Cache updated: {args.cache}', file=sys.stderr)
 
     llm_count = sum(1 for a in analyses if a.get('llm'))
     if llm_count > 0:
@@ -1860,12 +2603,15 @@ def main():
     if args.verbose:
         print('\nPer-issue summary:', file=sys.stdout)
         for a in analyses:
-            final = a['final']
+            final = a.get('final') or {}
+            h = a.get('heuristic') or {}
+            ps = (h.get('platform_scope') or {}).get('scope', '?')
             print(
                 f"  #{a['number']:6d}  "
-                f"{final['criticality']:10s}  "
-                f"{final['verdict']:20s}  "
-                f"{a['title'][:60]}",
+                f"{final.get('criticality', '?'):10s}  "
+                f"{final.get('verdict', '?'):20s}  "
+                f"scope={ps:16s}  "
+                f"{a['title'][:50]}",
             )
 
     # Generate HTML report
@@ -1881,10 +2627,10 @@ def main():
             json.dump(analyses, fh, indent=2, default=str)
         print(f'JSON data written to: {args.json}', file=sys.stderr)
 
-    # Print a quick triage summary
+    # Print quick triage summary
     verdict_counts = {}
     for a in analyses:
-        v = a['final']['verdict']
+        v = (a.get('final') or {}).get('verdict', 'needs-triage')
         verdict_counts[v] = verdict_counts.get(v, 0) + 1
 
     print('\nTriage summary:', file=sys.stderr)
