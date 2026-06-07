@@ -29,8 +29,18 @@ Supported LLM providers (selected via --provider or ADVISOR_PROVIDER):
                Requires: pip install litellm
                Env:      provider-specific (OPENAI_API_KEY, ANTHROPIC_API_KEY, ...)
 
+  openrouter - OpenRouter.ai aggregator: 200+ models (Claude, Gemini, Llama,
+               Mistral, ...) via a single API key using model strings like
+               anthropic/claude-opus-4, google/gemini-pro, meta-llama/llama-3-70b
+               Requires: pip install openai
+               Env:      OPENROUTER_API_KEY
+                         OPENROUTER_SITE_URL (optional, shown in or.ai dashboard)
+                         OPENROUTER_SITE_NAME (optional)
+
   auto       - (default) Infer provider from model name and available packages.
-               claude-* -> anthropic; gpt-*/o1-*/o3-*/o4-* -> openai;
+               claude-* -> anthropic, then litellm fallback;
+               gpt-*/o1-*/o3-*/o4-* -> openai, then litellm fallback;
+               OPENROUTER_API_KEY set -> openrouter;
                anything containing '/' -> litellm; fallback: first available.
 
 Usage (heuristic only, no API key needed):
@@ -39,10 +49,15 @@ Usage (heuristic only, no API key needed):
 Usage (OpenAI):
     OPENAI_API_KEY=sk-... ./scripts/ci/pr_test_advisor.py --pr 12345
 
-Usage (Claude):
+Usage (Claude via Anthropic):
     ANTHROPIC_API_KEY=sk-ant-... \\
         ./scripts/ci/pr_test_advisor.py --pr 12345 \\
         --provider anthropic --model claude-opus-4
+
+Usage (OpenRouter.ai — any model via one key):
+    OPENROUTER_API_KEY=sk-or-... \\
+        ./scripts/ci/pr_test_advisor.py --pr 12345 \\
+        --provider openrouter --model anthropic/claude-opus-4
 
 Usage (Ollama / local model via litellm):
     ./scripts/ci/pr_test_advisor.py --pr 12345 \\
@@ -53,15 +68,18 @@ Usage (OpenAI-compatible custom endpoint, e.g. vLLM):
         ./scripts/ci/pr_test_advisor.py --pr 12345 --model my-model
 
 Environment variables:
-    GITHUB_TOKEN      - GitHub API token (rate limits / private repos)
-    ADVISOR_PROVIDER  - Default provider (overridden by --provider)
-    OPENAI_API_KEY    - OpenAI / compatible key
-    OPENAI_BASE_URL   - Optional base URL for OpenAI-compatible endpoints
-    ANTHROPIC_API_KEY - Anthropic API key
+    GITHUB_TOKEN          - GitHub API token (rate limits / private repos)
+    ADVISOR_PROVIDER      - Default provider (overridden by --provider)
+    OPENAI_API_KEY        - OpenAI / compatible key
+    OPENAI_BASE_URL       - Optional base URL for OpenAI-compatible endpoints
+    ANTHROPIC_API_KEY     - Anthropic API key
+    OPENROUTER_API_KEY    - OpenRouter.ai API key
+    OPENROUTER_SITE_URL   - Optional: your site URL shown in or.ai dashboard
+    OPENROUTER_SITE_NAME  - Optional: your app name shown in or.ai dashboard
 
 Requirements:
     pip install PyGithub pyyaml
-    pip install openai      # for openai provider
+    pip install openai      # for openai and openrouter providers
     pip install anthropic   # for anthropic provider
     pip install litellm     # for litellm provider
 
@@ -449,23 +467,29 @@ _ANTHROPIC_PREFIXES = ('claude-',)
 _OPENAI_PREFIXES = ('gpt-', 'o1-', 'o3-', 'o4-', 'text-davinci')
 
 
+OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1'
+
+
 def _resolve_provider(model, provider_hint):
     """
     Determine which LLM provider to use.
 
     Resolution order:
       1. Explicit --provider / ADVISOR_PROVIDER value
-      2. Model name prefix heuristic
-      3. litellm if installed (handles model strings with '/')
-      4. First available library
+      2. OPENROUTER_API_KEY present -> openrouter (requires openai package)
+      3. Model name prefix heuristic
+      4. litellm if installed (handles model strings with '/')
+      5. First available library with a configured key
 
-    Returns one of 'openai', 'anthropic', 'litellm', or None.
+    Returns one of 'openai', 'anthropic', 'litellm', 'openrouter', or None.
     """
     hint = provider_hint or os.environ.get('ADVISOR_PROVIDER', 'auto')
 
     if hint != 'auto':
-        if hint == 'openai' and not HAS_OPENAI:
-            log.warning('Provider "openai" requested but openai package is not installed')
+        if hint in ('openai', 'openrouter') and not HAS_OPENAI:
+            log.warning(
+                'Provider "%s" requested but openai package is not installed', hint
+            )
             return None
         if hint == 'anthropic' and not HAS_ANTHROPIC:
             log.warning('Provider "anthropic" requested but anthropic package is not installed')
@@ -474,6 +498,10 @@ def _resolve_provider(model, provider_hint):
             log.warning('Provider "litellm" requested but litellm package is not installed')
             return None
         return hint
+
+    # If OPENROUTER_API_KEY is set, prefer openrouter when openai is available
+    if os.environ.get('OPENROUTER_API_KEY') and HAS_OPENAI:
+        return 'openrouter'
 
     # Auto-detect from model name
     if any(model.startswith(p) for p in _ANTHROPIC_PREFIXES):
@@ -640,6 +668,42 @@ def _call_litellm(model, system, user):
     return response.choices[0].message.content
 
 
+def _call_openrouter(model, system, user):
+    """
+    Call OpenRouter.ai using the OpenAI-compatible endpoint.
+
+    OpenRouter accepts any model string from their catalogue, e.g.:
+      anthropic/claude-opus-4
+      google/gemini-pro
+      meta-llama/llama-3-70b-instruct
+    """
+    api_key = os.environ.get('OPENROUTER_API_KEY')
+    if not api_key:
+        raise RuntimeError('OPENROUTER_API_KEY is not set')
+    extra_headers = {}
+    site_url = os.environ.get('OPENROUTER_SITE_URL', '')
+    site_name = os.environ.get('OPENROUTER_SITE_NAME', 'Zephyr PR Test Advisor')
+    if site_url:
+        extra_headers['HTTP-Referer'] = site_url
+    extra_headers['X-Title'] = site_name
+    client = openai.OpenAI(
+        api_key=api_key,
+        base_url=OPENROUTER_BASE_URL,
+        default_headers=extra_headers,
+    )
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {'role': 'system', 'content': system},
+            {'role': 'user', 'content': user},
+        ],
+        response_format={'type': 'json_object'},
+        temperature=0.2,
+        max_tokens=1024,
+    )
+    return response.choices[0].message.content
+
+
 def llm_analyze(pr_data, heuristic_result, provider=None):
     """
     Call an LLM to analyze the PR using the selected provider.
@@ -661,6 +725,7 @@ def llm_analyze(pr_data, heuristic_result, provider=None):
         'openai': _call_openai,
         'anthropic': _call_anthropic,
         'litellm': _call_litellm,
+        'openrouter': _call_openrouter,
     }
 
     backend_fn = _BACKENDS.get(resolved)
@@ -854,7 +919,8 @@ def generate_report(analysis, verbose=False):
         lines.append(llm['summary'])
     else:
         lines.append(
-            '(No LLM summary \u2014 install openai/anthropic/litellm and set an API key to enable AI analysis)'
+            '(No LLM summary \u2014 install openai/anthropic/litellm and set an API key '
+            '(OPENAI_API_KEY, ANTHROPIC_API_KEY, or OPENROUTER_API_KEY) to enable AI analysis)'
         )
         lines.append('')
         lines.append('Affected subsystems (heuristic):')
@@ -1058,9 +1124,9 @@ def parse_args():
     parser.add_argument(
         '--provider',
         default=None,
-        choices=['auto', 'openai', 'anthropic', 'litellm'],
+        choices=['auto', 'openai', 'anthropic', 'litellm', 'openrouter'],
         metavar='PROVIDER',
-        help='LLM provider: auto (default), openai, anthropic, litellm. '
+        help='LLM provider: auto (default), openai, anthropic, litellm, openrouter. '
              'Overrides ADVISOR_PROVIDER env var.',
     )
     parser.add_argument(
@@ -1090,6 +1156,8 @@ def parse_args():
 def _any_llm_available():
     """Return True if at least one LLM library is installed with a key set."""
     if HAS_OPENAI and os.environ.get('OPENAI_API_KEY'):
+        return True
+    if HAS_OPENAI and os.environ.get('OPENROUTER_API_KEY'):
         return True
     if HAS_ANTHROPIC and os.environ.get('ANTHROPIC_API_KEY'):
         return True
