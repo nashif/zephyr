@@ -7,27 +7,63 @@ PR Test Advisor: Analyzes a Zephyr pull request and recommends tests.
 
 Fetches a GitHub PR, maps changed files to twister test areas and pytest
 suites using the existing tags.yaml / MAINTAINERS.yml infrastructure, then
-optionally uses an LLM agent (OpenAI-compatible) to rate change complexity
-and provide a natural-language test recommendation rationale.
+optionally uses an LLM agent to rate change complexity and provide a
+natural-language test recommendation rationale.
 
-Usage (basic, heuristic-only):
+Supported LLM providers (selected via --provider or ADVISOR_PROVIDER):
+
+  openai     - OpenAI models (gpt-4o, o3-mini, ...) and any OpenAI-compatible
+               endpoint (Azure, Ollama, llama.cpp, vLLM, ...)
+               Requires: pip install openai
+               Env:      OPENAI_API_KEY, OPENAI_BASE_URL (optional)
+
+  anthropic  - Anthropic Claude models (claude-opus-4, claude-sonnet-4-5, ...)
+               Requires: pip install anthropic
+               Env:      ANTHROPIC_API_KEY
+
+  litellm    - Universal proxy; works with 100+ providers via a single interface.
+               Pass any litellm model string, e.g.:
+                 anthropic/claude-3-5-sonnet-20241022
+                 gemini/gemini-1.5-pro
+                 ollama/llama3
+               Requires: pip install litellm
+               Env:      provider-specific (OPENAI_API_KEY, ANTHROPIC_API_KEY, ...)
+
+  auto       - (default) Infer provider from model name and available packages.
+               claude-* -> anthropic; gpt-*/o1-*/o3-*/o4-* -> openai;
+               anything containing '/' -> litellm; fallback: first available.
+
+Usage (heuristic only, no API key needed):
     ./scripts/ci/pr_test_advisor.py --pr 12345
 
-Usage (with LLM analysis):
+Usage (OpenAI):
     OPENAI_API_KEY=sk-... ./scripts/ci/pr_test_advisor.py --pr 12345
 
-Usage (with custom endpoint, e.g. Azure OpenAI or local):
-    OPENAI_API_KEY=... OPENAI_BASE_URL=https://... \\
-        ./scripts/ci/pr_test_advisor.py --pr 12345 --model gpt-4o
+Usage (Claude):
+    ANTHROPIC_API_KEY=sk-ant-... \\
+        ./scripts/ci/pr_test_advisor.py --pr 12345 \\
+        --provider anthropic --model claude-opus-4
+
+Usage (Ollama / local model via litellm):
+    ./scripts/ci/pr_test_advisor.py --pr 12345 \\
+        --provider litellm --model ollama/qwen2.5-coder
+
+Usage (OpenAI-compatible custom endpoint, e.g. vLLM):
+    OPENAI_API_KEY=none OPENAI_BASE_URL=http://localhost:8000/v1 \\
+        ./scripts/ci/pr_test_advisor.py --pr 12345 --model my-model
 
 Environment variables:
-    GITHUB_TOKEN   - GitHub API token (required for private repos / rate limits)
-    OPENAI_API_KEY - OpenAI (or compatible) API key; enables LLM analysis
-    OPENAI_BASE_URL - Optional base URL for OpenAI-compatible endpoints
+    GITHUB_TOKEN      - GitHub API token (rate limits / private repos)
+    ADVISOR_PROVIDER  - Default provider (overridden by --provider)
+    OPENAI_API_KEY    - OpenAI / compatible key
+    OPENAI_BASE_URL   - Optional base URL for OpenAI-compatible endpoints
+    ANTHROPIC_API_KEY - Anthropic API key
 
 Requirements:
     pip install PyGithub pyyaml
-    pip install openai        # optional, enables AI analysis
+    pip install openai      # for openai provider
+    pip install anthropic   # for anthropic provider
+    pip install litellm     # for litellm provider
 
 Output:
     Prints a structured report to stdout, optionally saves JSON to --output.
@@ -60,6 +96,18 @@ try:
     HAS_OPENAI = True
 except ImportError:
     HAS_OPENAI = False
+
+try:
+    import anthropic
+    HAS_ANTHROPIC = True
+except ImportError:
+    HAS_ANTHROPIC = False
+
+try:
+    import litellm
+    HAS_LITELLM = True
+except ImportError:
+    HAS_LITELLM = False
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.WARNING)
 log = logging.getLogger(__name__)
@@ -393,6 +441,69 @@ def estimate_complexity(files, diff_stats):
 
 
 # ---------------------------------------------------------------------------
+# LLM provider abstraction
+# ---------------------------------------------------------------------------
+
+# Model-name prefixes used for auto-detection
+_ANTHROPIC_PREFIXES = ('claude-',)
+_OPENAI_PREFIXES = ('gpt-', 'o1-', 'o3-', 'o4-', 'text-davinci')
+
+
+def _resolve_provider(model, provider_hint):
+    """
+    Determine which LLM provider to use.
+
+    Resolution order:
+      1. Explicit --provider / ADVISOR_PROVIDER value
+      2. Model name prefix heuristic
+      3. litellm if installed (handles model strings with '/')
+      4. First available library
+
+    Returns one of 'openai', 'anthropic', 'litellm', or None.
+    """
+    hint = provider_hint or os.environ.get('ADVISOR_PROVIDER', 'auto')
+
+    if hint != 'auto':
+        if hint == 'openai' and not HAS_OPENAI:
+            log.warning('Provider "openai" requested but openai package is not installed')
+            return None
+        if hint == 'anthropic' and not HAS_ANTHROPIC:
+            log.warning('Provider "anthropic" requested but anthropic package is not installed')
+            return None
+        if hint == 'litellm' and not HAS_LITELLM:
+            log.warning('Provider "litellm" requested but litellm package is not installed')
+            return None
+        return hint
+
+    # Auto-detect from model name
+    if any(model.startswith(p) for p in _ANTHROPIC_PREFIXES):
+        if HAS_ANTHROPIC:
+            return 'anthropic'
+        if HAS_LITELLM:
+            return 'litellm'
+
+    if any(model.startswith(p) for p in _OPENAI_PREFIXES):
+        if HAS_OPENAI:
+            return 'openai'
+        if HAS_LITELLM:
+            return 'litellm'
+
+    if '/' in model:
+        if HAS_LITELLM:
+            return 'litellm'
+
+    # Fallback: first available with a configured key
+    if HAS_OPENAI and os.environ.get('OPENAI_API_KEY'):
+        return 'openai'
+    if HAS_ANTHROPIC and os.environ.get('ANTHROPIC_API_KEY'):
+        return 'anthropic'
+    if HAS_LITELLM:
+        return 'litellm'
+
+    return None
+
+
+# ---------------------------------------------------------------------------
 # LLM agent analysis
 # ---------------------------------------------------------------------------
 
@@ -455,32 +566,11 @@ Please analyze this PR and return the final_report JSON.
 """
 
 
-def llm_analyze(pr_data, heuristic_result):
-    """
-    Call an OpenAI-compatible LLM to analyze the PR.
-
-    Returns the parsed JSON dict, or None on failure.
-    """
-    if not HAS_OPENAI:
-        return None
-
-    api_key = os.environ.get('OPENAI_API_KEY')
-    if not api_key:
-        return None
-
-    base_url = os.environ.get('OPENAI_BASE_URL')
-    model = pr_data.get('llm_model', 'gpt-4o-mini')
-
-    client_kwargs = {'api_key': api_key}
-    if base_url:
-        client_kwargs['base_url'] = base_url
-
-    client = openai.OpenAI(**client_kwargs)
-
+def _build_user_content(pr_data, heuristic_result):
+    """Build the user message string from PR data and heuristic results."""
     files = pr_data['files']
     file_list = '\n'.join(f'  {f}' for f in sorted(files))
-
-    user_content = LLM_USER_PROMPT_TMPL.format(
+    return LLM_USER_PROMPT_TMPL.format(
         pr_number=pr_data['number'],
         pr_title=pr_data['title'],
         pr_url=pr_data['url'],
@@ -496,21 +586,95 @@ def llm_analyze(pr_data, heuristic_result):
         heuristic_complexity=heuristic_result['complexity']['level'],
     )
 
+
+def _call_openai(model, system, user):
+    """Call an OpenAI or OpenAI-compatible endpoint. Returns raw text."""
+    api_key = os.environ.get('OPENAI_API_KEY')
+    if not api_key:
+        raise RuntimeError('OPENAI_API_KEY is not set')
+    base_url = os.environ.get('OPENAI_BASE_URL')
+    kwargs = {'api_key': api_key}
+    if base_url:
+        kwargs['base_url'] = base_url
+    client = openai.OpenAI(**kwargs)
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {'role': 'system', 'content': system},
+            {'role': 'user', 'content': user},
+        ],
+        response_format={'type': 'json_object'},
+        temperature=0.2,
+        max_tokens=1024,
+    )
+    return response.choices[0].message.content
+
+
+def _call_anthropic(model, system, user):
+    """Call an Anthropic Claude model. Returns raw text."""
+    api_key = os.environ.get('ANTHROPIC_API_KEY')
+    if not api_key:
+        raise RuntimeError('ANTHROPIC_API_KEY is not set')
+    client = anthropic.Anthropic(api_key=api_key)
+    response = client.messages.create(
+        model=model,
+        max_tokens=1024,
+        system=system,
+        messages=[{'role': 'user', 'content': user}],
+        temperature=0.2,
+    )
+    return response.content[0].text
+
+
+def _call_litellm(model, system, user):
+    """Call any model supported by litellm. Returns raw text."""
+    response = litellm.completion(
+        model=model,
+        messages=[
+            {'role': 'system', 'content': system},
+            {'role': 'user', 'content': user},
+        ],
+        temperature=0.2,
+        max_tokens=1024,
+    )
+    return response.choices[0].message.content
+
+
+def llm_analyze(pr_data, heuristic_result, provider=None):
+    """
+    Call an LLM to analyze the PR using the selected provider.
+
+    Dispatches to the appropriate backend based on provider auto-detection
+    or explicit --provider / ADVISOR_PROVIDER selection.
+
+    Returns the parsed JSON dict, or None on failure.
+    """
+    model = pr_data.get('llm_model', 'gpt-4o-mini')
+    resolved = _resolve_provider(model, provider)
+
+    if resolved is None:
+        return None
+
+    user_content = _build_user_content(pr_data, heuristic_result)
+
+    _BACKENDS = {
+        'openai': _call_openai,
+        'anthropic': _call_anthropic,
+        'litellm': _call_litellm,
+    }
+
+    backend_fn = _BACKENDS.get(resolved)
+    if backend_fn is None:
+        log.warning('Unknown provider: %s', resolved)
+        return None
+
+    log.info('Using LLM provider: %s  model: %s', resolved, model)
+    pr_data['llm_provider'] = resolved
     try:
-        response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {'role': 'system', 'content': LLM_SYSTEM_PROMPT},
-                {'role': 'user', 'content': user_content},
-            ],
-            response_format={'type': 'json_object'},
-            temperature=0.2,
-            max_tokens=1024,
-        )
-        content = response.choices[0].message.content
-        return json.loads(content)
+        raw = backend_fn(model, LLM_SYSTEM_PROMPT, user_content)
+        return json.loads(raw)
     except Exception as exc:
-        log.warning('LLM analysis failed: %s', exc)
+        log.warning('LLM analysis failed (%s): %s', resolved, exc)
         return None
 
 
@@ -565,7 +729,7 @@ def fetch_pr(pr_number, github_token=None, org=GITHUB_ORG, repo=GITHUB_REPO):
 # Core analysis
 # ---------------------------------------------------------------------------
 
-def analyze_pr(pr_data, llm_model='gpt-4o-mini'):
+def analyze_pr(pr_data, llm_model='gpt-4o-mini', llm_provider=None):
     """
     Run heuristic + optional LLM analysis on fetched PR data.
 
@@ -615,7 +779,7 @@ def analyze_pr(pr_data, llm_model='gpt-4o-mini'):
 
     # --- LLM analysis (optional) ---
     pr_data['llm_model'] = llm_model
-    llm_result = llm_analyze(pr_data, heuristic_result)
+    llm_result = llm_analyze(pr_data, heuristic_result, provider=llm_provider)
 
     return {
         'pr': pr_data,
@@ -689,7 +853,9 @@ def generate_report(analysis, verbose=False):
     if llm and llm.get('summary'):
         lines.append(llm['summary'])
     else:
-        lines.append('(No LLM summary — set OPENAI_API_KEY to enable AI analysis)')
+        lines.append(
+            '(No LLM summary \u2014 install openai/anthropic/litellm and set an API key to enable AI analysis)'
+        )
         lines.append('')
         lines.append('Affected subsystems (heuristic):')
         for s in h['subsystems']:
@@ -886,7 +1052,16 @@ def parse_args():
         '--model',
         default='gpt-4o-mini',
         metavar='MODEL',
-        help='LLM model to use for AI analysis (default: gpt-4o-mini)',
+        help='LLM model name (default: gpt-4o-mini). Examples: '
+             'claude-opus-4, ollama/llama3, gemini/gemini-1.5-pro',
+    )
+    parser.add_argument(
+        '--provider',
+        default=None,
+        choices=['auto', 'openai', 'anthropic', 'litellm'],
+        metavar='PROVIDER',
+        help='LLM provider: auto (default), openai, anthropic, litellm. '
+             'Overrides ADVISOR_PROVIDER env var.',
     )
     parser.add_argument(
         '--output',
@@ -907,34 +1082,47 @@ def parse_args():
     parser.add_argument(
         '--no-llm',
         action='store_true',
-        help='Disable LLM analysis even if OPENAI_API_KEY is set',
+        help='Disable LLM analysis entirely',
     )
     return parser.parse_args()
+
+
+def _any_llm_available():
+    """Return True if at least one LLM library is installed with a key set."""
+    if HAS_OPENAI and os.environ.get('OPENAI_API_KEY'):
+        return True
+    if HAS_ANTHROPIC and os.environ.get('ANTHROPIC_API_KEY'):
+        return True
+    if HAS_LITELLM:
+        return True
+    return False
 
 
 def main():
     args = parse_args()
 
-    if args.no_llm:
-        # Temporarily remove the key so llm_analyze() returns None
-        os.environ.pop('OPENAI_API_KEY', None)
+    provider = None if args.no_llm else args.provider
 
     print(f'Fetching PR #{args.pr} from {args.org}/{args.repo} ...', file=sys.stderr)
     pr_data = fetch_pr(args.pr, github_token=args.token, org=args.org, repo=args.repo)
 
     print('Running analysis ...', file=sys.stderr)
-    analysis = analyze_pr(pr_data, llm_model=args.model)
+    analysis = analyze_pr(pr_data, llm_model=args.model, llm_provider=provider)
 
     if analysis['llm']:
-        print('LLM analysis complete.', file=sys.stderr)
+        print(
+            f"LLM analysis complete (provider: {pr_data.get('llm_provider', 'auto')})",
+            file=sys.stderr,
+        )
+    elif args.no_llm:
+        print('LLM analysis disabled (--no-llm).', file=sys.stderr)
+    elif not _any_llm_available():
+        print(
+            'LLM analysis skipped — install openai/anthropic/litellm and set an API key.',
+            file=sys.stderr,
+        )
     else:
-        if HAS_OPENAI and not args.no_llm and os.environ.get('OPENAI_API_KEY'):
-            print('LLM analysis failed (see warnings above).', file=sys.stderr)
-        else:
-            print(
-                'LLM analysis skipped (set OPENAI_API_KEY to enable AI recommendations).',
-                file=sys.stderr,
-            )
+        print('LLM analysis failed (see warnings above).', file=sys.stderr)
 
     if args.json:
         print(json.dumps(analysis, indent=2, default=str))
