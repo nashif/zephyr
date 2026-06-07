@@ -5,7 +5,7 @@
 """
 Issue Triage Tool: Analyzes open Zephyr GitHub bug issues for triage.
 
-Fetches open issues labeled "bug" (or a custom label) from the Zephyr
+Fetches open issues of type "Bug" (or a custom issue type) from the Zephyr
 GitHub repository, performs heuristic and optional LLM-based analysis
 of each issue, then generates a self-contained HTML report with per-issue
 triage recommendations.
@@ -59,6 +59,9 @@ Usage (with OpenRouter LLM):
 Usage (analyze a single issue for debugging):
     GITHUB_TOKEN=ghp_xxx ./scripts/ci/issue_triage.py --issue 12345 --no-llm
 
+Usage (custom issue type):
+    GITHUB_TOKEN=ghp_xxx ./scripts/ci/issue_triage.py --type Enhancement
+
 Environment variables:
     GITHUB_TOKEN          GitHub API token (rate limits / private repos)
     TRIAGE_PROVIDER       Default LLM provider (overridden by --provider)
@@ -89,6 +92,8 @@ import os
 import re
 import subprocess
 import sys
+import urllib.parse
+import urllib.request
 from pathlib import Path
 
 try:
@@ -143,9 +148,12 @@ OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1'
 _ANTHROPIC_PREFIXES = ('claude-',)
 _OPENAI_PREFIXES = ('gpt-', 'o1-', 'o3-', 'o4-', 'text-davinci')
 
-DEFAULT_BUG_LABEL = 'bug'
+DEFAULT_ISSUE_TYPE = 'Bug'
 DEFAULT_MAX_ISSUES = 200
 DEFAULT_OUTPUT = 'issue_triage_report.html'
+
+GITHUB_API_BASE = 'https://api.github.com'
+GITHUB_API_VERSION = '2022-11-28'
 
 # Canonical priority tiers extracted from common Zephyr label formats
 PRIORITY_LABELS = {
@@ -880,6 +888,118 @@ def llm_analyze_issue(issue, similar_issues, git_commits, model, provider):
 
 
 # ---------------------------------------------------------------------------
+# GitHub REST API helpers
+# ---------------------------------------------------------------------------
+
+def _gh_api_request(path, token, params=None):
+    """
+    Perform a single GET request against the GitHub REST API.
+
+    Returns the parsed JSON response body.
+    Raises SystemExit on HTTP errors.
+    """
+    base = f'{GITHUB_API_BASE}{path}'
+    if params:
+        base = f'{base}?{urllib.parse.urlencode(params)}'
+    headers = {
+        'Accept':               'application/vnd.github+json',
+        'X-GitHub-Api-Version': GITHUB_API_VERSION,
+        'User-Agent':           'Zephyr-Issue-Triage/1.0',
+    }
+    if token:
+        headers['Authorization'] = f'Bearer {token}'
+    req = urllib.request.Request(base, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read().decode('utf-8'))
+    except urllib.error.HTTPError as exc:
+        body = ''
+        try:
+            body = exc.read().decode('utf-8', errors='replace')[:200]
+        except Exception:
+            pass
+        raise SystemExit(
+            f'GitHub API {exc.code} for {path}: {body}'
+        ) from exc
+    except Exception as exc:
+        raise SystemExit(f'GitHub API request failed: {exc}') from exc
+
+
+def _gh_api_paginate(path, token, params, max_items):
+    """
+    Paginate through a GitHub REST API list endpoint.
+
+    Yields raw issue dicts (not PRs) until max_items is reached or
+    all pages are exhausted.
+    """
+    page = 1
+    fetched = 0
+    while fetched < max_items:
+        page_params = dict(params)
+        page_params['per_page'] = 100
+        page_params['page'] = page
+        items = _gh_api_request(path, token, page_params)
+        if not items:
+            break
+        for item in items:
+            if item.get('pull_request'):
+                continue
+            yield item
+            fetched += 1
+            if fetched >= max_items:
+                break
+        if len(items) < 100:
+            break
+        page += 1
+
+
+def _normalize_issue(raw, now):
+    """
+    Normalize a raw GitHub REST API issue dict into the internal format.
+    """
+    def _parse_dt(s):
+        if not s:
+            return now
+        s = s.rstrip('Z')
+        try:
+            dt = datetime.datetime.fromisoformat(s)
+        except ValueError:
+            return now
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=datetime.timezone.utc)
+        return dt
+
+    created_at = _parse_dt(raw.get('created_at'))
+    updated_at = _parse_dt(raw.get('updated_at'))
+    age_days = (now - created_at).days
+    inactive_days = (now - updated_at).days
+    label_names = [lbl['name'] for lbl in raw.get('labels', [])]
+
+    issue_type_obj = raw.get('type') or {}
+    issue_type_name = issue_type_obj.get('name', '') if isinstance(issue_type_obj, dict) else ''
+
+    return {
+        'number':        raw['number'],
+        'title':         raw.get('title') or '',
+        'url':           raw.get('html_url', ''),
+        'author':        (raw.get('user') or {}).get('login', ''),
+        'created_at':    created_at.strftime('%Y-%m-%d'),
+        'updated_at':    updated_at.strftime('%Y-%m-%d'),
+        'age_days':      age_days,
+        'inactive_days': inactive_days,
+        'labels':        label_names,
+        'issue_type':    issue_type_name,
+        'current_priority': _extract_priority(label_names),
+        'area_labels':   _extract_area_labels(label_names),
+        'body':          (raw.get('body') or '')[:4000],
+        'comment_count': raw.get('comments', 0),
+        'assignees':     [
+            (a.get('login') or '') for a in (raw.get('assignees') or [])
+        ],
+    }
+
+
+# ---------------------------------------------------------------------------
 # GitHub issue fetcher
 # ---------------------------------------------------------------------------
 
@@ -887,91 +1007,52 @@ def fetch_issues(
     github_token=None,
     org=GITHUB_ORG,
     repo=GITHUB_REPO,
-    label=DEFAULT_BUG_LABEL,
+    issue_type=DEFAULT_ISSUE_TYPE,
     max_issues=DEFAULT_MAX_ISSUES,
     days=0,
     issue_number=None,
 ):
     """
-    Fetch open issues with the given label from GitHub.
+    Fetch open issues of the given issue type from GitHub.
 
-    If issue_number is provided, only that issue is fetched.
+    Uses the GitHub REST API directly so that the 'type' query parameter
+    (GitHub issue types feature) is honoured — PyGithub does not expose
+    this parameter yet.
+
+    If issue_number is provided, only that single issue is fetched and
+    returned regardless of its type.
     If days > 0, only issues updated within the last N days are returned.
     Returns a list of issue dicts with normalized fields.
     """
-    if not HAS_PYGITHUB:
-        raise SystemExit('PyGithub is required: pip install PyGithub')
-
     token = github_token or os.environ.get('GITHUB_TOKEN')
-    gh = Github(token) if token else Github()
-
-    try:
-        gh_repo = gh.get_repo(f'{org}/{repo}')
-    except Exception as exc:
-        raise SystemExit(f'Failed to connect to {org}/{repo}: {exc}') from exc
-
     now = datetime.datetime.now(datetime.timezone.utc)
-    cutoff = None
-    if days > 0:
-        cutoff = now - datetime.timedelta(days=days)
-
+    cutoff = now - datetime.timedelta(days=days) if days > 0 else None
+    path = f'/repos/{org}/{repo}/issues'
     results = []
 
     if issue_number is not None:
-        try:
-            gh_issue = gh_repo.get_issue(issue_number)
-            raw_issues = [gh_issue]
-        except Exception as exc:
-            raise SystemExit(f'Failed to fetch issue #{issue_number}: {exc}') from exc
-    else:
-        try:
-            raw_issues = gh_repo.get_issues(
-                state='open',
-                labels=[label],
-                sort='updated',
-                direction='desc',
-            )
-        except Exception as exc:
-            raise SystemExit(f'Failed to fetch issues: {exc}') from exc
+        raw = _gh_api_request(f'{path}/{issue_number}', token)
+        if raw.get('pull_request'):
+            raise SystemExit(f'#{issue_number} is a pull request, not an issue')
+        results.append(_normalize_issue(raw, now))
+        return results
 
-    count = 0
-    for gh_issue in raw_issues:
-        if gh_issue.pull_request is not None:
-            continue  # skip PRs returned by the issues endpoint
+    params = {
+        'state':     'open',
+        'type':      issue_type,
+        'sort':      'updated',
+        'direction': 'desc',
+    }
 
-        updated_at = gh_issue.updated_at
-        if updated_at.tzinfo is None:
-            updated_at = updated_at.replace(tzinfo=datetime.timezone.utc)
-        created_at = gh_issue.created_at
-        if created_at.tzinfo is None:
-            created_at = created_at.replace(tzinfo=datetime.timezone.utc)
-
-        if cutoff and updated_at < cutoff:
-            break
-
-        age_days = (now - created_at).days
-        inactive_days = (now - updated_at).days
-        label_names = [lbl.name for lbl in gh_issue.labels]
-
-        results.append({
-            'number':        gh_issue.number,
-            'title':         gh_issue.title or '',
-            'url':           gh_issue.html_url,
-            'author':        gh_issue.user.login if gh_issue.user else '',
-            'created_at':    created_at.strftime('%Y-%m-%d'),
-            'updated_at':    updated_at.strftime('%Y-%m-%d'),
-            'age_days':      age_days,
-            'inactive_days': inactive_days,
-            'labels':        label_names,
-            'current_priority': _extract_priority(label_names),
-            'area_labels':   _extract_area_labels(label_names),
-            'body':          (gh_issue.body or '')[:4000],
-            'comment_count': gh_issue.comments,
-            'assignees':     [a.login for a in gh_issue.assignees],
-        })
-        count += 1
-        if count >= max_issues:
-            break
+    for raw in _gh_api_paginate(path, token, params, max_issues):
+        updated_at_str = raw.get('updated_at', '')
+        if cutoff and updated_at_str:
+            updated_dt = datetime.datetime.fromisoformat(
+                updated_at_str.rstrip('Z')
+            ).replace(tzinfo=datetime.timezone.utc)
+            if updated_dt < cutoff:
+                break
+        results.append(_normalize_issue(raw, now))
 
     return results
 
@@ -1434,7 +1515,7 @@ def generate_html_report(analyses, args):
         '<h1>Zephyr Issue Triage Report</h1>',
         f'<p>Generated: {esc(now_str)}'
         f' | {total} issues analyzed'
-        f' | Label: <strong>{esc(args.label)}</strong>'
+        f' | Issue type: <strong>{esc(args.type)}</strong>'
         f' | Repo: <strong>{esc(args.org)}/{esc(args.repo)}</strong>'
         f' | AI analysis: <strong>{"enabled (" + esc(args.model) + ")" if llm_count > 0 else "disabled"}</strong>'
         f'</p>',
@@ -1612,6 +1693,7 @@ def parse_args():
             '  GITHUB_TOKEN=ghp_xxx OPENROUTER_API_KEY=sk-or-... \\\n'
             '      ./scripts/ci/issue_triage.py --model anthropic/claude-opus-4\n'
             '  ./scripts/ci/issue_triage.py --issue 12345 --no-llm\n'
+            '  ./scripts/ci/issue_triage.py --type Enhancement\n'
         ),
     )
     parser.add_argument(
@@ -1633,10 +1715,11 @@ def parse_args():
         help=f'GitHub repository (default: {GITHUB_REPO})',
     )
     parser.add_argument(
-        '--label',
-        default=DEFAULT_BUG_LABEL,
-        metavar='LABEL',
-        help=f'Issue label to filter on (default: {DEFAULT_BUG_LABEL!r})',
+        '--type',
+        default=DEFAULT_ISSUE_TYPE,
+        metavar='TYPE',
+        help=f'GitHub issue type to filter on (default: {DEFAULT_ISSUE_TYPE!r}). '
+             'This uses the GitHub issue types feature, not labels.',
     )
     parser.add_argument(
         '--max-issues',
@@ -1727,7 +1810,7 @@ def main():
     # Print a summary of what we're about to do
     target = f'issue #{args.issue}' if args.issue else f'up to {args.max_issues} issues'
     print(
-        f'Fetching {target} labeled "{args.label}" from '
+        f'Fetching {target} of type "{args.type}" from '
         f'{args.org}/{args.repo} ...',
         file=sys.stderr,
     )
@@ -1736,7 +1819,7 @@ def main():
         github_token=args.token,
         org=args.org,
         repo=args.repo,
-        label=args.label,
+        issue_type=args.type,
         max_issues=args.max_issues,
         days=args.days,
         issue_number=args.issue,
