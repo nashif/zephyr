@@ -137,7 +137,7 @@ DEFAULT_OUTPUT = 'sample_quality_report.html'
 DEFAULT_CACHE = 'sample_quality_cache.json'
 
 # Cache version — increment when the cache schema changes incompatibly.
-CACHE_VERSION = 1
+CACHE_VERSION = 2
 
 # ---------------------------------------------------------------------------
 # Git helpers
@@ -413,6 +413,23 @@ ISSUE_DEFS = {
         'minor',
         'sample.yaml lacks a top-level "sample:" section with name/description',
     ),
+    'test_infra_sample': (
+        'major',
+        'Sample appears to be test/CI infrastructure rather than a functional '
+        'demonstration — path or content indicates it exists to exercise the '
+        'test framework itself, not to showcase a Zephyr feature',
+    ),
+    'vendor_specific': (
+        'minor',
+        'Sample only targets hardware from a single vendor — not generally '
+        'portable to other vendor platforms without significant rework',
+    ),
+    'high_porting_effort': (
+        'minor',
+        'Sample requires per-board DTS overlays or hardware-specific '
+        'configuration; porting to unlisted hardware requires writing custom '
+        'devicetree configuration',
+    ),
 }
 
 SEVERITY_ORDER = ['critical', 'major', 'minor']
@@ -577,6 +594,53 @@ _README_OUTPUT_RE = re.compile(
     re.MULTILINE | re.IGNORECASE,
 )
 
+# --- Test-infra detection -----------------------------------------------
+# Path components that indicate the sample is CI/test infrastructure
+_TEST_INFRA_PATH_PARTS = frozenset({
+    'testsuite', 'test_suite', 'ci_test', 'ci_tests',
+})
+# Keywords in sample name / description that indicate test infrastructure
+_TEST_INFRA_NAME_RE = re.compile(
+    r'\b(test\s+suite|unit\s+test|integration\s+test|ztest\s+sample|'
+    r'twister\s+test|pytest\s+sample|ci\s+test|test\s+harness|'
+    r'test\s+framework|testing\s+framework)\b',
+    re.IGNORECASE,
+)
+# README phrases that indicate test infra
+_TEST_INFRA_README_RE = re.compile(
+    r'\b(for\s+testing|tests\s+the\s+(zephyr|kernel|framework)|'
+    r'used\s+by\s+ci|used\s+in\s+ci|used\s+by\s+twister|'
+    r'for\s+ci\s+testing|not\s+a\s+sample|this\s+is\s+a\s+test)\b',
+    re.IGNORECASE,
+)
+
+# --- Vendor-specific detection ------------------------------------------
+# DT filter expressions that indicate hardware-specific requirements
+_DT_FILTER_RE = re.compile(
+    r'\bdt_compat_enabled\b|\bdt_node_has_prop\b|'
+    r'\bdt_node_has_compat\b|\bdt_alias\b|\bdt_nodelabel\b',
+)
+# Lazy-loaded mapping: board_directory_name -> vendor_subdirectory_name
+_BOARD_VENDOR_MAP = None
+
+
+def _get_board_vendor_map():
+    """
+    Return a {board_dir_name: vendor_subdir_name} dict built from
+    boards/<vendor>/<board>/ tree. Populated once and cached globally.
+    """
+    global _BOARD_VENDOR_MAP
+    if _BOARD_VENDOR_MAP is None:
+        _BOARD_VENDOR_MAP = {}
+        boards_root = ZEPHYR_BASE / 'boards'
+        if boards_root.is_dir():
+            for vendor_dir in boards_root.iterdir():
+                if vendor_dir.is_dir() and not vendor_dir.name.startswith('.'):
+                    for board_dir in vendor_dir.iterdir():
+                        if board_dir.is_dir():
+                            _BOARD_VENDOR_MAP[board_dir.name] = vendor_dir.name
+    return _BOARD_VENDOR_MAP
+
 
 def _check_source_for_ztest(sources):
     """
@@ -598,6 +662,187 @@ def _check_source_for_ztest(sources):
         uses_zassert = uses_zassert or file_za
 
     return uses_ztest, uses_zassert, offenders
+
+
+def _check_test_infra(sample_data):
+    """
+    Detect whether a sample is test/CI infrastructure rather than a
+    functional feature demonstration.
+
+    Returns a detail string if the check fires, or None.
+    """
+    reasons = []
+
+    # Path-based: path component is 'testsuite' or 'test_suite'
+    path_parts = set(Path(sample_data['path']).parts)
+    infra_parts = path_parts & _TEST_INFRA_PATH_PARTS
+    if infra_parts:
+        reasons.append(f'path contains {", ".join(sorted(infra_parts))}')
+
+    # Name/description-based
+    name = sample_data.get('name', '') or ''
+    description = sample_data.get('description', '') or ''
+    combined = f'{name} {description}'
+    m = _TEST_INFRA_NAME_RE.search(combined)
+    if m:
+        reasons.append(f'name/description mentions "{m.group(0).lower()}"')
+
+    # README-based (first 800 chars — overview area)
+    readme_head = (sample_data.get('readme_content') or '')[:800]
+    m = _TEST_INFRA_README_RE.search(readme_head)
+    if m:
+        reasons.append(f'README overview mentions "{m.group(0).lower()}"')
+
+    if not reasons:
+        return None
+    return 'Indicators: ' + '; '.join(reasons)
+
+
+def _check_vendor_specific(sample_data):
+    """
+    Detect whether a sample only targets hardware from a single vendor.
+
+    Uses two signals:
+    1. The sample lives under samples/boards/<single_vendor>/.
+    2. All integration_platforms and platform_allow entries across every
+       test case and the common block resolve to the same vendor directory
+       (needs ≥2 platforms so a single integration_platform does not
+       trivially trigger this).
+
+    Returns a detail string if the check fires, or None.
+    """
+    rel_path = sample_data['path']  # e.g. "samples/boards/nordic/foo"
+    parts = rel_path.replace('\\', '/').split('/')
+
+    # Signal 1: path under samples/boards/<vendor>/
+    # parts[0]='samples', parts[1]='boards', parts[2]=<vendor>
+    if (len(parts) >= 4 and parts[0] == 'samples'
+            and parts[1] == 'boards'):
+        vendor = parts[2]
+        # Exclude the 'common' subdirectory which is cross-vendor
+        if vendor not in ('common', 'index.rst'):
+            return (
+                f'sample is under samples/boards/{vendor}/ '
+                f'(single-vendor board directory)'
+            )
+
+    # Signal 2: all integration_platforms / platform_allow from one vendor
+    yaml_data = sample_data.get('yaml_data') or {}
+    common = yaml_data.get('common') or {}
+    tests = yaml_data.get('tests') or {}
+    if not isinstance(tests, dict):
+        tests = {}
+
+    all_plats = []
+    for src in (common.get('integration_platforms') or [],
+                common.get('platform_allow') or []):
+        all_plats.extend(src)
+    for tc in tests.values():
+        if isinstance(tc, dict):
+            for key in ('integration_platforms', 'platform_allow'):
+                all_plats.extend(tc.get(key) or [])
+
+    # Normalise: strip target/CPU suffixes (board/target form)
+    board_names = [p.split('/')[0] for p in all_plats if p]
+    if len(board_names) < 2:
+        return None  # Too few platforms to draw a conclusion
+
+    vendor_map = _get_board_vendor_map()
+    vendors = set()
+    unknown = 0
+    for board in board_names:
+        v = vendor_map.get(board)
+        if v:
+            vendors.add(v)
+        else:
+            unknown += 1
+
+    # Only flag when all known platforms belong to exactly one vendor
+    # and there are no unknown (cross-vendor or virtual) boards
+    if len(vendors) == 1 and unknown == 0:
+        vendor_name = list(vendors)[0]
+        return (
+            f'all {len(board_names)} listed platforms are from the '
+            f'"{vendor_name}" vendor directory'
+        )
+
+    return None
+
+
+def _check_high_porting_effort(sample_data):
+    """
+    Detect whether a sample requires significant per-board configuration
+    (DTS overlays, board-specific .conf fragments) to work on new hardware.
+
+    Signals checked:
+    1. A boards/ subdirectory containing .overlay or .conf files exists,
+       implying new hardware needs its own overlay written.
+    2. YAML filter uses DT-query functions (dt_compat_enabled,
+       dt_node_has_prop, etc.), meaning the sample needs specific DTS nodes.
+    3. README text warns about hardware-specific setup requirements.
+
+    Returns a detail string when at least one signal fires, or None.
+    """
+    reasons = []
+
+    # Signal 1: boards/ directory with ≥5 per-board config files.
+    # A few overrides (e.g. a single LED-pin .overlay for blinky) are a minor
+    # board quirk, not high porting effort.  Five or more distinct board files
+    # indicates the sample systematically requires per-board DTS customisation.
+    _OVERLAY_THRESHOLD = 5
+    sample_dir = ZEPHYR_BASE / sample_data['path']
+    boards_dir = sample_dir / 'boards'
+    if boards_dir.is_dir():
+        board_files = [
+            f for f in boards_dir.iterdir()
+            if f.is_file() and f.suffix in ('.overlay', '.conf')
+        ]
+        if len(board_files) >= _OVERLAY_THRESHOLD:
+            unique_boards = len({f.stem.split('.')[0] for f in board_files})
+            reasons.append(
+                f'{len(board_files)} board-specific config file(s) in boards/ '
+                f'({unique_boards} board(s)) — new hardware needs a custom overlay'
+            )
+
+    # Signal 2: DT-query filter in YAML
+    yaml_data = sample_data.get('yaml_data') or {}
+    common = yaml_data.get('common') or {}
+    tests = yaml_data.get('tests') or {}
+    if not isinstance(tests, dict):
+        tests = {}
+
+    dt_filters = []
+    for src_filter in ([common.get('filter')] if common.get('filter') else []):
+        if _DT_FILTER_RE.search(str(src_filter)):
+            dt_filters.append(str(src_filter)[:80])
+    for tc in tests.values():
+        if isinstance(tc, dict) and tc.get('filter'):
+            f = str(tc['filter'])
+            if _DT_FILTER_RE.search(f) and f not in dt_filters:
+                dt_filters.append(f[:80])
+    if dt_filters:
+        reasons.append(
+            f'YAML filter requires specific DTS nodes: '
+            + '; '.join(dt_filters[:2])
+        )
+
+    # Signal 3: README warns about hardware setup
+    _PORTING_README_RE = re.compile(
+        r'\b(add\s+(an?\s+)?overlay|write\s+(an?\s+)?overlay|'
+        r'create\s+(an?\s+)?overlay|modify\s+(the\s+)?overlay|'
+        r'hardware.specific\s+config|board.specific\s+config|'
+        r'you\s+must\s+(provide|configure|add)\s+(a\s+)?DTS|'
+        r'requires?\s+(a\s+)?custom\s+(overlay|DTS|devicetree))\b',
+        re.IGNORECASE,
+    )
+    readme = sample_data.get('readme_content') or ''
+    m = _PORTING_README_RE.search(readme)
+    if m:
+        reasons.append(f'README describes manual DTS setup: "{m.group(0)[:60]}"')
+
+    if not reasons:
+        return None
+    return '; '.join(reasons)
 
 
 def _check_yaml_compliance(yaml_data, yaml_name):
@@ -882,6 +1127,21 @@ def heuristic_analyze(sample_data):
             '(>1000 may indicate test-like complexity)'
         )
 
+    # --- Check 7: test/CI infrastructure ---
+    detail = _check_test_infra(sample_data)
+    if detail:
+        issues['test_infra_sample'] = detail
+
+    # --- Check 8: vendor-specific sample ---
+    detail = _check_vendor_specific(sample_data)
+    if detail:
+        issues['vendor_specific'] = detail
+
+    # --- Check 9: high porting effort ---
+    detail = _check_high_porting_effort(sample_data)
+    if detail:
+        issues['high_porting_effort'] = detail
+
     # --- Determine verdict ---
     has_critical = any(
         ISSUE_DEFS.get(k, ('minor', ''))[0] == 'critical'
@@ -1134,8 +1394,12 @@ The JSON must have exactly these fields:
   "code_quality_rationale": "<1-2 sentences: is the code clean, readable, free of test anti-patterns?>",
   "is_actually_a_test": <true|false>,
   "test_rationale": "<if true, explain why this looks like a test rather than a sample; else empty string>",
+  "is_vendor_specific": <true|false>,
+  "vendor_rationale": "<if true, name the vendor and explain why this cannot be used on other vendors' hardware; else empty string>",
   "has_testing_overhead": <true|false>,
   "overhead_rationale": "<if true, describe what makes it overly complex for a sample; else empty string>",
+  "high_porting_effort": <true|false>,
+  "porting_rationale": "<if true, describe the hardware-specific configuration a user would need to add for new hardware; else empty string>",
   "additional_issues": ["<issue description>", ...],
   "recommendations": ["<actionable recommendation>", ...],
   "verdict": "<compliant|minor-issues|major-issues|non-compliant>"
@@ -1147,6 +1411,12 @@ Evaluation criteria (from samples/sample_definition_and_criteria.rst):
 3. Samples should demonstrate real, non-trivial feature usage — not unit tests or edge cases.
 4. Samples must have a README.rst with Overview, Building & Running, and Sample Output.
 5. Code should be concise and readable as a reference; not a production application.
+6. Samples that are CI/test infrastructure (testsuite, harness tests, framework validation)
+   should set is_actually_a_test=true.
+7. Samples that only work on a single vendor's hardware set is_vendor_specific=true and
+   name the vendor in vendor_rationale.
+8. Samples that require users to write custom DTS overlays or board-specific configuration
+   before the sample works on their hardware set high_porting_effort=true.
 
 Verdict mapping:
   compliant     - meets all criteria well
