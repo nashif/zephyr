@@ -583,7 +583,7 @@ def fetch_linked_prs(issue, token, org=GITHUB_ORG, repo=GITHUB_REPO):
         timeline = _gh_api_request(
             f'/repos/{org}/{repo}/issues/{issue_number}/timeline',
             token,
-            params={'per_page': 100},
+            {'per_page': 100},
         )
         for event in (timeline or []):
             if event.get('event') == 'cross-referenced':
@@ -596,7 +596,7 @@ def fetch_linked_prs(issue, token, org=GITHUB_ORG, repo=GITHUB_REPO):
                         candidate_prs.add(pr_num)
                     except (ValueError, IndexError):
                         pass
-    except Exception as exc:
+    except GitHubAPIError as exc:
         log.debug('Timeline fetch failed for #%d: %s', issue_number, exc)
 
     if not candidate_prs:
@@ -606,7 +606,7 @@ def fetch_linked_prs(issue, token, org=GITHUB_ORG, repo=GITHUB_REPO):
     for pr_num in sorted(candidate_prs):
         try:
             pr = _gh_api_request(f'/repos/{org}/{repo}/pulls/{pr_num}', token)
-        except Exception as exc:
+        except GitHubAPIError as exc:
             log.debug('Could not fetch PR #%d: %s', pr_num, exc)
             continue
         if not isinstance(pr, dict):
@@ -1343,12 +1343,21 @@ def llm_analyze_issue(issue, similar_issues, git_commits, model, provider,
 # GitHub REST API helpers
 # ---------------------------------------------------------------------------
 
+class GitHubAPIError(OSError):
+    """Raised by _gh_api_request on HTTP or network errors."""
+
+    def __init__(self, message, status=None):
+        super().__init__(message)
+        self.status = status
+
+
 def _gh_api_request(path, token, params=None):
     """
     Perform a single GET request against the GitHub REST API.
 
     Returns the parsed JSON response body.
-    Raises SystemExit on HTTP errors.
+    Raises GitHubAPIError on HTTP or network errors so callers can
+    choose to handle or propagate them.
     """
     base = f'{GITHUB_API_BASE}{path}'
     if params:
@@ -1370,11 +1379,13 @@ def _gh_api_request(path, token, params=None):
             body = exc.read().decode('utf-8', errors='replace')[:200]
         except Exception:
             pass
-        raise SystemExit(
-            f'GitHub API {exc.code} for {path}: {body}'
+        raise GitHubAPIError(
+            f'GitHub API {exc.code} for {path}: {body}', status=exc.code
         ) from exc
+    except GitHubAPIError:
+        raise
     except Exception as exc:
-        raise SystemExit(f'GitHub API request failed: {exc}') from exc
+        raise GitHubAPIError(f'GitHub API request failed: {exc}') from exc
 
 
 def _gh_api_paginate(path, token, params, max_items):
@@ -1390,7 +1401,10 @@ def _gh_api_paginate(path, token, params, max_items):
         page_params = dict(params)
         page_params['per_page'] = 100
         page_params['page'] = page
-        items = _gh_api_request(path, token, page_params)
+        try:
+            items = _gh_api_request(path, token, page_params)
+        except GitHubAPIError as exc:
+            raise SystemExit(str(exc)) from exc
         if not items:
             break
         for item in items:
@@ -1483,7 +1497,10 @@ def fetch_issues(
     results = []
 
     if issue_number is not None:
-        raw = _gh_api_request(f'{path}/{issue_number}', token)
+        try:
+            raw = _gh_api_request(f'{path}/{issue_number}', token)
+        except GitHubAPIError as exc:
+            raise SystemExit(str(exc)) from exc
         if raw.get('pull_request'):
             raise SystemExit(f'#{issue_number} is a pull request, not an issue')
         results.append(_normalize_issue(raw, now))
