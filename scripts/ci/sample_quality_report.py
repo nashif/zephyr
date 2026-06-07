@@ -38,6 +38,10 @@ Supported LLM providers (selected via --provider or SAMPLE_ADVISOR_PROVIDER):
 Usage (heuristic only, no API key needed):
     ./scripts/ci/sample_quality_report.py --output report.html
 
+Usage (with caching — fast on subsequent runs):
+    ./scripts/ci/sample_quality_report.py \\
+        --cache sample_quality_cache.json --output report.html
+
 Usage (analyze specific subsystem):
     ./scripts/ci/sample_quality_report.py --subsystem bluetooth
 
@@ -47,6 +51,7 @@ Usage (with LLM analysis, limited to samples with issues):
         --model anthropic/claude-opus-4 \\
         --max-llm 50 \\
         --llm-non-compliant-only \\
+        --cache sample_quality_cache.json \\
         --output report.html
 
 Usage (analyze a single sample for debugging):
@@ -80,6 +85,7 @@ import json
 import logging
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -128,6 +134,193 @@ _ANTHROPIC_PREFIXES = ('claude-',)
 _OPENAI_PREFIXES = ('gpt-', 'o1-', 'o3-', 'o4-', 'text-davinci')
 
 DEFAULT_OUTPUT = 'sample_quality_report.html'
+DEFAULT_CACHE = 'sample_quality_cache.json'
+
+# Cache version — increment when the cache schema changes incompatibly.
+CACHE_VERSION = 1
+
+# ---------------------------------------------------------------------------
+# Git helpers
+# ---------------------------------------------------------------------------
+
+def _build_sample_sha_map():
+    """
+    Build a {rel_path: tree_sha} mapping for every directory under samples/
+    in a single git call.
+
+    Uses ``git ls-tree -r -d HEAD -- samples/`` which outputs one line per
+    directory object::
+
+        <mode> tree <sha>\t<path>
+
+    The tree SHA for a directory changes whenever any file inside it changes,
+    so it serves as a cheap content fingerprint without traversing commit
+    history.
+
+    Returns an empty dict when git is unavailable or the tree cannot be read.
+    """
+    try:
+        result = subprocess.run(
+            ['git', '-C', str(ZEPHYR_BASE), 'ls-tree', '-r', '-d',
+             'HEAD', '--', 'samples/'],
+            capture_output=True, text=True, timeout=15,
+        )
+        sha_map = {}
+        for line in result.stdout.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            # format: "<mode> tree <sha>\t<path>"
+            try:
+                meta, path = line.split('\t', 1)
+                sha = meta.split()[2]
+                sha_map[path] = sha
+            except (ValueError, IndexError):
+                continue
+        return sha_map
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+        return {}
+
+
+# ---------------------------------------------------------------------------
+# Cache management
+# ---------------------------------------------------------------------------
+
+def load_cache(cache_path):
+    """
+    Load the sample quality cache from a JSON file.
+
+    Cache format::
+
+        {
+            "version": 1,
+            "entries": {
+                "samples/hello_world": {
+                    "git_sha":     "<last-commit-sha-for-path>",
+                    "analyzed_at": "<ISO datetime>",
+                    "sample":      { ... serialisable sample metadata ... },
+                    "heuristic":   { ... heuristic result ... },
+                    "verdict":     "compliant",
+                    "llm": {
+                        "<model-name>": { ... llm result ... }
+                    }
+                }, ...
+            }
+        }
+
+    Returns a dict {path: entry} or empty dict on any error.
+    """
+    if not cache_path or not Path(cache_path).exists():
+        return {}
+    try:
+        with open(cache_path, encoding='utf-8') as fh:
+            data = json.load(fh)
+        if not isinstance(data, dict):
+            return {}
+        if data.get('version') != CACHE_VERSION:
+            log.debug('Cache version mismatch (%s); discarding.',
+                      data.get('version'))
+            return {}
+        entries = data.get('entries', {})
+        log.debug('Loaded cache from %s (%d entries)', cache_path, len(entries))
+        return entries
+    except Exception as exc:
+        log.warning('Could not load cache %s: %s', cache_path, exc)
+        return {}
+
+
+def save_cache(cache_path, entries):
+    """
+    Persist the sample quality cache to a JSON file atomically.
+
+    Writes to a .tmp file first then renames to avoid corruption on
+    interrupted runs.
+    """
+    if not cache_path:
+        return
+    try:
+        data = {'version': CACHE_VERSION, 'entries': entries}
+        tmp = cache_path + '.tmp'
+        with open(tmp, 'w', encoding='utf-8') as fh:
+            json.dump(data, fh, indent=2, default=str)
+        os.replace(tmp, cache_path)
+        log.debug('Cache saved to %s (%d entries)', cache_path, len(entries))
+    except Exception as exc:
+        log.warning('Could not save cache %s: %s', cache_path, exc)
+
+
+def _cache_entry_from_analysis(analysis, git_sha):
+    """
+    Build a serialisable cache entry from a completed analysis dict.
+
+    The full source file contents are excluded to keep the cache compact;
+    only the fields needed to reconstruct the display are stored.
+    """
+    sd = analysis['sample']
+    # Keep display-relevant fields; drop bulky raw source arrays
+    sample_meta = {
+        'path':             sd['path'],
+        'name':             sd.get('name', ''),
+        'description':      sd.get('description', ''),
+        'subsystem':        sd['subsystem'],
+        'yaml_name':        sd.get('yaml_name'),
+        'yaml_data':        sd.get('yaml_data', {}),
+        'loc':              sd['loc'],
+        'source_count':     sd['source_count'],
+        'has_readme':       sd['has_readme'],
+        'has_prj_conf':     sd['has_prj_conf'],
+        'has_cmake':        sd['has_cmake'],
+        # Keep only the first 700 chars for the HTML README excerpt
+        'readme_content':   sd.get('readme_content', '')[:700],
+        'prj_conf_content': sd.get('prj_conf_content', '')[:200],
+        # Mark that sources are not available (needed by LLM builder)
+        'sources':          [],
+    }
+    # LLM results keyed by model name so different models are cached separately
+    llm_by_model = {}
+    llm_result = analysis.get('llm')
+    llm_model  = analysis.get('_llm_model', '')
+    if llm_result and llm_model:
+        llm_by_model[llm_model] = llm_result
+
+    return {
+        'git_sha':     git_sha,
+        'analyzed_at': datetime.datetime.now().isoformat(),
+        'sample':      sample_meta,
+        'heuristic':   analysis['heuristic'],
+        'verdict':     analysis['verdict'],
+        'llm':         llm_by_model,
+    }
+
+
+def _analysis_from_cache(entry, llm_model=None):
+    """
+    Reconstruct an analysis dict from a cache entry.
+
+    llm_model: if provided, look up cached LLM results for that model.
+    Returns the analysis dict with _from_cache=True.
+    """
+    llm_result = None
+    if llm_model:
+        llm_result = entry.get('llm', {}).get(llm_model)
+
+    # Determine final verdict (may need upgrade if LLM is now available)
+    verdict = entry['verdict']
+    if llm_result and llm_result.get('verdict') in VERDICTS:
+        llm_v_idx = VERDICTS.index(llm_result['verdict'])
+        h_v_idx   = VERDICTS.index(entry['heuristic']['verdict'])
+        if llm_v_idx > h_v_idx:
+            verdict = llm_result['verdict']
+
+    return {
+        'sample':      entry['sample'],
+        'heuristic':   entry['heuristic'],
+        'llm':         llm_result,
+        'verdict':     verdict,
+        '_from_cache': True,
+        '_llm_model':  llm_model or '',
+    }
+
 
 # ---------------------------------------------------------------------------
 # Verdict levels (ascending severity of issues)
@@ -1086,10 +1279,12 @@ def analyze_sample(sample_dir, model='gpt-4o-mini', provider=None,
             final_verdict = llm_result['verdict']
 
     return {
-        'sample':    sample_data,
-        'heuristic': heuristic,
-        'llm':       llm_result,
-        'verdict':   final_verdict,
+        'sample':      sample_data,
+        'heuristic':   heuristic,
+        'llm':         llm_result,
+        'verdict':     final_verdict,
+        '_from_cache': False,
+        '_llm_model':  model if run_llm and llm_result else '',
     }
 
 
@@ -1171,6 +1366,9 @@ tbody tr.detail-row td{padding:0;background:#f5f7fa;border-bottom:2px solid #c5c
 .loc-bar-wrap{width:80px;height:8px;background:#e0e0e0;border-radius:4px;
   display:inline-block;vertical-align:middle}
 .loc-bar{height:8px;border-radius:4px;background:#42a5f5}
+.tag-cached{font-size:.7rem;background:#e3f2fd;color:#0d47a1;
+  border:1px solid #90caf9;border-radius:10px;padding:1px 7px;
+  font-weight:600;vertical-align:middle}
 @media(max-width:900px){.detail-inner{grid-template-columns:1fr}}
 """
 
@@ -1308,11 +1506,13 @@ def _detail_html(analysis, idx):
     # Left: heuristic checks                                              #
     # ------------------------------------------------------------------ #
     parts.append('<div class="detail-box">')
-    src_tag = (
-        '<span class="tag-llm">AI + Heuristic</span>'
-        if llm else
-        '<span class="tag-heuristic">Heuristic</span>'
-    )
+    from_cache = analysis.get('_from_cache', False)
+    if llm:
+        src_tag = '<span class="tag-llm">AI + Heuristic</span>'
+    elif from_cache:
+        src_tag = '<span class="tag-cached">Cached</span>'
+    else:
+        src_tag = '<span class="tag-heuristic">Heuristic</span>'
     parts.append(f'<h4>Compliance checks {src_tag}</h4>')
 
     if h['issues']:
@@ -1805,13 +2005,17 @@ def parse_args():
             'Examples:\n'
             '  # Heuristic-only analysis of all samples:\n'
             '  ./scripts/ci/sample_quality_report.py --output report.html\n\n'
+            '  # Repeated runs: use git-SHA cache for speed:\n'
+            '  ./scripts/ci/sample_quality_report.py \\\n'
+            '      --cache sample_quality_cache.json --output report.html\n\n'
             '  # Analyze only the bluetooth subsystem:\n'
             '  ./scripts/ci/sample_quality_report.py --subsystem bluetooth\n\n'
-            '  # AI analysis of non-compliant samples (up to 50):\n'
+            '  # AI analysis of non-compliant samples (up to 50), with cache:\n'
             '  OPENROUTER_API_KEY=sk-or-... \\\n'
             '      ./scripts/ci/sample_quality_report.py \\\n'
             '      --model anthropic/claude-opus-4 \\\n'
             '      --max-llm 50 --llm-non-compliant-only \\\n'
+            '      --cache sample_quality_cache.json \\\n'
             '      --output report.html\n\n'
             '  # Analyze a single sample directory:\n'
             '  ./scripts/ci/sample_quality_report.py \\\n'
@@ -1890,6 +2094,23 @@ def parse_args():
         help='Print per-sample progress to stderr',
     )
     parser.add_argument(
+        '--cache',
+        default=None,
+        metavar='FILE',
+        help=(
+            'Path to the cache JSON file (default: no cache). '
+            'On the first run the cache is populated; subsequent runs '
+            'reuse cached results for samples whose last git commit SHA '
+            'has not changed.  Use "%(default)s" to disable caching even '
+            'when the environment sets a default.'
+        ),
+    )
+    parser.add_argument(
+        '--no-cache',
+        action='store_true',
+        help='Ignore and do not update any cache file',
+    )
+    parser.add_argument(
         '--debug',
         action='store_true',
         help='Enable DEBUG logging (shows raw LLM responses and details)',
@@ -1919,6 +2140,9 @@ def main():
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
 
+    # Resolve cache path
+    cache_path = None if args.no_cache else args.cache
+
     # Discover samples
     print('Discovering samples...', file=sys.stderr)
     sample_dirs = discover_samples(
@@ -1932,25 +2156,70 @@ def main():
 
     print(f'Found {len(sample_dirs)} samples.', file=sys.stderr)
 
+    # Load cache
+    cache_entries = load_cache(cache_path)
+    cache_hits = 0
+    cache_misses = 0
+
+    # Build git tree-SHA map in one call (used for cache invalidation)
+    print('Building git tree SHA map...', file=sys.stderr)
+    sha_map = _build_sample_sha_map()
+    if sha_map:
+        log.debug('git SHA map: %d directory entries', len(sha_map))
+    else:
+        log.debug('git SHA map unavailable; cache invalidation disabled')
+
     # Determine which samples should have LLM analysis
     use_llm = not args.no_llm and args.max_llm > 0 and _any_llm_available()
 
-    if use_llm and not _any_llm_available():
+    if args.max_llm > 0 and not args.no_llm and not _any_llm_available():
         print(
             'Warning: --max-llm requested but no LLM library/key available.',
             file=sys.stderr,
         )
         use_llm = False
 
-    # First pass: heuristic analysis of all samples
+    # First pass: heuristic analysis of all samples (with cache)
     print('Running heuristic analysis...', file=sys.stderr)
     all_analyses = []
     for i, sample_dir in enumerate(sample_dirs):
+        rel_path = str(sample_dir.relative_to(ZEPHYR_BASE))
         if args.verbose:
-            rel = sample_dir.relative_to(ZEPHYR_BASE)
-            print(f'  [{i + 1}/{len(sample_dirs)}] {rel}', file=sys.stderr)
-        analysis = analyze_sample(sample_dir, run_llm=False)
+            print(f'  [{i + 1}/{len(sample_dirs)}] {rel_path}', file=sys.stderr)
+
+        # Fetch tree SHA from pre-built map (free — no subprocess per sample)
+        git_sha = sha_map.get(rel_path, '')
+        cached = cache_entries.get(rel_path)
+
+        if (cached and git_sha
+                and cached.get('git_sha') == git_sha
+                and 'heuristic' in cached):
+            # Cache hit: restore heuristic result without re-reading files
+            analysis = _analysis_from_cache(cached)
+            analysis['_git_sha'] = git_sha
+            cache_hits += 1
+            log.debug('Cache hit: %s (sha %s)', rel_path, git_sha[:12])
+        else:
+            # Cache miss: run full heuristic analysis
+            analysis = analyze_sample(sample_dir, run_llm=False)
+            analysis['_git_sha'] = git_sha
+            # Store heuristic result in cache (LLM added later)
+            cache_entries[rel_path] = _cache_entry_from_analysis(
+                analysis, git_sha
+            )
+            cache_misses += 1
+
         all_analyses.append(analysis)
+
+    if cache_path:
+        hits_pct = f'{cache_hits / len(sample_dirs) * 100:.0f}%' if sample_dirs else '0%'
+        print(
+            f'Cache: {cache_hits} hits ({hits_pct}), '
+            f'{cache_misses} misses',
+            file=sys.stderr,
+        )
+        # Persist after heuristic pass so partial results survive interrupts
+        save_cache(cache_path, cache_entries)
 
     # Sort by verdict severity (worst first) then path
     verdict_order = {v: i for i, v in enumerate(reversed(VERDICTS))}
@@ -1963,18 +2232,41 @@ def main():
 
     # Second pass: LLM analysis for selected samples
     if use_llm:
-        # Select candidates
-        candidates = [
-            a for a in all_analyses
-            if (not args.llm_non_compliant_only or a['verdict'] != 'compliant')
-        ]
-        candidates = candidates[:args.max_llm]
+        # Select candidates (skip those that already have a cached LLM result
+        # for this model and whose git SHA has not changed)
+        candidates = []
+        for a in all_analyses:
+            if args.llm_non_compliant_only and a['verdict'] == 'compliant':
+                continue
+            # If from cache and LLM result for this model is already there, skip
+            if a.get('_from_cache'):
+                rel_path = a['sample']['path']
+                cached = cache_entries.get(rel_path, {})
+                if cached.get('git_sha') == a.get('_git_sha', '') and \
+                        args.model in cached.get('llm', {}):
+                    # Inject cached LLM into the analysis in-place
+                    llm_r = cached['llm'][args.model]
+                    a['llm'] = llm_r
+                    a['_llm_model'] = args.model
+                    # Re-merge verdict
+                    if llm_r.get('verdict') in VERDICTS:
+                        llm_idx = VERDICTS.index(llm_r['verdict'])
+                        h_idx = VERDICTS.index(a['heuristic']['verdict'])
+                        if llm_idx > h_idx:
+                            a['verdict'] = llm_r['verdict']
+                    log.debug('LLM cache hit: %s (model %s)',
+                              rel_path, args.model)
+                    continue
+            candidates.append(a)
+            if len(candidates) >= args.max_llm:
+                break
 
-        print(
-            f'Running LLM analysis on {len(candidates)} samples '
-            f'(model: {args.model})...',
-            file=sys.stderr,
-        )
+        if candidates:
+            print(
+                f'Running LLM analysis on {len(candidates)} samples '
+                f'(model: {args.model})...',
+                file=sys.stderr,
+            )
         llm_done = 0
         for analysis in candidates:
             path = analysis['sample']['path']
@@ -1984,8 +2276,25 @@ def main():
             sample_dir = ZEPHYR_BASE / path
             sd = analysis['sample']
             h = analysis['heuristic']
+
+            # Re-read source files if they were dropped from the cache
+            if not sd.get('sources') and not analysis.get('_from_cache'):
+                pass  # sources already present from fresh analysis
+            elif not sd.get('sources'):
+                # Restore sources from disk for LLM prompt building
+                sd['sources'] = collect_source_files(sample_dir)
+                if not sd.get('prj_conf_content') or len(sd['prj_conf_content']) < 50:
+                    sd['prj_conf_content'] = _read_text(
+                        sample_dir / 'prj.conf'
+                    )
+                if not sd.get('readme_content') or len(sd['readme_content']) < 100:
+                    sd['readme_content'] = _read_text(
+                        sample_dir / 'README.rst'
+                    )
+
             llm_result = llm_analyze_sample(sd, h, args.model, args.provider)
             analysis['llm'] = llm_result
+            analysis['_llm_model'] = args.model
             if llm_result:
                 # Upgrade verdict if LLM rates it worse
                 llm_v = llm_result.get('verdict', '')
@@ -1994,8 +2303,22 @@ def main():
                     h_idx = VERDICTS.index(analysis['verdict'])
                     if llm_idx > h_idx:
                         analysis['verdict'] = llm_v
+                # Update cache entry with LLM result
+                if cache_path:
+                    rel_path = path
+                    git_sha = sha_map.get(rel_path, analysis.get('_git_sha', ''))
+                    entry = cache_entries.get(rel_path, {})
+                    if not entry:
+                        entry = _cache_entry_from_analysis(analysis, git_sha)
+                        cache_entries[rel_path] = entry
+                    if 'llm' not in entry:
+                        entry['llm'] = {}
+                    entry['llm'][args.model] = llm_result
+                    # Save incrementally so partial LLM runs are not lost
+                    save_cache(cache_path, cache_entries)
             llm_done += 1
-            print(f'  OK ({llm_done}/{len(candidates)})', file=sys.stderr)
+            if args.verbose:
+                print(f'  OK ({llm_done}/{len(candidates)})', file=sys.stderr)
 
     # Generate HTML report
     print('Generating HTML report...', file=sys.stderr)
@@ -2011,15 +2334,17 @@ def main():
         json_data = []
         for a in all_analyses:
             entry = {
-                'path':      a['sample']['path'],
-                'name':      a['sample'].get('name', ''),
-                'subsystem': a['sample']['subsystem'],
-                'yaml_name': a['sample'].get('yaml_name'),
-                'loc':       a['sample']['loc'],
-                'verdict':   a['verdict'],
-                'issues':    a['heuristic']['issues'],
-                'purpose':   a['heuristic']['purpose'],
-                'llm':       a.get('llm'),
+                'path':        a['sample']['path'],
+                'name':        a['sample'].get('name', ''),
+                'subsystem':   a['sample']['subsystem'],
+                'yaml_name':   a['sample'].get('yaml_name'),
+                'loc':         a['sample']['loc'],
+                'verdict':     a['verdict'],
+                'issues':      a['heuristic']['issues'],
+                'purpose':     a['heuristic']['purpose'],
+                'llm':         a.get('llm'),
+                'from_cache':  a.get('_from_cache', False),
+                'git_sha':     a.get('_git_sha', ''),
             }
             json_data.append(entry)
         with open(args.json_out, 'w', encoding='utf-8') as fh:
@@ -2036,6 +2361,13 @@ def main():
         cnt = verdict_counts[v]
         pct = f'{cnt / len(all_analyses) * 100:.1f}%' if all_analyses else '0%'
         print(f'  {VERDICT_LABELS[v]:<20} {cnt:>5}  ({pct})', file=sys.stderr)
+
+    if cache_path:
+        print(
+            f'\nCache: {cache_path}  '
+            f'({len(cache_entries)} entries stored)',
+            file=sys.stderr,
+        )
 
     if not _any_llm_available() and not args.no_llm and args.max_llm == 0:
         print(
