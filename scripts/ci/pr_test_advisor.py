@@ -873,23 +873,11 @@ def _resolve_provider(model, provider_hint):
 # ---------------------------------------------------------------------------
 
 LLM_SYSTEM_PROMPT = """\
-You are an expert Zephyr RTOS code reviewer and QA engineer. Your task is to
-analyze a GitHub pull request to the Zephyr project and produce a structured
-JSON test recommendation report.
+You are an expert Zephyr RTOS code reviewer and QA engineer.
+Analyze the GitHub pull request described below and respond with ONLY a
+JSON object — no prose, no markdown fences, no explanation outside the JSON.
 
-You have access to the following tools which you MUST call to gather information
-before producing your final report:
-
-1. analyze_changed_files(files: list[str]) -> dict
-   Returns subsystems, risk areas, and suggested test tags for a file list.
-
-2. get_pr_diff_summary(file_path: str) -> str
-   Returns a brief summary of what changed in a specific file (from the PR diff).
-
-3. finalize_report(analysis: dict) -> dict
-   Accepts your complete analysis and returns the validated final report.
-
-Produce a final_report JSON object with exactly these fields:
+The JSON object must have exactly these fields:
 {
   "summary": "<2-3 sentence description of what this PR does>",
   "complexity": "<trivial|low|medium|high|critical>",
@@ -897,18 +885,23 @@ Produce a final_report JSON object with exactly these fields:
   "affected_subsystems": ["<subsystem1>", ...],
   "risk_areas": ["<area of concern>", ...],
   "test_focus": ["<what aspects should be tested>", ...],
-  "additional_platforms": ["<platform slug>", ...],
-  "notes": "<any special testing notes or caveats>"
+  "additional_platforms": ["<zephyr platform slug>", ...],
+  "notes": "<special testing notes or caveats, or empty string>"
 }
 
-Guidelines for complexity:
+Complexity guidelines:
 - trivial: docs-only, typo fix, comment update, CI-config only
 - low: single driver/subsystem, narrow scope, < 100 lines
 - medium: single subsystem but non-trivial, 100-500 lines, or API change
 - high: multiple subsystems, kernel/arch changes, public API break, > 500 lines
 - critical: cross-cutting refactor, ABI break, security fix, build system overhaul
 
-Only output valid JSON, no markdown fences, no prose outside the JSON object.
+For additional_platforms: suggest Zephyr board/platform slugs most relevant for
+testing this change (e.g. native_sim, qemu_x86, nrf52dk_nrf52832).
+Leave the list empty if the heuristic platforms already cover it well.
+
+IMPORTANT: Your entire response must be a single valid JSON object.
+Do NOT wrap it in ```json fences. Do NOT add any text before or after.
 """
 
 LLM_USER_PROMPT_TMPL = """\
@@ -1030,7 +1023,7 @@ def _call_openai(model, system, user):
         ],
         response_format={'type': 'json_object'},
         temperature=0.2,
-        max_tokens=1024,
+        max_tokens=2048,
     )
     return response.choices[0].message.content
 
@@ -1043,7 +1036,7 @@ def _call_anthropic(model, system, user):
     client = anthropic.Anthropic(api_key=api_key)
     response = client.messages.create(
         model=model,
-        max_tokens=1024,
+        max_tokens=2048,
         system=system,
         messages=[{'role': 'user', 'content': user}],
         temperature=0.2,
@@ -1060,7 +1053,7 @@ def _call_litellm(model, system, user):
             {'role': 'user', 'content': user},
         ],
         temperature=0.2,
-        max_tokens=1024,
+        max_tokens=2048,
     )
     return response.choices[0].message.content
 
@@ -1099,9 +1092,16 @@ def _call_openrouter(model, system, user):
             {'role': 'user', 'content': user},
         ],
         temperature=0.2,
-        max_tokens=1024,
+        max_tokens=2048,
     )
-    return response.choices[0].message.content
+    content = response.choices[0].message.content
+    # Some OpenRouter backends signal refusal or empty output via finish_reason
+    finish_reason = response.choices[0].finish_reason
+    if not content or not content.strip():
+        raise json.JSONDecodeError(
+            f'Empty response from OpenRouter (finish_reason={finish_reason!r})', '', 0
+        )
+    return content
 
 
 def llm_analyze(pr_data, heuristic_result, provider=None):
@@ -1138,7 +1138,22 @@ def llm_analyze(pr_data, heuristic_result, provider=None):
     try:
         raw = backend_fn(model, LLM_SYSTEM_PROMPT, user_content)
         log.debug('Raw LLM response: %s', raw)
-        return _extract_json(raw)
+        result = _extract_json(raw)
+        return result
+    except json.JSONDecodeError as exc:
+        # Show the raw response so the user can diagnose what the model returned
+        log.warning('LLM analysis failed (%s): %s', resolved, exc)
+        if exc.doc and exc.doc.strip():
+            log.warning(
+                'Raw LLM response was:\n%s',
+                exc.doc[:2000] + ('...' if len(exc.doc) > 2000 else ''),
+            )
+        else:
+            log.warning(
+                'The model returned an empty response. '
+                'Try a different model with --model, or check your API key.'
+            )
+        return None
     except Exception as exc:
         log.warning('LLM analysis failed (%s): %s', resolved, exc)
         return None
@@ -1588,6 +1603,11 @@ def parse_args():
         help='Include full file list in the report',
     )
     parser.add_argument(
+        '--debug',
+        action='store_true',
+        help='Enable DEBUG logging (shows raw LLM response and other details)',
+    )
+    parser.add_argument(
         '--no-llm',
         action='store_true',
         help='Disable LLM analysis entirely',
@@ -1610,6 +1630,9 @@ def _any_llm_available():
 
 def main():
     args = parse_args()
+
+    if args.debug:
+        logging.getLogger().setLevel(logging.DEBUG)
 
     provider = None if args.no_llm else args.provider
 
