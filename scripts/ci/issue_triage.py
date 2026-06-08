@@ -1793,15 +1793,44 @@ tbody tr.detail-row td{padding:0;background:#f5f7fa;border-bottom:2px solid #c5c
   border-radius:4px;font-size:.8rem}
 .scope-section{margin-top:8px;padding:6px 10px;border-radius:4px;
   background:#f5f5f5;border-left:3px solid #9e9e9e;font-size:.82rem}
+.row-reviewed{opacity:.45;text-decoration:line-through}
+.row-reviewed td{color:#888}
+.row-reviewed.expanded{opacity:.7;text-decoration:none}
+.btn-reviewed{display:inline-block;padding:4px 12px;border-radius:4px;
+  font-size:.8rem;font-weight:600;cursor:pointer;border:1px solid #ccc;
+  background:#fff;color:#555;margin-top:8px}
+.btn-reviewed:hover{background:#f5f5f5}
+.btn-reviewed.active{background:#e8f5e9;border-color:#81c784;color:#2e7d32}
 @media(max-width:900px){.detail-inner{grid-template-columns:1fr}}
 """
 
 _JS = """\
 (function(){
 var rows=[], filtered=[];
+var STORE_KEY='zephyr-triage-reviewed';
+function loadReviewed(){
+  try{return JSON.parse(localStorage.getItem(STORE_KEY)||'{}');}catch(e){return {};}
+}
+function saveReviewed(map){
+  try{localStorage.setItem(STORE_KEY,JSON.stringify(map));}catch(e){}
+}
 function init(){
   rows=Array.from(document.querySelectorAll('tbody tr.issue-row'));
   filtered=rows.slice();
+  /* restore reviewed state from localStorage */
+  var rev=loadReviewed();
+  rows.forEach(function(row){
+    if(rev[row.dataset.num]){
+      row.classList.add('row-reviewed');
+      row.dataset.reviewed='1';
+      /* update the button label inside the (hidden) detail row */
+      var dr=document.getElementById(row.dataset.detail);
+      if(dr){
+        var btn=dr.querySelector('.btn-reviewed');
+        if(btn){btn.textContent='Reviewed \u2713';btn.classList.add('active');}
+      }
+    }
+  });
   updateCount();
   document.querySelectorAll('thead th[data-col]').forEach(function(th){
     th.addEventListener('click',function(){sortBy(th)});
@@ -1810,10 +1839,23 @@ function init(){
   document.getElementById('fc').addEventListener('change',applyFilters);
   document.getElementById('fp').addEventListener('change',applyFilters);
   document.getElementById('fsc').addEventListener('change',applyFilters);
+  document.getElementById('fr').addEventListener('change',applyFilters);
   document.getElementById('fs').addEventListener('input',applyFilters);
   document.getElementById('btn-clear').addEventListener('click',clearFilters);
   rows.forEach(function(row){
-    row.addEventListener('click',function(){toggleDetail(row)});
+    row.addEventListener('click',function(e){
+      /* clicks on the reviewed-toggle button are handled separately */
+      if(e.target.classList.contains('btn-reviewed'))return;
+      toggleDetail(row);
+    });
+  });
+  document.addEventListener('click',function(e){
+    if(e.target.classList.contains('btn-reviewed')){
+      e.stopPropagation();
+      var num=e.target.dataset.issue;
+      var row=document.querySelector('tr.issue-row[data-num="'+num+'"]');
+      if(row)toggleReviewed(row,e.target);
+    }
   });
 }
 function toggleDetail(row){
@@ -1824,11 +1866,35 @@ function toggleDetail(row){
   if(open){dr.style.display='none';row.classList.remove('expanded');}
   else{dr.style.display='';row.classList.add('expanded');}
 }
+function toggleReviewed(row,btn){
+  var rev=loadReviewed();
+  var num=row.dataset.num;
+  var isRev=row.classList.contains('row-reviewed');
+  if(isRev){
+    row.classList.remove('row-reviewed');
+    row.dataset.reviewed='0';
+    delete rev[num];
+    if(btn){btn.textContent='Mark reviewed';btn.classList.remove('active');}
+  } else {
+    row.classList.add('row-reviewed');
+    row.dataset.reviewed='1';
+    rev[num]=1;
+    /* collapse detail when marking reviewed */
+    var dr=document.getElementById(row.dataset.detail);
+    if(dr)dr.style.display='none';
+    row.classList.remove('expanded');
+    if(btn){btn.textContent='Reviewed ✓';btn.classList.add('active');}
+  }
+  saveReviewed(rev);
+  /* re-apply filters in case the reviewed filter is active */
+  applyFilters();
+}
 function applyFilters(){
   var v=document.getElementById('fv').value;
   var c=document.getElementById('fc').value;
   var p=document.getElementById('fp').value;
   var sc=document.getElementById('fsc').value;
+  var r=document.getElementById('fr').value;
   var s=document.getElementById('fs').value.toLowerCase();
   filtered=[];
   rows.forEach(function(row){
@@ -1836,13 +1902,15 @@ function applyFilters(){
     var mc=!c||row.dataset.crit===c;
     var mp=!p||row.dataset.prio===p;
     var msc=!sc||row.dataset.scope===sc;
+    var mr=!r||(r==='unreviewed'&&row.dataset.reviewed!=='1')
+               ||(r==='reviewed'&&row.dataset.reviewed==='1');
     var ms=!s||(row.dataset.title||'').indexOf(s)>=0
                ||(row.dataset.num||'').indexOf(s)>=0;
-    var show=mv&&mc&&mp&&msc&&ms;
+    var show=mv&&mc&&mp&&msc&&mr&&ms;
     row.style.display=show?'':'none';
     var dr=document.getElementById(row.dataset.detail);
-    if(dr)dr.style.display='none';
-    if(show)row.classList.remove('expanded');
+    if(dr&&!show)dr.style.display='none';
+    if(!show)row.classList.remove('expanded');
     if(show)filtered.push(row);
   });
   updateCount();
@@ -1852,6 +1920,7 @@ function clearFilters(){
   document.getElementById('fc').value='';
   document.getElementById('fp').value='';
   document.getElementById('fsc').value='';
+  document.getElementById('fr').value='';
   document.getElementById('fs').value='';
   applyFilters();
 }
@@ -2126,6 +2195,17 @@ def _detail_row(analysis, idx):
             f'{snippet}</pre>'
         )
     parts.append('</div>')
+
+    # ------------------------------------------------------------------ #
+    # Reviewed toggle button                                              #
+    # ------------------------------------------------------------------ #
+    issue_num = analysis.get('number', '')
+    parts.append(
+        f'<div style="margin-top:4px;padding:0 0 4px">'
+        f'<button class="btn-reviewed" data-issue="{issue_num}">Mark reviewed</button>'
+        f'</div>'
+    )
+
     parts.append('</div>')
 
     return ''.join(parts)
@@ -2249,6 +2329,11 @@ def generate_html_report(analyses, args):
         + _options(list(PLATFORM_SCOPE_LABELS.keys()))
         + '</select></label>'
         '<label>Search: <input type="text" id="fs" placeholder="title or #" style="width:180px"></label>'
+        '<label>Reviewed: <select id="fr">'
+        '<option value="">All</option>'
+        '<option value="unreviewed">Unreviewed</option>'
+        '<option value="reviewed">Reviewed</option>'
+        '</select></label>'
         '<button id="btn-clear">Clear</button>'
         '<span class="filter-count" id="filter-count"></span>'
         '</div>'
@@ -2304,6 +2389,7 @@ def generate_html_report(analyses, args):
             f' data-scope="{esc(scope)}"'
             f' data-title="{esc(title.lower())}"'
             f' data-age="{age_days}"'
+            f' data-reviewed="0"'
             f' data-detail="{detail_id}"'
         )
 
