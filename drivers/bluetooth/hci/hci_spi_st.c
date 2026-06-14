@@ -543,6 +543,15 @@ static void bt_spi_rx_thread(void *p1, void *p2, void *p3)
 
 			/* Read data */
 			if (ret == 0 && size != 0) {
+				if (size > sizeof(rxmsg)) {
+					/* A malicious or malfunctioning controller can
+					 * report a size larger than our static RX buffer;
+					 * clamp it to avoid overflowing rxmsg/txmsg.
+					 */
+					LOG_ERR("Read size %u exceeds buffer %zu", size,
+						sizeof(rxmsg));
+					size = sizeof(rxmsg);
+				}
 				ret = bt_spi_transceive(&txmsg, size, &rxmsg, size);
 			}
 
