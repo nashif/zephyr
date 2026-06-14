@@ -525,7 +525,22 @@ static bool base_subgroup_meta_cb(const struct bt_bap_base_subgroup *subgroup, v
 		return false;
 	}
 
+	/* The BASE is advertised over the air by an untrusted broadcaster.
+	 * Reject more subgroups than the static array can hold, and metadata
+	 * longer than the per-subgroup buffer, before writing to either.
+	 */
+	if (mod_src_param.num_subgroups >= ARRAY_SIZE(mod_src_param.subgroups)) {
+		LOG_DBG("Too many subgroups in BASE");
+		return false;
+	}
+
 	subgroup_param = &mod_src_param.subgroups[mod_src_param.num_subgroups];
+
+	if ((size_t)ret > sizeof(subgroup_param->metadata)) {
+		LOG_DBG("Subgroup metadata too long: %d", ret);
+		return false;
+	}
+
 	mod_src_param.num_subgroups++;
 	subgroup_param->metadata_len = (uint8_t)ret;
 	memcpy(subgroup_param->metadata, meta, subgroup_param->metadata_len);
