@@ -2170,7 +2170,7 @@ static void le_set_cig_params_test(struct net_buf *buf, struct net_buf **evt)
 
 static void le_create_cis(struct net_buf *buf, struct net_buf **evt)
 {
-	uint16_t handle_used[CONFIG_BT_CTLR_CONN_ISO_STREAMS_PER_GROUP] = {0};
+	uint16_t handle_used[CONFIG_BT_CTLR_CONN_ISO_STREAMS] = {0};
 	struct bt_hci_cp_le_create_cis *cmd = (void *)buf->data;
 	uint8_t status;
 	uint8_t i;
@@ -2202,6 +2202,15 @@ static void le_create_cis(struct net_buf *buf, struct net_buf **evt)
 
 		cis_handle = sys_le16_to_cpu(cmd->cis[i].cis_handle);
 		acl_handle = sys_le16_to_cpu(cmd->cis[i].acl_handle);
+
+		if (!IS_CIS_HANDLE(cis_handle)) {
+			/* Reject handles that are not valid CIS handles before
+			 * using them to index handle_used[], otherwise a crafted
+			 * LE Create CIS command can drive an out-of-bounds access.
+			 */
+			status = BT_HCI_ERR_UNKNOWN_CONN_ID;
+			break;
+		}
 
 		cis_idx = LL_CIS_IDX_FROM_HANDLE(cis_handle);
 		if (handle_used[cis_idx]) {
