@@ -704,6 +704,14 @@ static int handle_fw_get(const struct bt_mesh_model *mod, struct bt_mesh_msg_ctx
 	size_t fwid_len;
 	int idx;
 
+	/* The op uses BT_MESH_LEN_MIN(0), so the access layer enforces no upper
+	 * bound. A FWID longer than FWID_MAXLEN is malformed and, if echoed back
+	 * by fw_status_rsp(), would overflow its fixed stack response buffer.
+	 */
+	if (buf->len > CONFIG_BT_MESH_DFU_FWID_MAXLEN) {
+		return -EINVAL;
+	}
+
 	fwid_len = buf->len;
 	fwid = net_buf_simple_pull_mem(buf, fwid_len);
 
@@ -746,6 +754,13 @@ static int handle_fw_delete(const struct bt_mesh_model *mod, struct bt_mesh_msg_
 	struct bt_mesh_dfd_srv *srv = mod->rt->user_data;
 	const uint8_t *fwid;
 	size_t fwid_len;
+
+	/* See handle_fw_get(): reject oversized FWIDs before they can be echoed
+	 * back into fw_status_rsp()'s fixed stack response buffer.
+	 */
+	if (buf->len > CONFIG_BT_MESH_DFU_FWID_MAXLEN) {
+		return -EINVAL;
+	}
 
 	fwid_len = buf->len;
 	fwid = net_buf_simple_pull_mem(buf, fwid_len);
