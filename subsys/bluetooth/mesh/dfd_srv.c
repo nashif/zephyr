@@ -172,7 +172,16 @@ static int handle_receivers_get(const struct bt_mesh_model *mod, struct bt_mesh_
 	net_buf_simple_add_le16(&rsp, srv->target_cnt);
 	net_buf_simple_add_le16(&rsp, first);
 
-	cnt = MIN(cnt, srv->target_cnt - first);
+	/* `first` is attacker-controlled. Without this guard,
+	 * `srv->target_cnt - first` underflows (uint16_t promoted to int) when
+	 * first > target_cnt and wraps `cnt` to a huge value, driving an
+	 * out-of-bounds read of srv->targets[] into the response.
+	 */
+	if (first >= srv->target_cnt) {
+		cnt = 0;
+	} else {
+		cnt = MIN(cnt, srv->target_cnt - first);
+	}
 	progress = bt_mesh_dfu_cli_progress(&srv->dfu) / 2;
 
 	for (i = 0; i < cnt && net_buf_simple_tailroom(&rsp) >= 5 + BT_MESH_MIC_SHORT; i++) {
