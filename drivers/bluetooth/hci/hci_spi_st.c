@@ -462,7 +462,11 @@ static int bt_spi_rx_buf_construct(uint8_t *msg, struct net_buf **bufp, uint16_t
 		}
 		/* Skip the first byte (HCI packet indicator) */
 		size = size - 1;
-		net_buf_add_mem(buf, &msg[1], size);
+		/* Tailroom was validated against `len` (the declared event
+		 * length), but the SPI frame may carry more bytes than the event
+		 * declares. Never copy more than `len` to avoid overflowing buf.
+		 */
+		net_buf_add_mem(buf, &msg[1], MIN(size, len));
 #if DT_HAS_COMPAT_STATUS_OKAY(st_hci_spi_v1)
 		if (size < len) {
 			ret = -EINPROGRESS;
