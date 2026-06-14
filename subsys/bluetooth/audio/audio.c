@@ -51,7 +51,12 @@ int bt_audio_data_parse(const uint8_t ltv[], size_t size,
 		const uint8_t len = ltv[i];
 		struct bt_data data;
 
-		if (i + len > size || len < sizeof(data.type)) {
+		/* The element occupies the length byte itself plus `len` bytes
+		 * (type + value), i.e. indices i .. i + len. Without the +1 an
+		 * element with len == size - i passes this check but its value
+		 * reads one byte past the buffer.
+		 */
+		if (i + 1U + len > size || len < sizeof(data.type)) {
 			LOG_DBG("Invalid len %u at i = %zu", len, i);
 
 			return -EINVAL;
