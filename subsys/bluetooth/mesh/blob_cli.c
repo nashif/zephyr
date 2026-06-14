@@ -1369,8 +1369,21 @@ static int handle_block_status(const struct bt_mesh_model *mod, struct bt_mesh_m
 	status.missing = status_and_format >> 6;
 	status.block.number = net_buf_simple_pull_le16(buf);
 	chunk_size = net_buf_simple_pull_le16(buf);
+	/* chunk_size is server-controlled. A value of 0 causes a divide-by-zero
+	 * below, and a too-small value yields a chunk_count larger than the
+	 * fixed-size missing[] bitmap can hold (overflowing the subsequent
+	 * memset/encode handling).
+	 */
+	if (chunk_size == 0U) {
+		LOG_ERR("Invalid chunk size");
+		return -EINVAL;
+	}
 	status.block.chunk_count =
 		DIV_ROUND_UP(cli->block.size, chunk_size);
+	if (status.block.chunk_count > 8 * sizeof(status.block.missing)) {
+		LOG_ERR("Invalid chunk count %u", status.block.chunk_count);
+		return -EINVAL;
+	}
 
 	LOG_DBG("status: %u block: %u encoding: %u", status.status,
 		status.block.number, status.missing);
