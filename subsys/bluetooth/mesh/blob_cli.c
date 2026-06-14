@@ -1321,6 +1321,15 @@ static int handle_block_report(const struct bt_mesh_model *mod, struct bt_mesh_m
 			return idx;
 		}
 
+		/* idx is server-controlled (up to 0xffff); bound it against the
+		 * block's chunk count before using it to index the fixed-size
+		 * missing[] bitmap, otherwise it can write out of bounds.
+		 */
+		if (idx >= cli->block.chunk_count) {
+			LOG_ERR("Invalid chunk index %d", idx);
+			return -EINVAL;
+		}
+
 		blob_chunk_missing_set(status.block.missing, idx, true);
 	}
 
