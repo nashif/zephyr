@@ -1413,6 +1413,14 @@ static void rfcomm_handle_msg(struct bt_rfcomm_session *session,
 		if (!cr) {
 			break;
 		}
+		/* The pattern length is buf->len - 1 (the trailing FCS byte is
+		 * stripped). Without this guard a zero-length TEST command would
+		 * underflow to 255 (uint8_t len) and drive an out-of-bounds copy.
+		 */
+		if (buf->len < 1U) {
+			LOG_ERR("Too small TEST command");
+			break;
+		}
 		rfcomm_send_test(session, BT_RFCOMM_MSG_RESP_CR, buf->data,
 				 buf->len - 1);
 		break;
