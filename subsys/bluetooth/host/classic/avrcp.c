@@ -2689,6 +2689,9 @@ static int avrcp_ct_handle_change_path(struct bt_avrcp *avrcp, uint8_t tid, stru
 
 	status = net_buf_pull_u8(buf);
 	if (status == BT_AVRCP_STATUS_OPERATION_COMPLETED) {
+		if (buf->len < sizeof(uint32_t)) {
+			return BT_AVRCP_STATUS_INVALID_PARAMETER;
+		}
 		num_items = net_buf_pull_be32(buf);
 	}
 
