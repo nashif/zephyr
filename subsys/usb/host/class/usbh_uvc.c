@@ -2108,6 +2108,14 @@ static uint32_t extract_control_bitmap(const uint8_t *bmControls, uint8_t contro
 {
 	uint32_t controls = 0;
 
+	/* bmControls/bControlSize are device-supplied. Cap the iteration at the
+	 * width of the result: reading more than sizeof(uint32_t) bytes both
+	 * over-reads the descriptor and shifts by >= 32 bits (undefined).
+	 */
+	if (control_size > sizeof(controls)) {
+		control_size = sizeof(controls);
+	}
+
 	for (uint8_t i = 0; i < control_size; i++) {
 		controls |= ((uint32_t)bmControls[i]) << (i * 8);
 	}
