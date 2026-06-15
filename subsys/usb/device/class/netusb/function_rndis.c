@@ -510,6 +510,11 @@ static int rndis_query_handle(uint8_t *data, uint32_t len)
 	struct net_buf *buf;
 	uint32_t object_id, buf_len = 0U;
 
+	if (len < sizeof(*cmd)) {
+		LOG_ERR("Packet is shorter than header");
+		return -EINVAL;
+	}
+
 	buf = net_buf_alloc(&rndis_tx_pool, K_NO_WAIT);
 	if (!buf) {
 		LOG_ERR("Cannot get free buffer");
