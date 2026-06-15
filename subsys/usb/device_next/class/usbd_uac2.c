@@ -118,7 +118,11 @@ static entity_type_t id_type(struct usbd_class_data *const c_data, uint8_t id)
 	const struct device *dev = usbd_class_get_private(c_data);
 	const struct uac2_cfg *cfg = dev->config;
 
-	if ((id - 1) < cfg->num_entities) {
+	/* id is 1-based. id == 0 must be rejected explicitly: (id - 1) is
+	 * computed in int, so for id == 0 it is -1, which would pass this
+	 * comparison and read entity_types[-1].
+	 */
+	if ((id >= 1) && ((id - 1) < cfg->num_entities)) {
 		return cfg->entity_types[id - 1];
 	}
 
