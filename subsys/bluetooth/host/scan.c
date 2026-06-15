@@ -1180,6 +1180,14 @@ static void bt_hci_le_per_adv_report_common(struct net_buf *buf)
 
 	evt = net_buf_pull_mem(buf, sizeof(*evt));
 
+	/* evt->length is controller-supplied and is later used to copy from
+	 * buf->data; make sure the buffer actually holds that many bytes.
+	 */
+	if (buf->len < evt->length) {
+		LOG_ERR("Periodic advertising data shorter than reported length");
+		return;
+	}
+
 	per_adv_sync = bt_hci_per_adv_sync_lookup_handle(sys_le16_to_cpu(evt->handle));
 
 	if (!per_adv_sync) {
