@@ -581,6 +581,11 @@ static int usbip_handle_import(struct usbip_bus_ctx *const bus_ctx, int connfd)
 		return ret == 0 ? -ENOTCONN : -errno;
 	}
 
+	/* busid arrives from the network and is not guaranteed to be NUL
+	 * terminated; it is later used with %s. Force termination.
+	 */
+	busid[sizeof(busid) - 1] = '\0';
+
 	dev_ctx = get_free_dev_ctx(bus_ctx);
 	if (dev_ctx == NULL) {
 		rep_hdr.status = net_htonl(-1);
