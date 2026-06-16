@@ -1999,16 +1999,32 @@ static uint16_t get_ssa_record_len(struct net_buf *buf)
 	uint16_t len;
 	uint8_t seq;
 
+	/* guard each pull against buffer underrun — a server-controlled
+	 * length field could leave fewer bytes than the seq/length bytes need.
+	 */
+	if (buf->len < 1U) {
+		return 0U;
+	}
+
 	seq = net_buf_pull_u8(buf);
 
 	switch (seq) {
 	case BT_SDP_SEQ8:
+		if (buf->len < sizeof(uint8_t)) {
+			return 0U;
+		}
 		len = net_buf_pull_u8(buf);
 		break;
 	case BT_SDP_SEQ16:
+		if (buf->len < sizeof(uint16_t)) {
+			return 0U;
+		}
 		len = net_buf_pull_be16(buf);
 		break;
 	case BT_SDP_SEQ32:
+		if (buf->len < sizeof(uint32_t)) {
+			return 0U;
+		}
 		len = net_buf_pull_be32(buf);
 		break;
 	default:
