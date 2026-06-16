@@ -190,8 +190,17 @@ int usbh_req_desc_cfg(struct usb_device *const udev,
 
 	ret = usbh_req_desc(udev, type, index, 0, wLength, buf);
 	if (ret == 0) {
-		memcpy(desc, buf->data, len);
-		desc->wTotalLength = sys_le16_to_cpu(desc->wTotalLength);
+		/* Validate the device returned at least len bytes before copying;
+		 * a short response would make memcpy read past buf->data.
+		 */
+		if (buf->len < len) {
+			LOG_ERR("Config descriptor too short: %u < %u",
+				buf->len, len);
+			ret = -EIO;
+		} else {
+			memcpy(desc, buf->data, len);
+			desc->wTotalLength = sys_le16_to_cpu(desc->wTotalLength);
+		}
 	}
 
 	usbh_xfer_buf_free(udev, buf);
