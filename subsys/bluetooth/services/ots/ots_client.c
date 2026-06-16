@@ -240,7 +240,11 @@ static void chan_closed(struct bt_gatt_ots_l2cap *l2cap_ctx,
 static void print_oacp_response(enum bt_gatt_ots_oacp_proc_type req_opcode,
 				enum bt_gatt_ots_oacp_res_code result_code)
 {
-	LOG_DBG("Request OP Code: %s", lit_request[req_opcode]);
+	if ((size_t)req_opcode < ARRAY_SIZE(lit_request)) {
+		LOG_DBG("Request OP Code: %s", lit_request[req_opcode]);
+	} else {
+		LOG_DBG("Request OP Code: unknown (0x%02x)", req_opcode);
+	}
 	LOG_DBG("Result Code    : %s", lit_result[result_code]);
 }
 
@@ -1029,12 +1033,12 @@ static uint8_t read_obj_created_cb(struct bt_conn *conn, uint8_t err,
 	}
 
 	if (data) {
-		if (length <= BT_OTS_DATE_TIME_FIELD_SIZE) {
+		if (length == BT_OTS_DATE_TIME_FIELD_SIZE) {
 			date_time_decode(
 				&net_buf,
 				&inst->otc_inst->cur_object.first_created);
 		} else {
-			LOG_WRN("Invalid length %u (expected max %u)", length,
+			LOG_WRN("Invalid length %u (expected %u)", length,
 				BT_OTS_DATE_TIME_FIELD_SIZE);
 			err = BT_ATT_ERR_INVALID_ATTRIBUTE_LEN;
 		}
@@ -1070,7 +1074,7 @@ static uint8_t read_obj_modified_cb(struct bt_conn *conn, uint8_t err,
 	}
 
 	if (data) {
-		if (length <= BT_OTS_DATE_TIME_FIELD_SIZE) {
+		if (length == BT_OTS_DATE_TIME_FIELD_SIZE) {
 			date_time_decode(&net_buf,
 					 &inst->otc_inst->cur_object.modified);
 		} else {
