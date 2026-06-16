@@ -431,6 +431,17 @@ int usbh_device_set_configuration(struct usb_device *const udev, const uint8_t n
 		goto error;
 	}
 
+	/* wTotalLength must cover at least the configuration descriptor header
+	 * itself. A smaller value would make the subsequent memcmp(9) read past
+	 * a heap allocation that was sized from the too-small wTotalLength.
+	 */
+	if (cfg_desc.wTotalLength < sizeof(struct usb_cfg_descriptor)) {
+		LOG_ERR("Configuration descriptor wTotalLength %u too small",
+			cfg_desc.wTotalLength);
+		err = -EINVAL;
+		goto error;
+	}
+
 	udev->cfg_desc = k_heap_alloc(&usb_device_heap,
 				      cfg_desc.wTotalLength + sizeof(struct usb_desc_header),
 				      K_NO_WAIT);
