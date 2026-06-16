@@ -231,6 +231,11 @@ static int usbip_submit_req(struct usbip_cmd_node *const cmd_nd, const uint8_t e
 		}
 	} while (xfer == NULL && retry--);
 
+	if (xfer == NULL) {
+		LOG_ERR("Failed to allocate USB transfer after retries");
+		return -ENOMEM;
+	}
+
 	if (setup != NULL) {
 		memcpy(xfer->setup_pkt, setup, sizeof(struct usb_setup_packet));
 		LOG_HEXDUMP_DBG(xfer->setup_pkt, 8U, "setup");
