@@ -92,6 +92,10 @@ static ssize_t ctrl_point_write(struct bt_conn *conn, const struct bt_gatt_attr 
 
 	LOG_INF("HRS CTRL Point Written %d", len);
 
+	if (len < sizeof(uint8_t)) {
+		return BT_GATT_ERR(BT_ATT_ERR_INVALID_ATTRIBUTE_LEN);
+	}
+
 	SYS_SLIST_FOR_EACH_CONTAINER(&hrs_cbs, listener, _node) {
 		if (listener->ctrl_point_write) {
 			err = listener->ctrl_point_write(*((uint8_t *)buf));
