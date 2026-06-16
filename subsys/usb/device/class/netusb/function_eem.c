@@ -175,6 +175,11 @@ static void eem_read_cb(uint8_t ep, int size, void *priv)
 			break;
 		}
 
+		if (eem_size < sizeof(sentinel)) {
+			LOG_ERR("EEM frame too small: %u", eem_size);
+			break;
+		}
+
 		pkt = net_pkt_rx_alloc_with_buffer(netusb_net_iface(),
 						   eem_size - sizeof(sentinel),
 						   NET_AF_UNSPEC, 0, K_FOREVER);
