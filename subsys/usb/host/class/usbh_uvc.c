@@ -630,11 +630,14 @@ static uint32_t get_frame_default_interval(const struct uvc_frame_common_descrip
 
 		if (interval_type == 0) {
 			max_interval = sys_le32_to_cpu(fb_cont_desc->dwMaxFrameInterval);
-		} else {
+		} else if (interval_type <= USB_VIDEO_MAX_FRMIVAL) {
 			const struct uvc_frame_framebased_discrete_descriptor *fb_disc_desc =
 				(const void *)frame_desc;
 			max_interval = sys_le32_to_cpu(
 				fb_disc_desc->dwFrameInterval[interval_type - 1]);
+		} else {
+			LOG_DBG("bFrameIntervalType %u exceeds max %u", interval_type,
+				USB_VIDEO_MAX_FRMIVAL);
 		}
 	}
 
@@ -648,11 +651,14 @@ static uint32_t get_frame_default_interval(const struct uvc_frame_common_descrip
 
 		if (interval_type == 0) {
 			max_interval = sys_le32_to_cpu(std_cont_desc->dwMaxFrameInterval);
-		} else {
+		} else if (interval_type <= USB_VIDEO_MAX_FRMIVAL) {
 			const struct uvc_frame_uncomp_discrete_descriptor *std_disc_desc =
 				(const void *)frame_desc;
 			max_interval = sys_le32_to_cpu(
 				std_disc_desc->dwFrameInterval[interval_type - 1]);
+		} else {
+			LOG_DBG("bFrameIntervalType %u exceeds max %u", interval_type,
+				USB_VIDEO_MAX_FRMIVAL);
 		}
 	}
 
