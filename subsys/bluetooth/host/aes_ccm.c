@@ -205,7 +205,16 @@ int bt_ccm_decrypt(const uint8_t key[16], uint8_t nonce[13],
 
 	ccm_auth(key, nonce, plaintext, len, aad, aad_len, mic, mic_size);
 
-	if (memcmp(mic, enc_data + len, mic_size)) {
+	/* Compare MIC in constant time. memcmp() exits early on the first
+	 * differing byte, leaking the correct MIC value byte-by-byte through
+	 * timing and enabling incremental forgery.
+	 */
+	volatile uint8_t diff = 0;
+
+	for (size_t i = 0; i < mic_size; i++) {
+		diff |= mic[i] ^ ((const uint8_t *)(enc_data + len))[i];
+	}
+	if (diff != 0) {
 		return -EBADMSG;
 	}
 
