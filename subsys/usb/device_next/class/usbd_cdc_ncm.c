@@ -451,6 +451,13 @@ static int check_frame(struct cdc_ncm_eth_data *data, struct net_buf *const buf)
 
 	ndptr16 = (const struct ndp16 *)(ntb->data + sys_le16_to_cpu(nthdr16->wNdpIndex));
 
+	/* wLength is USB host-supplied; guard against underflow before division. */
+	if (sys_le16_to_cpu(ndptr16->wLength) < sizeof(struct ndp16)) {
+		LOG_DBG("DROP: NDP16 wLength %u < header",
+			sys_le16_to_cpu(ndptr16->wLength));
+		return -EINVAL;
+	}
+
 	max_ndx = (uint16_t)((sys_le16_to_cpu(ndptr16->wLength) - sizeof(struct ndp16)) /
 			     sizeof(struct ndp16_datagram));
 
