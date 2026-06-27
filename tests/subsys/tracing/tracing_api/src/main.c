@@ -239,6 +239,36 @@ ZTEST(tracing_api, test_tracing_data_format)
 }
 
 /**
+ * @brief Test that disabled tracing produces no output
+ *
+ * @details Disable tracing through the command handler, emit a string and
+ * check that nothing reaches the backend, then restore the enabled state.
+ *
+ * @ingroup tracing_api_tests
+ */
+ZTEST(tracing_api, test_tracing_disabled_output)
+{
+	uint8_t dis[] = "disable";
+	uint8_t en[] = "enable";
+
+	/* Start from a clean buffer and flag. */
+	tracing_buffer_init();
+	sync_string_format_found = false;
+
+	tracing_cmd_handle(dis, sizeof(dis));
+	zassert_false(is_tracing_enabled(), "Failed to disable tracing");
+
+	tracing_format_string("tracing_format_string_testing");
+	k_sleep(K_MSEC(100));
+	zassert_false(sync_string_format_found,
+		      "Disabled tracing must not emit to the backend");
+
+	/* Restore the enabled state for the remaining tests. */
+	tracing_cmd_handle(en, sizeof(en));
+	zassert_true(is_tracing_enabled(), "Failed to re-enable tracing");
+}
+
+/**
  * @brief Test tracing APIS
  *
  * @details Simulate the host computer command to pass to the function
@@ -253,6 +283,7 @@ ZTEST(tracing_api, test_tracing_cmd_manual)
 	uint8_t cmd0[] = " ";
 	uint8_t cmd1[] = "disable";
 	uint8_t cmd2[] = "enable";
+	uint8_t cmd3[] = "garbage";
 
 	length = tracing_cmd_buffer_alloc(&cmd);
 	cmd = cmd0;
@@ -272,5 +303,35 @@ ZTEST(tracing_api, test_tracing_cmd_manual)
 	zassert_true(sizeof(cmd2) < length, "cmd2 is too long");
 	tracing_cmd_handle(cmd, sizeof(cmd2));
 	zassert_true(is_tracing_enabled(), "Failed to enable tracing");
+
+	/* An unrecognized command must leave the current state untouched. */
+	tracing_cmd_handle(cmd3, sizeof(cmd3));
+	zassert_true(is_tracing_enabled(),
+		"Unknown command must not change the enabled state");
+
+	tracing_cmd_handle(cmd1, sizeof(cmd1));
+	zassert_false(is_tracing_enabled(), "Failed to disable tracing");
+	tracing_cmd_handle(cmd3, sizeof(cmd3));
+	zassert_false(is_tracing_enabled(),
+		"Unknown command must not change the disabled state");
+
+	/* Restore the enabled state for the remaining tests. */
+	tracing_cmd_handle(cmd2, sizeof(cmd2));
+	zassert_true(is_tracing_enabled(), "Failed to enable tracing");
 }
-ZTEST_SUITE(tracing_api, NULL, NULL, NULL, NULL, NULL);
+
+/*
+ * The tracing enabled/disabled state is global and persists across tests, so
+ * start every test from a known state: tracing enabled and a clean buffer.
+ */
+static void tracing_api_before(void *fixture)
+{
+	uint8_t en[] = "enable";
+
+	ARG_UNUSED(fixture);
+
+	tracing_cmd_handle(en, sizeof(en));
+	tracing_buffer_init();
+}
+
+ZTEST_SUITE(tracing_api, NULL, NULL, tracing_api_before, NULL, NULL);
