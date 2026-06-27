@@ -26,11 +26,15 @@
 static bool data_format_found;
 static bool raw_data_format_found;
 static bool sync_string_format_found;
-#ifdef CONFIG_TRACING_ASYNC
-static bool async_tracing_api;
-static bool tracing_api_found;
-static bool tracing_api_not_found;
-static uint8_t *string_tracked[] = {
+
+/*
+ * The tracing API hooks are emitted as strings by the test format backend
+ * (CONFIG_TRACING_TEST). The list below is verified against the backend output
+ * in both synchronous and asynchronous mode: in async mode the tracing thread
+ * delivers a single buffer holding everything, while in sync mode each hook is
+ * delivered as its own chunk. Marking each entry as it is seen handles both.
+ */
+static const char *const string_tracked[] = {
 	"sys_trace_k_thread_switched_out", "sys_trace_k_thread_switched_in",
 	"sys_trace_k_thread_priority_set", "sys_trace_k_thread_sched_set_priority",
 	"sys_trace_k_thread_create", "sys_trace_k_thread_start",
@@ -57,7 +61,9 @@ static uint8_t *string_tracked[] = {
 	"sys_trace_k_mutex_lock_blocking", "sys_trace_k_mutex_unlock_enter",
 	"sys_trace_k_mutex_unlock_exit", "sys_trace_k_timer_start", NULL
 };
-#endif
+
+static bool api_found[ARRAY_SIZE(string_tracked)];
+static bool capturing;
 
 #if defined(CONFIG_TRACING_BACKEND_UART)
 static void tracing_backends_output(
@@ -65,37 +71,22 @@ static void tracing_backends_output(
 		uint8_t *data, uint32_t length)
 {
 	/* Check the output data. */
-#ifdef CONFIG_TRACING_ASYNC
-	if (async_tracing_api) {
-		/* This verification should run only once, hence the static
-		 * `i`. As soon as the tracing thread has a chance to run,
-		 * right at the sleep at the async version of
-		 * test_tracing_sys_api, it should have everything needed
-		 * for this check on its buffer, which is sent here.
-		 * Should SMP be ever enabled for this test, this logic
-		 * will break down and one will need some sort of internal
-		 * buffer to keep track of the tracing strings (or do the
-		 * verification in some other way).
-		 */
-		static int i;
-
-		while (string_tracked[i] != NULL) {
-			if (strstr(data, string_tracked[i]) != NULL) {
-				tracing_api_found = true;
-			} else {
-				tracing_api_not_found = true;
+	if (capturing) {
+		for (int i = 0; string_tracked[i] != NULL; i++) {
+			if (!api_found[i] &&
+			    strstr((char *)data, string_tracked[i]) != NULL) {
+				api_found[i] = true;
 			}
-			i++;
 		}
 	}
-#endif
-	if (strstr(data, "tracing_format_data_testing") != NULL) {
+
+	if (strstr((char *)data, "tracing_format_data_testing") != NULL) {
 		data_format_found = true;
 	}
-	if (strstr(data, "tracing_format_raw_data_testing") != NULL) {
+	if (strstr((char *)data, "tracing_format_raw_data_testing") != NULL) {
 		raw_data_format_found = true;
 	}
-	if (strstr(data, "tracing_format_string_testing") != NULL) {
+	if (strstr((char *)data, "tracing_format_string_testing") != NULL) {
 		sync_string_format_found = true;
 	}
 }
@@ -108,13 +99,12 @@ const struct tracing_backend_api tracing_uart_backend_api = {
 TRACING_BACKEND_DEFINE(tracing_backend_uart, tracing_uart_backend_api);
 #endif
 
-#ifdef CONFIG_TRACING_ASYNC
 /**
- * @brief Test tracing APIS
+ * @brief Test tracing APIs
  *
- * @details For asynchronous mode, self-designed tracing uart backend
- * firstly, and called tracing APIs one by one directly, check if the
- * output from the backend is equal to the input.
+ * @details Call the tracing API hooks one by one and check that each one
+ * reaches the self-designed tracing backend. This runs in both synchronous and
+ * asynchronous mode.
  *
  * @ingroup tracing_api_tests
  */
@@ -130,7 +120,8 @@ ZTEST(tracing_api, test_tracing_sys_api)
 	k_timeout_t timeout = K_MSEC(1);
 
 	tracing_buffer_init();
-	async_tracing_api = true;
+	memset(api_found, 0, sizeof(api_found));
+	capturing = true;
 	/* thread api */
 	sys_trace_k_thread_switched_out();
 	sys_trace_k_thread_switched_in();
@@ -189,31 +180,34 @@ ZTEST(tracing_api, test_tracing_sys_api)
 	sys_trace_k_timer_start(&timer, timeout, timeout);
 	sys_trace_k_timer_init(&timer, NULL, NULL);
 
-	/* wait for some actions finished */
+	/* wait for the tracing thread to flush the buffer (async mode) */
 	k_sleep(K_MSEC(100));
-	zassert_true(tracing_api_found, "Failed to check output from backend");
-	zassert_true(tracing_api_not_found == false, "Failed to check output from backend");
-	async_tracing_api = false;
+	capturing = false;
+
+	for (int i = 0; string_tracked[i] != NULL; i++) {
+		zassert_true(api_found[i],
+			     "Tracing API not found in backend output: %s",
+			     string_tracked[i]);
+	}
 }
-#else
+
 /**
- * @brief Test tracing APIS
+ * @brief Test string format tracing
  *
- * @details For synchronize mode, self-designed tracing uart backend
- * firstly, called API tracing_format_string to put a string, meanwhile,
- * check the output for the backend.
+ * @details Call tracing_format_string() with a known string and check that it
+ * reaches the backend, in both synchronous and asynchronous mode.
  *
  * @ingroup tracing_api_tests
  */
-ZTEST(tracing_api, test_tracing_sys_api)
+ZTEST(tracing_api, test_tracing_string_format)
 {
+	sync_string_format_found = false;
 	tracing_buffer_init();
 	tracing_format_string("tracing_format_string_testing");
 	k_sleep(K_MSEC(100));
 
 	zassert_true(sync_string_format_found == true, "Failed to check output from backend");
 }
-#endif /* CONFIG_TRACING_ASYNC */
 
 /**
  * @brief Test tracing APIS
