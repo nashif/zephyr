@@ -1,0 +1,50 @@
+common:
+  build_only: true
+  platform_allow: qemu_x86
+  tags: tracing_testing
+tests:
+  tracing.config.none:
+    extra_configs:
+      - CONFIG_TRACING_NONE=y
+  tracing.config.test_format:
+    extra_configs:
+      - CONFIG_TRACING_TEST=y
+  tracing.config.ctf:
+    extra_configs:
+      - CONFIG_TRACING_CTF=y
+      - CONFIG_TRACING_CTF_TIMESTAMP=n
+  tracing.config.ctf_timestamp:
+    extra_configs:
+      - CONFIG_TRACING_CTF=y
+  tracing.config.object_tracking:
+    extra_configs:
+      - CONFIG_TRACING_TEST=y
+      - CONFIG_TRACING_OBJECT_TRACKING=y
+  tracing.config.gpio:
+    extra_configs:
+      - CONFIG_TRACING_TEST=y
+      - CONFIG_TRACING_GPIO=y
+  tracing.config.subsystems_disabled:
+    extra_configs:
+      - CONFIG_TRACING_TEST=y
+      - CONFIG_TRACING_SYSCALL=n
+      - CONFIG_TRACING_THREAD=n
+      - CONFIG_TRACING_WORK=n
+      - CONFIG_TRACING_ISR=n
+      - CONFIG_TRACING_SEMAPHORE=n
+      - CONFIG_TRACING_MUTEX=n
+      - CONFIG_TRACING_CONDVAR=n
+      - CONFIG_TRACING_QUEUE=n
+      - CONFIG_TRACING_FIFO=n
+      - CONFIG_TRACING_LIFO=n
+      - CONFIG_TRACING_STACK=n
+      - CONFIG_TRACING_MESSAGE_QUEUE=n
+      - CONFIG_TRACING_MAILBOX=n
+      - CONFIG_TRACING_PIPE=n
+      - CONFIG_TRACING_HEAP=n
+      - CONFIG_TRACING_MEMORY_SLAB=n
+      - CONFIG_TRACING_TIMER=n
+      - CONFIG_TRACING_EVENT=n
+      - CONFIG_TRACING_POLLING=n
+      - CONFIG_TRACING_PM=n
+      - CONFIG_TRACING_IDLE=n
