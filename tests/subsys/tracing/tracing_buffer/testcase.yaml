@@ -1,0 +1,6 @@
+common:
+  tags: tracing_testing
+  platform_allow: qemu_x86
+tests:
+  tracing.buffer.overflow:
+    tags: tracing_testing
