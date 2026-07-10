@@ -24,7 +24,7 @@ jobs:
         uses: nashif/action-prrev@v1
         with:
           openrouter_api_key: ${{ secrets.OPENROUTER_API_KEY }}
-          model: deepseek/deepseek-v4-flash
+          model: anthropic/claude-opus-4.8
           fallback_models: deepseek/deepseek-v4
           post_inline_comments: "true"
           review_profile: zephyr
