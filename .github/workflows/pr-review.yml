@@ -17,11 +17,11 @@ jobs:
   review:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: AI review
         id: review
-        uses: nashif/action-prrev
+        uses: nashif/action-prrev@v1
         with:
           openrouter_api_key: ${{ secrets.OPENROUTER_API_KEY }}
           model: deepseek/deepseek-v4-flash
@@ -29,10 +29,6 @@ jobs:
           post_inline_comments: "true"
           review_profile: zephyr
           skip_labels: no-ai-review,dependencies
-          project_context: |
-            Python 3.11 service. We care most about input validation on the
-            HTTP boundary and about anything that widens the blast radius of
-            a compromised worker.
           # Turn the review into a merge gate by uncommenting:
           # fail_on_severity: high
           # min_score: "70"
