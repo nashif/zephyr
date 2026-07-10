@@ -25,9 +25,7 @@ jobs:
         with:
           openrouter_api_key: ${{ secrets.OPENROUTER_API_KEY }}
           model: deepseek/deepseek-v4-flash
-          fallback_models:
-            - deepseek/deepseek-v4
-            - gpt-4o-mini
+          fallback_models: deepseek/deepseek-v4
           post_inline_comments: "true"
           review_profile: zephyr
           skip_labels: no-ai-review,dependencies
