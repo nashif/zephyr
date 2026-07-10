@@ -1,0 +1,47 @@
+name: AI PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+
+# Least privilege: read the code, write the review comment.
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ai-pr-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: AI review
+        id: review
+        uses: nashif/action-prrev
+        with:
+          openrouter_api_key: ${{ secrets.OPENROUTER_API_KEY }}
+          model: deepseek/deepseek-v4-flash
+          fallback_models:
+            - deepseek/deepseek-v4
+            - gpt-4o-mini
+          post_inline_comments: "true"
+          review_profile: zephyr
+          skip_labels: no-ai-review,dependencies
+          project_context: |
+            Python 3.11 service. We care most about input validation on the
+            HTTP boundary and about anything that widens the blast radius of
+            a compromised worker.
+          # Turn the review into a merge gate by uncommenting:
+          # fail_on_severity: high
+          # min_score: "70"
+
+      - name: Summarize
+        if: always() && steps.review.outputs.skipped == 'false'
+        run: |
+          echo "Score:    ${{ steps.review.outputs.score }}"
+          echo "Verdict:  ${{ steps.review.outputs.verdict }}"
+          echo "Findings: ${{ steps.review.outputs.findings_count }}"
