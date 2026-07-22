@@ -186,6 +186,26 @@ BUILD_ASSERT(TIMER_CORE_CYC_PER_TICK != 0, "timer counter rate is below the tick
 #endif
 #endif
 
+/*
+ * Furthest deadline actually programmed ahead of the last announce.
+ *
+ * On real hardware this is TIMER_CORE_CYCLES_MAX: a wide counter may sleep
+ * for its whole schedulable range in one arm. Under QEMU icount, virtual
+ * time is warped to the armed deadline the moment the guest idles, so the
+ * arm span directly sets the size of the virtual-time leaps: multi-day
+ * leaps starve the emulator's I/O servicing (serial input dies, the
+ * monitor and gdb stubs stop responding, SIGTERM is never processed) and
+ * were never exercised before the pre-conversion drivers' native-register
+ * arithmetic stopped capping arms at 3/4 of the 32-bit cycle range. Keep
+ * that historical cap on icount targets; it only costs an idle wakeup per
+ * span, exactly as the converted drivers always behaved there.
+ */
+#if defined(CONFIG_QEMU_TARGET) && defined(CONFIG_QEMU_ICOUNT) && TIMER_CORE_CYCLES_WIDTH > 32
+#define TIMER_CORE_ARM_MAX ((uint64_t)(UINT32_MAX / 2U + UINT32_MAX / 4U))
+#else
+#define TIMER_CORE_ARM_MAX TIMER_CORE_CYCLES_MAX
+#endif
+
 /* Reload floor, in cycles (RELOAD only). A driver whose hardware needs a larger
  * minimum programmable delay overrides it.
  */
@@ -232,6 +252,22 @@ static bool timer_core_catchup;
  */
 static uint64_t timer_core_armed_deadline = UINT64_MAX;
 
+/*
+ * Furthest deadline, in ticks from the last announce, that may be armed.
+ *
+ * The eventual announce reports last_elapsed + ticks + the fire latency
+ * through the int32 sys_clock_announce() interface, so the armed span must
+ * stay far enough under INT32_MAX for a late report to still fit. The kernel
+ * caps its requests at SYS_CLOCK_MAX_WAIT, but that equals INT32_MAX: the
+ * add-path round-up plus any latency already overflows it. Half the range
+ * mirrors the latency headroom the cycle-domain clamp reserves; only wide
+ * counters can reach it (a narrow counter's TIMER_CORE_CYCLES_MAX caps the
+ * span first), and it takes a >2^30-tick timeout plus a counter that really
+ * advances that far unannounced - months of real time, or seconds under a
+ * warping emulated clock (QEMU icount with a mis-scaled counter frequency).
+ */
+#define TIMER_CORE_TICKS_MAX ((uint32_t)INT32_MAX / 2U)
+
 /* Whole ticks elapsed since the last announce, from the current counter. */
 static inline uint32_t timer_core_delta_ticks(void)
 {
@@ -256,7 +292,17 @@ static inline uint32_t timer_core_delta_ticks(void)
 	/* The masked delta fits in a 32-bit register: divide cheaply. */
 	return (uint32_t)delta / TIMER_CORE_CYC_PER_TICK;
 #else
-	return delta / TIMER_CORE_CYC_PER_TICK;
+	/*
+	 * A wide counter can accumulate a delta beyond what one announce can
+	 * report (see TIMER_CORE_TICKS_MAX): cap rather than let the tick
+	 * count wrap the announce interface, trading the excess uptime for a
+	 * sane clock. Unreachable through the core's own arming, which never
+	 * schedules past TIMER_CORE_TICKS_MAX; a bigger delta means the
+	 * counter outran the schedule (a stopped or warped virtual clock).
+	 */
+	uint64_t dticks = delta / TIMER_CORE_CYC_PER_TICK;
+
+	return (dticks > TIMER_CORE_TICKS_MAX) ? TIMER_CORE_TICKS_MAX : (uint32_t)dticks;
 #endif
 }
 
@@ -265,6 +311,10 @@ static inline uint32_t timer_core_delta_ticks(void)
  */
 static void timer_core_arm(uint32_t ticks)
 {
+	if (((uint64_t)timer_core_last_elapsed + ticks) > TIMER_CORE_TICKS_MAX) {
+		ticks = TIMER_CORE_TICKS_MAX - timer_core_last_elapsed;
+	}
+
 	uint64_t deadline_tick = timer_core_last_tick + timer_core_last_elapsed + ticks;
 
 	if (deadline_tick == timer_core_armed_deadline) {
@@ -281,8 +331,8 @@ static void timer_core_arm(uint32_t ticks)
 	 */
 	uint64_t deadline = deadline_tick * TIMER_CORE_CYC_PER_TICK;
 
-	if ((deadline - timer_core_last_cycle) > TIMER_CORE_CYCLES_MAX) {
-		deadline = timer_core_last_cycle + TIMER_CORE_CYCLES_MAX;
+	if ((deadline - timer_core_last_cycle) > TIMER_CORE_ARM_MAX) {
+		deadline = timer_core_last_cycle + TIMER_CORE_ARM_MAX;
 	}
 	timer_driver_set_compare(deadline);
 #else /* TIMER_CORE_BACKEND_RELOAD */
@@ -308,7 +358,7 @@ static void timer_core_arm(uint32_t ticks)
 	 * an announce that resets the baseline. This keeps the same invariant the
 	 * COMPARE path gets from clamping its absolute deadline.
 	 */
-	if (rel > (int64_t)TIMER_CORE_CYCLES_MAX - (int64_t)done) {
+	if (rel > (int64_t)TIMER_CORE_ARM_MAX - (int64_t)done) {
 		rel = (int64_t)TIMER_CORE_CYCLES_MAX - (int64_t)done;
 	}
 	if (rel < (int64_t)TIMER_CORE_MIN_DELAY) {
