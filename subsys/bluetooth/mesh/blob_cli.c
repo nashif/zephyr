@@ -1217,8 +1217,14 @@ static int handle_xfer_status(const struct bt_mesh_model *mod, struct bt_mesh_ms
 	info.mode = status_and_mode >> 6;
 	info.phase = net_buf_simple_pull_u8(buf);
 
-	if (buf->len) {
+	if (buf->len >= sizeof(info.id)) {
 		info.id = net_buf_simple_pull_le64(buf);
+	} else if (buf->len) {
+		/* Trailing bytes that cannot hold the 64-bit BLOB ID: pulling
+		 * it anyway reads past the message and underflows buf->len.
+		 */
+		LOG_WRN("Truncated BLOB ID (%u bytes)", buf->len);
+		return -EINVAL;
 	}
 
 	if (buf->len >= 7) {
