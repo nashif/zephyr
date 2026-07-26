@@ -2090,6 +2090,19 @@ static int sdp_client_notify_result(struct bt_conn *conn, struct bt_sdp_client *
 
 		net_buf_simple_save(&session->rec_buf->b, &buf_state);
 		rec_len = get_record_len(session);
+		/* The record length is decoded from server-supplied data. A
+		 * length beyond what was actually received would forge
+		 * resp_buf->len for the application callback and underflow the
+		 * net_buf_pull() below; a zero length would never advance the
+		 * buffer and spin here forever.
+		 */
+		if ((rec_len == 0U) || (rec_len > session->rec_buf->len)) {
+			LOG_WRN("Invalid record length %u (%u available)", rec_len,
+				session->rec_buf->len);
+			net_buf_simple_restore(&session->rec_buf->b, &buf_state);
+			return -EINVAL;
+		}
+
 		/* tell the user about multi record resolution */
 		if (session->rec_buf->len > rec_len) {
 			result.next_record_hint = true;
