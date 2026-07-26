@@ -1137,7 +1137,7 @@ static uint8_t read_obj_properties_cb(struct bt_conn *conn, uint8_t err,
 
 	if (err) {
 		LOG_WRN("err: 0x%02X", err);
-	} else if (data && length <= OTS_PROPERTIES_LEN) {
+	} else if (data && length == OTS_PROPERTIES_LEN) {
 		struct bt_ots_obj_metadata *cur_object =
 			&inst->otc_inst->cur_object;
 
