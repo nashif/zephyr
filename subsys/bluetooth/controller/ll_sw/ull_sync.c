@@ -1442,11 +1442,24 @@ void ull_sync_chm_update(uint8_t sync_handle, uint8_t *acad, uint8_t acad_len)
 
 	/* Find the Channel Map Update Indication */
 	do {
+		/* Both the length and the type octet must be present */
+		if (acad_len < 2U) {
+			return;
+		}
+
 		/* Pick the length and find the Channel Map Update Indication */
 		ad_len = acad[PDU_ADV_DATA_HEADER_LEN_OFFSET];
 		if (ad_len &&
 		    (acad[PDU_ADV_DATA_HEADER_TYPE_OFFSET] ==
 		     PDU_ADV_DATA_TYPE_CHANNEL_MAP_UPDATE_IND)) {
+			/* The advertised element must fit in what is left of the
+			 * ACAD; the skip path below checks this, the match path
+			 * did not, so a truncated element was read past the end.
+			 */
+			if ((ad_len + 1U) > acad_len) {
+				return;
+			}
+
 			break;
 		}
 
