@@ -177,6 +177,35 @@ class Systems:
             sys.exit(f"ERROR: SoC '{name}' is not found, please ensure that the SoC exists "
                      f"and that soc-root containing '{name}' has been correctly defined.")
 
+    def get_soc_closure(self, name):
+        '''Return the given SoC together with the transitive closure of the SoCs it lists in
+        the 'requires' property of its soc.yml entry.
+
+        The SoC trees of all returned SoCs must be loaded by the build system for the given
+        SoC to be usable.
+        '''
+        socs = []
+        seen = set()
+        pending = [(name, None)]
+
+        while pending:
+            soc_name, required_by = pending.pop(0)
+            if soc_name in seen:
+                continue
+            seen.add(soc_name)
+
+            soc = next((s for s in self._socs if s.name == soc_name), None)
+            if soc is None:
+                required_by_msg = f", required by SoC '{required_by}'," if required_by else ''
+                sys.exit(f"ERROR: SoC '{soc_name}'{required_by_msg} is not found, please ensure "
+                         f"that the SoC exists and that soc-root containing '{soc_name}' has "
+                         "been correctly defined.")
+
+            socs.append(soc)
+            pending.extend((r, soc_name) for r in soc.requires)
+
+        return socs
+
 
 @dataclass
 class Soc:
@@ -364,8 +393,9 @@ def dump_v2_systems(args):
     systems = find_v2_systems(args)
 
     if args.soc is not None:
-        # Narrow lookup: only the requested SoC and the series and family it belongs to.
-        socs = [systems.get_soc(args.soc)]
+        # Narrow lookup: only the requested SoC, the SoCs it requires, and the series and
+        # families those SoCs belong to.
+        socs = systems.get_soc_closure(args.soc)
         series_names = {s.series for s in socs if s.series}
         family_names = {s.family for s in socs if s.family}
         families = [f for f in systems.get_families() if f.name in family_names]
