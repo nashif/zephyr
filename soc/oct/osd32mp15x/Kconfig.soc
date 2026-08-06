@@ -14,6 +14,3 @@ config SOC_OSD32MP15X
 	bool
 	help
 	  Octavo Systems OSD32MP15X SiP
-
-config SOC
-	default "osd32mp15x" if SOC_OSD32MP15X
