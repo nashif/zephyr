@@ -313,9 +313,6 @@ def dump_v2_archs(args):
 
 
 def dump_v2_system(args, type, system):
-    if args.soc is not None and system.name != args.soc:
-        return
-
     if args.soc_family is not None and (type != "soc" or system.family is None or \
        system.family != args.soc_family):
         return
@@ -359,13 +356,25 @@ def dump_v2_system(args, type, system):
 def dump_v2_systems(args):
     systems = find_v2_systems(args)
 
-    for f in systems.get_families():
+    if args.soc is not None:
+        # Narrow lookup: only the requested SoC and the series and family it belongs to.
+        socs = [systems.get_soc(args.soc)]
+        series_names = {s.series for s in socs if s.series}
+        family_names = {s.family for s in socs if s.family}
+        families = [f for f in systems.get_families() if f.name in family_names]
+        series = [s for s in systems.get_series() if s.name in series_names]
+    else:
+        socs = systems.get_socs()
+        families = systems.get_families()
+        series = systems.get_series()
+
+    for f in families:
         dump_v2_system(args, 'family', f)
 
-    for s in systems.get_series():
+    for s in series:
         dump_v2_system(args, 'series', s)
 
-    for s in systems.get_socs():
+    for s in socs:
         dump_v2_system(args, 'soc', s)
 
 
