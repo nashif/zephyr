@@ -13,6 +13,3 @@ config SOC_MYRA
 	bool
 	help
 	  Antmicro Myra System-in-Package
-
-config SOC
-	default "myra" if SOC_MYRA
