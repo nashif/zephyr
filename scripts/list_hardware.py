@@ -177,16 +177,16 @@ class Systems:
             sys.exit(f"ERROR: SoC '{name}' is not found, please ensure that the SoC exists "
                      f"and that soc-root containing '{name}' has been correctly defined.")
 
-    def get_soc_closure(self, name):
-        '''Return the given SoC together with the transitive closure of the SoCs it lists in
-        the 'requires' property of its soc.yml entry.
+    def get_soc_closure(self, names):
+        '''Return the given SoCs together with the transitive closure of the SoCs they list in
+        the 'requires' property of their soc.yml entry.
 
         The SoC trees of all returned SoCs must be loaded by the build system for the given
-        SoC to be usable.
+        SoCs to be usable.
         '''
         socs = []
         seen = set()
-        pending = [(name, None)]
+        pending = [(name, None) for name in names]
 
         while pending:
             soc_name, required_by = pending.pop(0)
@@ -299,7 +299,8 @@ def add_args(parser):
     parser.add_argument("--soc-root", dest='soc_roots', default=[],
                         type=Path, action='append',
                         help='add a SoC root, may be given more than once')
-    parser.add_argument("--soc", default=None, help='lookup the specific soc')
+    parser.add_argument("--soc", dest='socs_lookup', default=[], action='append',
+                        help='lookup the specific soc, may be given more than once')
     parser.add_argument("--soc-series", default=None, help='lookup the specific soc series')
     parser.add_argument("--soc-family", default=None, help='lookup the specific family')
     parser.add_argument("--socs", action='store_true', help='lookup all socs')
@@ -392,10 +393,10 @@ def dump_v2_system(args, type, system):
 def dump_v2_systems(args):
     systems = find_v2_systems(args)
 
-    if args.soc is not None:
-        # Narrow lookup: only the requested SoC, the SoCs it requires, and the series and
+    if args.socs_lookup:
+        # Narrow lookup: only the requested SoCs, the SoCs they require, and the series and
         # families those SoCs belong to.
-        socs = systems.get_soc_closure(args.soc)
+        socs = systems.get_soc_closure(args.socs_lookup)
         series_names = {s.series for s in socs if s.series}
         family_names = {s.family for s in socs if s.family}
         families = [f for f in systems.get_families() if f.name in family_names]
@@ -417,7 +418,7 @@ def dump_v2_systems(args):
 
 if __name__ == '__main__':
     args = parse_args()
-    if any([args.socs, args.soc, args.soc_series, args.soc_family]):
+    if any([args.socs, args.socs_lookup, args.soc_series, args.soc_family]):
         dump_v2_systems(args)
     if args.archs or args.arch is not None:
         dump_v2_archs(args)
