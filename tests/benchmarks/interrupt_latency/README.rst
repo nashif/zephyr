@@ -8,30 +8,39 @@ through the platform interrupt controller, rather than the synchronous
 ``irq_offload()`` trap used by the ``latency_measure`` benchmark, so that the
 hardware interrupt entry path is part of what is measured.
 
+The benchmarks are built on the :ref:`ztest benchmarking framework
+<ztest_benchmarking>` as manually sampled benchmarks
+(``ZTEST_BENCHMARK_MANUAL``), because every measured span has at least one
+endpoint captured in a different execution context (inside the ISR, or in a
+woken thread) which framework-timed benchmarks cannot express.
+
 Scenarios
 *********
 
-* ``int.entry.trigger_to_isr`` -- time from the software write that raises
-  the interrupt to the first timestamp taken inside the ISR (entry latency).
-* ``int.exit.resume_interrupted`` -- time from the end of the ISR body back
-  to the interrupted thread.
-* ``int.exit.reschedule`` -- time from the end of an ISR that wakes a higher
+All benchmarks are in the ``interrupt`` suite:
+
+* ``entry_trigger_to_isr`` -- time from the software write that raises the
+  interrupt to the first timestamp taken inside the ISR (entry latency).
+* ``exit_resume_interrupted`` -- time from the end of the ISR body back to
+  the interrupted thread.
+* ``exit_reschedule`` -- time from the end of an ISR that wakes a higher
   priority thread to that thread running (exit plus context switch).
-* ``int.locked.unlock_to_isr`` -- the interrupt is raised while interrupts
-  are locked and kept pending for a configurable window; measured is the
-  time from ``irq_unlock()`` to ISR entry (latency after a critical
-  section).
-* ``int.throughput.round_trip`` -- the ISR re-triggers itself so interrupts
-  are serviced back to back; the average cost of one full entry + ISR +
-  exit round trip is reported. Its inverse is the maximum sustainable
-  interrupt rate.
-* ``int.dynamic.connect`` -- cost of installing an ISR at runtime with
+* ``locked_unlock_to_isr`` -- the interrupt is raised while interrupts are
+  locked and kept pending for a configurable window; measured is the time
+  from ``irq_unlock()`` to ISR entry (latency after a critical section).
+* ``throughput_round_trip`` -- the ISR re-triggers itself so interrupts are
+  serviced back to back; each sample is the average cost of one full
+  entry + ISR + exit round trip over a burst. Its inverse is the maximum
+  sustainable interrupt rate.
+* ``dynamic_connect`` -- cost of installing an ISR at runtime with
   ``irq_connect_dynamic()`` (needs ``CONFIG_DYNAMIC_INTERRUPTS``).
 
-Each sampled scenario reports ``min``, ``avg``, ``max`` and ``p99``
-statistics over ``CONFIG_INT_BENCH_NUM_ITERATIONS`` iterations, in the same
-console format used by the ``latency_measure`` benchmark so that twister
-records the values (``twister.json`` / ``recording.csv``).
+Each benchmark records ``CONFIG_INT_BENCH_NUM_ITERATIONS`` samples; the
+framework reports mean, standard deviation, standard error and min/max with
+control-measurement noise correction. The default configuration selects the
+CSV output format so that twister records the values (``twister.json`` /
+``recording.csv``); build with ``CONFIG_ZTEST_BENCHMARK_OUTPUT_VERBOSE=y``
+for human readable output instead.
 
 Trigger backends
 ****************
@@ -66,22 +75,20 @@ or via twister, which also collects the metrics:
 
    scripts/twister -p qemu_cortex_m3 -T tests/benchmarks/interrupt_latency
 
-Sample output::
+Sample CSV output (see :kconfig:option:`CONFIG_ZTEST_BENCHMARK_OUTPUT_CSV`
+for the column layout)::
 
-   int.entry.trigger_to_isr.min - Trigger write to ISR entry (min)   :  25 cycles ,  208 ns :
-   int.entry.trigger_to_isr.avg - Trigger write to ISR entry (avg)   :  26 cycles ,  219 ns :
-   int.entry.trigger_to_isr.max - Trigger write to ISR entry (max)   :  61 cycles ,  512 ns :
-   int.entry.trigger_to_isr.p99 - Trigger write to ISR entry (p99)   :  28 cycles ,  237 ns :
+   M,interrupt,entry_trigger_to_isr,1000,55000,55.000,0.000,0.000,55,1,55,1
+   M,interrupt,exit_resume_interrupted,1000,56000,56.000,0.000,0.000,56,1,56,1
 
 Notes on methodology
 ********************
 
-* Timestamps use the timing subsystem (``CONFIG_TIMING_FUNCTIONS``); the
-  average overhead of one ``timing_counter_get()`` call is calibrated at
-  startup and subtracted from every sample.
+* Timestamps use the timing subsystem; the framework subtracts a control
+  measurement from every reported statistic.
 * The system tick rate is reduced to one tick per second so timer
-  interrupts do not perturb most samples; residual hits show up in ``max``,
-  which is why ``p99`` is reported alongside it.
+  interrupts do not perturb most samples; residual hits show up in the
+  maximum and standard deviation.
 * Entry latency includes the cost of the trigger write itself and, on some
   interrupt controllers, the propagation delay of the software-generated
   interrupt. Numbers are therefore comparable across Zephyr versions and
@@ -95,5 +102,6 @@ Future work
 * Nested interrupt preemption latency (two lines, two priorities).
 * Direct ISR (``IRQ_DIRECT_CONNECT``) and zero-latency IRQ comparison
   scenarios.
-* Latency distribution histograms and background-load variants.
-* SMP scenarios (IPI latency, ISR on non-boot CPU).
+* Percentile (p99) reporting and latency distribution histograms.
+* Background-load variants and SMP scenarios (IPI latency, ISR on
+  non-boot CPU).
