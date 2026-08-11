@@ -22,7 +22,21 @@
 
 #include "trigger.h"
 
-#define NUM_ITERATIONS CONFIG_INT_BENCH_NUM_ITERATIONS
+#define NUM_ITERATIONS   CONFIG_INT_BENCH_NUM_ITERATIONS
+#define WARMUP           CONFIG_INT_BENCH_WARMUP_ITERATIONS
+#define TOTAL_ITERATIONS (WARMUP + NUM_ITERATIONS)
+
+/*
+ * Record a sample unless the iteration is part of the warmup phase.
+ * The first iterations of a scenario run with cold caches and are
+ * discarded so that they do not dominate the reported maximum.
+ */
+static inline void record(uint32_t iteration, uint64_t cycles)
+{
+	if (iteration >= WARMUP) {
+		ztest_benchmark_record_sample(cycles);
+	}
+}
 
 static void suite_setup(void)
 {
@@ -70,7 +84,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, entry_trigger_to_isr, NULL, NULL)
 
 	bench_trigger_set_handler(entry_handler);
 
-	for (uint32_t i = 0U; i < NUM_ITERATIONS; i++) {
+	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
 		fired = false;
 
 		start = timing_counter_get();
@@ -80,7 +94,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, entry_trigger_to_isr, NULL, NULL)
 		}
 
 		finish = isr_timestamp;
-		ztest_benchmark_record_sample(timing_cycles_get(&start, &finish));
+		record(i, timing_cycles_get(&start, &finish));
 	}
 
 	bench_trigger_set_handler(NULL);
@@ -107,7 +121,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, exit_resume_interrupted, NULL, NULL)
 
 	bench_trigger_set_handler(exit_handler);
 
-	for (uint32_t i = 0U; i < NUM_ITERATIONS; i++) {
+	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
 		fired = false;
 
 		bench_trigger();
@@ -117,7 +131,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, exit_resume_interrupted, NULL, NULL)
 
 		finish = timing_counter_get();
 		start = isr_timestamp;
-		ztest_benchmark_record_sample(timing_cycles_get(&start, &finish));
+		record(i, timing_cycles_get(&start, &finish));
 	}
 
 	bench_trigger_set_handler(NULL);
@@ -145,12 +159,12 @@ static void waiter_entry(void *p1, void *p2, void *p3)
 	ARG_UNUSED(p2);
 	ARG_UNUSED(p3);
 
-	for (uint32_t i = 0U; i < NUM_ITERATIONS; i++) {
+	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
 		k_sem_take(&wake_sem, K_FOREVER);
 
 		finish = timing_counter_get();
 		start = isr_timestamp;
-		ztest_benchmark_record_sample(timing_cycles_get(&start, &finish));
+		record(i, timing_cycles_get(&start, &finish));
 
 		k_sem_give(&sync_sem);
 	}
@@ -170,7 +184,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, exit_reschedule, NULL, NULL)
 	k_thread_create(&waiter_thread, waiter_stack, K_THREAD_STACK_SIZEOF(waiter_stack),
 			waiter_entry, NULL, NULL, NULL, priority - 1, 0, K_NO_WAIT);
 
-	for (uint32_t i = 0U; i < NUM_ITERATIONS; i++) {
+	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
 		bench_trigger();
 		k_sem_take(&sync_sem, K_FOREVER);
 	}
@@ -195,7 +209,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, locked_unlock_to_isr, NULL, NULL)
 
 	bench_trigger_set_handler(entry_handler);
 
-	for (uint32_t i = 0U; i < NUM_ITERATIONS; i++) {
+	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
 		fired = false;
 
 		key = irq_lock();
@@ -210,7 +224,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, locked_unlock_to_isr, NULL, NULL)
 		}
 
 		finish = isr_timestamp;
-		ztest_benchmark_record_sample(timing_cycles_get(&start, &finish));
+		record(i, timing_cycles_get(&start, &finish));
 	}
 
 	bench_trigger_set_handler(NULL);
@@ -251,7 +265,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, throughput_round_trip, NULL, NULL)
 
 	bench_trigger_set_handler(throughput_handler);
 
-	for (uint32_t burst = 0U; burst < THROUGHPUT_BURSTS; burst++) {
+	for (uint32_t burst = 0U; burst < THROUGHPUT_BURSTS + 1U; burst++) {
 		isr_count = 0U;
 		done = false;
 
@@ -262,8 +276,11 @@ ZTEST_BENCHMARK_MANUAL(interrupt, throughput_round_trip, NULL, NULL)
 		}
 
 		finish = end_timestamp;
-		ztest_benchmark_record_sample(timing_cycles_get(&start, &finish) /
-					      NUM_ITERATIONS);
+		/* Discard the first burst: it runs with cold caches */
+		if (burst > 0U) {
+			ztest_benchmark_record_sample(timing_cycles_get(&start, &finish) /
+						      NUM_ITERATIONS);
+		}
 	}
 
 	bench_trigger_set_handler(NULL);
@@ -285,13 +302,13 @@ ZTEST_BENCHMARK_MANUAL(interrupt, dynamic_connect, NULL, NULL)
 
 	irq_disable(line);
 
-	for (uint32_t i = 0U; i < NUM_ITERATIONS; i++) {
+	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
 		start = timing_counter_get();
 		(void)irq_connect_dynamic(line, CONFIG_INT_BENCH_IRQ_PRIO,
 					  bench_trigger_isr, NULL, 0);
 		finish = timing_counter_get();
 
-		ztest_benchmark_record_sample(timing_cycles_get(&start, &finish));
+		record(i, timing_cycles_get(&start, &finish));
 	}
 
 	irq_enable(line);
