@@ -3,8 +3,6 @@
 
 mainmenu "Interrupt Handling Benchmark"
 
-source "Kconfig.zephyr"
-
 menu "Interrupt benchmark options"
 
 config INT_BENCH_NUM_ITERATIONS
@@ -122,3 +120,10 @@ config INT_BENCH_SCENARIO_THROUGHPUT
 	  this number is the maximum sustainable interrupt rate.
 
 endmenu
+
+config SYS_CLOCK_TICKS_PER_SEC
+	int "Number of ticks per second"
+	default 20 if SOC_FAMILY_STM32
+	default 1
+
+source "Kconfig.zephyr"
