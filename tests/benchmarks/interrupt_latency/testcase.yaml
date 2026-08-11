@@ -1,0 +1,57 @@
+common:
+  tags:
+    - kernel
+    - benchmark
+    - interrupt
+tests:
+  benchmark.kernel.interrupt.latency:
+    # FIXME: no DWT on qemu_cortex_m0, no timing support on m2gl025_miv
+    platform_exclude:
+      - qemu_cortex_m0
+      - m2gl025_miv
+    filter: CONFIG_PRINTK and not CONFIG_SOC_FAMILY_STM32
+    harness: console
+    integration_platforms:
+      - qemu_cortex_m3
+      - qemu_cortex_a53
+      - qemu_x86
+    harness_config:
+      type: one_line
+      record:
+        regex:
+          - "(?P<metric>.*) - (?P<description>.*):(?P<cycles>.*) cycles ,(?P<nanoseconds>.*) ns"
+      regex:
+        - "PROJECT EXECUTION SUCCESSFUL"
+
+  # Cortex-M has a 24-bit systick, so the default of 1 tick per second
+  # is achievable only if the frequency is below 16MHz.
+  benchmark.kernel.interrupt.latency.stm32:
+    arch_allow: arm
+    filter: CONFIG_PRINTK and CONFIG_SOC_FAMILY_STM32
+    extra_configs:
+      - CONFIG_SYS_CLOCK_TICKS_PER_SEC=20
+    harness: console
+    harness_config:
+      type: one_line
+      record:
+        regex:
+          - "(?P<metric>.*) - (?P<description>.*):(?P<cycles>.*) cycles ,(?P<nanoseconds>.*) ns"
+      regex:
+        - "PROJECT EXECUTION SUCCESSFUL"
+
+  # Additionally measure the dynamic interrupt connect cost on
+  # platforms supporting runtime ISR installation.
+  benchmark.kernel.interrupt.latency.dynamic:
+    platform_allow:
+      - qemu_cortex_m3
+      - qemu_cortex_a53
+    extra_configs:
+      - CONFIG_DYNAMIC_INTERRUPTS=y
+    harness: console
+    harness_config:
+      type: one_line
+      record:
+        regex:
+          - "(?P<metric>.*) - (?P<description>.*):(?P<cycles>.*) cycles ,(?P<nanoseconds>.*) ns"
+      regex:
+        - "PROJECT EXECUTION SUCCESSFUL"
