@@ -1,0 +1,14 @@
+common:
+  tags:
+    - test_framework
+    - benchmark
+tests:
+  testing.ztest.benchmark_manual:
+    integration_platforms:
+      - qemu_x86
+      - qemu_cortex_a53
+  testing.ztest.benchmark_manual.csv:
+    extra_configs:
+      - CONFIG_ZTEST_BENCHMARK_OUTPUT_CSV=y
+    integration_platforms:
+      - qemu_x86
