@@ -28,15 +28,29 @@
 #define TOTAL_ITERATIONS (WARMUP + NUM_ITERATIONS)
 
 /*
- * Record a sample unless the iteration is part of the warmup phase.
- * The first iterations of a scenario run with cold caches and are
- * discarded so that they do not dominate the reported maximum.
+ * Record a sample, discarding everything recorded during the warmup
+ * phase once it ends.
+ *
+ * Warmup iterations record like any other and are thrown away
+ * afterwards, rather than skipping the recording. Skipping it would
+ * leave the first measured iteration as the only one not preceded by
+ * the bookkeeping ztest_benchmark_record_sample() performs, which is
+ * enough to make it measurably faster than every iteration after it:
+ * the reported minimum would then describe a state the scenario is
+ * never in again.
  */
+static inline void record_after(uint32_t iteration, uint32_t warmup, uint64_t cycles)
+{
+	ztest_benchmark_record_sample(cycles);
+
+	if ((warmup > 0U) && (iteration == (warmup - 1U))) {
+		ztest_benchmark_discard_samples();
+	}
+}
+
 static inline void record(uint32_t iteration, uint64_t cycles)
 {
-	if (iteration >= WARMUP) {
-		ztest_benchmark_record_sample(cycles);
-	}
+	record_after(iteration, WARMUP, cycles);
 }
 
 #if defined(CONFIG_INT_BENCH_SCENARIO_DIRECT) || defined(CONFIG_INT_BENCH_SCENARIO_ZLI)
@@ -290,6 +304,12 @@ ZTEST_BENCHMARK_MANUAL(interrupt, locked_unlock_to_isr, NULL, NULL)
 #ifdef CONFIG_INT_BENCH_SCENARIO_THROUGHPUT
 #define THROUGHPUT_BURSTS 10U
 
+/*
+ * One burst is plenty of warmup here: each of them serves
+ * NUM_ITERATIONS interrupts back to back.
+ */
+#define THROUGHPUT_WARMUP 1U
+
 static volatile bool done;
 static volatile uint32_t isr_count;
 static volatile timing_t end_timestamp;
@@ -321,7 +341,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, throughput_round_trip, NULL, NULL)
 
 	bench_trigger_set_handler(throughput_handler);
 
-	for (uint32_t burst = 0U; burst < THROUGHPUT_BURSTS + 1U; burst++) {
+	for (uint32_t burst = 0U; burst < THROUGHPUT_BURSTS + THROUGHPUT_WARMUP; burst++) {
 		isr_count = 0U;
 		done = false;
 		bench_load_pollute();
@@ -333,11 +353,8 @@ ZTEST_BENCHMARK_MANUAL(interrupt, throughput_round_trip, NULL, NULL)
 		}
 
 		finish = end_timestamp;
-		/* Discard the first burst: it runs with cold caches */
-		if (burst > 0U) {
-			ztest_benchmark_record_sample(timing_cycles_get(&start, &finish) /
-						      NUM_ITERATIONS);
-		}
+		record_after(burst, THROUGHPUT_WARMUP,
+			     timing_cycles_get(&start, &finish) / NUM_ITERATIONS);
 	}
 
 	bench_trigger_set_handler(NULL);
