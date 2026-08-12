@@ -202,6 +202,23 @@ void benchmark_main(void);
 void ztest_benchmark_record_sample(uint64_t cycles);
 
 /**
+ * @brief Discard the samples recorded so far
+ *
+ * Reset the statistics of the running ZTEST_BENCHMARK_MANUAL() benchmark,
+ * as if none of its samples had been recorded. Calls made outside a manual
+ * benchmark body are ignored.
+ *
+ * This exists so that a warmup phase can execute the measurement loop in
+ * full, recording included, and then be thrown away. Skipping the
+ * recording during warmup instead leaves the first measured iteration as
+ * the only one not preceded by the bookkeeping that
+ * ztest_benchmark_record_sample() performs, which is enough to make it
+ * measurably faster than every iteration after it and to render the
+ * reported minimum meaningless.
+ */
+void ztest_benchmark_discard_samples(void);
+
+/**
  * @}
  */
 #endif /* ZTEST_BENCHMARK_H */
