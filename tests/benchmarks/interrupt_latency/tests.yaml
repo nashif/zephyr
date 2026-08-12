@@ -21,7 +21,7 @@ tests:
       type: one_line
       record:
         regex:
-          - "^M,(?P<suite>[^,]+),(?P<metric>[^,]+),(?P<samples>[^,]+),(?P<total_cycles>[^,]+),(?P<mean>[^,]+),(?P<stddev>[^,]+),(?P<std_error>[^,]+),(?P<min>[^,]+),(?P<min_sample>[^,]+),(?P<max>[^,]+),(?P<max_sample>[^,]+)$"
+          - "^P,(?P<suite>[^,]+),(?P<metric>[^,]+),(?P<samples>[^,]+),(?P<min>[^,]+),(?P<p50>[^,]+),(?P<p90>[^,]+),(?P<p99>[^,]+),(?P<p999>[^,]+),(?P<p9999>[^,]+),(?P<max>[^,]+)$"
       regex:
         - "PROJECT EXECUTION SUCCESSFUL"
 
@@ -40,7 +40,7 @@ tests:
       type: one_line
       record:
         regex:
-          - "^M,(?P<suite>[^,]+),(?P<metric>[^,]+),(?P<samples>[^,]+),(?P<total_cycles>[^,]+),(?P<mean>[^,]+),(?P<stddev>[^,]+),(?P<std_error>[^,]+),(?P<min>[^,]+),(?P<min_sample>[^,]+),(?P<max>[^,]+),(?P<max_sample>[^,]+)$"
+          - "^P,(?P<suite>[^,]+),(?P<metric>[^,]+),(?P<samples>[^,]+),(?P<min>[^,]+),(?P<p50>[^,]+),(?P<p90>[^,]+),(?P<p99>[^,]+),(?P<p999>[^,]+),(?P<p9999>[^,]+),(?P<max>[^,]+)$"
       regex:
         - "PROJECT EXECUTION SUCCESSFUL"
 
@@ -71,7 +71,7 @@ tests:
       type: one_line
       record:
         regex:
-          - "^M,(?P<suite>[^,]+),(?P<metric>[^,]+),(?P<samples>[^,]+),(?P<total_cycles>[^,]+),(?P<mean>[^,]+),(?P<stddev>[^,]+),(?P<std_error>[^,]+),(?P<min>[^,]+),(?P<min_sample>[^,]+),(?P<max>[^,]+),(?P<max_sample>[^,]+)$"
+          - "^P,(?P<suite>[^,]+),(?P<metric>[^,]+),(?P<samples>[^,]+),(?P<min>[^,]+),(?P<p50>[^,]+),(?P<p90>[^,]+),(?P<p99>[^,]+),(?P<p999>[^,]+),(?P<p9999>[^,]+),(?P<max>[^,]+)$"
       regex:
         - "PROJECT EXECUTION SUCCESSFUL"
 
@@ -92,6 +92,6 @@ tests:
       type: one_line
       record:
         regex:
-          - "^M,(?P<suite>[^,]+),(?P<metric>[^,]+),(?P<samples>[^,]+),(?P<total_cycles>[^,]+),(?P<mean>[^,]+),(?P<stddev>[^,]+),(?P<std_error>[^,]+),(?P<min>[^,]+),(?P<min_sample>[^,]+),(?P<max>[^,]+),(?P<max_sample>[^,]+)$"
+          - "^P,(?P<suite>[^,]+),(?P<metric>[^,]+),(?P<samples>[^,]+),(?P<min>[^,]+),(?P<p50>[^,]+),(?P<p90>[^,]+),(?P<p99>[^,]+),(?P<p999>[^,]+),(?P<p9999>[^,]+),(?P<max>[^,]+)$"
       regex:
         - "PROJECT EXECUTION SUCCESSFUL"
