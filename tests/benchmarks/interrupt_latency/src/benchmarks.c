@@ -39,9 +39,73 @@
  * the reported minimum would then describe a state the scenario is
  * never in again.
  */
+#ifdef CONFIG_INT_BENCH_OUTLIER_TRACE
+/*
+ * Report what else the system was doing when a sample came out far
+ * above the smallest one seen.
+ *
+ * The witnesses are sampled once per iteration rather than around the
+ * measured span itself, so what they cover is the interval between
+ * consecutive samples. That is enough to tell an outlier caused by a
+ * clock tick or by the load timer from one caused by something the
+ * benchmark cannot observe, which is the distinction worth having.
+ */
+static uint32_t outlier_min;
+static uint32_t outlier_reported;
+static uint32_t outlier_seen;
+static uint32_t outlier_prev_ticks;
+static uint32_t outlier_prev_timer;
+
+static void outlier_check(uint32_t iteration, uint64_t cycles)
+{
+	uint32_t ticks = (uint32_t)sys_clock_tick_get_32();
+	uint32_t timer = bench_load_timer_runs();
+
+	if (iteration == 0U) {
+		/*
+		 * A new benchmark is starting: close off the previous
+		 * one, since there is no hook for its end here.
+		 */
+		if (outlier_seen > outlier_reported) {
+			printk("\tprevious benchmark: %u outliers in total, %u reported\n",
+			       outlier_seen, outlier_reported);
+		}
+
+		outlier_min = UINT32_MAX;
+		outlier_reported = 0U;
+		outlier_seen = 0U;
+	} else if ((outlier_min != UINT32_MAX) &&
+		   (cycles > (uint64_t)outlier_min * CONFIG_INT_BENCH_OUTLIER_FACTOR)) {
+		outlier_seen++;
+
+		if (outlier_reported < CONFIG_INT_BENCH_OUTLIER_LIMIT) {
+			outlier_reported++;
+			printk("\toutlier: iteration %u, %llu cycles against a minimum of %u, "
+			       "ticks +%u, load timer +%u\n",
+			       iteration, cycles, outlier_min, ticks - outlier_prev_ticks,
+			       timer - outlier_prev_timer);
+		}
+	}
+
+	if (cycles < outlier_min) {
+		outlier_min = (uint32_t)cycles;
+	}
+
+	outlier_prev_ticks = ticks;
+	outlier_prev_timer = timer;
+}
+#else
+static inline void outlier_check(uint32_t iteration, uint64_t cycles)
+{
+	ARG_UNUSED(iteration);
+	ARG_UNUSED(cycles);
+}
+#endif /* CONFIG_INT_BENCH_OUTLIER_TRACE */
+
 static inline void record_after(uint32_t iteration, uint32_t warmup, uint64_t cycles)
 {
 	ztest_benchmark_record_sample(cycles);
+	outlier_check(iteration, cycles);
 
 	if ((warmup > 0U) && (iteration == (warmup - 1U))) {
 		ztest_benchmark_discard_samples();
