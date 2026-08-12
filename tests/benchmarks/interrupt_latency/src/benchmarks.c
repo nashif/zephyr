@@ -340,3 +340,158 @@ ZTEST_BENCHMARK_MANUAL(interrupt, dynamic_connect, NULL, NULL)
 	irq_enable(line);
 }
 #endif /* CONFIG_INT_BENCH_SCENARIO_DYNAMIC */
+
+#ifdef CONFIG_INT_BENCH_SCENARIO_MASKING
+/*
+ * Delay inflicted on a periodic interrupt.
+ *
+ * The other scenarios measure interrupts the benchmark raises itself.
+ * This one measures what the rest of the system does to an interrupt
+ * that was already scheduled: a periodic timer runs at the tick rate
+ * while the benchmark exercises kernel primitives, and each sample is
+ * how much later than its period the timer interrupt was actually
+ * served.
+ *
+ * That delay is what an application experiences when the kernel or
+ * another driver masks interrupts, but it is a sampling technique and
+ * cannot separate the causes. A sample is only taken at a tick
+ * boundary, so a masked window that does not overlap one is never
+ * seen, and the reported delay also contains time spent in interrupts
+ * that were served before this one. Treat the maximum as a sampled
+ * lower bound on the longest interrupt-disabled window, not as proof
+ * of one.
+ *
+ * Set CONFIG_INT_BENCH_MASK_INJECT_US to mask interrupts for a known
+ * time in the work loop; the reported maximum should then be at least
+ * that long, which validates the measurement on a new platform.
+ */
+static uint32_t mask_samples[NUM_ITERATIONS];
+static volatile uint32_t mask_count;
+static timing_t mask_prev;
+
+static K_SEM_DEFINE(mask_sem, 0, 1);
+static K_MUTEX_DEFINE(mask_mutex);
+
+static void mask_timer_handler(struct k_timer *timer)
+{
+	timing_t now = timing_counter_get();
+	timing_t prev = mask_prev;
+
+	ARG_UNUSED(timer);
+
+	if (prev != 0 && mask_count < NUM_ITERATIONS) {
+		mask_samples[mask_count] = (uint32_t)timing_cycles_get(&prev, &now);
+		mask_count++;
+	}
+
+	mask_prev = now;
+}
+
+static K_TIMER_DEFINE(mask_timer, mask_timer_handler, NULL);
+
+static void sort_samples(uint32_t *samples, uint32_t count)
+{
+	for (uint32_t gap = count / 2U; gap > 0U; gap /= 2U) {
+		for (uint32_t i = gap; i < count; i++) {
+			uint32_t value = samples[i];
+			uint32_t j = i;
+
+			while ((j >= gap) && (samples[j - gap] > value)) {
+				samples[j] = samples[j - gap];
+				j -= gap;
+			}
+			samples[j] = value;
+		}
+	}
+}
+
+/* Kernel primitives that take a spinlock, and so mask interrupts */
+static void mask_kernel_work(void)
+{
+	k_sem_give(&mask_sem);
+	(void)k_sem_take(&mask_sem, K_NO_WAIT);
+	(void)k_mutex_lock(&mask_mutex, K_NO_WAIT);
+	(void)k_mutex_unlock(&mask_mutex);
+	(void)k_uptime_get();
+}
+
+ZTEST_BENCHMARK_MANUAL(interrupt, periodic_isr_delay, NULL, NULL)
+{
+	uint32_t baseline;
+	int64_t deadline;
+
+	mask_count = 0U;
+	mask_prev = 0;
+
+	k_timer_start(&mask_timer, K_TICKS(1), K_TICKS(1));
+
+	/*
+	 * Give up quickly if the timer is not delivering at all, rather
+	 * than spinning out the full collection window. Emulated
+	 * platforms can take minutes of wall clock to run out even a
+	 * short window of guest time.
+	 */
+	deadline = k_uptime_get() + 100;
+
+	while (mask_count == 0U && k_uptime_get() < deadline) {
+		mask_kernel_work();
+	}
+
+	if (mask_count == 0U) {
+		k_timer_stop(&mask_timer);
+		printk("periodic_isr_delay: timer did not deliver, skipping\n");
+		return;
+	}
+
+	/*
+	 * Bound the collection: if the timer delivers more slowly than
+	 * the tick rate suggests this would otherwise spin for a long
+	 * time. Allow four times the nominal duration.
+	 */
+	deadline = k_uptime_get() + (4 * MSEC_PER_SEC * NUM_ITERATIONS) /
+		   CONFIG_SYS_CLOCK_TICKS_PER_SEC + 100;
+
+	while (mask_count < NUM_ITERATIONS && k_uptime_get() < deadline) {
+		mask_kernel_work();
+
+		if (CONFIG_INT_BENCH_MASK_INJECT_US > 0) {
+			unsigned int key = irq_lock();
+
+			k_busy_wait(CONFIG_INT_BENCH_MASK_INJECT_US);
+			irq_unlock(key);
+		}
+	}
+
+	k_timer_stop(&mask_timer);
+
+	if (mask_count < NUM_ITERATIONS) {
+		/*
+		 * Too few intervals to say anything. Recording no
+		 * samples makes the framework report the benchmark as
+		 * inconclusive, which is the honest outcome.
+		 */
+		printk("periodic_isr_delay: only %u of %u intervals sampled\n",
+		       mask_count, NUM_ITERATIONS);
+		return;
+	}
+
+	/*
+	 * Establish the undelayed interval empirically rather than from
+	 * the configured tick rate: the timing counter does not
+	 * necessarily run at timing_freq_get() on every platform, and a
+	 * baseline that is off by a constant would either hide every
+	 * delay or turn every sample into one. The median interval is
+	 * the undelayed period as long as most intervals are undelayed,
+	 * and unlike the minimum it is not skewed by the short interval
+	 * that follows a late one.
+	 */
+	sort_samples(mask_samples, NUM_ITERATIONS);
+	baseline = mask_samples[NUM_ITERATIONS / 2U];
+
+	for (uint32_t i = 0U; i < NUM_ITERATIONS; i++) {
+		uint32_t delta = mask_samples[i];
+
+		ztest_benchmark_record_sample((delta > baseline) ? (delta - baseline) : 0U);
+	}
+}
+#endif /* CONFIG_INT_BENCH_SCENARIO_MASKING */
