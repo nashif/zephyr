@@ -167,6 +167,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, entry_trigger_to_isr, NULL, NULL)
 
 	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
 		fired = false;
+		bench_load_churn();
 		bench_load_pollute();
 
 		start = timing_counter_get();
@@ -214,6 +215,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, exit_resume_interrupted, NULL, NULL)
 
 	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
 		fired = false;
+		bench_load_churn();
 		bench_load_pollute();
 
 		bench_trigger();
@@ -270,6 +272,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, exit_reschedule, NULL, NULL)
 			waiter_entry, NULL, NULL, NULL, priority - 1, 0, K_NO_WAIT);
 
 	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
+		bench_load_churn();
 		bench_load_pollute();
 
 		bench_trigger();
@@ -298,6 +301,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, locked_unlock_to_isr, NULL, NULL)
 
 	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
 		fired = false;
+		bench_load_churn();
 
 		key = irq_lock();
 
@@ -309,7 +313,9 @@ ZTEST_BENCHMARK_MANUAL(interrupt, locked_unlock_to_isr, NULL, NULL)
 		 * interrupt is unmasked with the caches in the state a
 		 * critical section doing real work would leave them in.
 		 * This lengthens the hold time beyond the configured
-		 * value.
+		 * value. Only the cache load runs here: the kernel and
+		 * scheduler churn make kernel calls, which is not valid
+		 * with interrupts locked, so they ran before the lock.
 		 */
 		bench_load_pollute();
 
@@ -370,6 +376,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, throughput_round_trip, NULL, NULL)
 	for (uint32_t burst = 0U; burst < THROUGHPUT_BURSTS + THROUGHPUT_WARMUP; burst++) {
 		isr_count = 0U;
 		done = false;
+		bench_load_churn();
 		bench_load_pollute();
 
 		start = timing_counter_get();
@@ -403,6 +410,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, dynamic_connect, NULL, NULL)
 	irq_disable(line);
 
 	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
+		bench_load_churn();
 		bench_load_pollute();
 
 		start = timing_counter_get();
@@ -607,6 +615,7 @@ static void alt_entry_measure(const char *name)
 
 	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
 		alt_fired = false;
+		bench_load_churn();
 		bench_load_pollute();
 
 		start = timing_counter_get();
@@ -665,6 +674,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, zli_entry_while_locked, NULL, NULL)
 
 	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
 		alt_fired = false;
+		bench_load_churn();
 		bench_load_pollute();
 
 		key = irq_lock();
@@ -735,6 +745,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, irq_to_thread, NULL, NULL)
 			e2e_waiter_entry, NULL, NULL, NULL, priority - 1, 0, K_NO_WAIT);
 
 	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
+		bench_load_churn();
 		bench_load_pollute();
 
 		e2e_start = timing_counter_get();
@@ -794,6 +805,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, nested_preempt, NULL, NULL)
 
 	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
 		nested_done = false;
+		bench_load_churn();
 		bench_load_pollute();
 
 		bench_trigger();
