@@ -45,13 +45,14 @@ config ZTEST_BENCHMARK_PERCENTILES
 	  characterised by how bad an individual operation can be, and
 	  that lives in the tail of the distribution.
 
-	  The percentiles also give the report its outlier count, the number of samples slower
-	  than the median. For a kernel latency distribution that is the number of runs that were
-	  disturbed, which is what the human-readable report carries instead of a standard error:
-	  these distributions are a baseline plus a few interrupted runs rather than samples of one
-	  stochastic population, and quoting how precisely their average was estimated suggests an
-	  average that no single execution ever produced. The standard error stays in the CSV
-	  output, whose columns are fixed.
+	  The percentiles also give the report its outlier count, the number of samples that exceed
+	  the median by more than a margin. For a kernel latency distribution that is the number of
+	  runs that were disturbed, which is what the human-readable report carries instead of a
+	  standard error: these distributions are a baseline plus a few interrupted runs rather than
+	  samples of one stochastic population, and quoting how precisely their average was
+	  estimated suggests an average that no single execution ever produced. The standard error
+	  stays in the CSV output, whose columns are fixed. See
+	  CONFIG_ZTEST_BENCHMARK_OUTLIER_MARGIN_DIV for why the margin is needed.
 
 	  A percentile needs enough samples to be resolved at all. p99
 	  needs at least 100, p99.9 at least 1000 and p99.99 at least
@@ -59,6 +60,29 @@ config ZTEST_BENCHMARK_PERCENTILES
 	  maximum. Retaining samples costs 8 bytes each, so the buffer
 	  has to be sized for the number of iterations the benchmarks
 	  run.
+
+config ZTEST_BENCHMARK_OUTLIER_MARGIN_DIV
+	int "Outlier margin above the median, as a divisor"
+	depends on ZTEST_BENCHMARK_PERCENTILES
+	default 16
+	range 1 1000
+	help
+	  How far above the median a sample has to sit before it counts as
+	  an outlier, expressed as a divisor of the median: the default of
+	  16 sets the margin at a sixteenth of the median, so a baseline of
+	  400 counts a sample from 426 upwards. The margin is never less
+	  than two counts, so that a distribution spanning only adjacent
+	  counts of a coarse timer never registers.
+
+	  Without a margin every sample above the median counts, and the
+	  baseline of a benchmark is not one exact value: the resolution of
+	  the timing counter spreads it over a few counts, and where that
+	  counter is coarse relative to the operation being measured the
+	  whole distribution can span as little as two values. Half the
+	  samples then land above the median and are reported as outliers
+	  although nothing disturbed them. Lower this to count smaller
+	  disturbances, raise it on a platform whose baseline is noisy by
+	  nature.
 
 config ZTEST_BENCHMARK_MAX_SAMPLES
 	int "Number of samples retained for percentiles"
