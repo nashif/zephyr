@@ -20,6 +20,7 @@
 #include <zephyr/irq.h>
 #include <zephyr/timing/timing.h>
 
+#include "load.h"
 #include "trigger.h"
 
 #define NUM_ITERATIONS   CONFIG_INT_BENCH_NUM_ITERATIONS
@@ -51,10 +52,19 @@ static void suite_setup(void)
 	       NUM_ITERATIONS);
 #endif
 
+	printk("Background load: %s\n", bench_load_description());
+
 	(void)bench_trigger_init();
+
+	bench_load_start();
 }
 
-ZTEST_BENCHMARK_SUITE(interrupt, suite_setup, NULL);
+static void suite_teardown(void)
+{
+	bench_load_stop();
+}
+
+ZTEST_BENCHMARK_SUITE(interrupt, suite_setup, suite_teardown);
 
 #if defined(CONFIG_INT_BENCH_SCENARIO_ENTRY) || defined(CONFIG_INT_BENCH_SCENARIO_EXIT) || \
 	defined(CONFIG_INT_BENCH_SCENARIO_LOCKED)
@@ -86,6 +96,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, entry_trigger_to_isr, NULL, NULL)
 
 	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
 		fired = false;
+		bench_load_pollute();
 
 		start = timing_counter_get();
 		bench_trigger();
@@ -123,6 +134,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, exit_resume_interrupted, NULL, NULL)
 
 	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
 		fired = false;
+		bench_load_pollute();
 
 		bench_trigger();
 
@@ -185,6 +197,8 @@ ZTEST_BENCHMARK_MANUAL(interrupt, exit_reschedule, NULL, NULL)
 			waiter_entry, NULL, NULL, NULL, priority - 1, 0, K_NO_WAIT);
 
 	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
+		bench_load_pollute();
+
 		bench_trigger();
 		k_sem_take(&sync_sem, K_FOREVER);
 	}
@@ -216,6 +230,15 @@ ZTEST_BENCHMARK_MANUAL(interrupt, locked_unlock_to_isr, NULL, NULL)
 
 		bench_trigger();
 		k_busy_wait(CONFIG_INT_BENCH_LOCK_HOLD_US);
+
+		/*
+		 * Pollute from inside the critical section, so that the
+		 * interrupt is unmasked with the caches in the state a
+		 * critical section doing real work would leave them in.
+		 * This lengthens the hold time beyond the configured
+		 * value.
+		 */
+		bench_load_pollute();
 
 		start = timing_counter_get();
 		irq_unlock(key);
@@ -268,6 +291,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, throughput_round_trip, NULL, NULL)
 	for (uint32_t burst = 0U; burst < THROUGHPUT_BURSTS + 1U; burst++) {
 		isr_count = 0U;
 		done = false;
+		bench_load_pollute();
 
 		start = timing_counter_get();
 		bench_trigger();
@@ -303,6 +327,8 @@ ZTEST_BENCHMARK_MANUAL(interrupt, dynamic_connect, NULL, NULL)
 	irq_disable(line);
 
 	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
+		bench_load_pollute();
+
 		start = timing_counter_get();
 		(void)irq_connect_dynamic(line, CONFIG_INT_BENCH_IRQ_PRIO,
 					  bench_trigger_isr, NULL, 0);
