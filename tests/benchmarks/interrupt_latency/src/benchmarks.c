@@ -39,6 +39,25 @@ static inline void record(uint32_t iteration, uint64_t cycles)
 	}
 }
 
+#if defined(CONFIG_INT_BENCH_SCENARIO_DIRECT) || defined(CONFIG_INT_BENCH_SCENARIO_ZLI)
+static volatile bool alt_fired;
+static volatile timing_t alt_timestamp;
+
+/*
+ * Dispatched straight from the vector table: no software ISR table
+ * lookup and none of the common entry code that wraps a regular ISR.
+ * Returning zero tells the architecture layer that no reschedule is
+ * needed, which keeps the exit path out of the measurement.
+ */
+ISR_DIRECT_DECLARE(bench_alt_isr)
+{
+	alt_timestamp = timing_counter_get();
+	alt_fired = true;
+
+	return 0;
+}
+#endif
+
 static void suite_setup(void)
 {
 #ifdef CONFIG_INT_BENCH_TRIGGER_SW_IRQ
@@ -55,6 +74,20 @@ static void suite_setup(void)
 	printk("Background load: %s\n", bench_load_description());
 
 	(void)bench_trigger_init();
+
+#ifdef CONFIG_INT_BENCH_SCENARIO_DIRECT
+	IRQ_DIRECT_CONNECT(BENCH_IRQ_LINE_ALT, CONFIG_INT_BENCH_IRQ_PRIO, bench_alt_isr, 0);
+	irq_enable(BENCH_IRQ_LINE_ALT);
+#endif
+#ifdef CONFIG_INT_BENCH_SCENARIO_ZLI
+	/*
+	 * Zero-latency interrupts have to be registered with
+	 * IRQ_DIRECT_CONNECT(), and at a priority within the levels
+	 * reserved for them.
+	 */
+	IRQ_DIRECT_CONNECT(BENCH_IRQ_LINE_ALT, 0, bench_alt_isr, IRQ_ZERO_LATENCY);
+	irq_enable(BENCH_IRQ_LINE_ALT);
+#endif
 
 	bench_load_start();
 }
@@ -495,3 +528,94 @@ ZTEST_BENCHMARK_MANUAL(interrupt, periodic_isr_delay, NULL, NULL)
 	}
 }
 #endif /* CONFIG_INT_BENCH_SCENARIO_MASKING */
+
+#if defined(CONFIG_INT_BENCH_SCENARIO_DIRECT) || defined(CONFIG_INT_BENCH_SCENARIO_ZLI)
+/*
+ * Bound on the spin waiting for the second line's ISR. A direct or
+ * zero-latency interrupt that never arrives would otherwise hang the
+ * run, and in the zero-latency case the wait happens with interrupts
+ * locked, so nothing else could break the deadlock.
+ */
+#define ALT_SPIN_LIMIT 10000000U
+
+static bool alt_wait(void)
+{
+	for (uint32_t spin = 0U; spin < ALT_SPIN_LIMIT; spin++) {
+		if (alt_fired) {
+			return true;
+		}
+	}
+
+	return false;
+}
+#endif
+
+#ifdef CONFIG_INT_BENCH_SCENARIO_DIRECT
+/*
+ * Entry latency of a directly connected ISR. Identical to
+ * entry_trigger_to_isr apart from the line it uses, so the difference
+ * between the two is the cost of the software ISR table dispatch and
+ * the common entry code that a regular ISR goes through.
+ */
+ZTEST_BENCHMARK_MANUAL(interrupt, entry_direct_isr, NULL, NULL)
+{
+	timing_t start;
+	timing_t finish;
+
+	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
+		alt_fired = false;
+		bench_load_pollute();
+
+		start = timing_counter_get();
+		bench_trigger_alt();
+
+		if (!alt_wait()) {
+			printk("entry_direct_isr: direct ISR did not run, skipping\n");
+			return;
+		}
+
+		finish = alt_timestamp;
+		record(i, timing_cycles_get(&start, &finish));
+	}
+}
+#endif /* CONFIG_INT_BENCH_SCENARIO_DIRECT */
+
+#ifdef CONFIG_INT_BENCH_SCENARIO_ZLI
+/*
+ * Entry latency of a zero-latency interrupt raised while interrupts
+ * are locked. A zero-latency interrupt runs above the priority the
+ * kernel masks with, so unlike the interrupt in locked_unlock_to_isr
+ * it is served inside the critical section rather than after it. The
+ * two scenarios together show what a critical section costs an
+ * interrupt, and what escaping it buys.
+ */
+ZTEST_BENCHMARK_MANUAL(interrupt, zli_entry_while_locked, NULL, NULL)
+{
+	timing_t start;
+	timing_t finish;
+	unsigned int key;
+	bool served;
+
+	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
+		alt_fired = false;
+		bench_load_pollute();
+
+		key = irq_lock();
+
+		start = timing_counter_get();
+		bench_trigger_alt();
+
+		served = alt_wait();
+
+		irq_unlock(key);
+
+		if (!served) {
+			printk("zli_entry_while_locked: not served while locked, skipping\n");
+			return;
+		}
+
+		finish = alt_timestamp;
+		record(i, timing_cycles_get(&start, &finish));
+	}
+}
+#endif /* CONFIG_INT_BENCH_SCENARIO_ZLI */
