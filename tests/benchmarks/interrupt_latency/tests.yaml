@@ -51,15 +51,16 @@ tests:
       - qemu_cortex_m0
       - m2gl025_miv
       # The critical section scenario busy waits with interrupts
-      # locked while the load timer keeps expiring. Under ARC emulation
-      # that combination costs orders of magnitude more wall clock than
-      # the nominal hold time, making the run impractically long.
+      # locked while the load timer keeps expiring. Under emulation
+      # that combination costs orders of magnitude more wall clock
+      # than the nominal hold time, making the run impractically long.
       - qemu_arc/qemu_arc_em
+      - qemu_cortex_m3
     extra_args:
       - EXTRA_CONF_FILE="prj.load.conf"
     extra_configs:
       - CONFIG_ZTEST_BENCHMARK_OUTPUT_CSV=y
-    timeout: 600
+    timeout: 120
     extra_configs:
       - CONFIG_ZTEST_BENCHMARK_OUTPUT_CSV=y
     harness: console
