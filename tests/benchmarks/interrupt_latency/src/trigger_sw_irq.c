@@ -242,6 +242,11 @@ void bench_trigger_alt(void)
 #include <soc/dport_reg.h>
 #define BENCH_FROM_CPU_REG DPORT_CPU_INTR_FROM_CPU_2_REG
 #define BENCH_FROM_CPU_BIT DPORT_CPU_INTR_FROM_CPU_2
+#elif defined(CONFIG_SOC_SERIES_ESP32S2)
+/* The register moved to the system peripheral but kept the old prefix */
+#include <soc/system_reg.h>
+#define BENCH_FROM_CPU_REG DPORT_CPU_INTR_FROM_CPU_2_REG
+#define BENCH_FROM_CPU_BIT DPORT_CPU_INTR_FROM_CPU_2
 #else
 #include <soc/system_reg.h>
 #define BENCH_FROM_CPU_REG SYSTEM_CPU_INTR_FROM_CPU_2_REG
