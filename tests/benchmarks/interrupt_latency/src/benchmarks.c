@@ -50,18 +50,54 @@
  * clock tick or by the load timer from one caused by something the
  * benchmark cannot observe, which is the distinction worth having.
  */
+/*
+ * Cortex-M counts the cycles it spends entering and leaving exceptions
+ * in DWT_EXCCNT, which is the one witness that distinguishes an
+ * interrupt from a stall in the memory system. It is only eight bits
+ * wide, but exception overhead is a few cycles at a time, so it does
+ * not wrap between consecutive samples.
+ */
+#if defined(CONFIG_CPU_CORTEX_M) && defined(CONFIG_CORTEX_M_DWT)
+#include <cmsis_core.h>
+#define OUTLIER_HAS_EXC_COUNT 1
+
+static inline void outlier_exc_init(void)
+{
+	DWT->CTRL |= DWT_CTRL_EXCEVTENA_Msk;
+	DWT->EXCCNT = 0;
+}
+
+static inline uint32_t outlier_exc_count(void)
+{
+	return DWT->EXCCNT & 0xFFU;
+}
+#else
+static inline void outlier_exc_init(void)
+{
+}
+
+static inline uint32_t outlier_exc_count(void)
+{
+	return 0;
+}
+#endif
+
 static uint32_t outlier_min;
 static uint32_t outlier_reported;
 static uint32_t outlier_seen;
 static uint32_t outlier_prev_ticks;
 static uint32_t outlier_prev_timer;
+static uint32_t outlier_prev_exc;
+static timing_t outlier_prev_time;
 
 static void outlier_check(uint32_t iteration, uint64_t cycles)
 {
 	uint32_t ticks = (uint32_t)sys_clock_tick_get_32();
 	uint32_t timer = bench_load_timer_runs();
+	uint32_t exc = outlier_exc_count();
 
 	if (iteration == 0U) {
+		outlier_exc_init();
 		/*
 		 * A new benchmark is starting: close off the previous
 		 * one, since there is no hook for its end here.
@@ -79,11 +115,19 @@ static void outlier_check(uint32_t iteration, uint64_t cycles)
 		outlier_seen++;
 
 		if (outlier_reported < CONFIG_INT_BENCH_OUTLIER_LIMIT) {
+			timing_t now = timing_counter_get();
+			timing_t prev = outlier_prev_time;
+			uint64_t since = (outlier_prev_time == 0) ? 0 :
+					 timing_cycles_get(&prev, &now);
+
+			outlier_prev_time = now;
 			outlier_reported++;
 			printk("\toutlier: iteration %u, %llu cycles against a minimum of %u, "
-			       "ticks +%u, load timer +%u\n",
+			       "ticks +%u, load timer +%u, exception cycles +%u\n",
 			       iteration, cycles, outlier_min, ticks - outlier_prev_ticks,
-			       timer - outlier_prev_timer);
+			       timer - outlier_prev_timer,
+			       (exc - outlier_prev_exc) & 0xFFU);
+			printk("\t          %llu cycles since the previous one\n", since);
 		}
 	}
 
@@ -93,6 +137,7 @@ static void outlier_check(uint32_t iteration, uint64_t cycles)
 
 	outlier_prev_ticks = ticks;
 	outlier_prev_timer = timer;
+	outlier_prev_exc = exc;
 }
 #else
 static inline void outlier_check(uint32_t iteration, uint64_t cycles)

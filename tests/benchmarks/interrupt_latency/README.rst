@@ -376,10 +376,24 @@ its samples disturbed, while ``locked_unlock_to_isr`` holds interrupts
 masked for far longer and sees 2.1%, which is why its tail begins at p99
 rather than at p99.9.
 
-Idle outliers are a different matter. One run in three showed a single
-566 cycle sample out of 10000 and the other two showed none at all, so
-there is nothing periodic to find; with no load there is no tick or timer
-for the trace to point at either.
+On Cortex-M the trace also reports ``DWT_EXCCNT``, the cycles the core
+spent entering and leaving exceptions, which is what separates an
+interrupt from a stall in the memory system, and the interval since the
+previous outlier.
+
+Those two together identified the outliers that appear even with no load
+at all. On an FRDM-MCXN947 each one costs 350 to 500 cycles, each reports
+23 cycles of exception overhead, meaning exactly one exception, and they
+arrive 16778634 cycles apart, which is 2^24 to within 0.008%. That is the
+period of the 24 bit SysTick counter at 150MHz: a tickless kernel still
+has to take an interrupt every time the counter runs out, whether or not
+a timeout is due, and at one tick per second it announces nothing when it
+does. The interrupt is invisible to the tick and timer witnesses for that
+reason, which is why the exception counter was needed to find it.
+
+Expect this on any Cortex-M platform using SysTick. It puts a floor of one
+interrupt per 2^24 cycles under the tail of every measurement, 112ms at
+150MHz, whatever else the system is doing.
 
 Notes on methodology
 ********************
