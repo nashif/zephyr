@@ -23,22 +23,8 @@
 #include "load.h"
 #include "trigger.h"
 
-#define NUM_ITERATIONS   CONFIG_INT_BENCH_NUM_ITERATIONS
-#define WARMUP           CONFIG_INT_BENCH_WARMUP_ITERATIONS
-#define TOTAL_ITERATIONS (WARMUP + NUM_ITERATIONS)
+#define NUM_ITERATIONS CONFIG_INT_BENCH_NUM_ITERATIONS
 
-/*
- * Record a sample, discarding everything recorded during the warmup
- * phase once it ends.
- *
- * Warmup iterations record like any other and are thrown away
- * afterwards, rather than skipping the recording. Skipping it would
- * leave the first measured iteration as the only one not preceded by
- * the bookkeeping ztest_benchmark_record_sample() performs, which is
- * enough to make it measurably faster than every iteration after it:
- * the reported minimum would then describe a state the scenario is
- * never in again.
- */
 #ifdef CONFIG_INT_BENCH_OUTLIER_TRACE
 /*
  * Report what else the system was doing when a sample came out far
@@ -147,19 +133,15 @@ static inline void outlier_check(uint32_t iteration, uint64_t cycles)
 }
 #endif /* CONFIG_INT_BENCH_OUTLIER_TRACE */
 
-static inline void record_after(uint32_t iteration, uint32_t warmup, uint64_t cycles)
+/*
+ * Record one measured span. Which samples belong to the warmup and
+ * which to the reported distribution is the framework's business, so
+ * every iteration records and the scenarios do not tell them apart.
+ */
+static inline void record(uint32_t iteration, uint64_t cycles)
 {
 	ztest_benchmark_record_sample(cycles);
 	outlier_check(iteration, cycles);
-
-	if ((warmup > 0U) && (iteration == (warmup - 1U))) {
-		ztest_benchmark_discard_samples();
-	}
-}
-
-static inline void record(uint32_t iteration, uint64_t cycles)
-{
-	record_after(iteration, WARMUP, cycles);
 }
 
 #if defined(CONFIG_INT_BENCH_SCENARIO_DIRECT) || defined(CONFIG_INT_BENCH_SCENARIO_ZLI) || \
@@ -267,14 +249,14 @@ static BENCH_ISR_FUNC void entry_handler(void)
  * the interrupt to the first timestamp taken inside the ISR. Requires
  * the sw-irq trigger backend (a real asynchronous interrupt).
  */
-ZTEST_BENCHMARK_MANUAL(interrupt, entry_trigger_to_isr, NULL, NULL)
+ZTEST_BENCHMARK_MANUAL(interrupt, entry_trigger_to_isr, NUM_ITERATIONS, NULL, NULL)
 {
 	timing_t start;
 	timing_t finish;
 
 	bench_trigger_set_handler(entry_handler);
 
-	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
+	for (uint32_t i = 0U; i < ztest_benchmark_iterations(); i++) {
 		fired = false;
 		bench_load_churn();
 		bench_load_pollute();
@@ -315,14 +297,14 @@ static BENCH_ISR_FUNC void exit_handler(void)
  * body back to the interrupted thread. Works with both trigger
  * backends; with irq_offload() it measures the offload trap exit path.
  */
-ZTEST_BENCHMARK_MANUAL(interrupt, exit_resume_interrupted, NULL, NULL)
+ZTEST_BENCHMARK_MANUAL(interrupt, exit_resume_interrupted, NUM_ITERATIONS, NULL, NULL)
 {
 	timing_t start;
 	timing_t finish;
 
 	bench_trigger_set_handler(exit_handler);
 
-	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
+	for (uint32_t i = 0U; i < ztest_benchmark_iterations(); i++) {
 		fired = false;
 		bench_load_churn();
 		bench_load_pollute();
@@ -355,7 +337,7 @@ static void waiter_entry(void *p1, void *p2, void *p3)
 	ARG_UNUSED(p2);
 	ARG_UNUSED(p3);
 
-	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
+	for (uint32_t i = 0U; i < ztest_benchmark_iterations(); i++) {
 		k_sem_take(&wake_sem, K_FOREVER);
 
 		finish = timing_counter_get();
@@ -371,7 +353,7 @@ static void waiter_entry(void *p1, void *p2, void *p3)
  * an ISR that wakes a higher priority thread to that thread running
  * (interrupt exit plus context switch).
  */
-ZTEST_BENCHMARK_MANUAL(interrupt, exit_reschedule, NULL, NULL)
+ZTEST_BENCHMARK_MANUAL(interrupt, exit_reschedule, NUM_ITERATIONS, NULL, NULL)
 {
 	int priority = k_thread_priority_get(k_current_get());
 
@@ -380,7 +362,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, exit_reschedule, NULL, NULL)
 	k_thread_create(&waiter_thread, waiter_stack, K_THREAD_STACK_SIZEOF(waiter_stack),
 			waiter_entry, NULL, NULL, NULL, priority - 1, 0, K_NO_WAIT);
 
-	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
+	for (uint32_t i = 0U; i < ztest_benchmark_iterations(); i++) {
 		bench_load_churn();
 		bench_load_pollute();
 
@@ -400,7 +382,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, exit_reschedule, NULL, NULL)
  * CONFIG_INT_BENCH_LOCK_HOLD_US, then the time from irq_unlock() to
  * ISR entry is measured. Requires the sw-irq trigger backend.
  */
-ZTEST_BENCHMARK_MANUAL(interrupt, locked_unlock_to_isr, NULL, NULL)
+ZTEST_BENCHMARK_MANUAL(interrupt, locked_unlock_to_isr, NUM_ITERATIONS, NULL, NULL)
 {
 	timing_t start;
 	timing_t finish;
@@ -408,7 +390,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, locked_unlock_to_isr, NULL, NULL)
 
 	bench_trigger_set_handler(entry_handler);
 
-	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
+	for (uint32_t i = 0U; i < ztest_benchmark_iterations(); i++) {
 		fired = false;
 		bench_load_churn();
 
@@ -475,14 +457,15 @@ static void throughput_handler(void)
  * over a burst of NUM_ITERATIONS interrupts; its inverse is the
  * maximum sustainable interrupt rate. Requires the sw-irq backend.
  */
-ZTEST_BENCHMARK_MANUAL(interrupt, throughput_round_trip, NULL, NULL)
+ZTEST_BENCHMARK_MANUAL_WARMUP(interrupt, throughput_round_trip, THROUGHPUT_BURSTS,
+			      THROUGHPUT_WARMUP, NULL, NULL)
 {
 	timing_t start;
 	timing_t finish;
 
 	bench_trigger_set_handler(throughput_handler);
 
-	for (uint32_t burst = 0U; burst < THROUGHPUT_BURSTS + THROUGHPUT_WARMUP; burst++) {
+	for (uint32_t burst = 0U; burst < ztest_benchmark_iterations(); burst++) {
 		isr_count = 0U;
 		done = false;
 		bench_load_churn();
@@ -495,8 +478,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, throughput_round_trip, NULL, NULL)
 		}
 
 		finish = end_timestamp;
-		record_after(burst, THROUGHPUT_WARMUP,
-			     timing_cycles_get(&start, &finish) / NUM_ITERATIONS);
+		record(burst, timing_cycles_get(&start, &finish) / NUM_ITERATIONS);
 	}
 
 	bench_trigger_set_handler(NULL);
@@ -510,7 +492,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, throughput_round_trip, NULL, NULL)
  * (re)installed because z_isr_install() requires the line to be
  * disabled on most architectures.
  */
-ZTEST_BENCHMARK_MANUAL(interrupt, dynamic_connect, NULL, NULL)
+ZTEST_BENCHMARK_MANUAL(interrupt, dynamic_connect, NUM_ITERATIONS, NULL, NULL)
 {
 	timing_t start;
 	timing_t finish;
@@ -518,7 +500,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, dynamic_connect, NULL, NULL)
 
 	irq_disable(line);
 
-	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
+	for (uint32_t i = 0U; i < ztest_benchmark_iterations(); i++) {
 		bench_load_churn();
 		bench_load_pollute();
 
@@ -608,7 +590,7 @@ static void mask_kernel_work(void)
 	(void)k_uptime_get();
 }
 
-ZTEST_BENCHMARK_MANUAL(interrupt, periodic_isr_delay, NULL, NULL)
+ZTEST_BENCHMARK_MANUAL(interrupt, periodic_isr_delay, NUM_ITERATIONS, NULL, NULL)
 {
 	uint32_t baseline;
 	int64_t deadline;
@@ -722,7 +704,7 @@ static void alt_entry_measure(const char *name)
 	timing_t start;
 	timing_t finish;
 
-	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
+	for (uint32_t i = 0U; i < ztest_benchmark_iterations(); i++) {
 		alt_fired = false;
 		bench_load_churn();
 		bench_load_pollute();
@@ -747,7 +729,7 @@ static void alt_entry_measure(const char *name)
  * difference from entry_trigger_to_isr is the software ISR table
  * dispatch and the common entry code a regular ISR goes through.
  */
-ZTEST_BENCHMARK_MANUAL(interrupt, entry_direct_isr, NULL, NULL)
+ZTEST_BENCHMARK_MANUAL(interrupt, entry_direct_isr, NUM_ITERATIONS, NULL, NULL)
 {
 	alt_entry_measure("entry_direct_isr");
 }
@@ -769,19 +751,19 @@ ZTEST_BENCHMARK_MANUAL(interrupt, entry_direct_isr, NULL, NULL)
  * compared with them; zli_entry_while_locked below answers the
  * different question of what happens inside a critical section.
  */
-ZTEST_BENCHMARK_MANUAL(interrupt, zli_entry_trigger_to_isr, NULL, NULL)
+ZTEST_BENCHMARK_MANUAL(interrupt, zli_entry_trigger_to_isr, NUM_ITERATIONS, NULL, NULL)
 {
 	alt_entry_measure("zli_entry_trigger_to_isr");
 }
 
-ZTEST_BENCHMARK_MANUAL(interrupt, zli_entry_while_locked, NULL, NULL)
+ZTEST_BENCHMARK_MANUAL(interrupt, zli_entry_while_locked, NUM_ITERATIONS, NULL, NULL)
 {
 	timing_t start;
 	timing_t finish;
 	unsigned int key;
 	bool served;
 
-	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
+	for (uint32_t i = 0U; i < ztest_benchmark_iterations(); i++) {
 		alt_fired = false;
 		bench_load_churn();
 		bench_load_pollute();
@@ -823,7 +805,7 @@ static void e2e_waiter_entry(void *p1, void *p2, void *p3)
 	ARG_UNUSED(p2);
 	ARG_UNUSED(p3);
 
-	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
+	for (uint32_t i = 0U; i < ztest_benchmark_iterations(); i++) {
 		k_sem_take(&wake_sem, K_FOREVER);
 
 		finish = timing_counter_get();
@@ -844,7 +826,7 @@ static void e2e_waiter_entry(void *p1, void *p2, void *p3)
  * handoff between them. This is the figure to quote for how quickly an
  * application can respond to an event.
  */
-ZTEST_BENCHMARK_MANUAL(interrupt, irq_to_thread, NULL, NULL)
+ZTEST_BENCHMARK_MANUAL(interrupt, irq_to_thread, NUM_ITERATIONS, NULL, NULL)
 {
 	int priority = k_thread_priority_get(k_current_get());
 
@@ -853,7 +835,7 @@ ZTEST_BENCHMARK_MANUAL(interrupt, irq_to_thread, NULL, NULL)
 	k_thread_create(&waiter_thread, waiter_stack, K_THREAD_STACK_SIZEOF(waiter_stack),
 			e2e_waiter_entry, NULL, NULL, NULL, priority - 1, 0, K_NO_WAIT);
 
-	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
+	for (uint32_t i = 0U; i < ztest_benchmark_iterations(); i++) {
 		bench_load_churn();
 		bench_load_pollute();
 
@@ -908,11 +890,11 @@ static void nested_low_handler(void)
  * idle when an event arrives, so this is often a better description of
  * what a high priority handler will see than the plain entry latency.
  */
-ZTEST_BENCHMARK_MANUAL(interrupt, nested_preempt, NULL, NULL)
+ZTEST_BENCHMARK_MANUAL(interrupt, nested_preempt, NUM_ITERATIONS, NULL, NULL)
 {
 	bench_trigger_set_handler(nested_low_handler);
 
-	for (uint32_t i = 0U; i < TOTAL_ITERATIONS; i++) {
+	for (uint32_t i = 0U; i < ztest_benchmark_iterations(); i++) {
 		nested_done = false;
 		bench_load_churn();
 		bench_load_pollute();

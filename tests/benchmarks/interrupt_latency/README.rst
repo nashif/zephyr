@@ -72,9 +72,11 @@ All benchmarks are in the ``interrupt`` suite:
   shot allocation of an IDT vector and an interrupt stub rather than a
   rebindable install, so it cannot be repeated to gather samples.
 
-Each benchmark discards ``CONFIG_INT_BENCH_WARMUP_ITERATIONS`` iterations
-and then records ``CONFIG_INT_BENCH_NUM_ITERATIONS`` samples, all with
-control-measurement noise correction.
+Each benchmark runs ``CONFIG_ZTEST_BENCHMARK_WARMUP`` iterations that are
+executed but not recorded, then records ``CONFIG_INT_BENCH_NUM_ITERATIONS``
+samples, all with control-measurement noise correction. The very first
+execution is reported separately as the cold cost rather than folded into
+the distribution.
 
 The numbers to read are the percentiles, which the benchmark enables with
 :kconfig:option:`CONFIG_ZTEST_BENCHMARK_PERCENTILES`: ``min``, ``p50``,
@@ -408,6 +410,21 @@ Expect this on any Cortex-M platform using SysTick. It puts a floor of one
 interrupt per 2^24 cycles under the tail of every measurement, 112ms at
 150MHz, whatever else the system is doing.
 
+Cold and hot
+************
+
+The first interrupt a system takes is not the interrupt it will take a
+thousand times a second, and the difference is largest exactly where this
+benchmark looks. On an FRDM-MCXN947 the entry path costs 86 cycles the
+first time and 33 thereafter, a factor of 2.6, and the directly connected
+ISR shows the same ratio. The paths that end in a thread, where the entry
+is a small part of a much longer span, barely move.
+
+The framework runs the warmup and reports the cold cost separately for
+that reason, so neither number contaminates the other. An application that
+services an interrupt continuously should read the median; one whose
+handler runs once after a long idle period should read the cold cost.
+
 Notes on methodology
 ********************
 
@@ -417,9 +434,9 @@ Notes on methodology
   interrupts do not perturb most samples; residual hits show up in the
   maximum and standard deviation.
 * The first iterations of each scenario run with cold caches, branch
-  predictors and TLBs and are typically an order of magnitude slower than
-  the steady state, so they are discarded as warmup. Set
-  ``CONFIG_INT_BENCH_WARMUP_ITERATIONS=0`` to include cold-start costs.
+  predictors and TLBs and are typically far slower than the steady state,
+  so the framework executes them as warmup without recording them and
+  reports the first on its own as the cold cost.
 * Entry latency includes the cost of the trigger write itself and, on some
   interrupt controllers, the propagation delay of the software-generated
   interrupt. Numbers are therefore comparable across Zephyr versions and
