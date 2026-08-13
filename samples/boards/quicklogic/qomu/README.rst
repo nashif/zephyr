@@ -1,7 +1,7 @@
-.. _qomu_usbserial:
+.. zephyr:code-sample:: qomu-usbserial
+   :name: Qomu USB serial
 
-Zephyr usbserial driver on Qomu
-###############################
+   Load a bitstream onto the EOS-S3 FPGA and use the resulting USB serial port.
 
 This sample demonstrates how to load bitstream on EOS-S3 FPGA and use the
 usbserial driver.
