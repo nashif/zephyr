@@ -1,7 +1,8 @@
-.. _samples_subsys_logging_syst:
+.. zephyr:code-sample:: logging-syst
+   :name: MIPI Sys-T logging
+   :relevant-api: log_api
 
-MIPI Sys-T Logging Sample
-#########################
+   Output log messages in the MIPI Sys-T format.
 
 .. contents:: Table of Contents
    :depth: 4
