@@ -1,7 +1,8 @@
-.. _mhz19b-sample:
+.. zephyr:code-sample:: mhz19b
+   :name: MH-Z19B CO2 sensor
+   :relevant-api: sensor_interface
 
-MH-Z19B: CO2 Sensor Sample
-##########################
+   Configure a Winsen MH-Z19B CO2 sensor and read its measurements periodically.
 
 Description
 ***********
