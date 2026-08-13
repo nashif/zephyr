@@ -1,9 +1,7 @@
-:orphan:
+.. zephyr:code-sample:: arc_secure_service
+   :name: ARC secure service
 
-.. _arc_secure_service:
-
-ARC Secure Service
-##################
+   Run a secure Zephyr application alongside a normal one using ARC SecureShield.
 
 Overview
 ********
