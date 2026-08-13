@@ -1,7 +1,9 @@
-.. _x-nucleo-iks4a1-shub2-sample:
+.. zephyr:code-sample:: x-nucleo-iks4a1-shub2
+   :name: X-NUCLEO-IKS4A1 shield in SHUB2 mode (Mode 2)
+   :relevant-api: sensor_interface
 
-X-NUCLEO-IKS4A1: shield SHUB2 (Mode 2) sample
-#############################################
+   Read data from an X-NUCLEO-IKS4A1 shield with the LSM6DSO16IS IMU acting as a
+   sensor hub.
 
 Overview
 ********

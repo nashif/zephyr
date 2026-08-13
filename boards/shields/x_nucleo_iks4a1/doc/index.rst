@@ -160,8 +160,8 @@ with one of the overlays described above:
   configured in Standard Mode (Mode 1)
 - :zephyr:code-sample:`x-nucleo-iks4a1-shub1` application, to be used when the shield is
   configured in SHUB1 Mode (Mode 3)
-- :ref:`x-nucleo-iks4a1-shub2-sample` application, to be used when the shield is configured
-  in SHUB2 Mode (Mode 2)
+- :zephyr:code-sample:`x-nucleo-iks4a1-shub2` application, to be used when the shield is
+  configured in SHUB2 Mode (Mode 2)
 
 See also :ref:`shields` for more details.
 
