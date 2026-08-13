@@ -1,7 +1,8 @@
-.. _osdp-sample:
+.. zephyr:code-sample:: osdp
+   :name: Open Supervised Device Protocol (OSDP)
 
-Open Supervised Device Protocol (OSDP)
-######################################
+   Communicate between an OSDP control panel and a peripheral device over
+   RS-485.
 
 Open Supervised Device Protocol (OSDP) is an IEC standard (IEC 60839-11-5)
 intended to improve interoperability among access control and security products.
