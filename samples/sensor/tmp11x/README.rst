@@ -1,7 +1,8 @@
-.. _ti_tmp11x_sample:
+.. zephyr:code-sample:: tmp11x
+   :name: TMP11X temperature sensor
+   :relevant-api: sensor_interface
 
-TI_TMP11X Sample
-################
+   Read temperature measurements from a TI TMP116, TMP117 or TMP119 sensor.
 
 Description
 ***********
