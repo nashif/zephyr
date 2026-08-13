@@ -156,8 +156,8 @@ Examples
 Three samples are provided as examples for ``x-nucleo-iks4a1`` shield, each one associated
 with one of the overlays described above:
 
-- :ref:`x-nucleo-iks4a1-std-sample` application, to be used when the shield is configured
-  in Standard Mode (Mode 1)
+- :zephyr:code-sample:`x-nucleo-iks4a1-standard` application, to be used when the shield is
+  configured in Standard Mode (Mode 1)
 - :ref:`x-nucleo-iks4a1-shub1-sample` application, to be used when the shield is configured
   in SHUB1 Mode (Mode 3)
 - :ref:`x-nucleo-iks4a1-shub2-sample` application, to be used when the shield is configured

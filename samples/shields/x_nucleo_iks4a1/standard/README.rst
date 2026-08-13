@@ -1,7 +1,9 @@
-.. _x-nucleo-iks4a1-std-sample:
+.. zephyr:code-sample:: x-nucleo-iks4a1-standard
+   :name: X-NUCLEO-IKS4A1 shield in Standard mode (Mode 1)
+   :relevant-api: sensor_interface
 
-X-NUCLEO-IKS4A1 shield Standard (Mode 1) sample
-###############################################
+   Read data from the six sensors of an X-NUCLEO-IKS4A1 shield configured in
+   Standard mode.
 
 Overview
 ********
