@@ -1,7 +1,8 @@
-.. _mec15xxevb-sample:
+.. zephyr:code-sample:: mec15xx-power-management
+   :name: MEC15xx power management
+   :relevant-api: subsys_pm
 
-MEC15xx sample board test application
-#####################################
+   Enter light and deep sleep on a Microchip MEC15xx based board.
 
 Overview
 ********
