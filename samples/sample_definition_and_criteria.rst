@@ -97,14 +97,45 @@ Sample Criteria
   * Samples must have a ``README.rst`` file in the samples folder.
     Example: ``samples/subsys/foo/README.rst``. clearly explaining the purpose of the sample, its
     hardware requirements, and the expected sample output, if applicable.
-  * Ensure that the ``README.rst`` file is accessible in the sample hierarchy starting at
-    ``samples/index.rst``.
 
   **README Template:**
     * Overview, if applicable.
     * Software/Hardware requirements
     * Building & Running instructions
     * Sample output, if applicable.
+
+5. Samples must be declared with a code-sample directive.
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  The ``README.rst`` file must start with a :rst:dir:`zephyr:code-sample` directive, which
+  registers the sample's id, name and description and lists it in the documentation. This is
+  what makes a directory a sample: without the directive it is only an application that
+  happens to live under :zephyr_file:`samples/`, invisible both to the sample listings and to
+  tooling that looks for samples in the tree.
+
+  The directive, its options and its role are documented in :ref:`documenting_code_samples`. A
+  few points apply specifically to samples:
+
+  * The sample id, given as the directive's argument, must be unique across the whole
+    workspace, modules included, since documentation cross references resolve against it.
+  * The directive supplies the page heading, so do not add a section title of your own above
+    or below it, and reference the sample with the :rst:role:`zephyr:code-sample` role instead
+    of defining a ``:ref:`` label for it.
+  * When a sample builds more than one application, such as a host and a remote image, or an
+    initiator and a reflector, declare it once in a ``README.rst`` in the directory those
+    applications share rather than once per application. The sample then covers all of them.
+  * Samples are listed through the :rst:dir:`zephyr:code-sample-category` directive of the
+    nearest enclosing directory, so a sample needs no ``toctree`` entry and no ``:orphan:``
+    marker to be reachable.
+
+  Use ``west samples`` to check that a new sample is declared correctly:
+
+  .. code-block:: console
+
+     # show what the tree records for one sample
+     west samples -i kernel-condvar -l
+
+     # list applications that no sample declares
+     west samples --orphans
 
 
 As a starting point, this sample is a good example to refer to

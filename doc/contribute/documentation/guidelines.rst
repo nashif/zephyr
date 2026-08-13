@@ -1221,6 +1221,8 @@ building HTML output.
 
       Check out :dtcompatible:`zephyr,input-longpress` for more information.
 
+.. _documenting_code_samples:
+
 Code samples
 ============
 
