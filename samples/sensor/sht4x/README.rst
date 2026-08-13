@@ -1,7 +1,8 @@
-.. _sht4x:
+.. zephyr:code-sample:: sht4x
+   :name: SHT4X humidity and temperature sensor
+   :relevant-api: sensor_interface
 
-SHT4X: High Accuracy Digital I2C Humidity Sensor
-#################################################
+   Read ambient temperature and humidity from a Sensirion SHT4X sensor.
 
 Description
 ***********
