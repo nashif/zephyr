@@ -1,9 +1,8 @@
-:orphan:
+.. zephyr:code-sample:: kernel-condvar-simple
+   :name: Condition variables (simple)
+   :relevant-api: condvar_apis
 
-.. _samples_kernel_simple_condition_variables:
-
-Condition Variables
-###################
+   Wait on a condition variable until a group of worker threads has signalled it.
 
 Overview
 ********
