@@ -1,7 +1,7 @@
-.. _tfm_psa_test:
+.. zephyr:code-sample:: tfm_psa_test
+   :name: TF-M PSA test
 
-TF-M Platform Security Architecture Test Sample
-###############################################
+   Run the PSA Arch Test suites against TF-M from Zephyr.
 
 Overview
 ********

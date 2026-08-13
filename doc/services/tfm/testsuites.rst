@@ -23,7 +23,7 @@ application (TF-M).
 PSA Arch Tests
 **************
 
-The PSA Arch Test suite, available via :ref:`tfm_psa_test`, contains a number of
+The PSA Arch Test suite, available via :zephyr:code-sample:`tfm_psa_test`, contains a number of
 test suites that can be used to validate that PSA API specifications are
 being followed by the secure application, TF-M being an implementation of
 the Platform Security Architecture (PSA).
