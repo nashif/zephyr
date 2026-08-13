@@ -1,7 +1,9 @@
-.. _lmp90100_evb_rtd_sample:
+.. zephyr:code-sample:: lmp90100_evb_rtd
+   :name: LMP90100 sensor AFE evaluation board RTD
+   :relevant-api: sensor_interface
 
-LMP90100 Sensor AFE Evaluation Board: RTD Sample
-################################################
+   Measure the temperature of a 3-wire PT100 RTD sensor using an LMP90100 EVB
+   shield.
 
 Overview
 ********

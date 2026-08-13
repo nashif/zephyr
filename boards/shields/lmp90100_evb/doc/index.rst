@@ -36,7 +36,7 @@ Samples
 
 Zephyr RTOS includes one sample targeting the LMP90100 EVB:
 
-* :ref:`lmp90100_evb_rtd_sample`
+* :zephyr:code-sample:`lmp90100_evb_rtd`
 
 Programming
 ***********
