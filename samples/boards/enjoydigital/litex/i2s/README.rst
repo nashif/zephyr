@@ -1,10 +1,8 @@
-:orphan:
+.. zephyr:code-sample:: litex-i2s
+   :name: LiteX I2S
+   :relevant-api: i2s_interface
 
-.. _i2s_litex_example:
-
-#####################
-I2S example
-#####################
+   Receive and play back stereo audio on a LiteX SoC using the I2S API.
 
 Overview
 ********
