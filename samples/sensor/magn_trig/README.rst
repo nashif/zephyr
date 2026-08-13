@@ -1,7 +1,8 @@
-.. zephyr:Code-sample:: magn-trig
+.. zephyr:code-sample:: magn-trig
    :name: Magnetometer trigger
+   :relevant-api: sensor_interface
 
-   Test and debug magnetometer with interrupts
+   Get magnetometer data from a sensor using a data ready trigger.
 
 Overview
 ********
