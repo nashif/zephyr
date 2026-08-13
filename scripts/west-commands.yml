@@ -15,6 +15,11 @@ west-commands:
       - name: shields
         class: Shields
         help: display list of supported shields
+  - file: scripts/west_commands/samples.py
+    commands:
+      - name: samples
+        class: Samples
+        help: display information about code samples
   - file: scripts/west_commands/snippets_cmd.py
     commands:
       - name: snippets
