@@ -1,7 +1,9 @@
-.. _clock_control_xec:
+.. zephyr:code-sample:: clock-control-xec
+   :name: Microchip XEC clock control
+   :relevant-api: clock_control_interface
 
-Microchip XEC (MEC15xx/MEC172x) clock control driver sample application
-#######################################################################
+   Configure the 32 KHz clock of a Microchip MEC15xx or MEC172x through
+   devicetree and exercise the clock control API.
 
 Overview
 ********
