@@ -3,6 +3,4 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/dts-v1/;
-
-#include "../common/qemu_x86.dtsi"
+#include "qemu_x86_64.dts"

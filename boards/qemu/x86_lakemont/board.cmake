@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright (c) 2019 Intel Corp.
+# Copyright (c) 2021 Intel Corporation.
 
 set(QEMU_CPU_TYPE qemu32,+nx,+pae)
 
