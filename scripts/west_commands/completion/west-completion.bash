@@ -669,6 +669,7 @@ __comp_west_boards()
 
 	local other_opts="
 		--format -f
+		--jobs -j
 		--name -n
 		--preprocessor
 		--target -t

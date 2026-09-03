@@ -168,7 +168,7 @@ class Boards(WestCommand):
 
         targets = args.targets or generator.all_targets()
         failures = board_facts.generate_all(
-            generator, targets, args.facts_dir, out=sys.stdout, err=self.err
+            generator, targets, args.facts_dir, jobs=args.jobs, out=sys.stdout, err=self.err
         )
         if failures:
             raise CommandError(1)

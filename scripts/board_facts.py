@@ -24,11 +24,13 @@ and standalone use (python3 scripts/board_facts.py --target <target>).
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
 import sys
 import tempfile
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -619,39 +621,86 @@ def add_args(parser):
         help=f'''C preprocessor to run on devicetree files (default: the
                 first of {", ".join(DEFAULT_PREPROCESSORS)} found)''',
     )
+    parser.add_argument(
+        '-j',
+        '--jobs',
+        type=int,
+        default=os.cpu_count() or 1,
+        help='number of board targets to process in parallel (default: %(default)s)',
+    )
 
 
-def generate_all(generator: BoardFacts, targets, facts_dir, out=sys.stdout, err=print):
+# Generator used by the worker processes of generate_all().
+_worker_generator: BoardFacts | None = None
+
+
+def _worker_init(generator: BoardFacts) -> None:
+    global _worker_generator
+    _worker_generator = generator
+    edtlib_logger.setup_edtlib_logging()
+
+
+def _generate_one(generator, target, facts_dir):
+    """Generate facts for one target.
+
+    Returns (resolved target, facts or output file, error message). The
+    facts are written to 'facts_dir' when given and the file path is
+    returned instead of the facts, which keeps the data returned from
+    worker processes small.
+    """
+    try:
+        bt = generator.resolve(target)
+        # Named like the board's own files, so revisions do not collide.
+        stem = bt.file_stems(with_revision=True)[0]
+        dts_out = facts_dir / f'{stem}.dts' if facts_dir else None
+        facts = generator.generate(target, dts_out)
+    except BoardFactsError as e:
+        return target, None, str(e)
+
+    if facts_dir is None:
+        return bt.target, facts, None
+
+    json_out = facts_dir / f'{stem}.json'
+    with json_out.open('w', encoding='utf-8') as f:
+        json.dump(facts, f, indent=2)
+        f.write('\n')
+    return bt.target, json_out, None
+
+
+def _generate_one_in_worker(target, facts_dir):
+    return _generate_one(_worker_generator, target, facts_dir)
+
+
+def generate_all(generator: BoardFacts, targets, facts_dir, jobs=1, out=sys.stdout, err=print):
     """Generate facts for 'targets'; returns the number of failures.
 
     Facts go to one file per target in 'facts_dir' when given, and are
-    otherwise printed to 'out' as one JSON object keyed by target.
+    otherwise printed to 'out' as one JSON object keyed by target. Targets
+    are processed by up to 'jobs' worker processes; the output order is
+    the order of 'targets' either way.
     """
     if facts_dir is not None:
         facts_dir.mkdir(parents=True, exist_ok=True)
 
+    targets = list(targets)
+    if jobs > 1 and len(targets) > 1:
+        with ProcessPoolExecutor(
+            max_workers=min(jobs, len(targets)), initializer=_worker_init, initargs=(generator,)
+        ) as pool:
+            results = list(pool.map(_generate_one_in_worker, targets, [facts_dir] * len(targets)))
+    else:
+        results = [_generate_one(generator, target, facts_dir) for target in targets]
+
     facts = {}
     failures = 0
-    for target in targets:
-        try:
-            bt = generator.resolve(target)
-            # Named like the board's own files, so revisions do not collide.
-            stem = bt.file_stems(with_revision=True)[0]
-            dts_out = facts_dir / f'{stem}.dts' if facts_dir else None
-            target_facts = generator.generate(target, dts_out)
-        except BoardFactsError as e:
-            err(f'{target}: {e}')
+    for target, result, error in results:
+        if error is not None:
+            err(f'{target}: {error}')
             failures += 1
-            continue
-
-        if facts_dir is None:
-            facts[bt.target] = target_facts
+        elif facts_dir is None:
+            facts[target] = result
         else:
-            json_out = facts_dir / f'{stem}.json'
-            with json_out.open('w', encoding='utf-8') as f:
-                json.dump(target_facts, f, indent=2)
-                f.write('\n')
-            out.write(f'{bt.target}: {json_out}\n')
+            out.write(f'{target}: {result}\n')
 
     if facts_dir is None:
         json.dump(facts, out, indent=2)
@@ -677,7 +726,11 @@ def main():
     )
     targets = args.targets or generator.all_targets()
     failures = generate_all(
-        generator, targets, args.facts_dir, err=lambda m: print(f'ERROR: {m}', file=sys.stderr)
+        generator,
+        targets,
+        args.facts_dir,
+        jobs=args.jobs,
+        err=lambda m: print(f'ERROR: {m}', file=sys.stderr),
     )
     sys.exit(1 if failures else 0)
 

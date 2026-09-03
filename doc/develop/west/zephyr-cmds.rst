@@ -55,6 +55,12 @@ board at its default revision, so the ``--name`` filter selects the boards::
 
   west boards --generate-facts -n '^nrf52840dk$'
 
+Targets are processed in parallel, one worker process per CPU unless
+``--jobs`` (``-j``) says otherwise, so an inventory of every board in the
+workspace takes minutes rather than hours::
+
+  west boards --generate-facts --facts-dir facts -j 8
+
 The facts are printed to standard output as one JSON object keyed by board
 target. With ``--facts-dir``, one ``<target>.json`` file and the merged
 ``<target>.dts`` are written per target into that directory instead::
