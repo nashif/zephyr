@@ -9,11 +9,12 @@ import sys
 import textwrap
 from pathlib import Path
 
-from west.commands import WestCommand
+from west.commands import CommandError, WestCommand
 
 from zephyr_ext_common import ZEPHYR_BASE
 
 sys.path.append(os.fspath(Path(__file__).parent.parent))
+import board_facts
 import list_boards
 import zephyr_module
 
@@ -53,6 +54,16 @@ class Boards(WestCommand):
             - qualifiers: board qualifiers (will be empty for legacy boards)
             - dir: directory that contains the board definition
             - vendor: board vendor
+
+            FACTS
+            -----
+
+            With --generate-facts, the board's base devicetree is
+            preprocessed and parsed with edtlib for each selected board
+            target, and a JSON description of the result (the "facts") is
+            emitted. No build is configured: no toolchain, Kconfig or
+            compiler is involved. Targets are selected with --target, or
+            default to every target of every listed board.
             '''))
 
         # Remember to update west-completion.bash if you add or remove
@@ -67,6 +78,11 @@ class Boards(WestCommand):
                             help='''Output all valid combinations of {name},
                             {revisions}, and {qualifiers} that can be used as a board
                             target''')
+        parser.add_argument('--generate-facts', action='store_true',
+                            help='''Generate devicetree facts (JSON) for board
+                            targets without configuring a build; see FACTS
+                            below''')
+        board_facts.add_args(parser)
         list_boards.add_args(parser)
 
         return parser
@@ -81,6 +97,7 @@ class Boards(WestCommand):
             'arch_root': [ZEPHYR_BASE],
             'board_root': [ZEPHYR_BASE],
             'soc_root': [ZEPHYR_BASE],
+            'dts_root': [],
         }
 
         for module in zephyr_module.parse_modules(ZEPHYR_BASE, self.manifest):
@@ -93,11 +110,17 @@ class Boards(WestCommand):
         args.board_roots += module_settings['board_root']
         args.soc_roots += module_settings['soc_root']
 
-        all_targets: list[str] = []
-        for board in list_boards.find_v2_boards(args).values():
-            if name_re is not None and not name_re.search(board.name):
-                continue
+        boards = list_boards.find_v2_boards(args)
+        if name_re is not None:
+            boards = {name: board for name, board in boards.items()
+                      if name_re.search(name)}
 
+        if args.generate_facts:
+            self.generate_facts(args, boards, module_settings['dts_root'])
+            return
+
+        all_targets: list[str] = []
+        for board in boards.values():
             if args.all_targets:
                 all_targets += [f"{board.name}/{qualifier}"
                                 for qualifier in list_boards.board_v2_qualifiers(board)]
@@ -126,3 +149,26 @@ class Boards(WestCommand):
 
         if args.all_targets:
             self.inf(os.linesep.join(all_targets))
+
+    def generate_facts(self, args, boards, dts_roots):
+        board_facts.edtlib_logger.setup_edtlib_logging()
+
+        aliases = os.environ.get('ZEPHYR_BOARD_ALIASES')
+        try:
+            generator = board_facts.BoardFacts(
+                boards,
+                args.arch_roots,
+                dts_roots,
+                workspace_dir=Path(self.topdir) if self.topdir else None,
+                preprocessor=args.preprocessor,
+                board_aliases=Path(aliases) if aliases else None,
+            )
+        except board_facts.BoardFactsError as e:
+            self.die(str(e))
+
+        targets = args.targets or generator.all_targets()
+        failures = board_facts.generate_all(
+            generator, targets, args.facts_dir, out=sys.stdout, err=self.err
+        )
+        if failures:
+            raise CommandError(1)

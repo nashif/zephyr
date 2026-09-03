@@ -37,6 +37,14 @@ For example, using the :zephyr:board:`qemu_cortex_m3` board to build
 
 You can change ``qemu_cortex_m3`` to match your board.
 
+.. tip::
+
+   :ref:`west boards --generate-facts <west-boards-facts>` produces the same
+   base devicetree (and a JSON description of it) for any board target
+   without configuring a build at all, for example::
+
+      west boards --generate-facts --facts-dir facts -t qemu_cortex_m3
+
 CMake prints the input and output file locations like this:
 
 .. code-block:: none

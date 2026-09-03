@@ -27,6 +27,43 @@ Additional help about the formatting options can be found by running::
 
   west boards -h
 
+.. _west-boards-facts:
+
+Generating devicetree facts
+===========================
+
+The ``--generate-facts`` flag inspects board targets instead of listing them.
+For each selected target, the board's base devicetree is preprocessed and
+parsed with ``edtlib``, and a JSON description of the result is emitted. This
+covers the board target, the resolved revision and qualifiers, the devicetree
+input files, the ``chosen`` and ``aliases`` entries, the node labels, the
+enabled compatibles and every node with its properties.
+
+No build is configured along the way: no toolchain is probed, Kconfig is not
+run and nothing is compiled, which makes this considerably lighter than a
+``west build --cmake-only`` configuration. Application overlays, shields and
+snippets are not applied, so the result is the board's own devicetree.
+
+Targets are given with ``--target`` (``-t``), which accepts the same
+``<board>[@<revision>][/<qualifiers>]`` syntax as ``west build -b`` and can
+be repeated::
+
+  west boards --generate-facts -t nrf9160dk@0.14.0/nrf9160/ns
+
+Without ``--target``, facts are generated for every target of every listed
+board at its default revision, so the ``--name`` filter selects the boards::
+
+  west boards --generate-facts -n '^nrf52840dk$'
+
+The facts are printed to standard output as one JSON object keyed by board
+target. With ``--facts-dir``, one ``<target>.json`` file and the merged
+``<target>.dts`` are written per target into that directory instead::
+
+  west boards --generate-facts --facts-dir facts -t nrf52840dk/nrf52840
+
+The devicetree files are run through a C preprocessor, which is found among
+``gcc``, ``clang`` and ``cpp`` unless ``--preprocessor`` names one.
+
 .. _west-completion:
 
 Shell completion scripts: ``west completion``
