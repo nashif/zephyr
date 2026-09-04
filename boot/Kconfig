@@ -1,0 +1,23 @@
+# Copyright (c) 2026 Intel Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+
+mainmenu "Zephyr bootloader configuration"
+
+# Kernel defaults for the bootloader image. These have to come before
+# Kconfig.zephyr so that they take precedence over the kernel's own
+# defaults.
+
+config MULTITHREADING
+	default y if BOOT_USB_DFU_GPIO || BOOT_USB_DFU_WAIT
+	default n if SOC_FAMILY_NORDIC_NRF
+	default n if SOC_FAMILY_ESPRESSIF_ESP32
+	default y
+
+config LOG_PROCESS_THREAD
+	default n # the bootloader has its own log processing thread
+
+config USB_DEVICE_PRODUCT
+	default "MCUBOOT"
+
+source "Kconfig.zephyr"

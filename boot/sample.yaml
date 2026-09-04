@@ -1,0 +1,20 @@
+sample:
+  description: Zephyr bootloader build coverage
+  name: Zephyr bootloader
+common:
+  tags: bootloader
+  build_only: true
+tests:
+  sample.bootloader.zephyr:
+    platform_allow:
+      - nrf52840dk/nrf52840
+    integration_platforms:
+      - nrf52840dk/nrf52840
+  sample.bootloader.zephyr.hash_only:
+    platform_allow:
+      - nrf52840dk/nrf52840
+      - qemu_cortex_m0
+    integration_platforms:
+      - qemu_cortex_m0
+    extra_configs:
+      - CONFIG_BOOT_SIGNATURE_TYPE_NONE=y
