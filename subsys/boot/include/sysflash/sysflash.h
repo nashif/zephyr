@@ -1,0 +1,106 @@
+/*
+ * Copyright (c) 2023-2024 Nordic Semiconductor ASA
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#ifndef __SYSFLASH_H__
+#define __SYSFLASH_H__
+
+#include <mcuboot_config/mcuboot_config.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/storage/flash_map.h>
+#include <zephyr/devicetree/partitions.h>
+#include <zephyr/sys/util_macro.h>
+
+#if !defined(CONFIG_SINGLE_APPLICATION_SLOT) && !defined(CONFIG_MCUBOOT_BOOTLOADER_MODE_SINGLE_APP)
+
+/* Each pair of slots is separated by , and there is no terminating character */
+#define FLASH_AREA_IMAGE_0_SLOTS    slot0_partition, slot1_partition
+#define FLASH_AREA_IMAGE_1_SLOTS    slot2_partition, slot3_partition
+#define FLASH_AREA_IMAGE_2_SLOTS    slot4_partition, slot5_partition
+#define FLASH_AREA_IMAGE_3_SLOTS    slot6_partition, slot7_partition
+#define FLASH_AREA_IMAGE_4_SLOTS    slot8_partition, slot9_partition
+#define FLASH_AREA_IMAGE_5_SLOTS    slot10_partition, slot11_partition
+#define FLASH_AREA_IMAGE_6_SLOTS    slot12_partition, slot13_partition
+#define FLASH_AREA_IMAGE_7_SLOTS    slot14_partition, slot15_partition
+
+#if (MCUBOOT_IMAGE_NUMBER == 1)
+#define ALL_AVAILABLE_SLOTS FLASH_AREA_IMAGE_0_SLOTS
+#elif (MCUBOOT_IMAGE_NUMBER == 2)
+#define ALL_AVAILABLE_SLOTS FLASH_AREA_IMAGE_0_SLOTS, \
+                            FLASH_AREA_IMAGE_1_SLOTS
+#elif (MCUBOOT_IMAGE_NUMBER == 3)
+#define ALL_AVAILABLE_SLOTS FLASH_AREA_IMAGE_0_SLOTS, \
+                            FLASH_AREA_IMAGE_1_SLOTS, \
+                            FLASH_AREA_IMAGE_2_SLOTS
+#elif (MCUBOOT_IMAGE_NUMBER == 4)
+#define ALL_AVAILABLE_SLOTS FLASH_AREA_IMAGE_0_SLOTS, \
+                            FLASH_AREA_IMAGE_1_SLOTS, \
+                            FLASH_AREA_IMAGE_2_SLOTS, \
+                            FLASH_AREA_IMAGE_3_SLOTS
+#elif (MCUBOOT_IMAGE_NUMBER == 5)
+#define ALL_AVAILABLE_SLOTS FLASH_AREA_IMAGE_0_SLOTS, \
+                            FLASH_AREA_IMAGE_1_SLOTS, \
+                            FLASH_AREA_IMAGE_2_SLOTS, \
+                            FLASH_AREA_IMAGE_3_SLOTS, \
+                            FLASH_AREA_IMAGE_4_SLOTS
+#elif (MCUBOOT_IMAGE_NUMBER == 6)
+#define ALL_AVAILABLE_SLOTS FLASH_AREA_IMAGE_0_SLOTS, \
+                            FLASH_AREA_IMAGE_1_SLOTS, \
+                            FLASH_AREA_IMAGE_2_SLOTS, \
+                            FLASH_AREA_IMAGE_3_SLOTS, \
+                            FLASH_AREA_IMAGE_4_SLOTS, \
+                            FLASH_AREA_IMAGE_5_SLOTS
+#elif (MCUBOOT_IMAGE_NUMBER == 7)
+#define ALL_AVAILABLE_SLOTS FLASH_AREA_IMAGE_0_SLOTS, \
+                            FLASH_AREA_IMAGE_1_SLOTS, \
+                            FLASH_AREA_IMAGE_2_SLOTS, \
+                            FLASH_AREA_IMAGE_3_SLOTS, \
+                            FLASH_AREA_IMAGE_4_SLOTS, \
+                            FLASH_AREA_IMAGE_5_SLOTS, \
+                            FLASH_AREA_IMAGE_6_SLOTS
+#elif (MCUBOOT_IMAGE_NUMBER == 8)
+#define ALL_AVAILABLE_SLOTS FLASH_AREA_IMAGE_0_SLOTS, \
+                            FLASH_AREA_IMAGE_1_SLOTS, \
+                            FLASH_AREA_IMAGE_2_SLOTS, \
+                            FLASH_AREA_IMAGE_3_SLOTS, \
+                            FLASH_AREA_IMAGE_4_SLOTS, \
+                            FLASH_AREA_IMAGE_5_SLOTS, \
+                            FLASH_AREA_IMAGE_6_SLOTS, \
+                            FLASH_AREA_IMAGE_7_SLOTS
+#endif
+
+static inline uint32_t __flash_area_ids_for_slot(int img, int slot)
+{
+    static const int all_slots[] = {
+        FOR_EACH_NONEMPTY_TERM(PARTITION_ID, (,), ALL_AVAILABLE_SLOTS)
+    };
+    return all_slots[img * 2 + slot];
+};
+
+#undef FLASH_AREA_IMAGE_0_SLOTS
+#undef FLASH_AREA_IMAGE_1_SLOTS
+#undef FLASH_AREA_IMAGE_2_SLOTS
+#undef FLASH_AREA_IMAGE_3_SLOTS
+#undef FLASH_AREA_IMAGE_4_SLOTS
+#undef FLASH_AREA_IMAGE_5_SLOTS
+#undef FLASH_AREA_IMAGE_6_SLOTS
+#undef FLASH_AREA_IMAGE_7_SLOTS
+#undef ALL_AVAILABLE_SLOTS
+
+#define FLASH_AREA_IMAGE_PRIMARY(x) __flash_area_ids_for_slot(x, 0)
+#define FLASH_AREA_IMAGE_SECONDARY(x) __flash_area_ids_for_slot(x, 1)
+
+#if !defined(CONFIG_BOOT_SWAP_USING_MOVE) && !defined(CONFIG_BOOT_SWAP_USING_OFFSET)
+#define FLASH_AREA_IMAGE_SCRATCH    PARTITION_ID(scratch_partition)
+#endif
+
+#else /* !CONFIG_SINGLE_APPLICATION_SLOT && !CONFIG_MCUBOOT_BOOTLOADER_MODE_SINGLE_APP */
+
+#define FLASH_AREA_IMAGE_PRIMARY(x)	PARTITION_ID(slot0_partition)
+#define FLASH_AREA_IMAGE_SECONDARY(x)	PARTITION_ID(slot0_partition)
+
+#endif /* CONFIG_SINGLE_APPLICATION_SLOT */
+
+#endif /* __SYSFLASH_H__ */

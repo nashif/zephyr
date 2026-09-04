@@ -390,6 +390,7 @@ endif # BOOTLOADER_MCUBOOT
 
 menuconfig MCUBOOT_BOOTUTIL_LIB
 	bool "MCUboot utility library"
+	depends on !ZEPHYR_BOOTLOADER
 	help
 	  Enable MCUboot utility library which implements functions
 	  required by the chain-loaded application and the MCUboot.
