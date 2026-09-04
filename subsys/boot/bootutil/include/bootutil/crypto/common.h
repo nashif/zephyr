@@ -1,0 +1,44 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Copyright (c) 2021 Arm Limited
+ */
+
+#ifndef __BOOTUTIL_CRYPTO_COMMON_H__
+#define __BOOTUTIL_CRYPTO_COMMON_H__
+
+/*
+ * TF-PSA-Crypto keeps several legacy crypto declarations under the
+ * mbedtls private include tree (e.g. mbedtls/private/sha256.h).
+ * Classic Mbed TLS exposes the same APIs under mbedtls/sha256.h.
+ * Unless the build forces MCUBOOT_MBEDTLS_CRYPTO_IN_PRIVATE_SUBDIR to 0 or 1,
+ * detect at preprocess time whether the private sha256 header exists.
+ */
+#if !defined(MCUBOOT_MBEDTLS_CRYPTO_IN_PRIVATE_SUBDIR)
+#if defined(__has_include) && __has_include(<mbedtls/private/sha256.h>)
+#define MCUBOOT_MBEDTLS_CRYPTO_IN_PRIVATE_SUBDIR 1
+#else
+#define MCUBOOT_MBEDTLS_CRYPTO_IN_PRIVATE_SUBDIR 0
+#endif
+#endif
+
+/* The check below can be performed even for those cases
+ * where MCUBOOT_USE_MBED_TLS has not been defined
+ */
+#include "mbedtls/version.h"
+#if MBEDTLS_VERSION_NUMBER >= 0x03000000
+#define MBEDTLS_CONTEXT_MEMBER(X) MBEDTLS_PRIVATE(X)
+#else
+#define MBEDTLS_CONTEXT_MEMBER(X) X
+#endif
+
+/* Newer versions of Mbed TLS have removed the private accessor requirement for
+ * the ASN1 fields.
+ */
+#if (MBEDTLS_VERSION_NUMBER >= 0x03000000) && (MBEDTLS_VERSION_NUMBER < 0x03010000)
+#define ASN1_CONTEXT_MEMBER(X) MBEDTLS_PRIVATE(X)
+#else
+#define ASN1_CONTEXT_MEMBER(X) X
+#endif
+
+#endif /* __BOOTUTIL_CRYPTO_COMMON_H__ */
