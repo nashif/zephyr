@@ -5,7 +5,7 @@
 # This sysbuild CMake file sets the sysbuild controlled settings as properties
 # on a firmware updater image.
 
-set_config_bool(${ZCMAKE_APPLICATION} CONFIG_BOOTLOADER_MCUBOOT "${SB_CONFIG_BOOTLOADER_MCUBOOT}")
+set_config_bool(${ZCMAKE_APPLICATION} CONFIG_BOOTLOADER_MCUBOOT "${SB_CONFIG_BOOTLOADER_MCUBOOT_COMPATIBLE}")
 
 sysbuild_mcuboot_application_signature_key_file(
   application_signature_key_file "${SB_CONFIG_BOOT_SIGNATURE_KEY_FILE}"

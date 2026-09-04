@@ -10,6 +10,16 @@ config SUPPORT_BOOTLOADER_MCUBOOT_ZEPHYR
 	bool
 	default y
 
+config SUPPORT_BOOTLOADER_ZEPHYR
+	bool
+	default y
+
+config BOOTLOADER_MCUBOOT_COMPATIBLE
+	bool
+	help
+	  Hidden symbol set when the selected bootloader uses the MCUboot image
+	  format, so that the mode, signature and key settings below apply.
+
 choice BOOTLOADER
 	prompt "Bootloader support"
 	default BOOTLOADER_NONE
@@ -20,15 +30,25 @@ config BOOTLOADER_NONE
 	help
 	  Do not Include a bootloader in the build
 
+config BOOTLOADER_ZEPHYR
+	bool "Zephyr bootloader"
+	depends on SUPPORT_BOOTLOADER_ZEPHYR
+	select BOOTLOADER_MCUBOOT_COMPATIBLE
+	help
+	  Include the in-tree Zephyr bootloader (subsys/boot) as the bootloader
+	  to use. It boots images in the MCUboot image format and does not need
+	  the mcuboot module.
+
 config BOOTLOADER_MCUBOOT
 	bool "MCUboot"
 	depends on SUPPORT_BOOTLOADER_MCUBOOT_ZEPHYR
+	select BOOTLOADER_MCUBOOT_COMPATIBLE
 	help
 	  Include MCUboot (Zephyr port) as the bootloader to use
 
 endchoice
 
-if BOOTLOADER_MCUBOOT
+if BOOTLOADER_MCUBOOT_COMPATIBLE
 
 choice MCUBOOT_MODE
 	prompt "Mode of operation"
@@ -204,6 +224,12 @@ endchoice
 
 config BOOT_SIGNATURE_KEY_FILE
 	string "Signing PEM key file(s) (or comma-separated list)" if !BOOT_SIGNATURE_TYPE_NONE
+	default "$(ZEPHYR_BASE)/subsys/boot/keys/root-ec-p256.pem" \
+		if BOOT_SIGNATURE_TYPE_ECDSA_P256 && BOOTLOADER_ZEPHYR
+	default "$(ZEPHYR_BASE)/subsys/boot/keys/root-ed25519.pem" \
+		if BOOT_SIGNATURE_TYPE_ED25519 && BOOTLOADER_ZEPHYR
+	default "$(ZEPHYR_BASE)/subsys/boot/keys/root-rsa-2048.pem" \
+		if BOOT_SIGNATURE_TYPE_RSA && BOOTLOADER_ZEPHYR
 	default "$(ZEPHYR_MCUBOOT_MODULE_DIR)/root-ec-p256.pem" if BOOT_SIGNATURE_TYPE_ECDSA_P256
 	default "$(ZEPHYR_MCUBOOT_MODULE_DIR)/root-ed25519.pem" if BOOT_SIGNATURE_TYPE_ED25519
 	default "$(ZEPHYR_MCUBOOT_MODULE_DIR)/root-rsa-2048.pem" if BOOT_SIGNATURE_TYPE_RSA
@@ -252,4 +278,4 @@ endchoice # BOOT_ENCRYPTION_ALG
 
 endif # BOOT_ENCRYPTION
 
-endif
+endif # BOOTLOADER_MCUBOOT_COMPATIBLE

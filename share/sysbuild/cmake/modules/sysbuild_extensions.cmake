@@ -768,6 +768,18 @@ function(ExternalZephyrProject_Cmake)
 endfunction()
 
 # Usage:
+#   sysbuild_register_hooks(<name>)
+#
+# Register <name> as a provider of sysbuild hooks in addition to the Zephyr
+# modules, so that <name>_pre_cmake(), <name>_post_image_cmake() etc. are
+# invoked like the module hooks. This lets images shipped with sysbuild itself
+# (such as the in-tree bootloader) take part in the hook sequence.
+#
+function(sysbuild_register_hooks name)
+  set_property(GLOBAL APPEND PROPERTY sysbuild_hook_names ${name})
+endfunction()
+
+# Usage:
 #   sysbuild_module_call(<hook> MODULES <modules> IMAGES <images> [IMAGE <image>] [EXTRA_ARGS <arguments>])
 #
 # This function invokes the sysbuild hook provided as <hook> for <modules>.

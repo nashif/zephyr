@@ -33,6 +33,10 @@ set(DEFAULT_IMAGE "${app_name}")
 sysbuild_add_subdirectory(${sysbuild_toplevel_SOURCE_DIR}/images sysbuild/images)
 
 get_property(IMAGES GLOBAL PROPERTY sysbuild_images)
+
+# Hooks registered by the sysbuild tree itself, see sysbuild_register_hooks().
+get_property(sysbuild_hook_names GLOBAL PROPERTY sysbuild_hook_names)
+list(APPEND SYSBUILD_MODULE_NAMES ${sysbuild_hook_names})
 sysbuild_module_call(PRE_CMAKE MODULES ${SYSBUILD_MODULE_NAMES} IMAGES ${IMAGES})
 sysbuild_images_order(IMAGES_CONFIGURATION_ORDER CONFIGURE IMAGES ${IMAGES})
 
