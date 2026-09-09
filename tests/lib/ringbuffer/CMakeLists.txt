@@ -7,10 +7,6 @@ project(ringbuffer)
 target_sources(app PRIVATE
     src/main.c
     src/concurrent.c
-  )
-
-target_sources_ifndef(CONFIG_RING_BUFFER
-    app PRIVATE
     src/index_math.c
   )
 

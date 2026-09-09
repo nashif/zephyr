@@ -6,6 +6,8 @@ common:
 
 tests:
   libraries.ring_buffer:
+    extra_configs:
+      - CONFIG_RING_BUFFER=n
     integration_platforms:
       - native_sim
       - native_sim/native/64

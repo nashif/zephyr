@@ -93,15 +93,10 @@ static void test_ptr_ztress(ztress_handler high_handler, ztress_handler low_hand
 
 	ring_buf_init(&ptr_ringbuf, sizeof(ptr_buffer), ptr_buffer);
 
-#ifdef CONFIG_RING_BUFFER
-	offset = (ring_buf_idx_t)-1 - ring_buf_capacity_get(&ptr_ringbuf) / 2;
-	ring_buf_internal_reset(&ptr_ringbuf, offset);
-#else
+	/* start close to the 2N index wrap */
 	offset = 2 * ring_buf_capacity_get(&ptr_ringbuf) -
 		 ring_buf_capacity_get(&ptr_ringbuf) / 2;
-	ptr_ringbuf.read_idx = offset;
-	ptr_ringbuf.write_idx = offset;
-#endif
+	ring_buf_internal_reset(&ptr_ringbuf, offset);
 
 	timeout = (CONFIG_SYS_CLOCK_TICKS_PER_SEC < 10000) ? K_MSEC(1000) : K_MSEC(10000);
 	ztress_set_timeout(timeout);
@@ -373,8 +368,8 @@ static void test_ztress(ztress_handler high_handler,
 		ring_buf_init(&ringbuf, ARRAY_SIZE(buf.buf8), buf.buf8);
 	}
 
-	/* force internal index roll-over */
-	offset = (ring_buf_idx_t)-1 - ring_buf_capacity_get(&ringbuf)/2;
+	/* start close to the 2N index wrap */
+	offset = 2 * ring_buf_capacity_get(&ringbuf) - ring_buf_capacity_get(&ringbuf) / 2;
 	ring_buf_internal_reset(&ringbuf, offset);
 
 	/* Timeout after 5 seconds. */
