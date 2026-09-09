@@ -266,12 +266,12 @@ Configuration Options
 
 Related configuration options:
 
-* :kconfig:option:`CONFIG_RING_BUFFER`: Restore the deprecated legacy ring
-  buffer APIs (the claim/finish and fixed-size item APIs). The ring buffer
-  itself is header-only and always available, so this option is not required
-  for normal use.
+* :kconfig:option:`CONFIG_RING_BUFFER`: Keep the deprecated claim/finish and
+  fixed-size item APIs available (enabled by default). The ring buffer itself
+  is header-only and always available; disabling this option drops the
+  deprecated APIs and the two index fields they add to :c:struct:`ring_buf`.
 * :kconfig:option:`CONFIG_RING_BUFFER_LARGE`: Increase the maximum buffer size
-  from 32KB to 2GB.
+  from 32KB to 1GB.
 
 API Reference
 *************

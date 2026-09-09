@@ -2059,17 +2059,18 @@ bookkeeping path more efficient. To accommodate these changes, the zero-copy cla
 (``ring_buf_put_claim()`` / ``ring_buf_put_finish()`` and their ``get`` counterparts) has been
 replaced by the non-stacking :c:func:`ring_buf_put_ptr` and :c:func:`ring_buf_get_ptr`.
 
-The legacy claim/finish API is still available, but only when
-:kconfig:option:`CONFIG_RING_BUFFER` is enabled. New code should use the ``_ptr`` API
-directly.
+The legacy claim/finish API and the item API (:c:func:`ring_buf_item_init`,
+:c:func:`ring_buf_item_put`, :c:func:`ring_buf_item_get`, :c:func:`ring_buf_item_space_get`,
+``RING_BUF_ITEM_DECLARE*`` and ``RING_BUF_ITEM_SIZEOF``) remain available as deprecated wrappers
+over the new primitives while :kconfig:option:`CONFIG_RING_BUFFER` is enabled, which is the
+default. Using them emits a deprecation warning. The wrappers add two index fields to
+:c:struct:`ring_buf`; once no code in an image uses them, disable
+:kconfig:option:`CONFIG_RING_BUFFER` to drop both the wrappers and the extra fields.
+:kconfig:option:`CONFIG_RING_BUFFER` no longer has to be selected to use ring buffers, and
+``select RING_BUFFER`` lines in Kconfig files can be removed.
 
-Enabling :kconfig:option:`CONFIG_RING_BUFFER` selects the legacy ring buffer header, which
-also brings back the other deprecated symbols that are absent from the default header: the entire
-item API (:c:func:`ring_buf_item_init`, :c:func:`ring_buf_item_put`, :c:func:`ring_buf_item_get`,
-:c:func:`ring_buf_item_space_get`, ``RING_BUF_ITEM_DECLARE*`` and ``RING_BUF_ITEM_SIZEOF``) and
-``ring_buf_internal_reset()``. Out-of-tree code that still uses any of these fails to compile with
-no other hint; enabling this option is the switch that restores them while the code is migrated to
-:c:struct:`sys_ringq` and the ``_ptr`` API.
+With :kconfig:option:`CONFIG_RING_BUFFER_LARGE` the maximum buffer size is now ``UINT32_MAX / 4``
+instead of ``UINT32_MAX / 2``.
 
 Advanced use cases such as **speculative-write-then-cancel** and **backfilling** (modifying a
 previously written header before committing) now rely on the trailing ``offset`` parameter of

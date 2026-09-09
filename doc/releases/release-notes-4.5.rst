@@ -369,13 +369,11 @@ Deprecated APIs and options
 
   * The zero-copy claim/finish API (:c:func:`ring_buf_put_claim`, :c:func:`ring_buf_put_finish`,
     :c:func:`ring_buf_get_claim`, :c:func:`ring_buf_get_finish`) has been deprecated in favor of
-    the new :c:func:`ring_buf_put_ptr` / :c:func:`ring_buf_get_ptr` API. Code still using it must
-    enable :kconfig:option:`CONFIG_RING_BUFFER`.
+    the new :c:func:`ring_buf_put_ptr` / :c:func:`ring_buf_get_ptr` API.
 
-  * :kconfig:option:`CONFIG_RING_BUFFER` is deprecated. The ring buffer API is now header-only and
-    always available, so the option is no longer required to use ring buffers. It now only serves
-    as the deprecated switch that restores the legacy claim/finish and item APIs while out-of-tree
-    code migrates to the replacement APIs.
+  * :kconfig:option:`CONFIG_RING_BUFFER` is no longer required to use ring buffers, which are now
+    header-only and always available. The option now only keeps the deprecated claim/finish and
+    item APIs compiled in (enabled by default) and will be removed together with them.
 
 
 * Networking
@@ -681,6 +679,7 @@ New APIs and options
   * :c:func:`ring_buf_get_ptr`
   * :c:func:`ring_buf_commit`
   * :c:func:`ring_buf_consume`
+  * :c:func:`ring_buf_is_full`
 
 * USB Type-C
 
