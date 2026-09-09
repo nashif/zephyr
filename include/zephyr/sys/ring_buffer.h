@@ -439,7 +439,7 @@ static inline uint32_t ring_buf_put(struct ring_buf *rb, const uint8_t *data, ui
  * @brief Read data from a ring buffer.
  *
  * @param rb   Address of ring buffer.
- * @param data Destination buffer. Must not be NULL.
+ * @param data Destination buffer. Can be NULL to discard data.
  * @param size Maximum number of bytes to read.
  *
  * @return Number of bytes read.
@@ -457,7 +457,9 @@ static inline uint32_t ring_buf_get(struct ring_buf *rb, uint8_t *data, uint32_t
 		if (chunk == 0U) {
 			break;
 		}
-		memcpy(&data[total], src, chunk);
+		if (data != NULL) {
+			memcpy(&data[total], src, chunk);
+		}
 		total += chunk;
 	} while (total < size);
 	ring_buf_consume(rb, total);
