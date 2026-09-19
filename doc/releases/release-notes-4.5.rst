@@ -1059,6 +1059,11 @@ New APIs and options
   * :c:func:`zbus_runtime_channel_register`
   * :c:func:`zbus_runtime_channel_unregister`
 
+* ZTest
+
+  * :kconfig:option:`CONFIG_ZTEST_SEMIHOST_EXIT` (report the test result to an attached
+    debugger through semihosting)
+
 .. zephyr-keep-sorted-stop
 
 .. _boards_added_in_zephyr_4_5:
