@@ -757,6 +757,10 @@ New APIs and options
     and :kconfig:option:`CONFIG_NET_SOCKETS_PACKET_MCAST_MEMBERSHIP_COUNT` sets
     how many memberships can be active at the same time.
   * :kconfig:option:`CONFIG_PTP_NETWORK_MODE_HYBRID`
+  * Add experimental iperf3 support to zperf
+    (:kconfig:option:`CONFIG_NET_ZPERF_IPERF3`), chosen in place of iPerf 2
+    (:kconfig:option:`CONFIG_NET_ZPERF_IPERF2`). The zperf API and shell commands are the
+    same for both. See :ref:`zperf_iperf3`.
   * Add an SNTP server (:kconfig:option:`CONFIG_SNTP_SERVER`) that answers time
     queries on UDP port 123 on every enabled address family. The application
     sets the system clock and then tells the server about its clock source with
