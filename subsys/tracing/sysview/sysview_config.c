@@ -106,7 +106,7 @@ static void send_task_list_cb(void)
 
 static U64 get_time_cb(void)
 {
-	return (U64)k_cycle_get_32();
+	return k_ticks_to_us_floor64(k_uptime_ticks());
 }
 
 
