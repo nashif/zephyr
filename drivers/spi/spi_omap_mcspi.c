@@ -24,23 +24,28 @@ LOG_MODULE_REGISTER(omap_mcspi);
 /* Time to wait between successive retries in microseconds */
 #define OMAP_MCSPI_REG_TIME_BETWEEN_RETRIES_US (10)
 
+/*
+ * Register offsets are relative to the start of the register window, which is
+ * the module base on OMAP2/3 and 0x100 above it on OMAP4 and later.
+ */
 struct omap_mcspi_regs {
-	uint8_t RESERVED_1[0x04];    /**< Reserved, offset: 0x00 - 0x04 */
-	volatile uint32_t HWINFO;    /**< MCSPI Hardware configuration register, offset: 0x04 */
-	uint8_t RESERVED_2[0x108];   /**< Reserved, offset: 0x08 - 0x110 */
-	volatile uint32_t SYSCONFIG; /**< Configuration register, offset: 0x110 */
-	volatile uint32_t SYSSTATUS; /**< Status information register, offset: 0x114 */
-	uint8_t RESERVED_3[0x10];    /**< Reserved, offset: 0x118 - 0x128 */
-	volatile uint32_t MODULCTRL; /**< MCSPI configuration register, offset: 0x128 */
+	uint8_t RESERVED_1[0x10];    /**< Reserved, offset: 0x00 - 0x10 */
+	volatile uint32_t SYSCONFIG; /**< Configuration register, offset: 0x10 */
+	volatile uint32_t SYSSTATUS; /**< Status information register, offset: 0x14 */
+	uint8_t RESERVED_2[0x10];    /**< Reserved, offset: 0x18 - 0x28 */
+	volatile uint32_t MODULCTRL; /**< MCSPI configuration register, offset: 0x28 */
 	volatile struct {
-		volatile uint32_t CHCONF; /**< Configuration register, offset: 0x12C + (0x14 * i) */
-		volatile uint32_t CHSTAT; /**< Status register, offset: 0x130 + (0x14 * i) */
-		volatile uint32_t CHCTRL; /**< Control register, offset: 0x134 + (0x14 * i) */
-		volatile uint32_t TX;     /**< TX register, offset: 0x138 + (0x14 * i) */
-		volatile uint32_t RX;     /**< RX register, offset: 0x13C + (0x14 * i) */
+		volatile uint32_t CHCONF; /**< Configuration register, offset: 0x2C + (0x14 * i) */
+		volatile uint32_t CHSTAT; /**< Status register, offset: 0x30 + (0x14 * i) */
+		volatile uint32_t CHCTRL; /**< Control register, offset: 0x34 + (0x14 * i) */
+		volatile uint32_t TX;     /**< TX register, offset: 0x38 + (0x14 * i) */
+		volatile uint32_t RX;     /**< RX register, offset: 0x3C + (0x14 * i) */
 	} CHAN[OMAP_MCSPI_NUM_CHANNELS];
-	volatile uint32_t XFERLEVEL; /**< FIFO Transfer Level register, offset: 0x17C */
+	volatile uint32_t XFERLEVEL; /**< FIFO Transfer Level register, offset: 0x7C */
 };
+
+/* Hardware configuration register, at the module base on OMAP4 and later */
+#define OMAP_MCSPI_HWINFO 0x04U
 
 /* Hardware Information */
 #define OMAP_MCSPI_HWINFO_FFNBYTE GENMASK(5, 1) /* FIFO depth */
@@ -90,11 +95,14 @@ struct omap_mcspi_regs {
 
 #define DEV_CFG(dev)  ((const struct omap_mcspi_cfg *)(dev)->config)
 #define DEV_DATA(dev) ((struct omap_mcspi_data *)(dev)->data)
-#define DEV_REGS(dev) ((struct omap_mcspi_regs *)DEVICE_MMIO_GET(dev))
+#define DEV_REGS(dev) ((struct omap_mcspi_regs *)(DEVICE_MMIO_GET(dev) + DEV_CFG(dev)->regs_offset))
 
 struct omap_mcspi_cfg {
 	DEVICE_MMIO_ROM;
 	const struct pinctrl_dev_config *pinctrl;
+	uintptr_t regs_offset;
+	/* FIFO depth in bytes, 0 to read it from HWINFO */
+	uint32_t fifo_depth;
 	uint32_t clock_frequency;
 	bool d1_miso_d0_mosi;
 	uint8_t num_cs;
@@ -665,7 +673,13 @@ static int omap_mcspi_init(const struct device *dev)
 		return ret;
 	}
 
-	data->fifo_depth = FIELD_GET(OMAP_MCSPI_HWINFO_FFNBYTE, regs->HWINFO) << 4;
+	if (cfg->fifo_depth != 0U) {
+		data->fifo_depth = cfg->fifo_depth;
+	} else {
+		data->fifo_depth = FIELD_GET(OMAP_MCSPI_HWINFO_FFNBYTE,
+					     sys_read32(DEVICE_MMIO_GET(dev) + OMAP_MCSPI_HWINFO))
+				   << 4;
+	}
 
 	/*
 	 * Reset leaves the chip selects active high, which selects every device
@@ -703,11 +717,13 @@ static DEVICE_API(spi, omap_mcspi_api) = {
 	.release = omap_mcspi_release,
 };
 
-#define OMAP_MCSPI_INIT(n)                                                                         \
+#define OMAP_MCSPI_INIT(n, offset, fifo)                                                           \
 	PINCTRL_DT_INST_DEFINE(n);                                                                 \
 	static struct omap_mcspi_cfg omap_mcspi_config_##n = {                                     \
 		DEVICE_MMIO_ROM_INIT(DT_DRV_INST(n)),                                              \
 		.pinctrl = PINCTRL_DT_INST_DEV_CONFIG_GET(n),                                      \
+		.regs_offset = (offset),                                                           \
+		.fifo_depth = (fifo),                                                              \
 		.clock_frequency = DT_INST_PROP(n, clock_frequency),                               \
 		.d1_miso_d0_mosi = DT_INST_PROP(n, ti_d1_miso_d0_mosi),                            \
 		.num_cs = DT_INST_PROP(n, ti_spi_num_cs),                                          \
@@ -722,4 +738,15 @@ static DEVICE_API(spi, omap_mcspi_api) = {
 				  &omap_mcspi_config_##n, POST_KERNEL, CONFIG_SPI_INIT_PRIORITY,   \
 				  &omap_mcspi_api);
 
-DT_INST_FOREACH_STATUS_OKAY(OMAP_MCSPI_INIT)
+/* OMAP4 and later: registers at 0x100, FIFO depth in HWINFO */
+#define OMAP_MCSPI_OMAP4_INIT(n) OMAP_MCSPI_INIT(n, 0x100U, 0U)
+
+DT_INST_FOREACH_STATUS_OKAY(OMAP_MCSPI_OMAP4_INIT)
+
+#undef DT_DRV_COMPAT
+#define DT_DRV_COMPAT ti_omap2_mcspi
+
+/* OMAP2/3: registers at the module base, 64-byte FIFO */
+#define OMAP_MCSPI_OMAP2_INIT(n) OMAP_MCSPI_INIT(n, 0U, 64U)
+
+DT_INST_FOREACH_STATUS_OKAY(OMAP_MCSPI_OMAP2_INIT)

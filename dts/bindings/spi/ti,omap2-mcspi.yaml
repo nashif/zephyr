@@ -1,0 +1,29 @@
+# Copyright The Zephyr Project Contributors
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  TI Multi Channel SPI controller for OMAP2 and OMAP3 SoCs
+
+  The registers start at the module base and the FIFO holds 64 bytes.
+
+compatible: "ti,omap2-mcspi"
+
+include: [spi-controller.yaml, pinctrl-device.yaml]
+
+properties:
+  reg:
+    required: true
+
+  clock-frequency:
+    required: true
+
+  ti,spi-num-cs:
+    type: int
+    default: 1
+    description: |
+      Number of chipselects supported by controller
+
+  ti,d1-miso-d0-mosi:
+    type: boolean
+    description: |
+      Sets d0 as MOSI and d1 as MISO if true, vice versa otherwise.
