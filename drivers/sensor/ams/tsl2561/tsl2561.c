@@ -16,7 +16,9 @@
 
 LOG_MODULE_REGISTER(TSL2561, CONFIG_SENSOR_LOG_LEVEL);
 
+/* Part numbers of the T, FN and CL packages, whose lux equation this driver implements */
 #define TSL2561_CHIP_ID 0x05
+#define TSL2563_CHIP_ID 0x07
 
 #define TSL2561_GAIN_1X  0x00
 #define TSL2561_GAIN_16X 0x01
@@ -265,8 +267,10 @@ static int tsl2561_sensor_setup(const struct device *dev)
 		return ret;
 	}
 
-	if (FIELD_GET(TSL2561_ID_PARTNO, chip_id) != TSL2561_CHIP_ID) {
-		LOG_ERR("Chip ID is invalid! Device @%02x is not TSL2561!", config->i2c.addr);
+	tmp = FIELD_GET(TSL2561_ID_PARTNO, chip_id);
+	if ((tmp != TSL2561_CHIP_ID) && (tmp != TSL2563_CHIP_ID)) {
+		LOG_ERR("Chip ID is invalid! Device @%02x is not TSL2561 or TSL2563!",
+			config->i2c.addr);
 		return -EIO;
 	}
 
