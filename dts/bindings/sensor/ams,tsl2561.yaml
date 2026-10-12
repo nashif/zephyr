@@ -4,6 +4,9 @@
 description: |
     OSRAM ams TSL2561 light sensor.
 
+    Also supports the TSL2563, which has the same registers and lux equation and
+    differs in its part number.
+
 compatible: "ams,tsl2561"
 
 include: [sensor-device.yaml, i2c-device.yaml]
