@@ -667,8 +667,14 @@ static int omap_mcspi_init(const struct device *dev)
 
 	data->fifo_depth = FIELD_GET(OMAP_MCSPI_HWINFO_FFNBYTE, regs->HWINFO) << 4;
 
+	/*
+	 * Reset leaves the chip selects active high, which selects every device
+	 * with an active low chip select during each transfer. Default them to
+	 * active low until a transfer configures its channel.
+	 */
 	ARRAY_FOR_EACH(regs->CHAN, ch) {
-		regs->CHAN[ch].CHCONF &= ~OMAP_MCSPI_CHCONF_FORCE;
+		regs->CHAN[ch].CHCONF =
+			(regs->CHAN[ch].CHCONF & ~OMAP_MCSPI_CHCONF_FORCE) | OMAP_MCSPI_CHCONF_EPOL;
 	}
 
 	ret = spi_context_cs_configure_all(&data->ctx);
