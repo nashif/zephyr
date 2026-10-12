@@ -28,10 +28,17 @@ void lvgl_flush_cb_24bit(lv_display_t *display, const lv_area_t *area, uint8_t *
 		return;
 	}
 #else
-	w = lv_area_get_width(area);
-	h = lv_area_get_height(area);
-	flush.x = area->x1;
-	flush.y = area->y1;
+	lv_area_t rotated = *area;
+
+	px_map = lvgl_rotate_area(display, &rotated, px_map);
+	if (px_map == NULL) {
+		lv_display_flush_ready(display);
+		return;
+	}
+	w = lv_area_get_width(&rotated);
+	h = lv_area_get_height(&rotated);
+	flush.x = rotated.x1;
+	flush.y = rotated.y1;
 #endif
 	flush.display = display;
 	flush.desc.buf_size = w * 3U * h;
