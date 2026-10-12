@@ -4,7 +4,7 @@
 config SPI_OMAP_MCSPI
 	bool "MCSPI driver for OMAP and K3 devices"
 	default y
-	depends on DT_HAS_TI_OMAP_MCSPI_ENABLED
+	depends on DT_HAS_TI_OMAP_MCSPI_ENABLED || DT_HAS_TI_OMAP2_MCSPI_ENABLED
 	select PINCTRL
 	help
 	  Enable support for TI OMAP MCSPI driver.
