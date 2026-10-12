@@ -188,6 +188,7 @@ static int tsl2561_channel_get(const struct device *dev, enum sensor_channel cha
 	struct tsl2561_data *data = dev->data;
 	uint32_t channel0;
 	uint32_t channel1;
+	int64_t micro_lux;
 
 	if (chan != SENSOR_CHAN_ALL && chan != SENSOR_CHAN_LIGHT) {
 		return -ENOTSUP;
@@ -234,17 +235,16 @@ static int tsl2561_channel_get(const struct device *dev, enum sensor_channel cha
 		m = TSL2561_LUX_M8T;
 	}
 
-	int32_t tmp = ((channel0 * b) - (channel1 * m));
+	int64_t tmp = ((int64_t)channel0 * b) - ((int64_t)channel1 * m);
 
-	/* Round LSB (2^(LUX_SCALE−1)) */
-	tmp += (1 << (TSL2561_LUX_SCALE - 1));
+	if (tmp < 0) {
+		tmp = 0;
+	}
 
-	/* Strip off fractional portion */
-	val->val1 = tmp >> TSL2561_LUX_SCALE;
+	/* Lux in units of 2^-LUX_SCALE, to micro-lux */
+	micro_lux = (tmp * 1000000) >> TSL2561_LUX_SCALE;
 
-	val->val2 = 0;
-
-	return 0;
+	return sensor_value_from_micro(val, micro_lux);
 }
 
 static DEVICE_API(sensor, tsl2561_driver_api) = {
