@@ -60,6 +60,8 @@
 #define INPUT_KEY_BRIGHTNESSDOWN 224    /**< Brightness Down Key */
 #define INPUT_KEY_BRIGHTNESSUP 225      /**< Brightness Up Key */
 #define INPUT_KEY_C 46                  /**< C Key */
+#define INPUT_KEY_CAMERA 212            /**< Camera Shutter Key */
+#define INPUT_KEY_CAMERA_FOCUS 528      /**< Camera Focus Key */
 #define INPUT_KEY_CAPSLOCK 58           /**< Caps Lock Key */
 #define INPUT_KEY_CLOSECD 160           /**< Close CD Key */
 #define INPUT_KEY_COFFEE 152            /**< Screen Saver Key */
