@@ -21,6 +21,15 @@ properties:
       - 13
       - 101
       - 402
+  glass-attenuation:
+    type: int
+    default: 100000
+    description: |
+      Light attenuation of the glass over the sensor: the reported
+      illuminance is multiplied by it. Integer value with 5 decimals; the
+      default (1.00000) is for an uncovered sensor. Example: 16 would be
+      1600000.
+
   gain:
     type: int
     default: 16
