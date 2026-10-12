@@ -339,7 +339,7 @@ static struct arm_mmu_perms_attrs arm_mmu_convert_attr_flags(uint32_t attrs)
 		perms_attrs.domain = ARM_MMU_DOMAIN_OS;
 
 		/* For normal memory, shareability depends on the S bit */
-		if (attrs & MATTR_SHARED) {
+		if (IS_ENABLED(CONFIG_ARM_MMU_NORMAL_SHAREABLE) && (attrs & MATTR_SHARED)) {
 			perms_attrs.shared = 1;
 		}
 
@@ -919,7 +919,7 @@ int z_arm_mmu_init(bool is_primary_core)
 	 * Set IRGN, RGN, S in TTBR0 based on the configuration of the
 	 * memory area the actual page tables are located in.
 	 */
-	if (pt_attrs & MATTR_SHARED) {
+	if (IS_ENABLED(CONFIG_ARM_MMU_NORMAL_SHAREABLE) && (pt_attrs & MATTR_SHARED)) {
 		reg_val |= ARM_MMU_TTBR_SHAREABLE_BIT;
 	}
 
