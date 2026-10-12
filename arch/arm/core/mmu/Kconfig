@@ -35,6 +35,16 @@ config ARM_AARCH32_MMU_VMSA_V7
 
 endchoice
 
+config ARM_MMU_NORMAL_SHAREABLE
+	bool
+	depends on ARM_AARCH32_MMU
+	default y if !CPU_CORTEX_A8
+	help
+	  Honor the Shareable attribute of Normal memory regions. The
+	  uniprocessor Cortex-A8 maps all Normal memory Non-shareable: on
+	  OMAP3, its exclusive loads and stores to Shareable memory reach the
+	  interconnect and raise external aborts.
+
 config ARM_MMU_NUM_L2_TABLES
 	depends on ARM_AARCH32_MMU
 	int "Number of L2 translation tables available to the MMU"
