@@ -126,14 +126,36 @@ static bool arm_mmu_l2_map_page(uint32_t va, uint32_t pa,
 				struct arm_mmu_perms_attrs perms_attrs);
 
 /**
+ * @brief Cleans a range of the page tables to the point of coherency
+ * The table walk of cores without coherent walks (ID_MMFR3.CohWalk == 0),
+ * such as the Cortex-A8, does not look up the L1 data cache, so entries
+ * written while the data cache is on have to be cleaned before they are used.
+ */
+static void clean_page_tables(const void *start, size_t size)
+{
+	/* CTR.DminLine: log2 of the smallest data cache line in words */
+	uint32_t line_size = 4U << ((read_sysreg(ctr) >> 16) & 0xFU);
+	uintptr_t addr = (uintptr_t)start & ~(line_size - 1U);
+	uintptr_t end = (uintptr_t)start + size;
+
+	for (; addr < end; addr += line_size) {
+		L1C_CleanDCacheMVA((void *)addr);
+	}
+}
+
+/**
  * @brief Invalidates the TLB
  * Helper function which invalidates the entire TLB. This action
  * is performed whenever the MMU is (re-)enabled or changes to the
  * page tables are made at run-time, as the TLB might contain entries
- * which are no longer valid once the changes are applied.
+ * which are no longer valid once the changes are applied. The page
+ * tables are cleaned first so that the table walk sees the changes.
  */
 static void invalidate_tlb_all(void)
 {
+	clean_page_tables(&l1_page_table, sizeof(l1_page_table));
+	clean_page_tables(l2_page_tables, sizeof(l2_page_tables));
+	barrier_dsync_fence_full();
 	__set_TLBIALL(0); /* 0 = opc2 = invalidate entire TLB */
 	barrier_dsync_fence_full();
 	barrier_isync_fence_full();
