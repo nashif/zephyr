@@ -4,8 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
 &gpio0 {
-	ngpios = <2>;
+	ngpios = <3>;
 };
 
 / {
@@ -21,6 +23,12 @@
 		volup_button: button_1 {
 			gpios = <&gpio0 1 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
 			zephyr,code = <11>;
+		};
+
+		lid_switch: switch_0 {
+			gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;
+			zephyr,code = <INPUT_SW_LID>;
+			zephyr,input-type = <INPUT_EV_SW>;
 		};
 	};
 };
