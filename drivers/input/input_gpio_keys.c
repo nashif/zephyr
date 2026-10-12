@@ -36,6 +36,8 @@ struct gpio_keys_pin_config {
 	struct gpio_dt_spec spec;
 	/** Zephyr code from devicetree */
 	uint32_t zephyr_code;
+	/** Event type from devicetree */
+	uint8_t input_type;
 };
 
 struct gpio_keys_pin_data {
@@ -87,7 +89,8 @@ static void gpio_keys_poll_pin(const struct device *dev, int key_index)
 		pin_data->cb_data.pin_state = new_pressed;
 		LOG_DBG("Report event %s %d, code=%d", dev->name, new_pressed,
 			pin_cfg->zephyr_code);
-		input_report_key(dev, pin_cfg->zephyr_code, new_pressed, true, K_FOREVER);
+		input_report(dev, pin_cfg->input_type, pin_cfg->zephyr_code, new_pressed, true,
+			     K_FOREVER);
 	}
 }
 
@@ -196,6 +199,19 @@ static int gpio_keys_init(const struct device *dev)
 
 		pin_data[i].dev = dev;
 		k_work_init_delayable(&pin_data[i].work, cfg->handler);
+
+		/* A switch has a state from the start: report it */
+		if (cfg->pin_cfg[i].input_type == INPUT_EV_SW) {
+			ret = gpio_pin_get_dt(gpio);
+			if (ret < 0) {
+				LOG_ERR("Pin %d get failed: %d", i, ret);
+				return ret;
+			}
+
+			pin_data[i].cb_data.pin_state = ret;
+			input_report(dev, INPUT_EV_SW, cfg->pin_cfg[i].zephyr_code, ret, true,
+				     K_NO_WAIT);
+		}
 
 		if (cfg->polling_mode) {
 			continue;
@@ -325,6 +341,7 @@ static int gpio_keys_pm_action(const struct device *dev,
 	{                                                                                          \
 		.spec = GPIO_DT_SPEC_GET(node_id, gpios),                                          \
 		.zephyr_code = DT_PROP(node_id, zephyr_code),                                      \
+		.input_type = DT_PROP(node_id, zephyr_input_type),                                 \
 	}
 
 #define GPIO_KEYS_INIT(i)                                                                          \

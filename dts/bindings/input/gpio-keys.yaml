@@ -78,6 +78,16 @@ child-binding:
       type: int
       description: Key code to emit.
 
+    zephyr,input-type:
+      type: int
+      default: 1
+      enum:
+        - 1
+        - 5
+      description: |
+        Event type to emit: INPUT_EV_KEY (1), the default, or INPUT_EV_SW (5)
+        for a switch, with an INPUT_SW_* code in zephyr,code.
+
 examples:
   - |
     #include <zephyr/dt-bindings/input/input-event-codes.h>
