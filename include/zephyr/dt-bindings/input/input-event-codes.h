@@ -26,6 +26,7 @@
 #define INPUT_EV_REL 0x02               /**< Relative coordinate event */
 #define INPUT_EV_ABS 0x03               /**< Absolute coordinate event */
 #define INPUT_EV_MSC 0x04               /**< Miscellaneous event */
+#define INPUT_EV_SW 0x05                /**< Switch event */
 #define INPUT_EV_DEVICE 0xef            /**< Device specific input event */
 #define INPUT_EV_VENDOR_START 0xf0      /**< Vendor specific event start */
 #define INPUT_EV_VENDOR_STOP 0xff       /**< Vendor specific event stop */
@@ -294,6 +295,34 @@
  */
 /* zephyr-keep-sorted-start */
 #define INPUT_MSC_SCAN 0x04             /**< Scan code */
+/* zephyr-keep-sorted-stop */
+/** @} */
+
+/**
+ * @name Input event SW codes.
+ * @anchor INPUT_SW_CODES
+ *
+ * A value of 1 means the switch is active, as described for each code.
+ * @{
+ */
+/* zephyr-keep-sorted-start */
+#define INPUT_SW_CAMERA_LENS_COVER 0x09 /**< Lens cover is closed */
+#define INPUT_SW_DOCK 0x05              /**< Plugged into a dock */
+#define INPUT_SW_FRONT_PROXIMITY 0x0b   /**< Front proximity sensor is active */
+#define INPUT_SW_HEADPHONE_INSERT 0x02  /**< Headphone is inserted */
+#define INPUT_SW_JACK_PHYSICAL_INSERT 0x07 /**< Mechanical jack switch is inserted */
+#define INPUT_SW_KEYPAD_SLIDE 0x0a      /**< Keypad slide is out */
+#define INPUT_SW_LID 0x00               /**< Lid is closed */
+#define INPUT_SW_LINEIN_INSERT 0x0d     /**< Line in is inserted */
+#define INPUT_SW_LINEOUT_INSERT 0x06    /**< Line out is inserted */
+#define INPUT_SW_MACHINE_COVER 0x10     /**< Machine cover is closed */
+#define INPUT_SW_MICROPHONE_INSERT 0x04 /**< Microphone is inserted */
+#define INPUT_SW_MUTE_DEVICE 0x0e       /**< Device is muted */
+#define INPUT_SW_PEN_INSERTED 0x0f      /**< Pen is inserted */
+#define INPUT_SW_RFKILL_ALL 0x03        /**< Radios are enabled */
+#define INPUT_SW_ROTATE_LOCK 0x0c       /**< Screen rotation is locked */
+#define INPUT_SW_TABLET_MODE 0x01       /**< Tablet mode is on */
+#define INPUT_SW_VIDEOOUT_INSERT 0x08   /**< Video out is inserted */
 /* zephyr-keep-sorted-stop */
 /** @} */
 
