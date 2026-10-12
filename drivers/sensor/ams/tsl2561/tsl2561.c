@@ -92,7 +92,11 @@ struct tsl2561_config {
 	struct i2c_dt_spec i2c;
 	uint16_t integration_time;
 	uint8_t gain;
+	/* Light attenuation of the glass over the sensor, times 100000 */
+	uint32_t glass_attenuation;
 };
+
+#define GLASS_ATTENUATION_ONE 100000U
 
 struct tsl2561_data {
 	uint16_t ch0;
@@ -185,6 +189,7 @@ static int tsl2561_sample_fetch(const struct device *dev, enum sensor_channel ch
 static int tsl2561_channel_get(const struct device *dev, enum sensor_channel chan,
 			       struct sensor_value *val)
 {
+	const struct tsl2561_config *config = dev->config;
 	struct tsl2561_data *data = dev->data;
 	uint32_t channel0;
 	uint32_t channel1;
@@ -241,8 +246,9 @@ static int tsl2561_channel_get(const struct device *dev, enum sensor_channel cha
 		tmp = 0;
 	}
 
-	/* Lux in units of 2^-LUX_SCALE, to micro-lux */
+	/* Lux in units of 2^-LUX_SCALE, to micro-lux, compensated for the glass */
 	micro_lux = (tmp * 1000000) >> TSL2561_LUX_SCALE;
+	micro_lux = (micro_lux * config->glass_attenuation) / GLASS_ATTENUATION_ONE;
 
 	return sensor_value_from_micro(val, micro_lux);
 }
@@ -342,6 +348,7 @@ static int tsl2561_init(const struct device *dev)
 	static const struct tsl2561_config tsl2561_config_##n = {                                  \
 		.i2c = I2C_DT_SPEC_INST_GET(n),                                                    \
 		.integration_time = DT_INST_PROP(n, integration_time),                             \
+		.glass_attenuation = DT_INST_PROP(n, glass_attenuation),                           \
 		.gain = DT_INST_PROP(n, gain)};                                                    \
 	SENSOR_DEVICE_DT_INST_DEFINE(n, tsl2561_init, NULL, &tsl2561_data_##n,                     \
 				     &tsl2561_config_##n, POST_KERNEL,                             \
