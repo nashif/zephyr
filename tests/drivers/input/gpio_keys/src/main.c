@@ -14,12 +14,15 @@
 
 static const struct device *const test_gpio_keys_dev = DEVICE_DT_GET(DT_NODELABEL(buttons));
 #define BUTTON_0_IDX DT_NODE_CHILD_IDX(DT_NODELABEL(voldown_button))
+#define SWITCH_0_IDX DT_NODE_CHILD_IDX(DT_NODELABEL(lid_switch))
 
 struct gpio_keys_pin_config {
 	/** GPIO specification from devicetree */
 	struct gpio_dt_spec spec;
 	/** Zephyr code from devicetree */
 	uint32_t zephyr_code;
+	/** Event type from devicetree */
+	uint8_t input_type;
 };
 struct gpio_keys_config {
 	/** Debounce interval in milliseconds from devicetree */
@@ -36,10 +39,19 @@ ZTEST_SUITE(gpio_keys, NULL, NULL, NULL, NULL, NULL);
 static int event_count;
 static uint16_t last_code;
 static bool last_val;
+static int sw_event_count;
+static uint16_t last_sw_code;
+static bool last_sw_val;
 static void test_gpio_keys_cb_handler(struct input_event *evt, void *user_data)
 {
-	TC_PRINT("GPIO_KEY %s pressed, zephyr_code=%u, value=%d\n",
-		 evt->dev->name, evt->code, evt->value);
+	TC_PRINT("GPIO_KEY %s type=%u, zephyr_code=%u, value=%d\n",
+		 evt->dev->name, evt->type, evt->code, evt->value);
+	if (evt->type == INPUT_EV_SW) {
+		sw_event_count++;
+		last_sw_code = evt->code;
+		last_sw_val = evt->value;
+		return;
+	}
 	event_count++;
 	last_code = evt->code;
 	last_val = evt->value;
@@ -82,4 +94,33 @@ ZTEST(gpio_keys, test_gpio_keys_pressed)
 	zassert_equal(event_count, 2);
 	zassert_equal(last_code, pin_cfg->zephyr_code);
 	zassert_equal(last_val, false);
+}
+
+/**
+ * @brief TestPurpose: Verify a switch reports its initial state and changes.
+ *
+ */
+ZTEST(gpio_keys, test_gpio_keys_switch)
+{
+	const struct gpio_keys_config *config = test_gpio_keys_dev->config;
+	const struct gpio_keys_pin_config *pin_cfg = &config->pin_cfg[SWITCH_0_IDX];
+	const struct gpio_dt_spec *spec = &pin_cfg->spec;
+
+	zassert_equal(pin_cfg->input_type, INPUT_EV_SW);
+
+	/* The state at init, inactive */
+	zassert_equal(sw_event_count, 1);
+	zassert_equal(last_sw_code, pin_cfg->zephyr_code);
+	zassert_equal(last_sw_val, false);
+
+	zassert_ok(gpio_emul_input_set(spec->port, spec->pin, 1));
+	k_sleep(K_MSEC(config->debounce_interval_ms * 3 / 2));
+	zassert_equal(sw_event_count, 2);
+	zassert_equal(last_sw_code, pin_cfg->zephyr_code);
+	zassert_equal(last_sw_val, true);
+
+	zassert_ok(gpio_emul_input_set(spec->port, spec->pin, 0));
+	k_sleep(K_MSEC(config->debounce_interval_ms * 3 / 2));
+	zassert_equal(sw_event_count, 3);
+	zassert_equal(last_sw_val, false);
 }
