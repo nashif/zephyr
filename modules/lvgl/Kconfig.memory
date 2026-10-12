@@ -118,6 +118,16 @@ config LV_Z_FULL_REFRESH
 
 endchoice
 
+config LV_Z_SW_ROTATION
+	bool "Software display rotation"
+	depends on !LV_Z_DIRECT_RENDERING
+	help
+	  Rotate the rendered areas in software when the application rotates
+	  an LVGL display with lv_display_set_rotation(), for displays that
+	  cannot rotate themselves. A rotation buffer as large as the draw
+	  buffer is allocated from the LVGL heap on the first rotated flush.
+	  Supports 16, 24 and 32 bits per pixel.
+
 config LV_Z_VDB_ALIGN
 	int "Rending buffer alignment"
 	default 4

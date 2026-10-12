@@ -25,6 +25,9 @@ struct lvgl_disp_data {
 	uint8_t *mono_conv_buf;
 	uint32_t mono_conv_buf_size;
 #endif
+#ifdef CONFIG_LV_Z_SW_ROTATION
+	uint8_t *rot_buf;
+#endif
 	bool blanking_on;
 };
 
@@ -47,6 +50,20 @@ void lvgl_rounder_cb_mono(lv_event_t *e);
 int set_lvgl_rendering_cb(lv_display_t *display);
 
 void lvgl_flush_display(struct lvgl_display_flush *request);
+
+/**
+ * @brief Rotate a rendered area to the orientation of the display
+ *
+ * With CONFIG_LV_Z_SW_ROTATION and a rotated LVGL display, rotates the pixels
+ * into the rotation buffer and the area to display coordinates. Otherwise
+ * returns the pixels unchanged.
+ *
+ * @param display LVGL display
+ * @param area Rendered area, updated to the area on the display
+ * @param px_map Rendered pixels
+ * @return Pixels to write, or NULL if the rotation buffer cannot be allocated
+ */
+uint8_t *lvgl_rotate_area(lv_display_t *display, lv_area_t *area, uint8_t *px_map);
 
 #ifdef CONFIG_LV_Z_USE_ROUNDER_CB
 void lvgl_rounder_cb(lv_event_t *e);

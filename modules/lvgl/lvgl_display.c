@@ -6,9 +6,12 @@
  */
 
 #include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
 #include <errno.h>
 
 #include "lvgl_display.h"
+
+LOG_MODULE_DECLARE(lvgl, CONFIG_LV_Z_LOG_LEVEL);
 
 #ifdef CONFIG_LV_Z_FLUSH_THREAD
 
@@ -131,6 +134,45 @@ int set_lvgl_rendering_cb(lv_display_t *display)
 	}
 
 	return err;
+}
+
+uint8_t *lvgl_rotate_area(lv_display_t *display, lv_area_t *area, uint8_t *px_map)
+{
+#ifdef CONFIG_LV_Z_SW_ROTATION
+	struct lvgl_disp_data *data = (struct lvgl_disp_data *)lv_display_get_user_data(display);
+	lv_display_rotation_t rotation = lv_display_get_rotation(display);
+	lv_color_format_t cf = lv_display_get_color_format(display);
+	int32_t w = lv_area_get_width(area);
+	int32_t h = lv_area_get_height(area);
+	int32_t dest_w;
+
+	if (rotation == LV_DISPLAY_ROTATION_0) {
+		return px_map;
+	}
+
+	if (data->rot_buf == NULL) {
+		/* As large as the draw buffer the areas are rendered in */
+		data->rot_buf = lv_malloc(lv_display_get_buf_active(display)->data_size);
+		if (data->rot_buf == NULL) {
+			LOG_ERR("Failed to allocate memory for rotation buffer");
+			return NULL;
+		}
+	}
+
+	dest_w = ((rotation == LV_DISPLAY_ROTATION_90) || (rotation == LV_DISPLAY_ROTATION_270))
+			 ? h
+			 : w;
+	lv_draw_rotate(px_map, data->rot_buf, w, h, lv_draw_buf_width_to_stride(w, cf),
+		       lv_draw_buf_width_to_stride(dest_w, cf), rotation, cf);
+	lv_display_rotate_area(display, area);
+
+	return data->rot_buf;
+#else
+	ARG_UNUSED(display);
+	ARG_UNUSED(area);
+
+	return px_map;
+#endif
 }
 
 void lvgl_flush_display(struct lvgl_display_flush *request)
