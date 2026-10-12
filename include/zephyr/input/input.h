@@ -120,6 +120,19 @@ static inline int input_report_abs(const struct device *dev,
 }
 
 /**
+ * @brief Report a new @ref INPUT_EV_SW input event, note that value is
+ * converted to either 0 or 1.
+ *
+ * @see input_report() for more details.
+ */
+static inline int input_report_sw(const struct device *dev,
+				  uint16_t code, int32_t value, bool sync,
+				  k_timeout_t timeout)
+{
+	return input_report(dev, INPUT_EV_SW, code, !!value, sync, timeout);
+}
+
+/**
  * @brief Returns true if the input queue is empty.
  *
  * This can be used to batch input event processing until the whole queue has
