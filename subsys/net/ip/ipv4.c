@@ -328,6 +328,55 @@ static inline enum net_verdict ipv4_route_packet(struct net_pkt *pkt,
 }
 #endif /* CONFIG_NET_IPV4_FORWARDING */
 
+/* Check the option list of a received header, with the cursor at its start,
+ * and leave the cursor after it. The options are a sequence of one octet
+ * types; all but End of Options and No Operation carry a length octet that
+ * counts the type and length octets themselves, so it is at least 2 and the
+ * option ends within the header. RFC 791 ch. 3.1. On failure bad_offset is
+ * the offset of the offending octet from the start of the IP header, for a
+ * Parameter Problem message.
+ */
+static int ipv4_check_hdr_options(struct net_pkt *pkt, uint8_t opts_len,
+				  uint8_t *bad_offset)
+{
+	uint8_t opts[NET_IPV4_HDR_OPTNS_MAX_LEN];
+	uint8_t pos = 0U;
+
+	if (net_pkt_read(pkt, opts, opts_len)) {
+		*bad_offset = sizeof(struct net_ipv4_hdr);
+		return -ENOBUFS;
+	}
+
+	while (pos < opts_len) {
+		uint8_t opt_type = opts[pos];
+		uint8_t opt_len;
+
+		if (opt_type == NET_IPV4_OPTS_EO) {
+			break;
+		}
+
+		if (opt_type == NET_IPV4_OPTS_NOP) {
+			pos++;
+			continue;
+		}
+
+		if (pos + 1U >= opts_len) {
+			*bad_offset = sizeof(struct net_ipv4_hdr) + pos;
+			return -EINVAL;
+		}
+
+		opt_len = opts[pos + 1U];
+		if (opt_len < 2U || opt_len > opts_len - pos) {
+			*bad_offset = sizeof(struct net_ipv4_hdr) + pos + 1U;
+			return -EINVAL;
+		}
+
+		pos += opt_len;
+	}
+
+	return 0;
+}
+
 enum net_verdict net_ipv4_input(struct net_pkt *pkt)
 {
 	NET_PKT_DATA_ACCESS_CONTIGUOUS_DEFINE(ipv4_access, struct net_ipv4_hdr);
@@ -371,9 +420,6 @@ enum net_verdict net_ipv4_input(struct net_pkt *pkt)
 	}
 
 	opts_len = hdr_len - sizeof(struct net_ipv4_hdr);
-	if (opts_len > NET_IPV4_HDR_OPTNS_MAX_LEN) {
-		return -EINVAL;
-	}
 
 	if (hdr->ttl == 0) {
 		goto drop;
@@ -479,10 +525,22 @@ enum net_verdict net_ipv4_input(struct net_pkt *pkt)
 		goto drop;
 	}
 
-	if (opts_len) {
-		/* Only few options are handled in EchoRequest, rest skipped */
-		if (net_pkt_skip(pkt, opts_len)) {
-			NET_DBG("Header too big? %u", hdr_len);
+	if (opts_len > 0U) {
+		uint8_t bad_offset;
+
+		/* The options are only acted on by the ICMPv4 echo handler,
+		 * but a malformed one makes the datagram invalid for every
+		 * protocol.
+		 */
+		ret = ipv4_check_hdr_options(pkt, opts_len, &bad_offset);
+		if (ret == -EINVAL) {
+			NET_DBG("DROP: malformed option at offset %u", bad_offset);
+			net_icmpv4_send_error(pkt, NET_ICMPV4_BAD_IP_HEADER,
+					      NET_ICMPV4_BAD_IP_HEADER_POINTER,
+					      (uint32_t)bad_offset << 24);
+			goto drop;
+		} else if (ret < 0) {
+			NET_DBG("DROP: header too big? %u", hdr_len);
 			goto drop;
 		}
 	}

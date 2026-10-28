@@ -111,6 +111,15 @@ static const unsigned char icmpv4_echo_req_opt_bad[] = {
 #define TEST_ICMPV4_UNKNOWN  0
 #define TEST_ICMPV4_ECHO_REQ  1
 #define TEST_ICMPV4_ECHO_REQ_OPTS 2
+#define TEST_ICMPV4_PARAM_PROBLEM 3
+
+/* Offset of the octet a Parameter Problem about icmpv4_echo_req_opt_bad
+ * points to: the type of its second option, which lacks a length octet.
+ */
+#define BAD_OPT_POINTER 23
+#define BAD_OPT_HDR_LEN 24
+
+static bool param_problem_received;
 
 static uint8_t current = TEST_ICMPV4_UNKNOWN;
 static struct net_in_addr my_addr  = { { { 192, 0, 2, 1 } } };
@@ -286,12 +295,53 @@ static int verify_echo_reply_with_opts(struct net_pkt *pkt)
 	return 0;
 }
 
+/* A malformed option is answered with a Parameter Problem that points at
+ * the offending octet and carries the original header, options included,
+ * plus the first 8 octets of the datagram. RFC 792, RFC 1122 ch. 3.2.2.
+ */
+static int verify_param_problem(struct net_pkt *pkt)
+{
+	struct net_icmp_hdr icmp_hdr;
+	uint8_t buf[BAD_OPT_HDR_LEN + 8];
+	uint8_t pointer[4];
+
+	net_pkt_set_overwrite(pkt, true);
+	net_pkt_cursor_init(pkt);
+
+	zassert_ok(net_pkt_skip(pkt, NET_IPV4H_LEN), "param problem skip failed");
+	zassert_ok(net_pkt_read(pkt, &icmp_hdr, sizeof(struct net_icmp_hdr)),
+		   "param problem read failed");
+	zassert_equal(icmp_hdr.type, NET_ICMPV4_BAD_IP_HEADER,
+		      "param problem invalid type %u", icmp_hdr.type);
+	zassert_equal(icmp_hdr.code, NET_ICMPV4_BAD_IP_HEADER_POINTER,
+		      "param problem invalid code %u", icmp_hdr.code);
+
+	zassert_ok(net_pkt_read(pkt, pointer, sizeof(pointer)),
+		   "param problem read pointer failed");
+	zassert_equal(pointer[0], BAD_OPT_POINTER,
+		      "param problem invalid pointer %u", pointer[0]);
+
+	zassert_equal(net_pkt_remaining_data(pkt), sizeof(buf),
+		      "param problem invalid payload len %zu",
+		      net_pkt_remaining_data(pkt));
+	zassert_ok(net_pkt_read(pkt, buf, sizeof(buf)),
+		   "param problem read payload failed");
+	zassert_mem_equal(buf, icmpv4_echo_req_opt_bad, sizeof(buf),
+			  "param problem invalid payload");
+
+	param_problem_received = true;
+
+	return 0;
+}
+
 static int tester_send(const struct device *dev, struct net_pkt *pkt)
 {
 	if (current == TEST_ICMPV4_ECHO_REQ) {
 		return verify_echo_reply(pkt);
 	} else if (current == TEST_ICMPV4_ECHO_REQ_OPTS) {
 		return verify_echo_reply_with_opts(pkt);
+	} else if (current == TEST_ICMPV4_PARAM_PROBLEM) {
+		return verify_param_problem(pkt);
 	}
 
 	return -EINVAL;
@@ -502,15 +552,20 @@ ZTEST(net_icmpv4, test_send_echo_req_bad_opt)
 {
 	struct net_pkt *pkt;
 
+	current = TEST_ICMPV4_PARAM_PROBLEM;
+	param_problem_received = false;
+
 	pkt = prepare_echo_request_with_bad_options(net_iface);
 	if (!pkt) {
 		zassert_true(false,
 			     "EchoRequest with bad opts packet prep failed");
 	}
 
-	if (net_ipv4_input(pkt)) {
-		net_pkt_unref(pkt);
-	}
+	zassert_equal(net_ipv4_input(pkt), NET_DROP,
+		      "EchoRequest with bad opts was not dropped");
+	net_pkt_unref(pkt);
+
+	zassert_true(param_problem_received, "No Parameter Problem sent");
 }
 
 ZTEST(net_icmpv4, test_icmpv4_send_echo)
