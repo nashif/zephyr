@@ -527,6 +527,16 @@ int net_eth_mcast_ip_addr_update(struct net_if *iface, const struct net_addr *ad
 }
 #endif /* NET_ETH_MCAST_FILTER_SUPPORTED */
 
+/* An IEEE 802.3 frame carries the length of its payload where an Ethernet
+ * II frame carries the protocol type, and RFC 1042 names the protocol with
+ * an LLC/SNAP header in front of the payload: the SNAP service access
+ * points and control field, a zero OUI and the EtherType.
+ */
+#define NET_ETH_802_3_MAX_LEN 1500U
+#define NET_ETH_LLC_SNAP_LEN 8U
+
+static const uint8_t eth_llc_snap[] = { 0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00 };
+
 static enum net_verdict ethernet_recv(struct net_if *iface,
 				      struct net_pkt *pkt)
 {
@@ -619,6 +629,21 @@ static enum net_verdict ethernet_recv(struct net_if *iface,
 					}
 				}
 			}
+		}
+	}
+
+	if (type <= NET_ETH_802_3_MAX_LEN) {
+		/* RFC 1122 ch. 2.3.3 asks a host to receive RFC 1042
+		 * encapsulation besides Ethernet II. A frame with any other
+		 * LLC header keeps the length as its type and is counted as
+		 * an unknown protocol below.
+		 */
+		const uint8_t *llc = net_pkt_data(pkt) + hdr_len;
+
+		if (pkt->buffer->len >= hdr_len + NET_ETH_LLC_SNAP_LEN &&
+		    memcmp(llc, eth_llc_snap, sizeof(eth_llc_snap)) == 0) {
+			type = sys_get_be16(llc + sizeof(eth_llc_snap));
+			hdr_len += NET_ETH_LLC_SNAP_LEN;
 		}
 	}
 

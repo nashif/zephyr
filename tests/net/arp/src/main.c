@@ -707,26 +707,31 @@ ZTEST(arp_fn_tests, test_arp)
  * The L2 sets the packet family only for a frame that it accepts, so a family
  * that is still unspecified afterwards means the frame was dropped.
  */
+/* The LLC/SNAP header of an RFC 1042 frame carrying IPv4 */
+static const uint8_t llc_snap_ipv4[] = { 0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00, 0x08, 0x00 };
+
 static void recv_ipv4_frame(struct net_if *iface,
 			    const struct net_eth_addr *dst_hwaddr,
 			    const uint8_t *dst_ipaddr,
+			    bool rfc1042,
 			    bool expect_accepted)
 {
 	static const struct net_eth_addr peer_hwaddr = {
 		{ 0x00, 0x00, 0x5e, 0x00, 0x53, 0x01 } };
 	static const uint8_t peer_ipaddr[] = { 192, 0, 2, 2 };
+	size_t llc_len = rfc1042 ? sizeof(llc_snap_ipv4) : 0U;
 	struct net_ipv4_hdr *ipv4_hdr;
 	struct net_eth_hdr *eth_hdr;
 	struct net_pkt *pkt;
 	int ret;
 
 	pkt = net_pkt_rx_alloc_with_buffer(iface,
-					   sizeof(struct net_eth_hdr) +
+					   sizeof(struct net_eth_hdr) + llc_len +
 					   sizeof(struct net_ipv4_hdr),
 					   NET_AF_UNSPEC, 0, K_SECONDS(1));
 	zassert_not_null(pkt, "out of mem");
 
-	net_buf_add(pkt->buffer, sizeof(struct net_eth_hdr) +
+	net_buf_add(pkt->buffer, sizeof(struct net_eth_hdr) + llc_len +
 		    sizeof(struct net_ipv4_hdr));
 
 	setup_eth_header(iface, pkt, dst_hwaddr, NET_ETH_PTYPE_IP);
@@ -737,8 +742,17 @@ static void recv_ipv4_frame(struct net_if *iface,
 	eth_hdr = (struct net_eth_hdr *)net_pkt_data(pkt);
 	memcpy(&eth_hdr->src.addr, &peer_hwaddr, sizeof(struct net_eth_addr));
 
+	if (rfc1042) {
+		/* An IEEE 802.3 frame: the type field holds the payload length
+		 * and an LLC/SNAP header names the protocol.
+		 */
+		eth_hdr->type = net_htons(llc_len + sizeof(struct net_ipv4_hdr));
+		memcpy(net_pkt_data(pkt) + sizeof(struct net_eth_hdr),
+		       llc_snap_ipv4, llc_len);
+	}
+
 	ipv4_hdr = (struct net_ipv4_hdr *)(net_pkt_data(pkt) +
-					   sizeof(struct net_eth_hdr));
+					   sizeof(struct net_eth_hdr) + llc_len);
 	memset(ipv4_hdr, 0, sizeof(struct net_ipv4_hdr));
 	ipv4_hdr->vhl = 0x45;
 	ipv4_hdr->len = net_htons(sizeof(struct net_ipv4_hdr));
@@ -782,16 +796,32 @@ ZTEST(arp_fn_tests, test_bcast_hwaddr_unicast_ipaddr)
 	zassert_not_null(iface, "No Ethernet interface");
 
 	/* The mismatching frame must be dropped. */
-	recv_ipv4_frame(iface, net_eth_broadcast_addr(), unicast_ipaddr, false);
+	recv_ipv4_frame(iface, net_eth_broadcast_addr(), unicast_ipaddr, false, false);
 
 	/* A broadcast IPv4 destination matches the broadcast MAC address, and
 	 * a unicast IPv4 destination matches our own MAC address, so both of
 	 * these must be accepted.
 	 */
-	recv_ipv4_frame(iface, net_eth_broadcast_addr(), bcast_ipaddr, true);
+	recv_ipv4_frame(iface, net_eth_broadcast_addr(), bcast_ipaddr, false, true);
 	recv_ipv4_frame(iface,
 			(struct net_eth_addr *)net_if_get_link_addr(iface)->addr,
-			unicast_ipaddr, true);
+			unicast_ipaddr, false, true);
+}
+
+/* RFC 1122 ch. 2.3.3: a host receives RFC 1042 encapsulation, an IEEE 802.3
+ * frame with an LLC/SNAP header, the same as an Ethernet II frame.
+ */
+ZTEST(arp_fn_tests, test_recv_rfc1042_frame)
+{
+	static const uint8_t unicast_ipaddr[] = { 192, 0, 2, 1 };
+	struct net_if *iface = net_if_get_first_by_type(
+					&NET_L2_GET_NAME(ETHERNET));
+
+	zassert_not_null(iface, "No Ethernet interface");
+
+	recv_ipv4_frame(iface,
+			(struct net_eth_addr *)net_if_get_link_addr(iface)->addr,
+			unicast_ipaddr, true, true);
 }
 
 static void arp_cb_ip_only(struct arp_entry *entry, void *user_data)
