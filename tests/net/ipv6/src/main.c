@@ -976,6 +976,137 @@ ZTEST_P(net_ipv6, test_ipv6_ext_hdr_len_bounds)
 
 ZTEST_INSTANTIATE_TEST_SUITE_P(bounds, net_ipv6, test_ipv6_ext_hdr_len_bounds, ext_hdr_cases);
 
+/* Echo request behind a type 0 routing header with one segment left. The
+ * routing type is unrecognized (RFC 5095 deprecates type 0), so RFC 8200
+ * ch. 4.4 asks for a Parameter Problem, code 0, pointing at the routing type
+ * octet, which is at offset 42.
+ */
+static const unsigned char ipv6_routing_hdr_segments_left[] = {
+	/* IPv6 header, peer_addr 2001:db8::2 to my_addr 2001:db8::1 */
+	0x60, 0x00, 0x00, 0x00, 0x00, 0x20, 0x2b, 0x40,
+	0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
+	0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+	/* Routing header: next ICMPv6, length 2, type 0, 1 segment left */
+	0x3a, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
+	0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03,
+	/* ICMPv6 echo request */
+	0x80, 0x00, 0x12, 0x13, 0x12, 0x34, 0x00, 0x01,
+};
+
+#define ROUTING_TYPE_OFFSET (NET_IPV6H_LEN + 2)
+
+/* The same with no segments left: the routing header is ignored and the
+ * echo request answered.
+ */
+static const unsigned char ipv6_routing_hdr_no_segments_left[] = {
+	/* IPv6 header, peer_addr 2001:db8::2 to my_addr 2001:db8::1 */
+	0x60, 0x00, 0x00, 0x00, 0x00, 0x20, 0x2b, 0x40,
+	0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
+	0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+	/* Routing header: next ICMPv6, length 2, type 0, 0 segments left */
+	0x3a, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03,
+	/* ICMPv6 echo request */
+	0x80, 0x00, 0x12, 0x13, 0x12, 0x34, 0x00, 0x01,
+};
+
+struct icmpv6_tx_capture {
+	struct k_sem sent;
+	uint8_t type;
+	uint8_t code;
+	uint32_t param;
+};
+
+static bool capture_icmpv6_tx(struct net_pkt *pkt, void *user_data)
+{
+	struct icmpv6_tx_capture *cap = user_data;
+	struct net_icmp_hdr *icmp = get_icmp_hdr(pkt);
+
+	zassert_not_null(icmp, "No ICMPv6 header in the transmitted packet");
+
+	cap->type = icmp->type;
+	cap->code = icmp->code;
+
+	skip_headers(pkt);
+	zassert_ok(net_pkt_read_be32(pkt, &cap->param),
+		   "Cannot read the ICMPv6 parameter");
+
+	k_sem_give(&cap->sent);
+
+	return true;
+}
+
+/* Feed a packet carrying extension headers to net_ipv6_input() and capture
+ * the ICMPv6 message, if any, that the stack sends in response.
+ */
+static enum net_verdict recv_ext_hdr_pkt(const unsigned char *data, size_t len,
+					 struct icmpv6_tx_capture *cap)
+{
+	static struct test_tx_handler handler = { .fn = capture_icmpv6_tx };
+	struct net_if *iface = TEST_NET_IF;
+	enum net_verdict verdict;
+	struct net_pkt *pkt;
+
+	/* The reply goes to the peer, which must be resolved already as the
+	 * driver does not answer neighbor solicitations.
+	 */
+	add_neighbor();
+
+	pkt = net_pkt_alloc_with_buffer(iface, len, NET_AF_INET6, 0, K_MSEC(WAIT_TIME));
+	zassert_not_null(pkt, "Out of TX packets");
+
+	zassert_ok(net_pkt_write(pkt, data, len), "Failed to write packet");
+	net_pkt_set_overwrite(pkt, true);
+	net_pkt_cursor_init(pkt);
+	net_pkt_lladdr_clear(pkt);
+
+	k_sem_init(&cap->sent, 0, 1);
+	handler.user_data = cap;
+	tx_handler = &handler;
+
+	verdict = net_ipv6_input(pkt);
+	if (verdict == NET_DROP) {
+		net_pkt_unref(pkt);
+	}
+
+	return verdict;
+}
+
+ZTEST(net_ipv6, test_routing_hdr_segments_left)
+{
+	struct icmpv6_tx_capture cap;
+	enum net_verdict verdict;
+
+	verdict = recv_ext_hdr_pkt(ipv6_routing_hdr_segments_left,
+				   sizeof(ipv6_routing_hdr_segments_left), &cap);
+	zassert_equal(verdict, NET_DROP, "Packet with segments left was not dropped");
+
+	zassert_ok(k_sem_take(&cap.sent, K_MSEC(WAIT_TIME)), "No ICMPv6 message sent");
+	zassert_equal(cap.type, NET_ICMPV6_PARAM_PROBLEM, "Wrong ICMPv6 type %u", cap.type);
+	zassert_equal(cap.code, NET_ICMPV6_PARAM_PROB_HEADER, "Wrong ICMPv6 code %u", cap.code);
+	zassert_equal(cap.param, ROUTING_TYPE_OFFSET, "Pointer %u does not point at the "
+		      "routing type", cap.param);
+}
+
+ZTEST(net_ipv6, test_routing_hdr_no_segments_left)
+{
+	struct icmpv6_tx_capture cap;
+	enum net_verdict verdict;
+
+	verdict = recv_ext_hdr_pkt(ipv6_routing_hdr_no_segments_left,
+				   sizeof(ipv6_routing_hdr_no_segments_left), &cap);
+	zassert_not_equal(verdict, NET_DROP, "Packet with no segments left was dropped");
+
+	zassert_ok(k_sem_take(&cap.sent, K_MSEC(WAIT_TIME)), "No echo reply sent");
+	zassert_equal(cap.type, NET_ICMPV6_ECHO_REPLY, "Wrong ICMPv6 type %u", cap.type);
+}
+
 struct test_nd_context {
 	struct k_sem wait_ns;
 	struct net_in6_addr *exp_ns_addr;

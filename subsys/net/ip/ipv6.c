@@ -350,6 +350,55 @@ out:
 	return ret;
 }
 
+/* Handle a Routing header with the cursor after its Next Header octet. No
+ * routing type is supported, and RFC 8200 ch. 4.4 tells what to do with an
+ * unrecognized one: a header with no segments left is skipped, otherwise the
+ * packet is discarded with a Parameter Problem pointing at the routing type.
+ * A deprecated type 0 header (RFC 5095) is treated the same way. Returns the
+ * length of the header, or a negative value when the packet is dropped. The
+ * caller sends no error message in that case.
+ */
+static int ipv6_handle_routing_hdr(struct net_pkt *pkt, uint16_t pkt_len)
+{
+	uint16_t offset;
+	uint16_t hdr_len;
+	uint8_t hdr_ext_len;
+	uint8_t routing_type;
+	uint8_t segments_left;
+
+	/* The header started one octet before the cursor */
+	offset = net_pkt_get_current_offset(pkt) - 1U;
+
+	if (net_pkt_read_u8(pkt, &hdr_ext_len) < 0 ||
+	    net_pkt_read_u8(pkt, &routing_type) < 0 ||
+	    net_pkt_read_u8(pkt, &segments_left) < 0) {
+		return -ENOBUFS;
+	}
+
+	hdr_len = (hdr_ext_len + 1U) * 8U;
+	if (hdr_len > pkt_len - offset) {
+		NET_DBG("Corrupted packet, routing header %u too long (max %u bytes)",
+			hdr_len, pkt_len - offset);
+		return -EINVAL;
+	}
+
+	if (segments_left > 0U) {
+		NET_DBG("Unrecognized routing type %u with %u segments left",
+			routing_type, segments_left);
+		/* The routing type is the third octet of the header */
+		net_icmpv6_send_error(pkt, NET_ICMPV6_PARAM_PROBLEM,
+				      NET_ICMPV6_PARAM_PROB_HEADER, offset + 2U);
+		return -EINVAL;
+	}
+
+	/* Skip the type-specific data */
+	if (net_pkt_skip(pkt, hdr_len - 4U) < 0) {
+		return -ENOBUFS;
+	}
+
+	return hdr_len;
+}
+
 static inline int ipv6_handle_ext_hdr_options(struct net_pkt *pkt,
 					      struct net_ipv6_hdr *hdr,
 					      uint16_t pkt_len)
@@ -885,6 +934,7 @@ enum net_verdict net_ipv6_input(struct net_pkt *pkt)
 			goto bad_hdr;
 
 		case NET_IPV6_NEXTHDR_DESTO:
+		case NET_IPV6_NEXTHDR_ROUTING:
 		case NET_IPV6_NEXTHDR_FRAG:
 		case NET_IPV6_NEXTHDR_NONE:
 			/* Valid values */
@@ -903,6 +953,18 @@ enum net_verdict net_ipv6_input(struct net_pkt *pkt)
 		case NET_IPV6_NEXTHDR_DESTO:
 			/* Process options below */
 			break;
+
+		case NET_IPV6_NEXTHDR_ROUTING:
+			exthdr_len = ipv6_handle_routing_hdr(pkt, pkt_len);
+			if (exthdr_len < 0) {
+				NET_DBG("DROP: routing hdr (%d)", exthdr_len);
+				goto drop;
+			}
+
+			ext_len += exthdr_len;
+			current_hdr = nexthdr;
+			net_pkt_set_ipv6_hdr_prev(pkt, prev_hdr_offset);
+			continue;
 
 		case NET_IPV6_NEXTHDR_FRAG:
 			if (IS_ENABLED(CONFIG_NET_IPV6_FRAGMENT)) {
