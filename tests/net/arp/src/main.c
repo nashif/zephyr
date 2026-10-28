@@ -44,6 +44,7 @@ static struct net_pkt *pending_pkt;
 static struct net_eth_addr eth_hwaddr = { { 0x42, 0x11, 0x69, 0xde, 0xfa, 0xec } };
 
 static int send_status = -EINVAL;
+static int arp_reply_count;
 
 /* Returned by the fake driver for ARP requests when non-zero. */
 static int arp_req_send_ret;
@@ -109,6 +110,8 @@ static int tester_send(const struct device *dev, struct net_pkt *pkt)
 		}
 
 		if (net_ntohs(arp_hdr->opcode) == NET_ARP_REPLY) {
+			arp_reply_count++;
+
 			if (!req_test && pkt != pending_pkt) {
 				printk("Pending data but to be sent is wrong, "
 				       "expecting %p but got %p\n",
@@ -648,7 +651,7 @@ ZTEST(arp_fn_tests, test_arp)
 	/**TESTPOINT: Check gratuitous ARP */
 	if (IS_ENABLED(CONFIG_NET_ARP_GRATUITOUS)) {
 		struct net_eth_addr new_hwaddr = {
-			{ 0x11, 0x12, 0x13, 0x14, 0x15, 0x16 }
+			{ 0x12, 0x12, 0x13, 0x14, 0x15, 0x16 }
 		};
 		enum net_verdict verdict;
 
@@ -923,6 +926,87 @@ ZTEST(arp_fn_tests, test_arp_msg_updates_known_entry)
 	entry_found = false;
 	net_arp_foreach(arp_cb_ip_only, &unknown);
 	zexpect_false(entry_found, "Unsolicited ARP reply created a cache entry");
+}
+
+/* A message whose sender addresses cannot belong to a peer is discarded:
+ * no reply goes out and the cache is left alone (RFC 1122 ch. 3.3.6 and
+ * ch. 3.2.1.3).
+ */
+ZTEST(arp_fn_tests, test_arp_invalid_sender_dropped)
+{
+	const struct net_eth_addr hwaddr = { { 0x02, 0x00, 0x5e, 0x11, 0x22, 0x33 } };
+	const struct net_eth_addr mcast_hwaddr = { { 0x01, 0x00, 0x5e, 0x11, 0x22, 0x33 } };
+	const struct net_eth_addr zero_hwaddr = { { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } };
+	const struct net_in_addr peer = { { { 192, 0, 2, 2 } } };
+	const struct net_in_addr bcast = { { { 255, 255, 255, 255 } } };
+	const struct net_in_addr mcast = { { { 224, 0, 0, 1 } } };
+	const struct net_in_addr loopback = { { { 127, 0, 0, 2 } } };
+	struct net_in_addr src = { { { 192, 0, 2, 1 } } };
+	const struct net_eth_addr *our_hwaddr;
+	struct net_if_addr *ifaddr;
+	struct net_if *iface;
+
+	iface = net_if_lookup_by_dev(DEVICE_GET(net_arp_test));
+	zassert_not_null(iface, "No ARP test interface");
+
+	ifaddr = net_if_ipv4_addr_add(iface, &src, NET_ADDR_MANUAL, 0);
+	zassert_not_null(ifaddr, "Cannot add address");
+	ifaddr->addr_state = NET_ADDR_PREFERRED;
+
+	our_hwaddr = (const struct net_eth_addr *)net_if_get_link_addr(iface)->addr;
+
+	req_test = true;
+
+	net_arp_clear_cache(iface);
+
+	const struct {
+		const char *name;
+		uint16_t opcode;
+		const struct net_in_addr *src_ip;
+		const struct net_eth_addr *src_hwaddr;
+	} msgs[] = {
+		{ "request from broadcast hwaddr", NET_ARP_REQUEST, &peer,
+		  net_eth_broadcast_addr() },
+		{ "request from multicast hwaddr", NET_ARP_REQUEST, &peer,
+		  &mcast_hwaddr },
+		{ "request from our own hwaddr", NET_ARP_REQUEST, &peer,
+		  our_hwaddr },
+		{ "request from broadcast ipaddr", NET_ARP_REQUEST, &bcast,
+		  &hwaddr },
+		{ "request from multicast ipaddr", NET_ARP_REQUEST, &mcast,
+		  &hwaddr },
+		{ "request from loopback ipaddr", NET_ARP_REQUEST, &loopback,
+		  &hwaddr },
+		{ "reply from broadcast hwaddr", NET_ARP_REPLY, &peer,
+		  net_eth_broadcast_addr() },
+		{ "reply from our own hwaddr", NET_ARP_REPLY, &peer,
+		  our_hwaddr },
+		{ "reply from broadcast ipaddr", NET_ARP_REPLY, &bcast,
+		  &hwaddr },
+	};
+
+	ARRAY_FOR_EACH_PTR(msgs, msg) {
+		enum net_verdict verdict;
+
+		arp_reply_count = 0;
+
+		verdict = recv_arp_msg(iface, msg->opcode, msg->src_ip,
+				       msg->src_hwaddr, &src, &zero_hwaddr,
+				       net_eth_broadcast_addr());
+		zexpect_equal(verdict, NET_DROP, "%s was not dropped",
+			      msg->name);
+
+		/* Yielding so that network interface TX thread can proceed. */
+		k_yield();
+
+		zexpect_equal(arp_reply_count, 0, "%s was replied to",
+			      msg->name);
+
+		entry_found = false;
+		net_arp_foreach(arp_cb_ip_only, (void *)msg->src_ip);
+		zexpect_false(entry_found, "%s was added to the cache",
+			      msg->name);
+	}
 }
 
 struct arp_lookup_result {

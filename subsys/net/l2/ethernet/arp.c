@@ -896,14 +896,38 @@ static inline struct net_pkt *arp_prepare_reply(struct net_if *iface,
 	return pkt;
 }
 
-static bool arp_hdr_check(struct net_arp_hdr *arp_hdr)
+static bool arp_hdr_check(struct net_if *iface, struct net_arp_hdr *arp_hdr)
 {
 	if (net_ntohs(arp_hdr->hwtype) != NET_ARP_HTYPE_ETH ||
 	    net_ntohs(arp_hdr->protocol) != NET_ETH_PTYPE_IP ||
 	    arp_hdr->hwlen != sizeof(struct net_eth_addr) ||
-	    arp_hdr->protolen != NET_ARP_IPV4_PTYPE_SIZE ||
-	    net_ipv4_is_addr_loopback_raw(arp_hdr->src_ipaddr)) {
+	    arp_hdr->protolen != NET_ARP_IPV4_PTYPE_SIZE) {
 		NET_DBG("DROP: Invalid ARP header");
+		return false;
+	}
+
+	/* A group address cannot be the address of a sender, and a message
+	 * carrying our own address as the sender is either our own message
+	 * looped back or a spoofed one. Replying to either would send to a
+	 * group address, and merging either into the cache would redirect
+	 * the traffic of the host it claims to be. RFC 1122 ch. 3.3.6.
+	 */
+	if (net_eth_is_addr_multicast(&arp_hdr->src_hwaddr) ||
+	    memcmp(&arp_hdr->src_hwaddr,
+		   net_if_get_link_addr(iface)->addr,
+		   sizeof(struct net_eth_addr)) == 0) {
+		NET_DBG("DROP: Invalid ARP sender hardware address");
+		return false;
+	}
+
+	/* The sender protocol address is unspecified in an ARP probe
+	 * (RFC 5227) but never a loopback, multicast or broadcast address
+	 * (RFC 1122 ch. 3.2.1.3).
+	 */
+	if (net_ipv4_is_addr_loopback_raw(arp_hdr->src_ipaddr) ||
+	    net_ipv4_is_addr_mcast_raw(arp_hdr->src_ipaddr) ||
+	    net_ipv4_is_addr_bcast_raw(iface, arp_hdr->src_ipaddr)) {
+		NET_DBG("DROP: Invalid ARP sender protocol address");
 		return false;
 	}
 
@@ -927,21 +951,12 @@ enum net_verdict net_arp_input(struct net_pkt *pkt,
 	}
 
 	arp_hdr = NET_ARP_HDR(pkt);
-	if (!arp_hdr_check(arp_hdr)) {
+	if (!arp_hdr_check(net_pkt_iface(pkt), arp_hdr)) {
 		return NET_DROP;
 	}
 
 	switch (net_ntohs(arp_hdr->opcode)) {
 	case NET_ARP_REQUEST:
-		/* If ARP request sender hw address is our address,
-		 * we must drop the packet.
-		 */
-		if (memcmp(&arp_hdr->src_hwaddr,
-			   net_if_get_link_addr(net_pkt_iface(pkt))->addr,
-			   sizeof(struct net_eth_addr)) == 0) {
-			return NET_DROP;
-		}
-
 		if (IS_ENABLED(CONFIG_NET_ARP_GRATUITOUS)) {
 			if (net_eth_is_addr_broadcast(dst) &&
 			    (net_eth_is_addr_broadcast(&arp_hdr->dst_hwaddr) ||
@@ -957,16 +972,6 @@ enum net_verdict net_arp_input(struct net_pkt *pkt,
 					       &arp_hdr->src_hwaddr, false);
 				break;
 			}
-		}
-
-		/* Discard ARP request if Ethernet address is broadcast
-		 * and Source IP address is Multicast address.
-		 */
-		if (memcmp(dst, net_eth_broadcast_addr(),
-			   sizeof(struct net_eth_addr)) == 0 &&
-		    net_ipv4_is_addr_mcast_raw(arp_hdr->src_ipaddr)) {
-			NET_DBG("DROP: eth addr is bcast, src addr is mcast");
-			return NET_DROP;
 		}
 
 		/* Someone wants to know our ll address */
