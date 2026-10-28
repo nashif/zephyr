@@ -574,4 +574,34 @@ ZTEST(net_icmpv4, test_icmpv4_send_echo)
 	icmpv4_send_echo_rep();
 }
 
+/* A datagram that arrives with a TTL below 2 is for us all the same: RFC
+ * 1122 ch. 3.2.1.7 forbids discarding it, only forwarding it is ruled out.
+ */
+ZTEST(net_icmpv4, test_icmpv4_echo_req_ttl_zero)
+{
+	uint8_t req[sizeof(icmpv4_echo_req)];
+	struct net_pkt *pkt;
+
+	memcpy(req, icmpv4_echo_req, sizeof(req));
+	req[offsetof(struct net_ipv4_hdr, ttl)] = 0U;
+	/* Header checksum for a TTL of 0 */
+	req[offsetof(struct net_ipv4_hdr, chksum)] = 0x0c;
+	req[offsetof(struct net_ipv4_hdr, chksum) + 1] = 0x19;
+
+	current = TEST_ICMPV4_ECHO_REQ;
+
+	pkt = net_pkt_alloc_with_buffer(net_iface, sizeof(req), NET_AF_INET,
+					NET_IPPROTO_ICMP, K_FOREVER);
+	zassert_not_null(pkt, "EchoRequest packet alloc failed");
+	zassert_ok(net_pkt_write(pkt, req, sizeof(req)), "EchoRequest write failed");
+
+	net_pkt_set_overwrite(pkt, true);
+	net_pkt_cursor_init(pkt);
+
+	if (net_ipv4_input(pkt) != NET_OK) {
+		net_pkt_unref(pkt);
+		zassert_true(false, "EchoRequest with TTL 0 was dropped");
+	}
+}
+
 ZTEST_SUITE(net_icmpv4, NULL, icmpv4_setup, NULL, NULL, icmpv4_teardown);
