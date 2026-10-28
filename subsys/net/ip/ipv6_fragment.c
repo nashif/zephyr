@@ -469,6 +469,19 @@ static int fragments_are_ready(struct net_ipv6_reassembly *reass)
 	return 1;
 }
 
+static size_t fragment_payload_len(struct net_pkt *pkt)
+{
+	return net_pkt_get_len(pkt) - net_pkt_ipv6_fragment_start(pkt) -
+	       sizeof(struct net_ipv6_frag_hdr);
+}
+
+static bool fragment_is_duplicate(struct net_pkt *stored, struct net_pkt *pkt)
+{
+	return net_pkt_ipv6_fragment_offset(stored) == net_pkt_ipv6_fragment_offset(pkt) &&
+	       net_pkt_ipv6_fragment_more(stored) == net_pkt_ipv6_fragment_more(pkt) &&
+	       fragment_payload_len(stored) == fragment_payload_len(pkt);
+}
+
 static int shift_packets(struct net_ipv6_reassembly *reass, int pos)
 {
 	int i;
@@ -562,6 +575,19 @@ enum net_verdict net_ipv6_handle_fragment_hdr(struct net_pkt *pkt,
 			if (net_pkt_ipv6_fragment_offset(reass->pkt[i]) <
 			    net_pkt_ipv6_fragment_offset(pkt)) {
 				continue;
+			}
+
+			/* A retransmitted copy of a fragment already held
+			 * adds nothing: drop the copy and keep what was
+			 * received so far. A fragment that overlaps another
+			 * one differently is caught by fragments_are_ready()
+			 * and discards the whole packet, RFC 5722.
+			 */
+			if (fragment_is_duplicate(reass->pkt[i], pkt)) {
+				NET_DBG("Dropping duplicate fragment %p offset %d",
+					pkt, net_pkt_ipv6_fragment_offset(pkt));
+				net_pkt_unref(pkt);
+				goto accept;
 			}
 
 			/* Make room for this fragment. If there is no room,

@@ -2380,6 +2380,52 @@ ZTEST(net_ipv6_fragment, test_recv_ipv6_fragment)
 	net_icmp_cleanup_ctx(&ctx);
 }
 
+/* A fragment that arrives twice, as when a sender retransmits the whole
+ * datagram after one fragment was lost, must not throw away the fragments
+ * received so far: the copy is dropped and the datagram still completes.
+ */
+ZTEST(net_ipv6_fragment, test_recv_ipv6_fragment_duplicate)
+{
+	struct net_ipv6_hdr ipv6_hdr;
+	struct net_pkt *pkt;
+	uint16_t payload1_len;
+	uint16_t payload2_len;
+	uint8_t data;
+	int ret;
+	struct net_icmp_ctx ctx;
+
+	ret = net_icmp_init_ctx(&ctx, NET_AF_INET6, NET_ICMPV6_ECHO_REPLY,
+				0, handle_ipv6_echo_reply);
+	zassert_equal(ret, 0, "Cannot register %s handler (%d)",
+		      STRINGIFY(NET_ICMPV6_ECHO_REPLY), ret);
+
+	payload1_len = NET_IPV6_MTU - sizeof(ipv6_reass_frag1);
+	payload2_len = test_recv_payload_len - payload1_len;
+
+	data = 0U;
+	pkt = build_reass_fragment(ipv6_reass_frag1, sizeof(ipv6_reass_frag1),
+				   payload1_len, &data, &ipv6_hdr);
+	ret = net_ipv6_handle_fragment_hdr(pkt, &ipv6_hdr, NET_IPV6_NEXTHDR_FRAG);
+	zassert_equal(ret, NET_OK, "IPv6 frag1 reassembly failed");
+
+	/* The same first fragment once more */
+	data = 0U;
+	pkt = build_reass_fragment(ipv6_reass_frag1, sizeof(ipv6_reass_frag1),
+				   payload1_len, &data, &ipv6_hdr);
+	ret = net_ipv6_handle_fragment_hdr(pkt, &ipv6_hdr, NET_IPV6_NEXTHDR_FRAG);
+	zassert_equal(ret, NET_OK, "Duplicate IPv6 frag1 was not accepted");
+
+	pkt = build_reass_fragment(ipv6_reass_frag2, sizeof(ipv6_reass_frag2),
+				   payload2_len, &data, &ipv6_hdr);
+	ret = net_ipv6_handle_fragment_hdr(pkt, &ipv6_hdr, NET_IPV6_NEXTHDR_FRAG);
+	zassert_equal(ret, NET_OK, "IPv6 frag2 reassembly failed");
+
+	zassert_ok(k_sem_take(&wait_data, WAIT_TIME),
+		   "No echo reply after a duplicated fragment");
+
+	net_icmp_cleanup_ctx(&ctx);
+}
+
 /* Reassembly timeout-vs-completion race test state */
 static K_SEM_DEFINE(race_reached, 0, 1);
 static K_SEM_DEFINE(race_resume, 0, 1);
