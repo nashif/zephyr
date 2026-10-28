@@ -564,7 +564,7 @@ static inline void conn_send_icmp_error(struct net_pkt *pkt)
 
 	} else if (IS_ENABLED(CONFIG_NET_IPV4)) {
 		net_icmpv4_send_error(pkt, NET_ICMPV4_DST_UNREACH,
-				      NET_ICMPV4_DST_UNREACH_NO_PORT);
+				      NET_ICMPV4_DST_UNREACH_NO_PORT, 0);
 	}
 }
 

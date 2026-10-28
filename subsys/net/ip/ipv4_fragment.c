@@ -162,7 +162,7 @@ static void ipv4_reassembly_timeout(struct k_work *work)
 	/* Send a ICMPv4 Time Exceeded only if we received the first fragment */
 	if (first != NULL) {
 		net_icmpv4_send_error(first, NET_ICMPV4_TIME_EXCEEDED,
-				      NET_ICMPV4_TIME_EXCEEDED_FRAGMENT_REASSEMBLY_TIME);
+				      NET_ICMPV4_TIME_EXCEEDED_FRAGMENT_REASSEMBLY_TIME, 0);
 		net_pkt_unref(first);
 	}
 }
@@ -388,7 +388,7 @@ enum net_verdict net_ipv4_handle_fragment_hdr(struct net_pkt *pkt, struct net_ip
 		 * header error.
 		 */
 		net_icmpv4_send_error(pkt, NET_ICMPV4_BAD_IP_HEADER,
-				      NET_ICMPV4_BAD_IP_HEADER_LENGTH);
+				      NET_ICMPV4_BAD_IP_HEADER_LENGTH, 0);
 		return NET_DROP;
 	}
 

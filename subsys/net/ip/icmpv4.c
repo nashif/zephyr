@@ -542,7 +542,25 @@ drop:
 	return NET_DROP;
 }
 
-int net_icmpv4_send_error(struct net_pkt *orig, uint8_t type, uint8_t code)
+/* ICMP messages that report an error. No error is ever sent about one of
+ * these, RFC 1122 ch. 3.2.2.
+ */
+static bool icmpv4_is_error_type(uint8_t type)
+{
+	switch (type) {
+	case NET_ICMPV4_DST_UNREACH:
+	case NET_ICMPV4_SOURCE_QUENCH:
+	case NET_ICMPV4_REDIRECT:
+	case NET_ICMPV4_TIME_EXCEEDED:
+	case NET_ICMPV4_BAD_IP_HEADER:
+		return true;
+	default:
+		return false;
+	}
+}
+
+int net_icmpv4_send_error(struct net_pkt *orig, uint8_t type, uint8_t code,
+			  uint32_t param)
 {
 	NET_PKT_DATA_ACCESS_CONTIGUOUS_DEFINE(ipv4_access, struct net_ipv4_hdr);
 	int err = -EIO;
@@ -550,6 +568,7 @@ int net_icmpv4_send_error(struct net_pkt *orig, uint8_t type, uint8_t code)
 	struct net_ipv4_hdr *ip_hdr;
 	struct net_in_addr orig_src, orig_dst;
 	struct net_pkt *pkt;
+	size_t hdr_len;
 	size_t copy_len;
 
 	net_pkt_cursor_init(orig);
@@ -559,42 +578,50 @@ int net_icmpv4_send_error(struct net_pkt *orig, uint8_t type, uint8_t code)
 		goto drop_no_pkt;
 	}
 
+	hdr_len = (ip_hdr->vhl & NET_IPV4_IHL_MASK) * 4U;
+
 	if (ip_hdr->proto == NET_IPPROTO_ICMP) {
 		NET_PKT_DATA_ACCESS_CONTIGUOUS_DEFINE(icmpv4_access,
 						      struct net_icmp_hdr);
 		struct net_icmp_hdr *icmp_hdr;
+		struct net_pkt_cursor cur;
+
+		net_pkt_cursor_backup(orig, &cur);
+
+		if (net_pkt_skip(orig, hdr_len)) {
+			goto drop_no_pkt;
+		}
 
 		icmp_hdr = (struct net_icmp_hdr *)net_pkt_get_data(
 							orig, &icmpv4_access);
-		if (!icmp_hdr || icmp_hdr->code < 8) {
+		if (!icmp_hdr || icmpv4_is_error_type(icmp_hdr->type)) {
 			/* We must not send ICMP errors back */
 			err = -EINVAL;
 			goto drop_no_pkt;
 		}
+
+		net_pkt_cursor_restore(orig, &cur);
 	}
 
 	net_ipv4_addr_copy_raw(orig_src.s4_addr, ip_hdr->src);
 	net_ipv4_addr_copy_raw(orig_dst.s4_addr, ip_hdr->dst);
 
-	if (net_ipv4_is_addr_bcast(iface, &orig_dst)) {
-		/* We should not send an error to packet that
-		 * were sent to broadcast
-		 */
-		NET_DBG("Not sending error to bcast pkt from %s on proto %s",
+	/* No error about a datagram sent to a broadcast or multicast address,
+	 * RFC 1122 ch. 3.2.2.
+	 */
+	if (net_ipv4_is_addr_bcast(iface, &orig_dst) ||
+	    net_ipv4_is_addr_mcast(&orig_dst)) {
+		NET_DBG("Not sending error to bcast/mcast pkt from %s on proto %s",
 			net_sprint_ipv4_addr(&orig_src),
 			net_proto2str(NET_AF_INET, ip_hdr->proto));
 		goto drop_no_pkt;
 	}
 
-	if (ip_hdr->proto == NET_IPPROTO_UDP) {
-		copy_len = sizeof(struct net_ipv4_hdr) +
-			sizeof(struct net_udp_hdr);
-	} else if (ip_hdr->proto == NET_IPPROTO_TCP) {
-		copy_len = sizeof(struct net_ipv4_hdr) +
-			sizeof(struct net_tcp_hdr);
-	} else {
-		copy_len = 0;
-	}
+	/* The error carries the IP header, options included, and the first
+	 * 8 octets of the datagram, which hold the transport port numbers
+	 * that the receiver demultiplexes it with. RFC 792.
+	 */
+	copy_len = MIN(net_pkt_get_len(orig), hdr_len + NET_ICMPV4_UNUSED_LEN * 2);
 
 	pkt = net_pkt_alloc_with_buffer(iface,
 					copy_len + NET_ICMPV4_UNUSED_LEN,
@@ -607,7 +634,7 @@ int net_icmpv4_send_error(struct net_pkt *orig, uint8_t type, uint8_t code)
 
 	if (net_ipv4_create(pkt, &orig_dst, &orig_src) ||
 	    net_icmpv4_create(pkt, type, code) ||
-	    net_pkt_memset(pkt, 0, NET_ICMPV4_UNUSED_LEN) ||
+	    net_pkt_write_be32(pkt, param) ||
 	    net_pkt_copy(pkt, orig, copy_len)) {
 		goto drop;
 	}
