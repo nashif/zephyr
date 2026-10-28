@@ -661,17 +661,17 @@ static enum net_verdict ipv6_forward_mcast_packet(struct net_pkt *pkt,
 	return NET_CONTINUE;
 }
 
-static uint8_t extension_to_bitmap(uint8_t header, uint8_t ext_bitmap)
+/* The bit that stands for an extension header in the bitmap of the headers
+ * seen so far, to detect a header that is repeated. A Destination Options
+ * header gets no bit: RFC 8200 ch. 4.1 asks a node to process extension
+ * headers occurring any number of times, and it is the one header that
+ * legitimately appears more than once.
+ */
+static uint8_t extension_to_bitmap(uint8_t header)
 {
 	switch (header) {
 	case NET_IPV6_NEXTHDR_HBHO:
 		return NET_IPV6_EXT_HDR_BITMAP_HBHO;
-	case NET_IPV6_NEXTHDR_DESTO:
-		/* Destination header can appears twice */
-		if (ext_bitmap & NET_IPV6_EXT_HDR_BITMAP_DESTO1) {
-			return NET_IPV6_EXT_HDR_BITMAP_DESTO2;
-		}
-		return NET_IPV6_EXT_HDR_BITMAP_DESTO1;
 	case NET_IPV6_NEXTHDR_ROUTING:
 		return NET_IPV6_EXT_HDR_BITMAP_ROUTING;
 	case NET_IPV6_NEXTHDR_FRAG:
@@ -885,7 +885,7 @@ enum net_verdict net_ipv6_input(struct net_pkt *pkt)
 	}
 
 	current_hdr = hdr->nexthdr;
-	ext_bitmap = extension_to_bitmap(current_hdr, ext_bitmap);
+	ext_bitmap = extension_to_bitmap(current_hdr);
 	/* Offset of "nexthdr" in the IPv6 header */
 	prev_hdr_offset = (uint8_t *)&hdr->nexthdr - (uint8_t *)hdr;
 	net_pkt_set_ipv6_hdr_prev(pkt, prev_hdr_offset);
@@ -915,7 +915,7 @@ enum net_verdict net_ipv6_input(struct net_pkt *pkt)
 		}
 
 		/* Detect duplicated Extension headers */
-		ext_bit = extension_to_bitmap(nexthdr, ext_bitmap);
+		ext_bit = extension_to_bitmap(nexthdr);
 		if (ext_bit & ext_bitmap) {
 			goto bad_hdr;
 		}

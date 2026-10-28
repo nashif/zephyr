@@ -1094,6 +1094,39 @@ ZTEST(net_ipv6, test_routing_hdr_segments_left)
 		      "routing type", cap.param);
 }
 
+/* Echo request behind three Destination Options headers, each holding one
+ * PadN option. RFC 8200 ch. 4.1 asks for extension headers occurring any
+ * number of times to be processed, so the request is answered.
+ */
+static const unsigned char ipv6_dest_opts_hdr_repeated[] = {
+	/* IPv6 header, peer_addr 2001:db8::2 to my_addr 2001:db8::1 */
+	0x60, 0x00, 0x00, 0x00, 0x00, 0x20, 0x3c, 0x40,
+	0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
+	0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+	/* Destination Options headers */
+	0x3c, 0x00, 0x01, 0x04, 0x00, 0x00, 0x00, 0x00,
+	0x3c, 0x00, 0x01, 0x04, 0x00, 0x00, 0x00, 0x00,
+	0x3a, 0x00, 0x01, 0x04, 0x00, 0x00, 0x00, 0x00,
+	/* ICMPv6 echo request */
+	0x80, 0x00, 0x12, 0x13, 0x12, 0x34, 0x00, 0x01,
+};
+
+ZTEST(net_ipv6, test_dest_opts_hdr_repeated)
+{
+	struct icmpv6_tx_capture cap;
+	enum net_verdict verdict;
+
+	verdict = recv_ext_hdr_pkt(ipv6_dest_opts_hdr_repeated,
+				   sizeof(ipv6_dest_opts_hdr_repeated), &cap);
+	zassert_not_equal(verdict, NET_DROP,
+			  "Packet with repeated Destination Options headers was dropped");
+
+	zassert_ok(k_sem_take(&cap.sent, K_MSEC(WAIT_TIME)), "No echo reply sent");
+	zassert_equal(cap.type, NET_ICMPV6_ECHO_REPLY, "Wrong ICMPv6 type %u", cap.type);
+}
+
 ZTEST(net_ipv6, test_routing_hdr_no_segments_left)
 {
 	struct icmpv6_tx_capture cap;
