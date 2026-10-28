@@ -26,6 +26,10 @@
 
 #define NET_ICMPV4_DST_UNREACH_NO_PROTO  2 /* Protocol not supported */
 #define NET_ICMPV4_DST_UNREACH_NO_PORT   3 /* Port unreachable */
+#define NET_ICMPV4_DST_UNREACH_FRAG_NEEDED 4 /* Fragmentation needed and DF set */
+#define NET_ICMPV4_DST_UNREACH_NET_PROHIBITED  9 /* Network administratively prohibited */
+#define NET_ICMPV4_DST_UNREACH_HOST_PROHIBITED 10 /* Host administratively prohibited */
+#define NET_ICMPV4_DST_UNREACH_FILTERED  13 /* Communication administratively prohibited */
 #define NET_ICMPV4_TIME_EXCEEDED_FRAGMENT_REASSEMBLY_TIME 1 /* Fragment reassembly time exceeded */
 #define NET_ICMPV4_BAD_IP_HEADER_POINTER 0 /* Pointer indicates the error */
 #define NET_ICMPV4_BAD_IP_HEADER_LENGTH  2 /* Bad length field */

@@ -2500,6 +2500,65 @@ static struct tcp *tcp_conn_search(struct net_pkt *pkt, struct tcphdr *th)
 
 static struct tcp *tcp_conn_new(struct net_pkt *pkt, struct tcphdr *th);
 
+void net_tcp_icmp_error(const struct net_sockaddr *local,
+			const struct net_sockaddr *remote,
+			uint32_t seq, int status)
+{
+	union tcp_endpoint local_ep = { 0 };
+	union tcp_endpoint remote_ep = { 0 };
+	struct tcp *conn = NULL;
+	struct tcp *tmp;
+	bool found = false;
+
+	if (local->sa_family != remote->sa_family) {
+		return;
+	}
+
+	memcpy(&local_ep, local, tcp_endpoint_len(local->sa_family));
+	memcpy(&remote_ep, remote, tcp_endpoint_len(remote->sa_family));
+
+	k_mutex_lock(&tcp_lock, K_FOREVER);
+
+	SYS_SLIST_FOR_EACH_CONTAINER_SAFE(&tcp_conns, conn, tmp, next) {
+		found = tcp_endpoint_cmp(&conn->src, &local_ep) &&
+			tcp_endpoint_cmp(&conn->dst, &remote_ep);
+		if (found) {
+			tcp_conn_ref(conn);
+			break;
+		}
+	}
+
+	k_mutex_unlock(&tcp_lock);
+
+	if (!found) {
+		return;
+	}
+
+	k_mutex_lock(&conn->lock, K_FOREVER);
+
+	/* Only the handshake is aborted. The quoted segment must be the SYN
+	 * or SYN-ACK this host sent, which carries the sequence number
+	 * before the one the handshake moved to, so that a forged error
+	 * cannot abort a connection it does not know, RFC 5927 ch. 4.1.
+	 */
+	if ((conn->state != TCP_SYN_SENT && conn->state != TCP_SYN_RECEIVED) ||
+	    seq != conn->seq - 1U) {
+		k_mutex_unlock(&conn->lock);
+		tcp_conn_unref(conn);
+		return;
+	}
+
+	NET_DBG("[%p] ICMP error %d in state %s", conn, status,
+		tcp_state_to_str(conn->state, false));
+
+	conn->connect_err = status;
+
+	k_mutex_unlock(&conn->lock);
+
+	tcp_conn_close(conn, status);
+	tcp_conn_unref(conn);
+}
+
 static enum net_verdict tcp_recv(struct net_conn *net_conn,
 				 struct net_pkt *pkt,
 				 union net_ip_header *ip,
@@ -4403,6 +4462,8 @@ int net_tcp_connect(struct net_context *context,
 
 		if (conn->rst_received) {
 			ret = -ECONNREFUSED;
+		} else if (conn->connect_err != 0) {
+			ret = conn->connect_err;
 		} else {
 			ret = -ETIMEDOUT;
 		}

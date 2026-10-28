@@ -21,6 +21,7 @@ LOG_MODULE_REGISTER(net_icmpv4, CONFIG_NET_ICMPV4_LOG_LEVEL);
 #include "net_private.h"
 #include "ipv4.h"
 #include "icmpv4.h"
+#include "tcp_internal.h"
 #include "net_stats.h"
 #include "pmtu.h"
 
@@ -726,70 +727,31 @@ drop:
 	return NET_DROP;
 }
 
+#if defined(CONFIG_NET_IPV4_PMTU_PTB) || defined(CONFIG_NET_TCP)
 #if defined(CONFIG_NET_IPV4_PMTU_PTB)
 /* The RFC 1191 chapter 3 says the minimum MTU size is 68 octets.
  * This is way too small in modern world, so make the minimum 576 octets.
  */
 #define MIN_IPV4_MTU NET_IPV4_MTU
 
-static enum net_verdict icmpv4_handle_dst_unreach(struct net_icmp_ctx *ctx,
-						  struct net_pkt *pkt,
-						  struct net_icmp_ip_hdr *hdr,
-						  struct net_icmp_hdr *icmp_hdr,
-						  void *user_data)
+/* Fragmentation Needed: update the path MTU towards the reporting host. */
+static enum net_verdict icmpv4_handle_ptb(struct net_pkt *pkt,
+					  struct net_ipv4_hdr *ip_hdr,
+					  uint16_t mtu)
 {
-	NET_PKT_DATA_ACCESS_CONTIGUOUS_DEFINE(dst_unreach_access,
-					      struct net_icmpv4_dest_unreach);
-	struct net_icmpv4_dest_unreach *dest_unreach_hdr;
-	struct net_ipv4_hdr *ip_hdr = hdr->ipv4;
-	uint16_t length = net_pkt_get_len(pkt);
 	struct net_pmtu_entry *entry;
 	struct net_sockaddr_in sockaddr_src = {
 		.sin_family = NET_AF_INET,
 	};
-	struct net_pkt_cursor backup;
-	uint16_t mtu;
 	int ret;
 
-	ARG_UNUSED(user_data);
-
-	net_pkt_cursor_backup(pkt, &backup);
-
-	dest_unreach_hdr = (struct net_icmpv4_dest_unreach *)
-		net_pkt_get_data(pkt, &dst_unreach_access);
-	if (dest_unreach_hdr == NULL) {
-		NET_DBG("DROP: NULL ICMPv4 Destination Unreachable header");
-		goto drop;
-	}
-
 	net_stats_update_ipv4_pmtu_recv(net_pkt_iface(pkt));
-
-	NET_DBG("Received Destination Unreachable from %s to %s",
-		net_sprint_ipv4_addr(&ip_hdr->src),
-		net_sprint_ipv4_addr(&ip_hdr->dst));
-
-	if (length < (sizeof(struct net_ipv4_hdr) +
-		      sizeof(struct net_icmp_hdr) +
-		      sizeof(struct net_icmpv4_dest_unreach))) {
-		NET_DBG("DROP: length %d too big %zd",
-			length, sizeof(struct net_ipv4_hdr) +
-			sizeof(struct net_icmp_hdr) +
-			sizeof(struct net_icmpv4_dest_unreach));
-		goto drop;
-	}
-
-	ret = net_pkt_acknowledge_data(pkt, &dst_unreach_access);
-	if (ret < 0) {
-		NET_DBG("DROP: cannot acknowledge data");
-		goto drop;
-	}
-
-	mtu = net_ntohs(dest_unreach_hdr->mtu);
 
 	if (mtu < MIN_IPV4_MTU) {
 		NET_DBG("DROP: Unsupported MTU %u, min is %u",
 			mtu, MIN_IPV4_MTU);
-		goto drop;
+		net_stats_update_ipv4_pmtu_drop(net_pkt_iface(pkt));
+		return NET_DROP;
 	}
 
 	net_ipaddr_copy(&sockaddr_src.sin_addr, (struct net_in_addr *)&ip_hdr->src);
@@ -817,12 +779,7 @@ static enum net_verdict icmpv4_handle_dst_unreach(struct net_icmp_ctx *ctx,
 			net_sprint_ipv4_addr(&ip_hdr->src), ret, mtu);
 	}
 
-	net_pkt_cursor_restore(pkt, &backup);
 	return NET_CONTINUE;
-drop:
-	net_stats_update_ipv4_pmtu_drop(net_pkt_iface(pkt));
-
-	return NET_DROP;
 
 silent_drop:
 	/* If the event is not really an error then just ignore it and
@@ -830,12 +787,130 @@ silent_drop:
 	 */
 	net_stats_update_ipv4_pmtu_drop(net_pkt_iface(pkt));
 
-	net_pkt_cursor_restore(pkt, &backup);
 	return NET_CONTINUE;
+}
+#endif /* CONFIG_NET_IPV4_PMTU_PTB */
+
+#if defined(CONFIG_NET_TCP)
+/* The errno a hard Destination Unreachable maps to, RFC 1122 ch. 3.2.2.1
+ * and ch. 4.2.3.9. Soft errors map to 0 and are not reported.
+ */
+static int icmpv4_dst_unreach_errno(uint8_t code)
+{
+	switch (code) {
+	case NET_ICMPV4_DST_UNREACH_NO_PROTO:
+		return -EPROTO;
+	case NET_ICMPV4_DST_UNREACH_NO_PORT:
+		return -ECONNREFUSED;
+	case NET_ICMPV4_DST_UNREACH_NET_PROHIBITED:
+	case NET_ICMPV4_DST_UNREACH_HOST_PROHIBITED:
+	case NET_ICMPV4_DST_UNREACH_FILTERED:
+		return -EACCES;
+	default:
+		return 0;
+	}
+}
+
+/* Hand a Destination Unreachable about a TCP segment to TCP, with the
+ * cursor at the quoted datagram: the IPv4 header this host sent and the
+ * first 8 octets of the segment, which hold the ports and the sequence
+ * number.
+ */
+static void icmpv4_dst_unreach_to_tcp(struct net_pkt *pkt, uint8_t code)
+{
+	NET_PKT_DATA_ACCESS_CONTIGUOUS_DEFINE(ipv4_access, struct net_ipv4_hdr);
+	struct net_sockaddr_in local = { .sin_family = NET_AF_INET };
+	struct net_sockaddr_in remote = { .sin_family = NET_AF_INET };
+	struct net_ipv4_hdr *hdr;
+	uint32_t seq;
+	int status;
+
+	status = icmpv4_dst_unreach_errno(code);
+	if (status == 0) {
+		return;
+	}
+
+	hdr = (struct net_ipv4_hdr *)net_pkt_get_data(pkt, &ipv4_access);
+	if (hdr == NULL || hdr->proto != NET_IPPROTO_TCP) {
+		return;
+	}
+
+	net_ipv4_addr_copy_raw((uint8_t *)&local.sin_addr, hdr->src);
+	net_ipv4_addr_copy_raw((uint8_t *)&remote.sin_addr, hdr->dst);
+
+	if (net_pkt_acknowledge_data(pkt, &ipv4_access) ||
+	    net_pkt_skip(pkt, (hdr->vhl & NET_IPV4_IHL_MASK) * 4U -
+			 sizeof(struct net_ipv4_hdr)) ||
+	    net_pkt_read(pkt, &local.sin_port, sizeof(local.sin_port)) ||
+	    net_pkt_read(pkt, &remote.sin_port, sizeof(remote.sin_port)) ||
+	    net_pkt_read_be32(pkt, &seq)) {
+		NET_DBG("DROP: truncated quoted TCP segment");
+		return;
+	}
+
+	net_tcp_icmp_error((struct net_sockaddr *)&local,
+			   (struct net_sockaddr *)&remote, seq, status);
+}
+#endif /* CONFIG_NET_TCP */
+
+static enum net_verdict icmpv4_handle_dst_unreach(struct net_icmp_ctx *ctx,
+						  struct net_pkt *pkt,
+						  struct net_icmp_ip_hdr *hdr,
+						  struct net_icmp_hdr *icmp_hdr,
+						  void *user_data)
+{
+	NET_PKT_DATA_ACCESS_CONTIGUOUS_DEFINE(dst_unreach_access,
+					      struct net_icmpv4_dest_unreach);
+	struct net_icmpv4_dest_unreach *dest_unreach_hdr;
+	struct net_ipv4_hdr *ip_hdr = hdr->ipv4;
+	enum net_verdict verdict = NET_CONTINUE;
+	struct net_pkt_cursor backup;
+
+	ARG_UNUSED(ctx);
+	ARG_UNUSED(user_data);
+
+	net_pkt_cursor_backup(pkt, &backup);
+
+	dest_unreach_hdr = (struct net_icmpv4_dest_unreach *)
+		net_pkt_get_data(pkt, &dst_unreach_access);
+	if (dest_unreach_hdr == NULL) {
+		NET_DBG("DROP: NULL ICMPv4 Destination Unreachable header");
+		goto drop;
+	}
+
+	NET_DBG("Received Destination Unreachable code %u from %s to %s",
+		icmp_hdr->code,
+		net_sprint_ipv4_addr(&ip_hdr->src),
+		net_sprint_ipv4_addr(&ip_hdr->dst));
+
+	if (net_pkt_acknowledge_data(pkt, &dst_unreach_access)) {
+		NET_DBG("DROP: cannot acknowledge data");
+		goto drop;
+	}
+
+	if (icmp_hdr->code == NET_ICMPV4_DST_UNREACH_FRAG_NEEDED) {
+#if defined(CONFIG_NET_IPV4_PMTU_PTB)
+		verdict = icmpv4_handle_ptb(pkt, ip_hdr,
+					    net_ntohs(dest_unreach_hdr->mtu));
+#endif
+	} else if (IS_ENABLED(CONFIG_NET_TCP)) {
+#if defined(CONFIG_NET_TCP)
+		icmpv4_dst_unreach_to_tcp(pkt, icmp_hdr->code);
+#endif
+	}
+
+	net_pkt_cursor_restore(pkt, &backup);
+
+	return verdict;
+
+drop:
+	net_pkt_cursor_restore(pkt, &backup);
+
+	return NET_DROP;
 }
 
 static struct net_icmp_ctx dst_unreach_ctx;
-#endif /* CONFIG_NET_IPV4_PMTU_PTB */
+#endif /* CONFIG_NET_IPV4_PMTU_PTB || CONFIG_NET_TCP */
 
 void net_icmpv4_init(void)
 {
@@ -849,7 +924,7 @@ void net_icmpv4_init(void)
 			ret);
 	}
 
-#if defined(CONFIG_NET_IPV4_PMTU_PTB)
+#if defined(CONFIG_NET_IPV4_PMTU_PTB) || defined(CONFIG_NET_TCP)
 	ret = net_icmp_init_ctx(&dst_unreach_ctx, NET_AF_INET, NET_ICMPV4_DST_UNREACH, 0,
 				icmpv4_handle_dst_unreach);
 	if (ret < 0) {

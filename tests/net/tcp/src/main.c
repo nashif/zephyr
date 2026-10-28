@@ -30,6 +30,8 @@ LOG_MODULE_REGISTER(net_test, CONFIG_NET_TCP_LOG_LEVEL);
 
 #include "ipv4.h"
 #include "ipv6.h"
+#include "icmpv4.h"
+#include "icmpv6.h"
 #include "tcp_internal.h"
 #include "net_stats.h"
 
@@ -124,6 +126,9 @@ static enum test_case_no {
 	TEST_ADVERTISED_RECV_WINDOW = 23,
 	TEST_TCP_PKT_LINEARIZE_FRAG_CHAIN = 24,
 	TEST_SERVER_MSS_AFTER_OPTIONS = 25,
+	TEST_CLIENT_ICMP_DST_UNREACH = 26,
+	TEST_CLIENT_ICMP_DST_UNREACH_SOFT = 27,
+	TEST_SERVER_ICMP_DST_UNREACH = 28,
 } test_case_no;
 
 static enum test_state t_state;
@@ -153,6 +158,12 @@ static void handle_client_fin_ack_with_data_test(net_sa_family_t af, struct tcph
 static void handle_client_seq_validation_test(net_sa_family_t af, struct tcphdr *th);
 static void handle_server_ack_validation_test(struct net_pkt *pkt);
 static void handle_server_fin_ack_after_data_test(net_sa_family_t af, struct tcphdr *th);
+static void handle_client_icmp_dst_unreach(net_sa_family_t af, struct net_pkt *pkt,
+					   struct tcphdr *th);
+static void handle_client_icmp_dst_unreach_soft(net_sa_family_t af, struct net_pkt *pkt,
+						struct tcphdr *th);
+static void handle_server_icmp_dst_unreach(net_sa_family_t af, struct net_pkt *pkt,
+					   struct tcphdr *th);
 
 static void verify_flags(struct tcphdr *th, uint8_t flags,
 			 const char *fun, int line)
@@ -709,6 +720,15 @@ static int tester_send(const struct device *dev, struct net_pkt *pkt)
 	case TEST_TCP_PKT_LINEARIZE_FRAG_CHAIN:
 		/* Ignore RST/response TX while exercising tcp_pkt_linearize(). */
 		break;
+	case TEST_CLIENT_ICMP_DST_UNREACH:
+		handle_client_icmp_dst_unreach(net_pkt_family(pkt), pkt, &th);
+		break;
+	case TEST_CLIENT_ICMP_DST_UNREACH_SOFT:
+		handle_client_icmp_dst_unreach_soft(net_pkt_family(pkt), pkt, &th);
+		break;
+	case TEST_SERVER_ICMP_DST_UNREACH:
+		handle_server_icmp_dst_unreach(net_pkt_family(pkt), pkt, &th);
+		break;
 	default:
 		zassert_true(false, "Undefined test case");
 	}
@@ -990,6 +1010,8 @@ static void test_server_timeout(struct k_work *work)
 		handle_server_test(NET_AF_INET, NULL);
 	} else if (test_case_no == TEST_SERVER_IPV6) {
 		handle_server_test(NET_AF_INET6, NULL);
+	} else if (test_case_no == TEST_SERVER_ICMP_DST_UNREACH) {
+		handle_server_icmp_dst_unreach(NET_AF_INET, NULL, NULL);
 	} else if (test_case_no == TEST_SERVER_RST_ON_CLOSED_PORT_FIN) {
 		struct net_pkt *reply;
 
@@ -3837,6 +3859,253 @@ static void net_tcp_after(void *fixture)
 	ARG_UNUSED(fixture);
 
 	tcp_send_cb = NULL;
+}
+
+/* Build a Destination Unreachable from the peer that quotes the segment in
+ * pkt the way a router or host would: the IP header this host sent and the
+ * first 8 octets of the segment.
+ */
+static struct net_pkt *prepare_icmp_dst_unreach(net_sa_family_t af, struct net_pkt *orig,
+						uint8_t code)
+{
+	size_t quoted = net_pkt_ip_hdr_len(orig) + net_pkt_ip_opts_len(orig) + 8U;
+	struct net_pkt *pkt;
+	int ret;
+
+	pkt = net_pkt_alloc_with_buffer(net_iface, NET_ICMPV4_UNUSED_LEN + quoted, af,
+					af == NET_AF_INET ? NET_IPPROTO_ICMP :
+							    NET_IPPROTO_ICMPV6,
+					K_NO_WAIT);
+	zassert_not_null(pkt, "Failed to allocate ICMP packet");
+
+	if (af == NET_AF_INET) {
+		ret = net_ipv4_create(pkt, &peer_addr, &my_addr);
+		zassert_ok(ret, "Failed to create IPv4 header");
+		ret = net_icmpv4_create(pkt, NET_ICMPV4_DST_UNREACH, code);
+	} else {
+		ret = net_ipv6_create(pkt, &peer_addr_v6, &my_addr_v6);
+		zassert_ok(ret, "Failed to create IPv6 header");
+		ret = net_icmpv6_create(pkt, NET_ICMPV6_DST_UNREACH, code);
+	}
+
+	zassert_ok(ret, "Failed to create ICMP header");
+	zassert_ok(net_pkt_write_be32(pkt, 0), "Failed to write unused field");
+
+	net_pkt_cursor_init(orig);
+	net_pkt_set_overwrite(orig, true);
+	zassert_ok(net_pkt_copy(pkt, orig, quoted), "Failed to quote the segment");
+
+	net_pkt_cursor_init(pkt);
+
+	if (af == NET_AF_INET) {
+		net_ipv4_finalize(pkt, NET_IPPROTO_ICMP);
+	} else {
+		net_ipv6_finalize(pkt, NET_IPPROTO_ICMPV6);
+	}
+
+	return pkt;
+}
+
+/* Test case scenario
+ *   expect SYN,
+ *   send Destination Unreachable, port unreachable, quoting the SYN,
+ *   net_context_connect reports ECONNREFUSED,
+ *   no further SYN is sent.
+ */
+static void handle_client_icmp_dst_unreach(net_sa_family_t af, struct net_pkt *pkt,
+					   struct tcphdr *th)
+{
+	struct net_pkt *reply;
+
+	switch (t_state) {
+	case T_SYN:
+		test_verify_flags(th, SYN);
+		reply = prepare_icmp_dst_unreach(af, pkt,
+						 af == NET_AF_INET ?
+						 NET_ICMPV4_DST_UNREACH_NO_PORT :
+						 NET_ICMPV6_DST_UNREACH_NO_PORT);
+		t_state = T_CLOSING;
+		zassert_ok(net_recv_data(net_iface, reply), "%s failed", __func__);
+		break;
+	default:
+		zassert_true(false, "%s: unexpected segment in state %d", __func__,
+			     t_state);
+		break;
+	}
+}
+
+static void test_client_icmp_dst_unreach(net_sa_family_t af,
+					 struct net_sockaddr *addr, net_socklen_t addrlen)
+{
+	struct net_context *ctx;
+	int ret;
+
+	t_state = T_SYN;
+	test_case_no = TEST_CLIENT_ICMP_DST_UNREACH;
+	seq = ack = 0;
+
+	ret = net_context_get(af, NET_SOCK_STREAM, NET_IPPROTO_TCP, &ctx);
+	zassert_ok(ret, "Failed to get net_context");
+
+	net_context_ref(ctx);
+
+	ret = net_context_connect(ctx, addr, addrlen, NULL, K_MSEC(1000), NULL);
+	zassert_equal(ret, -ECONNREFUSED,
+		      "Connect returned %d instead of -ECONNREFUSED", ret);
+	zassert_not_equal(net_context_get_state(ctx), NET_CONTEXT_CONNECTED,
+			  "Context should not be connected");
+	zassert_equal(t_state, T_CLOSING, "No SYN was seen");
+
+	net_context_put(ctx);
+}
+
+ZTEST(net_tcp, test_client_icmp_dst_unreach_ipv4)
+{
+	test_client_icmp_dst_unreach(NET_AF_INET, (struct net_sockaddr *)&peer_addr_s,
+				     sizeof(struct net_sockaddr_in));
+}
+
+ZTEST(net_tcp, test_client_icmp_dst_unreach_ipv6)
+{
+	test_client_icmp_dst_unreach(NET_AF_INET6, (struct net_sockaddr *)&peer_addr_v6_s,
+				     sizeof(struct net_sockaddr_in6));
+}
+
+/* Test case scenario
+ *   expect SYN,
+ *   send Destination Unreachable, network unreachable, quoting the SYN,
+ *   expect SYN (retransmission, the soft error did not abort),
+ *   send RST+ACK,
+ *   net_context_connect reports ECONNREFUSED.
+ */
+static void handle_client_icmp_dst_unreach_soft(net_sa_family_t af, struct net_pkt *pkt,
+						struct tcphdr *th)
+{
+	struct net_pkt *reply;
+
+	switch (t_state) {
+	case T_SYN:
+		test_verify_flags(th, SYN);
+		reply = prepare_icmp_dst_unreach(af, pkt, 0U);
+		t_state = T_SYN_ACK;
+		break;
+	case T_SYN_ACK:
+		test_verify_flags(th, SYN);
+		seq = 0U;
+		ack = net_ntohl(th->th_seq) + 1U;
+		reply = prepare_rst_ack_packet(af, net_htons(MY_PORT), th->th_sport);
+		t_state = T_CLOSING;
+		break;
+	default:
+		return;
+	}
+
+	zassert_ok(net_recv_data(net_iface, reply), "%s failed", __func__);
+}
+
+ZTEST(net_tcp, test_client_icmp_dst_unreach_soft_ipv4)
+{
+	struct net_context *ctx;
+	int ret;
+
+	t_state = T_SYN;
+	test_case_no = TEST_CLIENT_ICMP_DST_UNREACH_SOFT;
+	seq = ack = 0;
+
+	ret = net_context_get(NET_AF_INET, NET_SOCK_STREAM, NET_IPPROTO_TCP, &ctx);
+	zassert_ok(ret, "Failed to get net_context");
+
+	net_context_ref(ctx);
+
+	ret = net_context_connect(ctx, (struct net_sockaddr *)&peer_addr_s,
+				  sizeof(struct net_sockaddr_in), NULL, K_MSEC(1000), NULL);
+	zassert_equal(ret, -ECONNREFUSED,
+		      "Connect returned %d instead of -ECONNREFUSED", ret);
+	zassert_equal(t_state, T_CLOSING, "SYN was not retransmitted after a soft error");
+
+	net_context_put(ctx);
+}
+
+/* Test case scenario
+ *   open listening port,
+ *   send SYN,
+ *   expect SYN+ACK,
+ *   send Destination Unreachable, port unreachable, quoting the SYN+ACK,
+ *   send ACK,
+ *   expect RST (the half-open connection is gone),
+ *   the accept callback is never called.
+ */
+static void handle_server_icmp_dst_unreach(net_sa_family_t af, struct net_pkt *pkt,
+					   struct tcphdr *th)
+{
+	struct net_pkt *reply;
+
+	switch (t_state) {
+	case T_SYN:
+		reply = prepare_syn_packet(af, net_htons(MY_PORT), net_htons(PEER_PORT));
+		t_state = T_SYN_ACK;
+		break;
+	case T_SYN_ACK:
+		test_verify_flags(th, SYN | ACK);
+		seq++;
+		ack = net_ntohl(th->th_seq) + 1U;
+		reply = prepare_icmp_dst_unreach(af, pkt, NET_ICMPV4_DST_UNREACH_NO_PORT);
+		t_state = T_DATA;
+		/* Let the aborted connection be released before the ACK */
+		k_work_reschedule(&test_server, K_MSEC(50));
+		break;
+	case T_DATA:
+		reply = prepare_ack_packet(af, net_htons(MY_PORT), net_htons(PEER_PORT));
+		t_state = T_DATA_ACK;
+		break;
+	case T_DATA_ACK:
+		test_verify_flags(th, RST);
+		zassert_equal(net_ntohl(th->th_seq), ack, "Invalid SEQ value");
+		t_state = T_CLOSING;
+		test_sem_give();
+		return;
+	default:
+		return;
+	}
+
+	zassert_ok(net_recv_data(net_iface, reply), "%s failed", __func__);
+}
+
+ZTEST(net_tcp, test_server_icmp_dst_unreach_ipv4)
+{
+	struct net_context *ctx;
+	int ret;
+
+	t_state = T_SYN;
+	test_case_no = TEST_SERVER_ICMP_DST_UNREACH;
+	seq = ack = 200;
+
+	k_sem_reset(&test_sem);
+
+	ret = net_context_get(NET_AF_INET, NET_SOCK_STREAM, NET_IPPROTO_TCP, &ctx);
+	zassert_ok(ret, "Failed to get net_context");
+
+	net_context_ref(ctx);
+
+	ret = net_context_bind(ctx, (struct net_sockaddr *)&my_addr_s,
+			       sizeof(struct net_sockaddr_in));
+	zassert_ok(ret, "Failed to bind net_context");
+
+	ret = net_context_listen(ctx, 1);
+	zassert_ok(ret, "Failed to listen on net_context");
+
+	ret = net_context_accept(ctx, dummy_accept_cb, K_NO_WAIT, NULL);
+	zassert_ok(ret, "Failed to set accept on net_context");
+
+	/* Trigger the peer to send SYN */
+	k_work_reschedule(&test_server, K_NO_WAIT);
+
+	/* Peer will release the semaphore after it receives RST */
+	test_sem_take(K_MSEC(500), __LINE__);
+
+	zassert_equal(t_state, T_CLOSING, "No RST received for the aborted connection");
+
+	net_context_put(ctx);
 }
 
 ZTEST_SUITE(net_tcp, NULL, presetup, NULL, net_tcp_after, NULL);

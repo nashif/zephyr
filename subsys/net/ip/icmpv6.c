@@ -21,6 +21,7 @@ LOG_MODULE_REGISTER(net_icmpv6, CONFIG_NET_ICMPV6_LOG_LEVEL);
 #include <zephyr/net/icmp.h>
 #include "net_private.h"
 #include "icmpv6.h"
+#include "tcp_internal.h"
 #include "ipv6.h"
 #include "net_stats.h"
 
@@ -429,6 +430,85 @@ drop:
 	return NET_DROP;
 }
 
+#if defined(CONFIG_NET_TCP)
+/* The errno a hard Destination Unreachable maps to, RFC 4443 ch. 3.1.
+ * Soft errors map to 0 and are not reported.
+ */
+static int icmpv6_dst_unreach_errno(uint8_t code)
+{
+	switch (code) {
+	case NET_ICMPV6_DST_UNREACH_ADMIN:
+	case NET_ICMPV6_DST_UNREACH_SRC_ADDR:
+	case NET_ICMPV6_DST_UNREACH_REJ_ROUTE:
+		return -EACCES;
+	case NET_ICMPV6_DST_UNREACH_NO_PORT:
+		return -ECONNREFUSED;
+	default:
+		return 0;
+	}
+}
+
+/* Hand a Destination Unreachable about a TCP segment to TCP. The quoted
+ * packet follows the unused field: the IPv6 header this host sent and the
+ * start of the segment, which holds the ports and the sequence number.
+ */
+static enum net_verdict icmpv6_handle_dst_unreach(struct net_icmp_ctx *ctx,
+						  struct net_pkt *pkt,
+						  struct net_icmp_ip_hdr *hdr,
+						  struct net_icmp_hdr *icmp_hdr,
+						  void *user_data)
+{
+	NET_PKT_DATA_ACCESS_CONTIGUOUS_DEFINE(ipv6_access, struct net_ipv6_hdr);
+	struct net_sockaddr_in6 local = { .sin6_family = NET_AF_INET6 };
+	struct net_sockaddr_in6 remote = { .sin6_family = NET_AF_INET6 };
+	struct net_pkt_cursor backup;
+	struct net_ipv6_hdr *ip_hdr;
+	uint32_t seq;
+	int status;
+
+	ARG_UNUSED(ctx);
+	ARG_UNUSED(user_data);
+
+	NET_DBG("Received Destination Unreachable code %u from %s",
+		icmp_hdr->code, net_sprint_ipv6_addr(&hdr->ipv6->src));
+
+	status = icmpv6_dst_unreach_errno(icmp_hdr->code);
+	if (status == 0) {
+		return NET_CONTINUE;
+	}
+
+	net_pkt_cursor_backup(pkt, &backup);
+
+	if (net_pkt_skip(pkt, NET_ICMPV6_UNUSED_LEN)) {
+		goto out;
+	}
+
+	ip_hdr = (struct net_ipv6_hdr *)net_pkt_get_data(pkt, &ipv6_access);
+	if (ip_hdr == NULL || ip_hdr->nexthdr != NET_IPPROTO_TCP) {
+		goto out;
+	}
+
+	net_ipv6_addr_copy_raw((uint8_t *)&local.sin6_addr, ip_hdr->src);
+	net_ipv6_addr_copy_raw((uint8_t *)&remote.sin6_addr, ip_hdr->dst);
+
+	if (net_pkt_acknowledge_data(pkt, &ipv6_access) ||
+	    net_pkt_read(pkt, &local.sin6_port, sizeof(local.sin6_port)) ||
+	    net_pkt_read(pkt, &remote.sin6_port, sizeof(remote.sin6_port)) ||
+	    net_pkt_read_be32(pkt, &seq)) {
+		NET_DBG("DROP: truncated quoted TCP segment");
+		goto out;
+	}
+
+	net_tcp_icmp_error((struct net_sockaddr *)&local,
+			   (struct net_sockaddr *)&remote, seq, status);
+
+out:
+	net_pkt_cursor_restore(pkt, &backup);
+
+	return NET_CONTINUE;
+}
+#endif /* CONFIG_NET_TCP */
+
 void net_icmpv6_init(void)
 {
 	static struct net_icmp_ctx ctx;
@@ -440,4 +520,15 @@ void net_icmpv6_init(void)
 		NET_ERR("Cannot register %s handler (%d)", STRINGIFY(NET_ICMPV6_ECHO_REQUEST),
 			ret);
 	}
+
+#if defined(CONFIG_NET_TCP)
+	static struct net_icmp_ctx dst_unreach_ctx;
+
+	ret = net_icmp_init_ctx(&dst_unreach_ctx, NET_AF_INET6, NET_ICMPV6_DST_UNREACH, 0,
+				icmpv6_handle_dst_unreach);
+	if (ret < 0) {
+		NET_ERR("Cannot register %s handler (%d)", STRINGIFY(NET_ICMPV6_DST_UNREACH),
+			ret);
+	}
+#endif
 }

@@ -90,6 +90,35 @@ static inline enum tcp_state net_tcp_get_state(const struct tcp *conn)
 #endif
 
 /**
+ * @brief Deliver an ICMP Destination Unreachable about a segment this host
+ *        sent to the connection it belongs to.
+ *
+ * A connection still in its handshake is aborted and the error reported to
+ * the application, RFC 1122 ch. 4.2.3.9. An established connection is left
+ * alone, RFC 5927 ch. 4.1.
+ *
+ * @param local Source address and port of the quoted segment, this host's.
+ * @param remote Destination address and port of the quoted segment.
+ * @param seq Sequence number of the quoted segment.
+ * @param status Negative errno value the error maps to.
+ */
+#if defined(CONFIG_NET_NATIVE_TCP)
+void net_tcp_icmp_error(const struct net_sockaddr *local,
+			const struct net_sockaddr *remote,
+			uint32_t seq, int status);
+#else
+static inline void net_tcp_icmp_error(const struct net_sockaddr *local,
+				      const struct net_sockaddr *remote,
+				      uint32_t seq, int status)
+{
+	ARG_UNUSED(local);
+	ARG_UNUSED(remote);
+	ARG_UNUSED(seq);
+	ARG_UNUSED(status);
+}
+#endif
+
+/**
  * @brief Go through all the TCP connections and call callback
  * for each of them.
  *

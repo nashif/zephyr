@@ -323,6 +323,10 @@ struct tcp { /* TCP connection */
 	uint8_t dup_ack_cnt;
 #endif
 	uint8_t zwp_retries;
+	/* Error that ended the connection attempt, reported by a blocking
+	 * connect. Zero when the attempt timed out or was refused by a RST.
+	 */
+	int connect_err;
 	bool in_connect : 1;
 	bool in_close : 1;
 #if defined(CONFIG_NET_TCP_KEEPALIVE)
