@@ -935,10 +935,8 @@ static bool arp_hdr_check(struct net_if *iface, struct net_arp_hdr *arp_hdr)
 }
 
 enum net_verdict net_arp_input(struct net_pkt *pkt,
-			       struct net_eth_addr *src,
 			       struct net_eth_addr *dst)
 {
-	struct net_eth_addr *dst_hw_addr;
 	struct net_arp_hdr *arp_hdr;
 	struct net_in_addr src_ipaddr;
 	struct net_pkt *reply;
@@ -1002,14 +1000,15 @@ enum net_verdict net_arp_input(struct net_pkt *pkt,
 					       arp_hdr->src_ipaddr);
 			net_arp_update(net_pkt_iface(pkt), &src_ipaddr,
 				       &arp_hdr->src_hwaddr, true);
-
-			dst_hw_addr = &arp_hdr->src_hwaddr;
-		} else {
-			dst_hw_addr = src;
 		}
 
-		/* Send reply */
-		reply = arp_prepare_reply(net_pkt_iface(pkt), pkt, dst_hw_addr);
+		/* The reply goes to the sender hardware address carried in
+		 * the request (RFC 826), which is the address the sender
+		 * wants to be reached at, not to the source address of the
+		 * frame that delivered the request.
+		 */
+		reply = arp_prepare_reply(net_pkt_iface(pkt), pkt,
+					  &arp_hdr->src_hwaddr);
 		if (reply) {
 			net_if_try_queue_tx(net_pkt_iface(reply), reply, K_NO_WAIT);
 		} else {
@@ -1194,7 +1193,6 @@ static enum net_verdict arp_recv(struct net_if *iface,
 	}
 
 	return net_arp_input(pkt,
-			     (struct net_eth_addr *)net_pkt_lladdr_src(pkt)->addr,
 			     (struct net_eth_addr *)net_pkt_lladdr_dst(pkt)->addr);
 }
 

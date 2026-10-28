@@ -45,6 +45,7 @@ static struct net_eth_addr eth_hwaddr = { { 0x42, 0x11, 0x69, 0xde, 0xfa, 0xec }
 
 static int send_status = -EINVAL;
 static int arp_reply_count;
+static struct net_eth_addr arp_reply_dst;
 
 /* Returned by the fake driver for ARP requests when non-zero. */
 static int arp_req_send_ret;
@@ -111,6 +112,7 @@ static int tester_send(const struct device *dev, struct net_pkt *pkt)
 
 		if (net_ntohs(arp_hdr->opcode) == NET_ARP_REPLY) {
 			arp_reply_count++;
+			memcpy(&arp_reply_dst, &hdr->dst, sizeof(arp_reply_dst));
 
 			if (!req_test && pkt != pending_pkt) {
 				printk("Pending data but to be sent is wrong, "
@@ -583,9 +585,7 @@ ZTEST(arp_fn_tests, test_arp)
 	zassert_not_null(pkt_arp, "ARP reply generation failed.");
 
 	/* The pending packet should now be sent */
-	switch (net_arp_input(pkt_arp,
-			      (struct net_eth_addr *)net_pkt_lladdr_src(pkt_arp)->addr,
-			      &dst_lladdr)) {
+	switch (net_arp_input(pkt_arp, &dst_lladdr)) {
 	case NET_OK:
 	case NET_CONTINUE:
 		break;
@@ -630,9 +630,7 @@ ZTEST(arp_fn_tests, test_arp)
 
 	req_test = true;
 
-	switch (net_arp_input(pkt_arp,
-			      (struct net_eth_addr *)net_pkt_lladdr_src(pkt_arp)->addr,
-			      &dst_lladdr)) {
+	switch (net_arp_input(pkt_arp, &dst_lladdr)) {
 	case NET_OK:
 	case NET_CONTINUE:
 		break;
@@ -689,9 +687,7 @@ ZTEST(arp_fn_tests, test_arp)
 
 		net_pkt_set_ll_proto_type(pkt, NET_ETH_PTYPE_ARP);
 
-		verdict = net_arp_input(pkt,
-					(struct net_eth_addr *)net_pkt_lladdr_src(pkt)->addr,
-					&dst_lladdr);
+		verdict = net_arp_input(pkt, &dst_lladdr);
 
 		zassert_not_equal(verdict, NET_DROP, "Gratuitous ARP failed");
 
@@ -848,8 +844,7 @@ static enum net_verdict recv_arp_msg(struct net_if *iface, uint16_t opcode,
 
 	net_pkt_set_ll_proto_type(pkt, NET_ETH_PTYPE_ARP);
 
-	verdict = net_arp_input(pkt, (struct net_eth_addr *)src_hwaddr,
-				(struct net_eth_addr *)eth_dst);
+	verdict = net_arp_input(pkt, (struct net_eth_addr *)eth_dst);
 	if (verdict == NET_DROP) {
 		net_pkt_unref(pkt);
 	}
@@ -1007,6 +1002,83 @@ ZTEST(arp_fn_tests, test_arp_invalid_sender_dropped)
 		zexpect_false(entry_found, "%s was added to the cache",
 			      msg->name);
 	}
+}
+
+/* The reply to a request goes to the sender hardware address carried in
+ * the request, RFC 826, even when the frame that delivered the request came
+ * from another address, such as a proxy or a bridge.
+ */
+ZTEST(arp_fn_tests, test_arp_reply_to_sender_hwaddr)
+{
+	const struct net_eth_addr sender_hwaddr = { { 0x02, 0x00, 0x5e, 0x11, 0x22, 0x33 } };
+	const struct net_eth_addr frame_hwaddr = { { 0x02, 0x00, 0x5e, 0x44, 0x55, 0x66 } };
+	const struct net_in_addr peer = { { { 192, 0, 2, 2 } } };
+	struct net_in_addr src = { { { 192, 0, 2, 1 } } };
+	const struct net_eth_addr *our_hwaddr;
+	struct net_if_addr *ifaddr;
+	enum net_verdict verdict;
+	struct net_if *iface;
+	struct net_pkt *pkt;
+
+	iface = net_if_lookup_by_dev(DEVICE_GET(net_arp_test));
+	zassert_not_null(iface, "No ARP test interface");
+
+	ifaddr = net_if_ipv4_addr_add(iface, &src, NET_ADDR_MANUAL, 0);
+	zassert_not_null(ifaddr, "Cannot add address");
+	ifaddr->addr_state = NET_ADDR_PREFERRED;
+
+	our_hwaddr = (const struct net_eth_addr *)net_if_get_link_addr(iface)->addr;
+
+	req_test = true;
+
+	net_arp_clear_cache(iface);
+
+	/* A unicast request whose target hardware address is already ours,
+	 * so that nothing but the sender hardware address can be the reply
+	 * destination.
+	 */
+	pkt = net_pkt_alloc_with_buffer(iface, sizeof(struct net_eth_hdr) +
+					sizeof(struct net_arp_hdr),
+					NET_AF_UNSPEC, 0, K_SECONDS(1));
+	zassert_not_null(pkt, "out of mem");
+
+	setup_eth_header(iface, pkt, our_hwaddr, NET_ETH_PTYPE_ARP);
+	memcpy(&((struct net_eth_hdr *)net_pkt_data(pkt))->src, &frame_hwaddr,
+	       sizeof(struct net_eth_addr));
+
+	net_buf_add(pkt->buffer, sizeof(struct net_eth_hdr));
+	net_buf_pull(pkt->buffer, sizeof(struct net_eth_hdr));
+
+	struct net_arp_hdr *arp_hdr = NET_ARP_HDR(pkt);
+
+	arp_hdr->hwtype = net_htons(NET_ARP_HTYPE_ETH);
+	arp_hdr->protocol = net_htons(NET_ETH_PTYPE_IP);
+	arp_hdr->hwlen = sizeof(struct net_eth_addr);
+	arp_hdr->protolen = sizeof(struct net_in_addr);
+	arp_hdr->opcode = net_htons(NET_ARP_REQUEST);
+	memcpy(&arp_hdr->src_hwaddr, &sender_hwaddr, sizeof(struct net_eth_addr));
+	memcpy(&arp_hdr->dst_hwaddr, our_hwaddr, sizeof(struct net_eth_addr));
+	net_ipv4_addr_copy_raw(arp_hdr->src_ipaddr, (const uint8_t *)&peer);
+	net_ipv4_addr_copy_raw(arp_hdr->dst_ipaddr, (const uint8_t *)&src);
+
+	net_buf_add(pkt->buffer, sizeof(struct net_arp_hdr));
+
+	net_pkt_set_ll_proto_type(pkt, NET_ETH_PTYPE_ARP);
+	(void)net_linkaddr_set(net_pkt_lladdr_src(pkt), frame_hwaddr.addr,
+			       sizeof(struct net_eth_addr));
+
+	arp_reply_count = 0;
+
+	verdict = net_arp_input(pkt, (struct net_eth_addr *)our_hwaddr);
+	zassert_not_equal(verdict, NET_DROP, "ARP request was dropped");
+
+	/* Yielding so that network interface TX thread can proceed. */
+	k_yield();
+
+	zassert_equal(arp_reply_count, 1, "ARP request was not replied to");
+	zassert_mem_equal(&arp_reply_dst, &sender_hwaddr, sizeof(sender_hwaddr),
+			  "ARP reply sent to %s instead of the sender hardware address",
+			  net_sprint_ll_addr(arp_reply_dst.addr, sizeof(arp_reply_dst)));
 }
 
 struct arp_lookup_result {
