@@ -1348,7 +1348,8 @@ struct bt_le_per_adv_param {
  *                 advertiser.
  * @retval -ENOTSUP @ref BT_LE_ADV_OPT_DIR_ADDR_RPA was used and the peer is
  *                  known not to support address resolution, as reported by
- *                  @ref bt_le_bond_addr_res_support.
+ *                  @ref bt_le_bond_addr_res_support, or the Controller does
+ *                  not support LE.
  * @return -ECONNREFUSED When connectable advertising is requested and there
  *                       is already maximum number of connections established
  *                       in the controller.
@@ -2799,7 +2800,8 @@ BUILD_ASSERT(BT_GAP_SCAN_FAST_WINDOW == BT_GAP_SCAN_FAST_INTERVAL_MIN,
  * @retval -EINVAL if @ref BT_LE_SCAN_OPT_EXT_FILTER_POLICY is set and
  *         @kconfig{CONFIG_BT_SCAN_EXT_FILTER_POLICY} is disabled.
  * @retval -ENOTSUP if @ref BT_LE_SCAN_OPT_EXT_FILTER_POLICY is set and the Controller does
- *         not support the Extended Scanner Filter Policies.
+ *         not support the Extended Scanner Filter Policies, or the Controller does not
+ *         support LE.
  */
 int bt_le_scan_start(const struct bt_le_scan_param *param, bt_le_scan_cb_t cb);
 
