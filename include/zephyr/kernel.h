@@ -7740,6 +7740,8 @@ __syscall int k_poll_signal_raise(struct k_poll_signal *sig, int result);
  *
  * @note In some architectures, before returning, the function unmasks interrupts
  * unconditionally.
+ *
+ * @satisfies ZEP-SRS-13-14
  */
 static inline void k_cpu_idle(void)
 {
@@ -7759,6 +7761,8 @@ static inline void k_cpu_idle(void)
  * be restored as if by irq_unlock(key).
  *
  * @param key Interrupt locking key obtained from irq_lock().
+ *
+ * @satisfies ZEP-SRS-13-40
  */
 static inline void k_cpu_atomic_idle(unsigned int key)
 {
